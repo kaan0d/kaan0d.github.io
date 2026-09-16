@@ -32,7 +32,7 @@
   a{ color:inherit; }
   a:focus-visible, button:focus-visible{ outline:1px solid var(--accent); outline-offset:3px; }
 
-  #ripple-bg{
+  #silk-bg{
     position:fixed;
     inset:0;
     width:100vw;
@@ -40,6 +40,7 @@
     z-index:0;
     pointer-events:none;
     background:var(--bg);
+    display:block;
   }
 
   .wrap{
@@ -143,7 +144,7 @@
   }
 </style>
 
-<canvas id="ripple-bg" aria-hidden="true"></canvas>
+<canvas id="silk-bg" aria-hidden="true"></canvas>
 
 <div class="wrap">
   <header class="topbar">
@@ -247,212 +248,136 @@
   </footer>
 </div>
 
-
 <script>
 (function(){
-  var canvas = document.getElementById('ripple-bg');
-  var ctx = canvas.getContext('2d');
+  // Ported from https://reactbits.dev (Silk, JS-CSS variant) to raw WebGL, no three.js needed.
+  var canvas = document.getElementById('silk-bg');
+  var gl = canvas.getContext('webgl') || canvas.getContext('experimental-webgl');
   var reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  if (!gl) return;
 
-  var TEXT = "kaan dinc is a computer engineer working in research and development. he builds full stack apps and desktop tools end to end, from the database up to the interface. he works with oracle sql, python, javascript and typescript, shipping react front ends and python desktop tools backed by sql. he is ccna certified in networking and likes owning a project from top to bottom rather than one slice of it. ";
-  var SCRAMBLE = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789·,.;\'~-=+*%#@';
-  var CALM = [245, 245, 244], CALM_ALPHA = 0.16;
-  var NORM = 420;
-  var CREST_STOPS = [
-    { t: 0.00, c: CALM },
-    { t: 0.30, c: [232, 150, 63] },
-    { t: 0.62, c: [255, 255, 255] },
-    { t: 1.00, c: [190, 240, 255] }
-  ];
-  var TROUGH_STOPS = [
-    { t: 0.00, c: CALM },
-    { t: 0.30, c: [90, 110, 255] },
-    { t: 0.62, c: [173, 87, 255] },
-    { t: 1.00, c: [255, 110, 200] }
-  ];
-  var EDGE_MARGIN = 18;
+  var VERT = 'attribute vec2 aPos;\nvarying vec2 vUv;\nvoid main(){\n  vUv = aPos * 0.5 + 0.5;\n  gl_Position = vec4(aPos, 0.0, 1.0);\n}';
 
-  var W = 0, H = 0, DPR = 1;
-  var cellW = 10, cellH = 19;
-  var cols = 0, rows = 0, N = 0;
-  var bufA, bufB, edgeDamp;
-  var mouse = { x: -1000, y: -1000, down: false };
-  var normalFont = "16px 'JetBrains Mono', ui-monospace, monospace";
-  var boldFont = "700 16px 'JetBrains Mono', ui-monospace, monospace";
-  var curFont = normalFont;
+  var FRAG = [
+    '#ifdef GL_ES',
+    'precision mediump float;',
+    '#endif',
+    'varying vec2 vUv;',
+    'uniform float uTime;',
+    'uniform vec3 uColor;',
+    'uniform float uSpeed;',
+    'uniform float uScale;',
+    'uniform float uRotation;',
+    'uniform float uNoiseIntensity;',
+    'uniform float uLightMode;',
+    'const float e = 2.71828182845904523536;',
+    'float noise(vec2 texCoord){',
+    '  float G = e;',
+    '  vec2 r = (G * sin(G * texCoord));',
+    '  return fract(r.x * r.y * (1.0 + texCoord.x));',
+    '}',
+    'vec2 rotateUvs(vec2 uv, float angle){',
+    '  float c = cos(angle);',
+    '  float s = sin(angle);',
+    '  mat2 rot = mat2(c, -s, s, c);',
+    '  return rot * uv;',
+    '}',
+    'void main(){',
+    '  float rnd = noise(gl_FragCoord.xy);',
+    '  vec2 uv = rotateUvs(vUv * uScale, uRotation);',
+    '  vec2 tex = uv * uScale;',
+    '  float tOffset = uSpeed * uTime;',
+    '  tex.y += 0.03 * sin(8.0 * tex.x - tOffset);',
+    '  float pattern = 0.6 + 0.4 * sin(5.0 * (tex.x + tex.y + cos(3.0 * tex.x + 5.0 * tex.y) + 0.02 * tOffset) + sin(20.0 * (tex.x + tex.y - 0.1 * tOffset)));',
+    '  float grain = rnd / 15.0 * uNoiseIntensity;',
+    '  vec3 result = uColor * pattern - vec3(grain);',
+    '  if (uLightMode > 0.5) {',
+    '    float fold = smoothstep(0.28, 0.9, pattern);',
+    '    float specular = smoothstep(0.72, 0.98, pattern);',
+    '    vec3 shadowColor = uColor * 0.72;',
+    '    vec3 bodyColor = min(uColor * 1.18, vec3(1.0));',
+    '    vec3 lightBase = mix(shadowColor, bodyColor, fold);',
+    '    lightBase = mix(lightBase, vec3(1.0), specular * 0.92);',
+    '    float fineNoise = noise(gl_FragCoord.xy * 0.63 + vec2(17.0, 41.0));',
+    '    float grainSignal = (rnd + fineNoise - 1.0);',
+    '    float grainStrength = clamp(uNoiseIntensity * 0.038, 0.0, 0.16);',
+    '    result = lightBase + grainSignal * grainStrength;',
+    '  }',
+    '  gl_FragColor = vec4(clamp(result, 0.0, 1.0), 1.0);',
+    '}'
+  ].join('\n');
 
-  function hash(i){
-    var x = Math.sin(i * 12.9898) * 43758.5453;
-    return x - Math.floor(x);
+  function compile(type, src){
+    var s = gl.createShader(type);
+    gl.shaderSource(s, src);
+    gl.compileShader(s);
+    return s;
   }
-  function hash2(i, seed){
-    var x = Math.sin(i * 78.233 + seed * 37.719) * 43758.5453;
-    return x - Math.floor(x);
-  }
 
-  function lerpRgb(a, b, t){
+  var prog = gl.createProgram();
+  gl.attachShader(prog, compile(gl.VERTEX_SHADER, VERT));
+  gl.attachShader(prog, compile(gl.FRAGMENT_SHADER, FRAG));
+  gl.linkProgram(prog);
+  gl.useProgram(prog);
+
+  var quad = new Float32Array([-1, -1, 3, -1, -1, 3]);
+  var buf = gl.createBuffer();
+  gl.bindBuffer(gl.ARRAY_BUFFER, buf);
+  gl.bufferData(gl.ARRAY_BUFFER, quad, gl.STATIC_DRAW);
+  var aPos = gl.getAttribLocation(prog, 'aPos');
+  gl.enableVertexAttribArray(aPos);
+  gl.vertexAttribPointer(aPos, 2, gl.FLOAT, false, 0, 0);
+
+  var uTime = gl.getUniformLocation(prog, 'uTime');
+  var uColor = gl.getUniformLocation(prog, 'uColor');
+  var uSpeed = gl.getUniformLocation(prog, 'uSpeed');
+  var uScale = gl.getUniformLocation(prog, 'uScale');
+  var uRotation = gl.getUniformLocation(prog, 'uRotation');
+  var uNoiseIntensity = gl.getUniformLocation(prog, 'uNoiseIntensity');
+  var uLightMode = gl.getUniformLocation(prog, 'uLightMode');
+
+  function hexToRgb(hex){
+    hex = hex.replace('#', '');
     return [
-      Math.round(a[0] + (b[0] - a[0]) * t),
-      Math.round(a[1] + (b[1] - a[1]) * t),
-      Math.round(a[2] + (b[2] - a[2]) * t)
+      parseInt(hex.slice(0, 2), 16) / 255,
+      parseInt(hex.slice(2, 4), 16) / 255,
+      parseInt(hex.slice(4, 6), 16) / 255
     ];
   }
 
-  function rampColor(stops, t){
-    t = Math.max(0, Math.min(1, t));
-    var i = 0;
-    while (i < stops.length - 2 && t > stops[i + 1].t) i++;
-    var a = stops[i], b = stops[i + 1];
-    var span = (b.t - a.t) || 1;
-    return lerpRgb(a.c, b.c, (t - a.t) / span);
-  }
+  var col = hexToRgb('#7B7481');
+  gl.uniform3f(uColor, col[0], col[1], col[2]);
+  gl.uniform1f(uSpeed, 5);
+  gl.uniform1f(uScale, 0.8);
+  gl.uniform1f(uRotation, 0);
+  gl.uniform1f(uNoiseIntensity, 3.4);
+  gl.uniform1f(uLightMode, 0);
+
+  var time = 0, lastT = 0;
 
   function resize(){
-    DPR = Math.min(window.devicePixelRatio || 1, 2);
-    W = window.innerWidth;
-    H = window.innerHeight;
+    var DPR = Math.min(window.devicePixelRatio || 1, 2);
+    var W = window.innerWidth, H = window.innerHeight;
     canvas.width = Math.floor(W * DPR);
     canvas.height = Math.floor(H * DPR);
     canvas.style.width = W + 'px';
     canvas.style.height = H + 'px';
-    ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
-    ctx.font = normalFont;
-    curFont = normalFont;
-    ctx.textBaseline = 'middle';
-    ctx.textAlign = 'center';
-
-    cols = Math.ceil(W / cellW);
-    rows = Math.ceil(H / cellH);
-    N = cols * rows;
-    bufA = new Float32Array(N);
-    bufB = new Float32Array(N);
-
-    edgeDamp = new Float32Array(N);
-    for (var r = 0; r < rows; r++){
-      for (var c = 0; c < cols; c++){
-        var dist = Math.min(c, cols - 1 - c, r, rows - 1 - r);
-        edgeDamp[r * cols + c] = dist >= EDGE_MARGIN ? 1 : 0.7 + 0.3 * (dist / EDGE_MARGIN);
-      }
-    }
-
-    render(false);
+    gl.viewport(0, 0, canvas.width, canvas.height);
+    draw();
   }
 
-  function splash(px, py, force, radius){
-    var col = Math.round(px / cellW);
-    var row = Math.round(py / cellH);
-    for (var dy = -radius; dy <= radius; dy++){
-      for (var dx = -radius; dx <= radius; dx++){
-        var c = col + dx, r = row + dy;
-        if (c < 1 || c >= cols - 1 || r < 1 || r >= rows - 1) continue;
-        var d = Math.hypot(dx, dy);
-        if (d > radius) continue;
-        bufA[r * cols + c] += force * (1 - d / (radius + 1));
-      }
-    }
+  function draw(){
+    gl.uniform1f(uTime, time);
+    gl.drawArrays(gl.TRIANGLES, 0, 3);
   }
 
-  function step(){
-    for (var r = 1; r < rows - 1; r++){
-      var base = r * cols;
-      for (var c = 1; c < cols - 1; c++){
-        var i = base + c;
-        bufB[i] = (bufA[i - 1] + bufA[i + 1] + bufA[i - cols] + bufA[i + cols]) / 2 - bufB[i];
-        bufB[i] *= 0.987 * edgeDamp[i];
-      }
-    }
-    var tmp = bufA; bufA = bufB; bufB = tmp;
-  }
-
-  function render(animated){
-    if (animated) step();
-
-    ctx.shadowBlur = 0;
-    ctx.fillStyle = 'rgb(6,6,7)';
-    ctx.fillRect(0, 0, W, H);
-
-    var textLen = TEXT.length;
-    var timeSlice = Math.floor((typeof performance !== 'undefined' ? performance.now() : Date.now()) / 90);
-    var scrambleLen = SCRAMBLE.length;
-
-    for (var r = 0; r < rows; r++){
-      var rowBase = r * cols;
-      for (var c = 0; c < cols; c++){
-        var i = rowBase + c;
-        var h = animated ? bufA[i] : 0;
-        var dither = (hash(i) - 0.5) * 0.16;
-
-        var dx = animated ? (bufA[i + 1] || 0) - (bufA[i - 1] || 0) : 0;
-        var bend = Math.max(-3, Math.min(3, Math.round((dx / 260) * 1.4)));
-        var idx = ((i + bend) % textLen + textLen) % textLen;
-        var srcCh = TEXT[idx];
-
-        if (h > 0){
-          var crestE = Math.max(0, Math.min(1, h / NORM + dither));
-          if (crestE > 0.1){
-            if (srcCh === ' '){ continue; }
-            var boldOn = crestE > 0.4;
-            if (boldOn && curFont !== boldFont){ ctx.font = boldFont; curFont = boldFont; }
-            else if (!boldOn && curFont !== normalFont){ ctx.font = normalFont; curFont = normalFont; }
-            var crestRgb = rampColor(CREST_STOPS, crestE);
-            ctx.fillStyle = 'rgb(' + crestRgb[0] + ',' + crestRgb[1] + ',' + crestRgb[2] + ')';
-            if (crestE > 0.34){ ctx.shadowColor = ctx.fillStyle; ctx.shadowBlur = 4 + crestE * 14; }
-            else { ctx.shadowBlur = 0; }
-            ctx.fillText(srcCh, c * cellW + cellW / 2, r * cellH + cellH / 2);
-            continue;
-          }
-        } else if (h < 0){
-          var troughE = Math.max(0, Math.min(1, -h / NORM + dither));
-          if (troughE > 0.16){
-            if (curFont !== normalFont){ ctx.font = normalFont; curFont = normalFont; }
-            var pick = SCRAMBLE[Math.floor(hash2(i, timeSlice) * scrambleLen)];
-            var troughRgb = rampColor(TROUGH_STOPS, troughE);
-            ctx.fillStyle = 'rgb(' + troughRgb[0] + ',' + troughRgb[1] + ',' + troughRgb[2] + ')';
-            if (troughE > 0.32){ ctx.shadowColor = ctx.fillStyle; ctx.shadowBlur = 4 + troughE * 14; }
-            else { ctx.shadowBlur = 0; }
-            ctx.fillText(pick, c * cellW + cellW / 2, r * cellH + cellH / 2);
-            continue;
-          }
-        }
-
-        if (srcCh === ' ') continue;
-        if (curFont !== normalFont){ ctx.font = normalFont; curFont = normalFont; }
-        ctx.shadowBlur = 0;
-        ctx.fillStyle = 'rgba(' + CALM[0] + ',' + CALM[1] + ',' + CALM[2] + ',' + CALM_ALPHA + ')';
-        ctx.fillText(srcCh, c * cellW + cellW / 2, r * cellH + cellH / 2);
-      }
-    }
-
-    ctx.shadowBlur = 0;
-    var vg = ctx.createRadialGradient(W / 2, H / 2, Math.min(W, H) * 0.32, W / 2, H / 2, Math.max(W, H) * 0.78);
-    vg.addColorStop(0, 'rgba(0,0,0,0)');
-    vg.addColorStop(1, 'rgba(0,0,0,0.6)');
-    ctx.fillStyle = vg;
-    ctx.fillRect(0, 0, W, H);
-  }
-
-  function frame(){
-    render(true);
+  function frame(ts){
+    var delta = lastT ? (ts - lastT) / 1000 : 0;
+    lastT = ts;
+    time += 0.1 * delta;
+    draw();
     requestAnimationFrame(frame);
   }
-
-  function onMove(clientX, clientY){
-    if (mouse.x >= 0){
-      var dx = clientX - mouse.x, dy = clientY - mouse.y;
-      if (Math.hypot(dx, dy) > 3) splash(clientX, clientY, 60, 2);
-    }
-    mouse.x = clientX;
-    mouse.y = clientY;
-  }
-
-  window.addEventListener('mousemove', function(e){ onMove(e.clientX, e.clientY); });
-  window.addEventListener('mousedown', function(e){ splash(e.clientX, e.clientY, 650, 5); });
-  window.addEventListener('touchstart', function(e){
-    if (e.touches[0]) splash(e.touches[0].clientX, e.touches[0].clientY, 650, 5);
-  }, { passive: true });
-  window.addEventListener('touchmove', function(e){
-    if (e.touches[0]) onMove(e.touches[0].clientX, e.touches[0].clientY);
-  }, { passive: true });
 
   window.addEventListener('resize', resize);
   resize();
