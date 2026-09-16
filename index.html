@@ -1,0 +1,559 @@
+<title>Kaan Dinç</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+<style>
+  :root{
+    --bg:#060607;
+    --panel:rgba(6,6,7,0.86);
+    --line:#1d1e20;
+    --text:#e9e6e0;
+    --text-dim:#8b8983;
+    --accent:#e8963f;
+    --accent-dim:#a5652a;
+    --accent-soft:#6b4a26;
+    --font-mono:'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
+    --font-sans:'IBM Plex Sans', system-ui, -apple-system, sans-serif;
+    --maxw:760px;
+  }
+
+  *{ box-sizing:border-box; }
+
+  html{ scroll-behavior:smooth; }
+
+  body{
+    margin:0;
+    background:var(--bg);
+    color:var(--text);
+    font-family:var(--font-sans);
+    font-size:16px;
+    line-height:1.65;
+    -webkit-font-smoothing:antialiased;
+  }
+
+  a{ color:inherit; }
+  a:focus-visible, button:focus-visible{ outline:1px solid var(--accent); outline-offset:3px; }
+
+  #ripple-bg{
+    position:fixed;
+    inset:0;
+    width:100vw;
+    height:100vh;
+    z-index:0;
+    pointer-events:none;
+    background:var(--bg);
+  }
+
+  .wrap{
+    position:relative;
+    z-index:1;
+    max-width:var(--maxw);
+    margin:0 auto;
+    padding:40px 20px 56px;
+    background:var(--panel);
+    -webkit-backdrop-filter:blur(2px);
+    backdrop-filter:blur(2px);
+  }
+
+  header.topbar{
+    display:flex;
+    flex-wrap:wrap;
+    justify-content:space-between;
+    align-items:baseline;
+    gap:10px 20px;
+    padding-bottom:16px;
+    margin-bottom:28px;
+    border-bottom:1px solid var(--line);
+    font-family:var(--font-mono);
+  }
+
+  .prompt{ font-size:1.05rem; }
+  .prompt .cash{ color:var(--accent); margin-right:8px; }
+  .prompt .name{ font-weight:700; }
+
+  header.topbar nav{ display:flex; gap:16px; flex-wrap:wrap; font-size:0.88rem; }
+  header.topbar nav a{ display:inline-block; user-select:none; text-decoration:none; color:var(--text-dim); scroll-margin-top:16px; }
+  header.topbar nav a:hover, header.topbar nav a:focus-visible{ color:var(--accent); }
+
+  .tagline{
+    font-size:1.02rem;
+    max-width:65ch;
+    margin:0 0 44px;
+  }
+
+  section{ margin-bottom:44px; }
+  section:last-of-type{ margin-bottom:0; }
+
+  section h2{
+    font-family:var(--font-mono);
+    font-size:1.05rem;
+    font-weight:700;
+    margin:0 0 18px;
+    scroll-margin-top:16px;
+  }
+  section h2 .hash{ color:var(--accent-dim); margin-right:8px; }
+
+  #about p{ max-width:65ch; margin:0 0 14px; }
+  #about p:last-child{ margin-bottom:0; }
+
+  .linkgrid{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:12px 24px;
+    font-family:var(--font-mono);
+    font-size:0.92rem;
+  }
+  @media (max-width:480px){ .linkgrid{ grid-template-columns:1fr; } }
+  .linkrow{ display:flex; gap:10px; align-items:baseline; }
+  .linkrow .k{ color:var(--text-dim); min-width:4.5em; }
+  .linkrow a{ display:inline-block; user-select:none; text-decoration:none; border-bottom:1px solid var(--line); }
+  .linkrow a:hover, .linkrow a:focus-visible{ color:var(--accent); border-color:var(--accent-dim); }
+
+  .job, .repo{ margin-bottom:28px; }
+  .job:last-child, .repo:last-child{ margin-bottom:0; }
+
+  .job-head{ display:flex; flex-wrap:wrap; align-items:baseline; gap:4px 10px; }
+  .job-company{ font-weight:700; }
+  .job-role{ color:var(--accent); font-size:0.92rem; }
+  .job-meta{ font-family:var(--font-mono); font-size:0.78rem; color:var(--text-dim); margin-left:auto; white-space:nowrap; }
+  .job-loc{ font-family:var(--font-mono); font-size:0.78rem; color:var(--text-dim); width:100%; }
+
+  .job ul{ margin:8px 0 0; padding-left:1.1em; display:flex; flex-direction:column; gap:6px; font-size:0.95rem; }
+  .job li b{ font-weight:600; }
+
+  .repo-head{ display:flex; justify-content:space-between; align-items:baseline; flex-wrap:wrap; gap:4px 16px; }
+  .repo-name a{ display:inline-block; user-select:none; font-family:var(--font-mono); font-weight:700; font-size:1rem; text-decoration:none; color:var(--accent); }
+  .repo-name a:hover, .repo-name a:focus-visible{ color:var(--text); }
+  .repo-meta{ font-family:var(--font-mono); font-size:0.76rem; color:var(--text-dim); white-space:nowrap; }
+  .repo-desc{ font-size:0.95rem; max-width:65ch; margin:4px 0 0; }
+
+  footer{
+    font-family:var(--font-mono);
+    font-size:0.76rem;
+    color:var(--text-dim);
+    margin-top:48px;
+    padding-top:16px;
+    border-top:1px solid var(--line);
+    display:flex;
+    justify-content:space-between;
+    gap:10px;
+    flex-wrap:wrap;
+  }
+
+  @media (prefers-reduced-motion: reduce){
+    *{ animation:none !important; transition:none !important; }
+  }
+</style>
+
+<canvas id="ripple-bg" aria-hidden="true"></canvas>
+
+<div class="wrap">
+  <header class="topbar">
+    <div class="prompt"><span class="cash">$</span><span class="name">Kaan Dinç</span></div>
+    <nav>
+      <a href="#about">about</a>
+      <a href="#links">links</a>
+      <a href="#experience">experience</a>
+      <a href="#repos">repos</a>
+    </nav>
+  </header>
+
+  <p class="tagline">i build full-stack apps and desktop tools end to end, from the database up to the interface.</p>
+
+  <section id="about">
+    <h2><span class="hash">##</span>about</h2>
+    <p>hi, i'm kaan. computer engineer working in R&amp;D.</p>
+    <p>i build across full-stack development, desktop applications, and database systems, with Oracle SQL, Python, and JavaScript/TypeScript. React on the frontend, Python desktop tools backed by SQL on the backend. CCNA-certified in networking.</p>
+    <p>i like owning a project end to end, from the database up to the interface, rather than one slice of it.</p>
+  </section>
+
+  <section id="links">
+    <h2><span class="hash">##</span>links</h2>
+    <div class="linkgrid">
+      <div class="linkrow"><span class="k">email</span><a href="mailto:kaan.dnc.7505@gmail.com">kaan.dnc.7505@gmail.com</a></div>
+      <div class="linkrow"><span class="k">github</span><a href="https://github.com/kaan0d" target="_blank" rel="noopener">github.com/kaan0d</a></div>
+      <div class="linkrow"><span class="k">linkedin</span><a href="https://www.linkedin.com/in/kaandinc/" target="_blank" rel="noopener">linkedin.com/in/kaandinc</a></div>
+    </div>
+  </section>
+
+  <section id="experience">
+    <h2><span class="hash">##</span>experience</h2>
+
+    <article class="job">
+      <div class="job-head">
+        <span class="job-company">Abisena Information Technologies</span>
+        <span class="job-role">IT</span>
+        <span class="job-meta">Feb 2025 - Present</span>
+        <span class="job-loc">Çanakkale, Turkey</span>
+      </div>
+      <ul>
+        <li><b>Technical support</b>: resolved access and data issues for clinical and administrative staff on Abisena HBYS, a hospital information management system.</li>
+        <li><b>SQL &amp; workflow tools</b>: wrote Oracle SQL queries for extraction and reporting; built custom forms and Pascal-based modules to streamline workflows.</li>
+        <li><b>IT operations</b>: handled hardware setup and troubleshooting, network connectivity, user accounts, and system updates.</li>
+      </ul>
+    </article>
+
+    <article class="job">
+      <div class="job-head">
+        <span class="job-company">Acrobat Innovation Technology</span>
+        <span class="job-role">Unity Developer Intern</span>
+        <span class="job-meta">Feb 2024 - Jun 2024</span>
+        <span class="job-loc">Gebze, Kocaeli, Turkey</span>
+      </div>
+      <ul>
+        <li><b>AR textile app</b>: contributed to an application letting users preview products virtually in their own space via mobile devices.</li>
+        <li><b>Recognition system</b>: helped design and prototype an object and environment recognition system generating recommendations through algorithmic and mathematical calculations.</li>
+      </ul>
+    </article>
+  </section>
+
+  <section id="repos">
+    <h2><span class="hash">##</span>repos</h2>
+
+    <article class="repo">
+      <div class="repo-head">
+        <span class="repo-name"><a href="https://github.com/kaan0d/simple-volume-saver" target="_blank" rel="noopener">simple-volume-saver</a></span>
+        <span class="repo-meta">JavaScript · 4 stars</span>
+      </div>
+      <p class="repo-desc">Chrome extension that controls per-site media volume, remembering each site's level and letting you reset it on demand.</p>
+    </article>
+
+    <article class="repo">
+      <div class="repo-head">
+        <span class="repo-name"><a href="https://github.com/kaan0d/Lespy" target="_blank" rel="noopener">Lespy</a></span>
+        <span class="repo-meta">Python · 3 stars</span>
+      </div>
+      <p class="repo-desc">Discord leveling bot for the Respy project. Tracks XP from reply and mention activity, stores levels in SQLite, and posts level-up announcements with configurable curves and admin roles.</p>
+    </article>
+
+    <article class="repo">
+      <div class="repo-head">
+        <span class="repo-name"><a href="https://github.com/kaan0d/rejs" target="_blank" rel="noopener">rejs</a></span>
+        <span class="repo-meta">JavaScript · 1 star</span>
+      </div>
+      <p class="repo-desc">Discord bot on discord.js that monitors a FiveM game server, posting live join and leave activity to a channel and keeping a SQLite history of player sessions.</p>
+    </article>
+
+    <article class="repo">
+      <div class="repo-head">
+        <span class="repo-name"><a href="https://github.com/kaan0d/excel_file_comparison" target="_blank" rel="noopener">excel_file_comparison</a></span>
+        <span class="repo-meta">Python · 0 stars</span>
+      </div>
+      <p class="repo-desc">Desktop GUI tool for diffing two Excel files with configurable column mapping, built to speed up a recurring task at work and shipped as a standalone executable.</p>
+    </article>
+  </section>
+
+  <footer>
+    <span>Kaan Dinç</span>
+    <span>Çanakkale, Turkey</span>
+  </footer>
+</div>
+
+
+<script>
+(function(){
+  var canvas = document.getElementById('ripple-bg');
+  var ctx = canvas.getContext('2d');
+  var reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  var TEXT = "kaan dinc is a computer engineer working in research and development. he builds full stack apps and desktop tools end to end, from the database up to the interface. he works with oracle sql, python, javascript and typescript, shipping react front ends and python desktop tools backed by sql. he is ccna certified in networking and likes owning a project from top to bottom rather than one slice of it. ";
+  var SCRAMBLE = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789·,.;\'~-=+*%#@';
+  var CALM = [245, 245, 244], CALM_ALPHA = 0.16;
+  var NORM = 420;
+  var CREST_STOPS = [
+    { t: 0.00, c: CALM },
+    { t: 0.30, c: [232, 150, 63] },
+    { t: 0.62, c: [255, 255, 255] },
+    { t: 1.00, c: [190, 240, 255] }
+  ];
+  var TROUGH_STOPS = [
+    { t: 0.00, c: CALM },
+    { t: 0.30, c: [90, 110, 255] },
+    { t: 0.62, c: [173, 87, 255] },
+    { t: 1.00, c: [255, 110, 200] }
+  ];
+  var EDGE_MARGIN = 18;
+
+  var W = 0, H = 0, DPR = 1;
+  var cellW = 10, cellH = 19;
+  var cols = 0, rows = 0, N = 0;
+  var bufA, bufB, edgeDamp;
+  var mouse = { x: -1000, y: -1000, down: false };
+  var normalFont = "16px 'JetBrains Mono', ui-monospace, monospace";
+  var boldFont = "700 16px 'JetBrains Mono', ui-monospace, monospace";
+  var curFont = normalFont;
+
+  function hash(i){
+    var x = Math.sin(i * 12.9898) * 43758.5453;
+    return x - Math.floor(x);
+  }
+  function hash2(i, seed){
+    var x = Math.sin(i * 78.233 + seed * 37.719) * 43758.5453;
+    return x - Math.floor(x);
+  }
+
+  function lerpRgb(a, b, t){
+    return [
+      Math.round(a[0] + (b[0] - a[0]) * t),
+      Math.round(a[1] + (b[1] - a[1]) * t),
+      Math.round(a[2] + (b[2] - a[2]) * t)
+    ];
+  }
+
+  function rampColor(stops, t){
+    t = Math.max(0, Math.min(1, t));
+    var i = 0;
+    while (i < stops.length - 2 && t > stops[i + 1].t) i++;
+    var a = stops[i], b = stops[i + 1];
+    var span = (b.t - a.t) || 1;
+    return lerpRgb(a.c, b.c, (t - a.t) / span);
+  }
+
+  function resize(){
+    DPR = Math.min(window.devicePixelRatio || 1, 2);
+    W = window.innerWidth;
+    H = window.innerHeight;
+    canvas.width = Math.floor(W * DPR);
+    canvas.height = Math.floor(H * DPR);
+    canvas.style.width = W + 'px';
+    canvas.style.height = H + 'px';
+    ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+    ctx.font = normalFont;
+    curFont = normalFont;
+    ctx.textBaseline = 'middle';
+    ctx.textAlign = 'center';
+
+    cols = Math.ceil(W / cellW);
+    rows = Math.ceil(H / cellH);
+    N = cols * rows;
+    bufA = new Float32Array(N);
+    bufB = new Float32Array(N);
+
+    edgeDamp = new Float32Array(N);
+    for (var r = 0; r < rows; r++){
+      for (var c = 0; c < cols; c++){
+        var dist = Math.min(c, cols - 1 - c, r, rows - 1 - r);
+        edgeDamp[r * cols + c] = dist >= EDGE_MARGIN ? 1 : 0.7 + 0.3 * (dist / EDGE_MARGIN);
+      }
+    }
+
+    render(false);
+  }
+
+  function splash(px, py, force, radius){
+    var col = Math.round(px / cellW);
+    var row = Math.round(py / cellH);
+    for (var dy = -radius; dy <= radius; dy++){
+      for (var dx = -radius; dx <= radius; dx++){
+        var c = col + dx, r = row + dy;
+        if (c < 1 || c >= cols - 1 || r < 1 || r >= rows - 1) continue;
+        var d = Math.hypot(dx, dy);
+        if (d > radius) continue;
+        bufA[r * cols + c] += force * (1 - d / (radius + 1));
+      }
+    }
+  }
+
+  function step(){
+    for (var r = 1; r < rows - 1; r++){
+      var base = r * cols;
+      for (var c = 1; c < cols - 1; c++){
+        var i = base + c;
+        bufB[i] = (bufA[i - 1] + bufA[i + 1] + bufA[i - cols] + bufA[i + cols]) / 2 - bufB[i];
+        bufB[i] *= 0.987 * edgeDamp[i];
+      }
+    }
+    var tmp = bufA; bufA = bufB; bufB = tmp;
+  }
+
+  function render(animated){
+    if (animated) step();
+
+    ctx.shadowBlur = 0;
+    ctx.fillStyle = 'rgb(6,6,7)';
+    ctx.fillRect(0, 0, W, H);
+
+    var textLen = TEXT.length;
+    var timeSlice = Math.floor((typeof performance !== 'undefined' ? performance.now() : Date.now()) / 90);
+    var scrambleLen = SCRAMBLE.length;
+
+    for (var r = 0; r < rows; r++){
+      var rowBase = r * cols;
+      for (var c = 0; c < cols; c++){
+        var i = rowBase + c;
+        var h = animated ? bufA[i] : 0;
+        var dither = (hash(i) - 0.5) * 0.16;
+
+        var dx = animated ? (bufA[i + 1] || 0) - (bufA[i - 1] || 0) : 0;
+        var bend = Math.max(-3, Math.min(3, Math.round((dx / 260) * 1.4)));
+        var idx = ((i + bend) % textLen + textLen) % textLen;
+        var srcCh = TEXT[idx];
+
+        if (h > 0){
+          var crestE = Math.max(0, Math.min(1, h / NORM + dither));
+          if (crestE > 0.1){
+            if (srcCh === ' '){ continue; }
+            var boldOn = crestE > 0.4;
+            if (boldOn && curFont !== boldFont){ ctx.font = boldFont; curFont = boldFont; }
+            else if (!boldOn && curFont !== normalFont){ ctx.font = normalFont; curFont = normalFont; }
+            var crestRgb = rampColor(CREST_STOPS, crestE);
+            ctx.fillStyle = 'rgb(' + crestRgb[0] + ',' + crestRgb[1] + ',' + crestRgb[2] + ')';
+            if (crestE > 0.34){ ctx.shadowColor = ctx.fillStyle; ctx.shadowBlur = 4 + crestE * 14; }
+            else { ctx.shadowBlur = 0; }
+            ctx.fillText(srcCh, c * cellW + cellW / 2, r * cellH + cellH / 2);
+            continue;
+          }
+        } else if (h < 0){
+          var troughE = Math.max(0, Math.min(1, -h / NORM + dither));
+          if (troughE > 0.16){
+            if (curFont !== normalFont){ ctx.font = normalFont; curFont = normalFont; }
+            var pick = SCRAMBLE[Math.floor(hash2(i, timeSlice) * scrambleLen)];
+            var troughRgb = rampColor(TROUGH_STOPS, troughE);
+            ctx.fillStyle = 'rgb(' + troughRgb[0] + ',' + troughRgb[1] + ',' + troughRgb[2] + ')';
+            if (troughE > 0.32){ ctx.shadowColor = ctx.fillStyle; ctx.shadowBlur = 4 + troughE * 14; }
+            else { ctx.shadowBlur = 0; }
+            ctx.fillText(pick, c * cellW + cellW / 2, r * cellH + cellH / 2);
+            continue;
+          }
+        }
+
+        if (srcCh === ' ') continue;
+        if (curFont !== normalFont){ ctx.font = normalFont; curFont = normalFont; }
+        ctx.shadowBlur = 0;
+        ctx.fillStyle = 'rgba(' + CALM[0] + ',' + CALM[1] + ',' + CALM[2] + ',' + CALM_ALPHA + ')';
+        ctx.fillText(srcCh, c * cellW + cellW / 2, r * cellH + cellH / 2);
+      }
+    }
+
+    ctx.shadowBlur = 0;
+    var vg = ctx.createRadialGradient(W / 2, H / 2, Math.min(W, H) * 0.32, W / 2, H / 2, Math.max(W, H) * 0.78);
+    vg.addColorStop(0, 'rgba(0,0,0,0)');
+    vg.addColorStop(1, 'rgba(0,0,0,0.6)');
+    ctx.fillStyle = vg;
+    ctx.fillRect(0, 0, W, H);
+  }
+
+  function frame(){
+    render(true);
+    requestAnimationFrame(frame);
+  }
+
+  function onMove(clientX, clientY){
+    if (mouse.x >= 0){
+      var dx = clientX - mouse.x, dy = clientY - mouse.y;
+      if (Math.hypot(dx, dy) > 3) splash(clientX, clientY, 60, 2);
+    }
+    mouse.x = clientX;
+    mouse.y = clientY;
+  }
+
+  window.addEventListener('mousemove', function(e){ onMove(e.clientX, e.clientY); });
+  window.addEventListener('mousedown', function(e){ splash(e.clientX, e.clientY, 650, 5); });
+  window.addEventListener('touchstart', function(e){
+    if (e.touches[0]) splash(e.touches[0].clientX, e.touches[0].clientY, 650, 5);
+  }, { passive: true });
+  window.addEventListener('touchmove', function(e){
+    if (e.touches[0]) onMove(e.touches[0].clientX, e.touches[0].clientY);
+  }, { passive: true });
+
+  window.addEventListener('resize', resize);
+  resize();
+  if (!reduceMotion) requestAnimationFrame(frame);
+})();
+</script>
+
+<script>
+(function(){
+  // Ported from AsciiGlitchRipple (React Bits style hover component) to vanilla JS.
+  if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+
+  var CHARS = '.,·-─~+:;=*π""┐┌┘┴┬╗╔╝╚╬╠╣╩╦║░▒▓█▄▀▌▐■!?&#$@0123456789*';
+  var WAVE_THRESH = 3, CHAR_MULT = 3, ANIM_STEP = 40, WAVE_BUF = 5, DUR = 1000;
+
+  function attach(el){
+    var origTxt = el.textContent;
+    var origChars = origTxt.split('');
+    var waves = [];
+    var animId = null, isAnim = false, isHover = false, cursorPos = 0, lockedWidth = null;
+
+    function updateCursorPos(e){
+      var rect = el.getBoundingClientRect();
+      var x = e.clientX - rect.left;
+      var len = origChars.length;
+      var pos = Math.round((x / rect.width) * len);
+      cursorPos = Math.max(0, Math.min(pos, len - 1));
+    }
+
+    function stop(){
+      el.textContent = origTxt;
+      if (lockedWidth !== null){ el.style.width = ''; lockedWidth = null; }
+      isAnim = false;
+      if (animId){ cancelAnimationFrame(animId); animId = null; }
+    }
+
+    function waveAt(charIdx, t){
+      var shouldAnim = false, resultChar = origChars[charIdx];
+      for (var w = 0; w < waves.length; w++){
+        var wave = waves[w];
+        var age = t - wave.startTime;
+        var prog = Math.min(age / DUR, 1);
+        var dist = Math.abs(charIdx - wave.startPos);
+        var maxDist = Math.max(wave.startPos, origChars.length - wave.startPos - 1);
+        var rad = prog * (maxDist + WAVE_BUF);
+        if (dist <= rad){
+          shouldAnim = true;
+          var intens = Math.max(0, rad - dist);
+          if (intens <= WAVE_THRESH && intens > 0){
+            resultChar = CHARS[(dist * CHAR_MULT + Math.floor(age / ANIM_STEP)) % CHARS.length];
+          }
+        }
+      }
+      return { shouldAnim: shouldAnim, ch: resultChar };
+    }
+
+    function scrambledText(t){
+      var out = '';
+      for (var i = 0; i < origChars.length; i++){
+        var ch = origChars[i];
+        if (ch === ' '){ out += ' '; continue; }
+        var res = waveAt(i, t);
+        out += res.shouldAnim ? res.ch : ch;
+      }
+      return out;
+    }
+
+    function animate(){
+      var t = Date.now();
+      waves = waves.filter(function(w){ return t - w.startTime < DUR; });
+      if (waves.length === 0){ stop(); return; }
+      el.textContent = scrambledText(t);
+      animId = requestAnimationFrame(animate);
+    }
+
+    function start(){
+      if (isAnim) return;
+      if (lockedWidth === null){
+        lockedWidth = el.getBoundingClientRect().width;
+        el.style.width = lockedWidth + 'px';
+      }
+      isAnim = true;
+      animId = requestAnimationFrame(animate);
+    }
+
+    function startWave(){
+      waves.push({ startPos: cursorPos, startTime: Date.now() });
+      if (!isAnim) start();
+    }
+
+    el.addEventListener('mouseenter', function(e){ isHover = true; updateCursorPos(e); startWave(); });
+    el.addEventListener('mousemove', function(e){
+      if (!isHover) return;
+      var old = cursorPos;
+      updateCursorPos(e);
+      if (cursorPos !== old) startWave();
+    });
+    el.addEventListener('mouseleave', function(){ isHover = false; });
+  }
+
+  var targets = document.querySelectorAll('header.topbar nav a, .linkrow a, .repo-name a');
+  for (var i = 0; i < targets.length; i++) attach(targets[i]);
+})();
+</script>
