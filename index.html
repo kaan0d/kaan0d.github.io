@@ -76,7 +76,6 @@
 
   .tagline{
     font-size:1.02rem;
-    max-width:65ch;
     margin:0 0 44px;
   }
 
@@ -92,7 +91,7 @@
   }
   section h2 .hash{ color:var(--accent-dim); margin-right:8px; }
 
-  #about p{ max-width:65ch; margin:0 0 14px; }
+  #about p{ margin:0 0 14px; }
   #about p:last-child{ margin-bottom:0; }
 
   .linkgrid{
@@ -120,11 +119,16 @@
   .job ul{ margin:8px 0 0; padding-left:1.1em; display:flex; flex-direction:column; gap:6px; font-size:0.95rem; }
   .job li b{ font-weight:600; }
 
-  .repo-head{ display:flex; justify-content:space-between; align-items:baseline; flex-wrap:wrap; gap:4px 16px; }
+  .repo-head, .project-head{ display:flex; justify-content:space-between; align-items:baseline; flex-wrap:wrap; gap:4px 16px; }
   .repo-name a{ display:inline-block; user-select:none; font-family:var(--font-mono); font-weight:700; font-size:1rem; text-decoration:none; color:var(--accent); }
   .repo-name a:hover, .repo-name a:focus-visible{ color:var(--text); }
-  .repo-meta{ font-family:var(--font-mono); font-size:0.76rem; color:var(--text-dim); white-space:nowrap; }
-  .repo-desc{ font-size:0.95rem; max-width:65ch; margin:4px 0 0; }
+  .repo-meta, .project-meta{ font-family:var(--font-mono); font-size:0.76rem; color:var(--text-dim); white-space:nowrap; }
+  .repo-desc, .project-desc{ font-size:0.95rem; margin:4px 0 0; }
+
+  .project{ padding-top:24px; border-top:1px solid var(--line); margin-bottom:24px; }
+  .project:first-of-type{ padding-top:0; border-top:none; }
+  .project:last-child{ margin-bottom:0; }
+  .project-name{ font-family:var(--font-mono); font-weight:700; font-size:1rem; color:var(--accent); }
 
   footer{
     font-family:var(--font-mono);
@@ -153,6 +157,8 @@
       <a href="#about">about</a>
       <a href="#links">links</a>
       <a href="#experience">experience</a>
+      <a href="#education">education</a>
+      <a href="#projects">projects</a>
       <a href="#repos">repos</a>
     </nav>
   </header>
@@ -161,8 +167,8 @@
 
   <section id="about">
     <h2><span class="hash">##</span>about</h2>
-    <p>hi, i'm kaan. computer engineer working in R&amp;D.</p>
-    <p>i build across full-stack development, desktop applications, and database systems, with Oracle SQL, Python, and JavaScript/TypeScript. React on the frontend, Python desktop tools backed by SQL on the backend. CCNA-certified in networking.</p>
+    <p>hi, i'm kaan. computer engineer interested in the defense industry, with a BSc from Gaziosmanpaşa University (GPA 86.4/100) and an Erasmus term at Kielce University of Technology in Poland.</p>
+    <p>i build across full-stack development, desktop applications, and database systems, with Oracle SQL, Python, and JavaScript/TypeScript. React on the frontend, Python desktop tools backed by SQL on the backend. I've also worked hands-on with computer vision and machine learning, and I'm CCNA-certified in networking.</p>
     <p>i like owning a project end to end, from the database up to the interface, rather than one slice of it.</p>
   </section>
 
@@ -183,12 +189,11 @@
         <span class="job-company">Abisena Information Technologies</span>
         <span class="job-role">IT</span>
         <span class="job-meta">Feb 2025 - Present</span>
-        <span class="job-loc">Çanakkale, Turkey</span>
+        <span class="job-loc">Ministry of Health · Çanakkale, Turkey</span>
       </div>
       <ul>
-        <li><b>Technical support</b>: resolved access and data issues for clinical and administrative staff on Abisena HBYS, a hospital information management system.</li>
+        <li><b>Technical support</b>: resolved access and data issues for clinical and administrative staff on Abisena's hospital information management system.</li>
         <li><b>SQL &amp; workflow tools</b>: wrote Oracle SQL queries for extraction and reporting; built custom forms and Pascal-based modules to streamline workflows.</li>
-        <li><b>IT operations</b>: handled hardware setup and troubleshooting, network connectivity, user accounts, and system updates.</li>
       </ul>
     </article>
 
@@ -203,6 +208,99 @@
         <li><b>AR textile app</b>: contributed to an application letting users preview products virtually in their own space via mobile devices.</li>
         <li><b>Recognition system</b>: helped design and prototype an object and environment recognition system generating recommendations through algorithmic and mathematical calculations.</li>
       </ul>
+    </article>
+  </section>
+
+  <section id="education">
+    <h2><span class="hash">##</span>education</h2>
+
+    <article class="job">
+      <div class="job-head">
+        <span class="job-company">BSc Computer Engineering</span>
+        <span class="job-role">Gaziosmanpaşa University</span>
+        <span class="job-meta">Aug 2020 - Jun 2024</span>
+        <span class="job-loc">Tokat, Turkey</span>
+      </div>
+      <ul>
+        <li>Graduated with an 86.4/100 GPA, picking up Java, C#, and Python along the way through coursework projects.</li>
+      </ul>
+    </article>
+
+    <article class="job">
+      <div class="job-head">
+        <span class="job-company">Erasmus Exchange, Computer Science</span>
+        <span class="job-role">Kielce University of Technology</span>
+        <span class="job-meta">Feb 2022 - Aug 2022</span>
+        <span class="job-loc">Kielce, Poland</span>
+      </div>
+      <ul>
+        <li>Hands-on Cisco network setup and configuration work, plus algorithmic programming in C++ and Python.</li>
+      </ul>
+    </article>
+
+    <article class="job">
+      <div class="job-head">
+        <span class="job-company">CCNA Certification Track</span>
+        <span class="job-role">Cisco</span>
+        <span class="job-meta">Nov 2025 - Mar 2026</span>
+      </div>
+      <ul>
+        <li><b>Introduction to Networks</b>: switching and routing fundamentals, IPv4/IPv6 addressing, ICMP, and core network security.</li>
+        <li><b>Switching, Routing &amp; Wireless Essentials</b>: VLANs, STP, EtherChannel, DHCP, WLAN configuration, and static routing.</li>
+        <li><b>Enterprise Networking, Security &amp; Automation</b>: OSPFv2, WAN concepts, ACLs/NAT, VPN/IPsec, QoS, and network automation.</li>
+      </ul>
+    </article>
+  </section>
+
+  <section id="projects">
+    <h2><span class="hash">##</span>projects</h2>
+
+    <article class="project">
+      <div class="project-head">
+        <span class="project-name">Business Management App</span>
+        <span class="project-meta">Full-stack · Python</span>
+      </div>
+      <p class="project-desc">Desktop retail management tool in Python with a local SQL database: inventory, point-of-sale, customer accounts, daily earnings, and exportable PDF statements, on a layered architecture with automatic backups.</p>
+    </article>
+
+    <article class="project">
+      <div class="project-head">
+        <span class="project-name">E-Commerce Website</span>
+        <span class="project-meta">Full-stack · React/TypeScript</span>
+      </div>
+      <p class="project-desc">Storefront and custom admin panel in React, TypeScript, and Tailwind CSS: product catalog, categories, discounts, and site content, backed by SQL and Zod validation.</p>
+    </article>
+
+    <article class="project">
+      <div class="project-head">
+        <span class="project-name">Invoice Application</span>
+        <span class="project-meta">Full-stack · Python</span>
+      </div>
+      <p class="project-desc">Desktop app that fills PDF receipt templates, converts totals to written Turkish text, and tracks payment status and customer history in a local database with sequential numbering.</p>
+    </article>
+
+    <article class="project">
+      <div class="project-head">
+        <span class="project-name">Real-Time CV Automation Tool</span>
+        <span class="project-meta">Vision · Python/OpenCV</span>
+      </div>
+      <p class="project-desc">Screen-region object detection with OpenCV using color and contour tracking, a sub-frame-precise pattern-recognition module, and a configurable, persisted region selector.</p>
+    </article>
+
+    <article class="project">
+      <div class="project-head">
+        <span class="project-name">COVID-19 Image Classification</span>
+        <span class="project-meta">Deep learning · TensorFlow/Keras</span>
+      </div>
+      <p class="project-desc">University project classifying lung MRI images with a CNN, tuned with pooling and dropout layers and evaluated on categorical cross-entropy loss and accuracy.</p>
+    </article>
+
+    <article class="project">
+      <div class="project-head">
+        <span class="project-name">Lyra (VR Game)</span>
+        <span class="project-meta">Gameplay/level design</span>
+      </div>
+      <p class="project-desc">Gameplay programmer and level designer on a VR headset game: built the physics and movement behind its flight mechanics and custom gameplay systems from scratch.</p>
     </article>
   </section>
 
