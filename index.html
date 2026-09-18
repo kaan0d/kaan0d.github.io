@@ -102,6 +102,9 @@
     font-size:0.92rem;
   }
   @media (max-width:480px){ .linkgrid{ grid-template-columns:1fr; } }
+  .skillgrid{ display:grid; gap:10px; font-family:var(--font-mono); font-size:0.92rem; }
+  .skillrow{ display:flex; gap:10px 16px; align-items:baseline; flex-wrap:wrap; }
+  .skillrow .k{ color:var(--text-dim); min-width:7.5em; }
   .linkrow{ display:flex; gap:10px; align-items:baseline; }
   .linkrow .k{ color:var(--text-dim); min-width:4.5em; }
   .linkrow a{ display:inline-block; user-select:none; text-decoration:none; border-bottom:1px solid var(--line); }
@@ -155,6 +158,7 @@
     <div class="prompt"><span class="cash">$</span><span class="name">Kaan Dinç</span></div>
     <nav>
       <a href="#about">about</a>
+      <a href="#skills">skills</a>
       <a href="#links">links</a>
       <a href="#experience">experience</a>
       <a href="#education">education</a>
@@ -173,12 +177,25 @@
     <p>i like owning a project end to end, from the database up to the interface, rather than one slice of it.</p>
   </section>
 
+  <section id="skills">
+    <h2><span class="hash">##</span>skills</h2>
+    <div class="skillgrid">
+      <div class="skillrow"><span class="k">languages</span><span>Python, JavaScript, TypeScript, C#, Java, Pascal</span></div>
+      <div class="skillrow"><span class="k">web</span><span>React, Tailwind CSS, Zod</span></div>
+      <div class="skillrow"><span class="k">data</span><span>Oracle SQL, SQLite</span></div>
+      <div class="skillrow"><span class="k">vision / ml</span><span>OpenCV, TensorFlow, Keras</span></div>
+      <div class="skillrow"><span class="k">games / ar</span><span>Unity, VR gameplay and physics</span></div>
+      <div class="skillrow"><span class="k">networking</span><span>Cisco CCNA: VLANs, STP, OSPF, ACLs/NAT, VPN/IPsec</span></div>
+    </div>
+  </section>
+
   <section id="links">
     <h2><span class="hash">##</span>links</h2>
     <div class="linkgrid">
       <div class="linkrow"><span class="k">email</span><a href="mailto:kaan.dnc.7505@gmail.com">kaan.dnc.7505@gmail.com</a></div>
       <div class="linkrow"><span class="k">github</span><a href="https://github.com/kaan0d" target="_blank" rel="noopener">github.com/kaan0d</a></div>
       <div class="linkrow"><span class="k">linkedin</span><a href="https://www.linkedin.com/in/kaandinc/" target="_blank" rel="noopener">linkedin.com/in/kaandinc</a></div>
+      <div class="linkrow"><span class="k">cv</span><a href="https://drive.google.com/file/d/1_YT2QwyEzQjuSVgaz7abzRfuyqstyUat/view?usp=sharing" target="_blank" rel="noopener">view cv</a></div>
     </div>
   </section>
 
@@ -277,7 +294,7 @@
         <span class="project-name">Invoice Application</span>
         <span class="project-meta">Full-stack · Python</span>
       </div>
-      <p class="project-desc">Desktop app that fills PDF receipt templates, converts totals to written Turkish text, and tracks payment status and customer history in a local database with sequential numbering.</p>
+      <p class="project-desc">Desktop app that fills PDF receipt templates, calculates totals, and tracks payment status and customer history in a local database with sequential numbering.</p>
     </article>
 
     <article class="project">
@@ -285,7 +302,7 @@
         <span class="project-name">Real-Time CV Automation Tool</span>
         <span class="project-meta">Vision · Python/OpenCV</span>
       </div>
-      <p class="project-desc">Screen-region object detection with OpenCV using color and contour tracking, a sub-frame-precise pattern-recognition module, and a configurable, persisted region selector.</p>
+      <p class="project-desc">Built to automate in-game minigames: screen-region object detection with OpenCV using color and contour tracking, a sub-frame-precise pattern-recognition module, and a configurable, persisted region selector.</p>
     </article>
 
     <article class="project">
