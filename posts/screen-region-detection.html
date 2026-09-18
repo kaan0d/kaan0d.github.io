@@ -1,4 +1,4 @@
-<title>discord bots notes</title>
+<title>screen detection notes</title>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
 <style>
   :root{
@@ -54,15 +54,17 @@
   </header>
 
   <article>
-    <p class="post-date">2024</p>
-    <h1 class="post-title">why I keep building discord bots</h1>
+    <p class="post-date">Dec 2025</p>
+    <h1 class="post-title">detecting things on screen in real time</h1>
 
     <div class="post-body">
-      <p>Lespy started as a leveling bot for a small server and turned into the thing I test every new idea on before it goes anywhere near a real project. SQLite for state, a cooldown system that took longer to get right than I'd like to admit, and just enough admin tooling to not regret it later.</p>
+      <p>This is a Python tool that watches a region of the screen and detects objects in it in real time, built on OpenCV. I built it to automate the minigames in a game: the tool reads the screen, finds what matters and responds, so the minigame plays itself.</p>
 
-      <p>rejs came out of the same itch, except this one watches a game server instead of a chat. different problem, same shape: poll something, store what changed, tell the right channel about it.</p>
+      <p>the detection itself is color and contour tracking: isolate the color you care about, find the contours in the result, then filter them by shape and size. That last step matters more than it sounds. Color alone matches plenty of things that aren't the target, and the shape and size filters are what cut the false positives down to something usable.</p>
 
-      <p>neither one needed to be a Discord bot specifically, that's just the interface I already had lying around: a chat window people check anyway, a place to push a notification without building a UI for it.</p>
+      <p>on top of that sits a pattern-recognition module that tracks sequences of detections and responds to them, with timing precision finer than a single captured frame. Reacting to a sequence is a different problem from reacting to a single detection, and that fits minigames, which tend to hinge on short timed sequences.</p>
+
+      <p>the boring but important piece is the region selector. You pick the capture region once, and it's saved to a config file that gets loaded on the next run, so nobody redoes setup every time. Capturing just a region instead of the whole screen also keeps each frame cheap to process.</p>
     </div>
   </article>
 

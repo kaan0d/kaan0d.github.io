@@ -1,4 +1,4 @@
-<title>discord bots notes</title>
+<title>business app notes</title>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
 <style>
   :root{
@@ -54,15 +54,17 @@
   </header>
 
   <article>
-    <p class="post-date">2024</p>
-    <h1 class="post-title">why I keep building discord bots</h1>
+    <p class="post-date">Jun 2025</p>
+    <h1 class="post-title">a retail app that can't lose its data</h1>
 
     <div class="post-body">
-      <p>Lespy started as a leveling bot for a small server and turned into the thing I test every new idea on before it goes anywhere near a real project. SQLite for state, a cooldown system that took longer to get right than I'd like to admit, and just enough admin tooling to not regret it later.</p>
+      <p>One of my projects is a desktop app in Python for a retail business, backed by a local SQL database. It covers inventory and stock, point-of-sale transactions for both cash and credit sales, customer accounts and payment tracking, daily earnings and expense logging, and PDF customer statements you can export.</p>
 
-      <p>rejs came out of the same itch, except this one watches a game server instead of a chat. different problem, same shape: poll something, store what changed, tell the right channel about it.</p>
+      <p>with an app like this, the database file is the business. That drove two decisions. The first is a layered architecture that keeps data access, business logic and the UI separate, so changing a screen can't quietly break how a sale gets recorded. The second is an automatic backup every time the app starts, so there's always a recent copy to fall back on.</p>
 
-      <p>neither one needed to be a Discord bot specifically, that's just the interface I already had lying around: a chat window people check anyway, a place to push a notification without building a UI for it.</p>
+      <p>the startup backup is deliberately unglamorous: there's no schedule to configure or forget, the app just does it every time it opens.</p>
+
+      <p>it's a plain desktop app on purpose. For a single shop, a local database and a reliable backup beat anything that needs a server to stay up.</p>
     </div>
   </article>
 

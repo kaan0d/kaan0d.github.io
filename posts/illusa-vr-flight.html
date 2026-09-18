@@ -1,4 +1,4 @@
-<title>discord bots notes</title>
+<title>illusa vr notes</title>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
 <style>
   :root{
@@ -54,15 +54,17 @@
   </header>
 
   <article>
-    <p class="post-date">2024</p>
-    <h1 class="post-title">why I keep building discord bots</h1>
+    <p class="post-date">2020 - 2021</p>
+    <h1 class="post-title">making flight feel right in VR</h1>
 
     <div class="post-body">
-      <p>Lespy started as a leveling bot for a small server and turned into the thing I test every new idea on before it goes anywhere near a real project. SQLite for state, a cooldown system that took longer to get right than I'd like to admit, and just enough admin tooling to not regret it later.</p>
+      <p>Illusa is a game built specifically for VR headsets, and I was part of the small startup team behind it. My job was gameplay programming and level design, and the piece I handled was flight: the physics calculations and movement simulation that decide how the player actually moves through the world.</p>
 
-      <p>rejs came out of the same itch, except this one watches a game server instead of a chat. different problem, same shape: poll something, store what changed, tell the right channel about it.</p>
+      <p>flight is a hard thing to get right in VR. In a flat game a floaty or stiff movement model is a style choice. With a headset on, movement that doesn't match what your body expects reads as wrong almost immediately. So the work was less about big features and more about the numbers underneath: acceleration, momentum, how quickly things settle, until it felt believable instead of merely functional.</p>
 
-      <p>neither one needed to be a Discord bot specifically, that's just the interface I already had lying around: a chat window people check anyway, a place to push a notification without building a UI for it.</p>
+      <p>level design came with the same constraint from the other side. A level has to be built around how flight moves, not around how a walking character would, so spacing, scale and pacing all had to be checked against the movement model rather than a top-down plan.</p>
+
+      <p>where the project needed something custom, I built the gameplay system from scratch. That, plus the physics work, is what I took away from Illusa: VR rewards interaction and immersion, and both come down to details you only find by putting the headset on and testing.</p>
     </div>
   </article>
 
