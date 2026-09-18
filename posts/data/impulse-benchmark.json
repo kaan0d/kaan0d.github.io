@@ -1,0 +1,181 @@
+{
+  "project": "impulse",
+  "repository": "https://github.com/kaan0d/impulse",
+  "measuredOn": "2026-09-19",
+  "environment": {
+    "build": "production build (vite build, vite preview)",
+    "browser": "headless Chrome 153 driven by Playwright",
+    "os": "Windows 11",
+    "cpu": "AMD Ryzen 7 5800X (16 threads)",
+    "timerResolutionMs": 0.1,
+    "note": "two benchmark runs differed by up to about 12% (pyramid), usually less; the tower \"before\" figures come from an earlier solver setup (30 iterations, no block solver)"
+  },
+  "counts": {
+    "runtimeDependencies": 0,
+    "unitTests": 171,
+    "browserTests": 14,
+    "engineLines": 2041,
+    "testLines": 2171,
+    "demoJavaScriptBytes": 35637,
+    "demoJavaScriptGzipBytes": 12710
+  },
+  "towerTimeToSleepSeconds": [
+    {
+      "label": "10 boxes, aligned",
+      "before": 7.4,
+      "beforeMeasured": true,
+      "after": 0.9
+    },
+    {
+      "label": "10 boxes, staggered 5 cm",
+      "before": 5.6,
+      "beforeMeasured": true,
+      "after": 0.9
+    },
+    {
+      "label": "10 boxes, dropped from 10 cm gaps",
+      "before": 6.7,
+      "beforeMeasured": true,
+      "after": 1.4
+    },
+    {
+      "label": "10 boxes, staggered 10 cm, 5 cm gaps",
+      "before": 3.5,
+      "beforeMeasured": true,
+      "after": 1.5
+    },
+    {
+      "label": "15 boxes, aligned",
+      "before": null,
+      "beforeMeasured": true,
+      "after": 1.4
+    },
+    {
+      "label": "20 boxes, staggered 3 cm",
+      "before": null,
+      "beforeMeasured": false,
+      "after": 2.4
+    }
+  ],
+  "iterationsVersusTimeToSleepSeconds": [
+    {
+      "iterations": 6,
+      "tower10": 1.1,
+      "tower20": null
+    },
+    {
+      "iterations": 8,
+      "tower10": 0.9,
+      "tower20": 3
+    },
+    {
+      "iterations": 10,
+      "tower10": 0.9,
+      "tower20": 2.4
+    },
+    {
+      "iterations": 15,
+      "tower10": 0.7,
+      "tower20": 1.7
+    },
+    {
+      "iterations": 20,
+      "tower10": 0.7,
+      "tower20": 1.4
+    },
+    {
+      "iterations": 30,
+      "tower10": 0.6,
+      "tower20": 1
+    }
+  ],
+  "stepTimeMs": [
+    {
+      "name": "Pyramid, 210 boxes",
+      "bodies": 210,
+      "steps": 240,
+      "avg": 0.86,
+      "p95": 1.1,
+      "max": 1.5,
+      "contacts": 403,
+      "awake": 210
+    },
+    {
+      "name": "Pyramid, 210 boxes, sleeping on",
+      "bodies": 210,
+      "steps": 240,
+      "avg": 0.29,
+      "p95": 0.9,
+      "max": 1.2,
+      "contacts": 403,
+      "awake": 0
+    },
+    {
+      "name": "Pile, 500 bodies",
+      "bodies": 500,
+      "steps": 480,
+      "avg": 1.47,
+      "p95": 1.8,
+      "max": 2.5,
+      "contacts": 986,
+      "awake": 500
+    },
+    {
+      "name": "Pile, 500 bodies, sleeping on",
+      "bodies": 500,
+      "steps": 480,
+      "avg": 1.39,
+      "p95": 1.7,
+      "max": 2,
+      "contacts": 986,
+      "awake": 500
+    },
+    {
+      "name": "Pile, 1000 bodies",
+      "bodies": 1000,
+      "steps": 300,
+      "avg": 2.59,
+      "p95": 3.9,
+      "max": 4.7,
+      "contacts": 2116,
+      "awake": 1000
+    }
+  ],
+  "broadphaseMs": [
+    {
+      "bodies": 250,
+      "pairs": 123,
+      "hash": 0.03,
+      "brute": 0.12,
+      "speedup": 4.4
+    },
+    {
+      "bodies": 500,
+      "pairs": 251,
+      "hash": 0.05,
+      "brute": 0.38,
+      "speedup": 7.7
+    },
+    {
+      "bodies": 1000,
+      "pairs": 488,
+      "hash": 0.1,
+      "brute": 1.48,
+      "speedup": 14.8
+    },
+    {
+      "bodies": 2000,
+      "pairs": 980,
+      "hash": 0.27,
+      "brute": 6.05,
+      "speedup": 22.4
+    },
+    {
+      "bodies": 4000,
+      "pairs": 2064,
+      "hash": 0.6,
+      "brute": 25.7,
+      "speedup": 42.5
+    }
+  ]
+}
