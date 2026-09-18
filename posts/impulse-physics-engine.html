@@ -1,0 +1,560 @@
+<!doctype html>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>impulse physics engine notes</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+<style>
+  :root{
+    --bg:#060607;
+    --panel:rgba(6,6,7,0.86);
+    --line:#1d1e20;
+    --text:#e9e6e0;
+    --text-dim:#8b8983;
+    --accent:#e8963f;
+    --accent-dim:#a5652a;
+    --accent-soft:#6b4a26;
+    --font-mono:'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
+    --font-sans:'IBM Plex Sans', system-ui, -apple-system, sans-serif;
+    --maxw:760px;
+  }
+  *{ box-sizing:border-box; }
+  html{ scroll-behavior:smooth; }
+  body{ margin:0; background:var(--bg); color:var(--text); font-family:var(--font-sans); font-size:16px; line-height:1.65; -webkit-font-smoothing:antialiased; }
+  a{ color:inherit; }
+  a:focus-visible, button:focus-visible{ outline:1px solid var(--accent); outline-offset:3px; }
+
+  #silk-bg{ position:fixed; inset:0; width:100vw; height:100vh; z-index:0; pointer-events:none; background:var(--bg); display:block; }
+
+  .wrap{ position:relative; z-index:1; max-width:var(--maxw); margin:0 auto; padding:40px 20px 56px; background:var(--panel); -webkit-backdrop-filter:blur(2px); backdrop-filter:blur(2px); }
+
+  header.topbar{ display:flex; flex-wrap:wrap; justify-content:space-between; align-items:baseline; gap:10px 20px; padding-bottom:16px; margin-bottom:36px; border-bottom:1px solid var(--line); font-family:var(--font-mono); }
+  .prompt{ font-size:1.05rem; }
+  .prompt .cash{ color:var(--accent); margin-right:8px; }
+  .prompt .name{ font-weight:700; }
+  header.topbar nav{ display:flex; gap:16px; flex-wrap:wrap; font-size:0.88rem; }
+  header.topbar nav a{ display:inline-block; user-select:none; text-decoration:none; color:var(--text-dim); }
+  header.topbar nav a:hover, header.topbar nav a:focus-visible{ color:var(--accent); }
+
+  .post-date{ font-family:var(--font-mono); font-size:0.8rem; color:var(--text-dim); margin:0 0 10px; }
+  .post-title{ font-family:var(--font-mono); font-size:clamp(1.5rem,4vw,2rem); font-weight:700; line-height:1.25; margin:0 0 32px; text-wrap:balance; }
+
+  .post-body p{ margin:0 0 16px; font-size:1rem; }
+  .post-body p:last-child{ margin-bottom:0; }
+
+  .post-body h2{ font-family:var(--font-mono); font-size:1.05rem; font-weight:700; margin:48px 0 18px; }
+  .post-body h2 .hash{ color:var(--accent-dim); margin-right:8px; }
+  .post-body h3{ font-family:var(--font-mono); font-size:0.92rem; font-weight:700; margin:32px 0 12px; color:var(--text); }
+  .post-body code{ font-family:var(--font-mono); font-size:0.88em; color:var(--accent); }
+  .post-body a{ color:var(--accent); text-decoration:underline; text-decoration-color:var(--accent-soft, #6b4a26); text-underline-offset:3px; }
+  .post-body a:hover{ text-decoration-color:var(--accent); }
+  .links{ font-family:var(--font-mono); font-size:0.88rem; }
+
+  .stats{ display:grid; grid-template-columns:repeat(3, 1fr); gap:1px; margin:32px 0; background:var(--line); border:1px solid var(--line); }
+  .stat{ background:rgba(6,6,7,0.94); padding:16px 14px; }
+  .stat b{ display:block; font-family:var(--font-mono); font-size:1.45rem; font-weight:700; color:var(--accent); line-height:1.2; }
+  @media (max-width:520px){ .stats{ grid-template-columns:repeat(2, 1fr); } }
+  .stat span{ display:block; margin-top:4px; font-size:0.82rem; color:var(--text-dim); line-height:1.4; }
+
+  figure{ margin:28px 0; }
+  figure img{ display:block; width:100%; height:auto; border:1px solid var(--line); border-radius:2px; background:#1a1d25; }
+  figcaption{ margin-top:8px; font-family:var(--font-mono); font-size:0.76rem; line-height:1.55; color:var(--text-dim); }
+  .pair{ display:grid; grid-template-columns:1fr 1fr; gap:12px; margin:28px 0; }
+  .pair figure{ margin:0; }
+  @media (max-width:640px){ .pair{ grid-template-columns:1fr; } }
+
+  .table-wrap{ overflow-x:auto; margin:24px 0; }
+  table.data{ width:100%; border-collapse:collapse; font-size:0.86rem; }
+  table.data th{ text-align:left; font-family:var(--font-mono); font-size:0.74rem; font-weight:500; color:var(--text-dim); padding:8px 12px 8px 0; border-bottom:1px solid var(--line); white-space:nowrap; }
+  table.data td{ padding:8px 12px 8px 0; border-bottom:1px solid var(--line); vertical-align:top; line-height:1.5; }
+  table.data .num{ text-align:right; font-family:var(--font-mono); font-variant-numeric:tabular-nums; white-space:nowrap; padding-right:0; padding-left:12px; }
+  table.data .dim, .dim{ color:var(--text-dim); }
+  table.data tr:last-child td{ border-bottom:none; }
+
+  .chart-wrap{ overflow-x:auto; margin:24px 0 8px; }
+  .chart{ display:block; width:100%; min-width:640px; height:auto; }
+  .chart .grid{ stroke:var(--line); stroke-width:1; }
+  .chart .lbl{ font-family:var(--font-mono); font-size:11.5px; fill:var(--text); }
+  .chart .tick{ font-family:var(--font-mono); font-size:10.5px; fill:var(--text-dim); }
+  .chart .val{ font-family:var(--font-mono); font-size:11px; fill:var(--text-dim); }
+  .chart .val.hot{ fill:var(--accent); }
+  .chart .val.dim{ fill:var(--text-dim); }
+  .chart .val.inside{ fill:var(--bg); font-weight:700; }
+  .chart .bar-before, .chart .key-before{ fill:#4a4844; }
+  .chart .bar-after, .chart .key-after{ fill:var(--accent); }
+  .chart .bar-never{ fill:#4a4844; stroke:var(--text-dim); stroke-dasharray:4 3; }
+  .chart .budget{ stroke:var(--text-dim); stroke-dasharray:4 4; }
+  .chart .line-brute{ fill:none; stroke:#b9b5ad; stroke-width:2; }
+  .chart .line-hash{ fill:none; stroke:var(--accent); stroke-width:2; }
+  .chart .dot-brute{ fill:#b9b5ad; }
+  .chart .dot-hash{ fill:var(--accent); }
+  .chart .key-line-brute{ stroke:#b9b5ad; stroke-width:2; }
+  .chart .key-line-hash{ stroke:var(--accent); stroke-width:2; }
+
+  .callout{ margin:28px 0; padding:14px 16px; border-left:2px solid var(--accent-dim); background:rgba(255,255,255,0.03); font-size:0.9rem; color:var(--text-dim); }
+  .callout p{ margin:0 0 10px; font-size:0.9rem; }
+  .callout p:last-child{ margin:0; }
+
+  .codeblock{ background:rgba(255,255,255,0.03); border:1px solid var(--line); border-radius:4px; padding:16px 18px; overflow-x:auto; margin:28px 0; }
+  .codeblock code{ font-family:var(--font-mono); font-size:0.85rem; color:var(--text); white-space:pre; line-height:1.6; }
+  .codeblock .cm{ color:var(--text-dim); }
+  .codeblock .kw{ color:var(--accent); }
+
+  footer{ font-family:var(--font-mono); font-size:0.76rem; color:var(--text-dim); margin-top:48px; padding-top:16px; border-top:1px solid var(--line); display:flex; justify-content:space-between; gap:10px; flex-wrap:wrap; }
+
+  @media (prefers-reduced-motion: reduce){ *{ animation:none !important; transition:none !important; } }
+</style>
+
+<canvas id="silk-bg" aria-hidden="true"></canvas>
+
+<div class="wrap">
+  <header class="topbar">
+    <div class="prompt"><span class="cash">$</span><span class="name">Kaan Dinç</span></div>
+    <nav>
+      <a href="../blog.html">blog</a>
+      <a href="../index.html">home</a>
+    </nav>
+  </header>
+
+  <article>
+    <p class="post-date">Sep 2026</p>
+    <h1 class="post-title">building a 2d physics engine from scratch</h1>
+
+    <div class="post-body">
+      <p>Impulse is a 2D rigid body physics engine I wrote from scratch in TypeScript, with no physics libraries: no Matter.js, no Planck, no Rapier. it simulates circles, boxes and convex polygons that collide, stack, fall asleep, get pinned together with joints and get grabbed with the mouse. it runs in the browser, has zero runtime dependencies, and the whole demo is about 36 kB of JavaScript.</p>
+
+      <p>my map was Erin Catto's Box2D Lite: sequential impulses, warm starting, accumulated impulse clamping. I used it for the ideas and wrote every piece to fit this codebase, then tried to prove each piece against something other than itself. most of this post is about that second part.</p>
+
+      <p class="links">try it: <a href="https://kaan0d.github.io/impulse/" target="_blank" rel="noopener">live demo</a> · <a href="https://kaan0d.github.io/impulse/bench/" target="_blank" rel="noopener">benchmark page</a> · <a href="https://github.com/kaan0d/impulse" target="_blank" rel="noopener">source</a> · <a href="data/impulse-benchmark.json">raw numbers</a></p>
+
+      <div class="stats">
+        <div class="stat"><b>0</b><span>runtime dependencies</span></div>
+        <div class="stat"><b>12</b><span>stages, each finished before the next began</span></div>
+        <div class="stat"><b>171 + 14</b><span>unit tests and browser tests</span></div>
+        <div class="stat"><b>2,041</b><span>lines of engine, backed by 2,171 lines of tests</span></div>
+        <div class="stat"><b>35.6 kB</b><span>demo JavaScript, 12.7 kB gzipped</span></div>
+        <div class="stat"><b>2.6 ms</b><span>per step with 1,000 bodies awake</span></div>
+      </div>
+
+      <h2><span class="hash">##</span>the rules I set first</h2>
+
+      <p>four rules before any physics: a fixed 1/60 s timestep, a deterministic engine (no <code>Math.random</code>), no allocations in the hot paths, and an engine that never touches the DOM or the canvas. the first one is the one that bites, so it lives in one small class.</p>
+
+      <div class="codeblock"><code><span class="cm">// FixedStepper: the only place frame time is allowed to exist</span>
+advance(frameSeconds: <span class="kw">number</span>): <span class="kw">number</span> {
+  <span class="kw">this</span>.accumulator += Math.min(frameSeconds, MAX_FRAME_SECONDS);
+  <span class="kw">let</span> steps = 0;
+  <span class="kw">while</span> (<span class="kw">this</span>.accumulator >= FIXED_DT) {
+    <span class="kw">this</span>.world.step(FIXED_DT);
+    <span class="kw">this</span>.accumulator -= FIXED_DT;
+    steps++;
+  }
+  <span class="kw">return</span> steps;
+}</code></div>
+
+      <p>the browser gives you a different frame time on every frame, and the engine never sees it. the accumulator turns frame time into whole fixed steps, and a long frame (a background tab, a breakpoint) is capped at 0.25 s so catching up cannot spiral. the test feeds the same simulation frames at 30, 60 and 144 fps and as an uneven sequence, and requires each result to match plain manual stepping of the same number of steps, bit for bit.</p>
+
+      <h2><span class="hash">##</span>twelve stages</h2>
+
+      <p>I built it in stages and did not start the next one until the current one had green tests and a working demo:</p>
+
+      <div class="table-wrap"><table class="data">
+        <thead><tr><th>stage</th><th>what it added</th><th>how it was proven</th></tr></thead>
+        <tbody>
+          <tr><td class="num">1</td><td>circles and boxes, semi-implicit Euler, fixed timestep, canvas renderer, drag-and-drop spawning</td><td class="dim">free fall matches the analytic result; frame rate never changes the outcome</td></tr>
+          <tr><td class="num">2</td><td>SAT collision detection and contact manifolds</td><td class="dim">known overlaps give the exact normal, depth and points; swapping bodies flips the normal</td></tr>
+          <tr><td class="num">3</td><td>impulse solver: friction, restitution, clamped accumulated impulses</td><td class="dim">boxes come to rest; elastic collisions conserve energy to 1e-9</td></tr>
+          <tr><td class="num">4</td><td>warm starting, persistent contacts, sleeping</td><td class="dim">a 10-box tower stands 10 s; reruns are bit-identical</td></tr>
+          <tr><td class="num">5</td><td>spatial hash broadphase</td><td class="dim">same pairs as brute force, five cell sizes</td></tr>
+          <tr><td class="num">6</td><td>pin and rod joints</td><td class="dim">pendulum period within 2% of the physics formula</td></tr>
+          <tr><td class="num">7</td><td>benchmark page, GitHub Pages deploy</td><td class="dim">the built site uses only base-aware URLs</td></tr>
+          <tr><td class="num">8</td><td>convex polygons</td><td class="dim">agrees with the box code on 4,000 random pairs</td></tr>
+          <tr><td class="num">9</td><td>block solver, sequential position correction, continuous collision</td><td class="dim">20-box towers stand and sleep; bullets stop at thin walls</td></tr>
+          <tr><td class="num">10</td><td>joint limits, motors, springs, ropes, mouse joint</td><td class="dim">spring frequency and deflection match theory</td></tr>
+          <tr><td class="num">11</td><td>interactive demo: scenes, grabbing, pause, step, reset</td><td class="dim">every scene simulates cleanly</td></tr>
+          <tr><td class="num">12</td><td>pre-commit hook, CI, browser tests</td><td class="dim">14 tests drive the built site in Chrome</td></tr>
+        </tbody>
+      </table></div>
+
+      <h2><span class="hash">##</span>what it looks like</h2>
+
+      <figure>
+        <img src="img/impulse-pyramid.png" width="902" height="602" alt="A pyramid of 55 boxes drawn in dark blue on a dark background." loading="lazy">
+        <figcaption>a pyramid of 55 boxes, six seconds in. the darker blue means the bodies are asleep: the solver has stopped spending time on them.</figcaption>
+      </figure>
+
+      <figure>
+        <img src="img/impulse-polygons.png" width="902" height="602" alt="A pile of circles, boxes, triangles and hexagons in a walled container, with red contact points and normals." loading="lazy">
+        <figcaption>a mixed pile of circles, boxes, triangles and hexagons. the red dots and lines are contact points and normals, drawn straight from the solver's data.</figcaption>
+      </figure>
+
+      <div class="pair">
+        <figure>
+          <img src="img/impulse-wrecking.png" width="902" height="602" alt="A ten-box tower in dark blue with a wrecking ball on a rope swinging toward it." loading="lazy">
+          <figcaption>a 10-box tower asleep, a wrecking ball on a rope swinging in.</figcaption>
+        </figure>
+        <figure>
+          <img src="img/impulse-wrecking-hit.png" width="902" height="602" alt="The same tower in bright blue after the ball hit it, with two boxes knocked off the top." loading="lazy">
+          <figcaption>under half a second later: the ball hit, the tower woke up, and it lost its top two boxes.</figcaption>
+        </figure>
+      </div>
+
+      <figure>
+        <img src="img/impulse-joints.png" width="902" height="602" alt="A motor-driven paddle, a hinged arm and a spring with a ball, drawn with green joint markers." loading="lazy">
+        <figcaption>the joints scene: a motor-driven paddle, a hinge that stops at its angle limits, and a spring. green marks the joints.</figcaption>
+      </figure>
+
+      <h2><span class="hash">##</span>the numbers</h2>
+
+      <h3>stacking</h3>
+
+      <p>the most useful thing I did was not obvious at first. tall stacks jittered: a 10-box tower stood, but kept moving at roughly 9 cm/s and did not fall asleep at 10 solver iterations. more iterations helped slowly and not even reliably: 60 iterations was worse than 40. as far as I can tell, two things were wrong. every box rests on two contact points, and solving them one after the other lets the pair rock. and my position correction pushed every contact apart at the same moment, so a stack's shared compression cancelled itself out and never went away.</p>
+
+      <p>the fix was a 2-point block solver, which solves both points of a contact together as a tiny problem with four cases (both pushing, either one alone, neither), plus a position correction that runs contact by contact so each one sees the shifts of the last.</p>
+
+      <div class="chart-wrap"><svg class="chart" viewBox="0 0 760 376" role="img" aria-labelledby="c1t c1d"><title id="c1t">Time until a tower falls asleep, before and after the block solver</title><desc id="c1d">10 boxes, aligned: before 7.4 s, after 0.9 s. 10 boxes, staggered 5 cm: before 5.6 s, after 0.9 s. 10 boxes, dropped from 10 cm gaps: before 6.7 s, after 1.4 s. 10 boxes, staggered 10 cm, 5 cm gaps: before 3.5 s, after 1.5 s. 15 boxes, aligned: before never, after 1.4 s. 20 boxes, staggered 3 cm: before not measured, after 2.4 s.</desc><rect class="key-before" x="302" y="8" width="12" height="12"/><text class="lbl" x="320" y="18">before: sequential solver, 30 iterations</text><rect class="key-after" x="302" y="28" width="12" height="12"/><text class="lbl" x="320" y="38">after: block solver, 10 iterations</text><line class="grid" x1="302" y1="60" x2="302" y2="342"/><text class="tick" x="302" y="360" text-anchor="middle">0 s</text><line class="grid" x1="409" y1="60" x2="409" y2="342"/><text class="tick" x="409" y="360" text-anchor="middle">2 s</text><line class="grid" x1="516" y1="60" x2="516" y2="342"/><text class="tick" x="516" y="360" text-anchor="middle">4 s</text><line class="grid" x1="623" y1="60" x2="623" y2="342"/><text class="tick" x="623" y="360" text-anchor="middle">6 s</text><line class="grid" x1="730" y1="60" x2="730" y2="342"/><text class="tick" x="730" y="360" text-anchor="middle">8 s</text><text class="lbl" x="290" y="90" text-anchor="end">10 boxes, aligned</text><rect class="bar-before" x="302" y="72" width="395.9000000000001" height="14"/><text class="val" x="703.9000000000001" y="83">7.4 s</text><rect class="bar-after" x="302" y="90" width="48.14999999999998" height="14"/><text class="val hot" x="356.15" y="101">0.9 s</text><text class="lbl" x="290" y="136" text-anchor="end">10 boxes, staggered 5 cm</text><rect class="bar-before" x="302" y="118" width="299.5999999999999" height="14"/><text class="val" x="607.5999999999999" y="129">5.6 s</text><rect class="bar-after" x="302" y="136" width="48.14999999999998" height="14"/><text class="val hot" x="356.15" y="147">0.9 s</text><text class="lbl" x="290" y="182" text-anchor="end">10 boxes, dropped from 10 cm gaps</text><rect class="bar-before" x="302" y="164" width="358.45000000000005" height="14"/><text class="val" x="666.45" y="175">6.7 s</text><rect class="bar-after" x="302" y="182" width="74.89999999999998" height="14"/><text class="val hot" x="382.9" y="193">1.4 s</text><text class="lbl" x="290" y="228" text-anchor="end">10 boxes, staggered 10 cm, 5 cm gaps</text><rect class="bar-before" x="302" y="210" width="187.25" height="14"/><text class="val" x="495.25" y="221">3.5 s</text><rect class="bar-after" x="302" y="228" width="80.25" height="14"/><text class="val hot" x="388.25" y="239">1.5 s</text><text class="lbl" x="290" y="274" text-anchor="end">15 boxes, aligned</text><rect class="bar-never" x="302" y="256" width="428" height="14"/><text class="val inside" x="724" y="267" text-anchor="end">never (20 s test)</text><rect class="bar-after" x="302" y="274" width="74.89999999999998" height="14"/><text class="val hot" x="382.9" y="285">1.4 s</text><text class="lbl" x="290" y="320" text-anchor="end">20 boxes, staggered 3 cm</text><text class="val dim" x="308" y="312">before: not measured</text><rect class="bar-after" x="302" y="320" width="128.39999999999998" height="14"/><text class="val hot" x="436.4" y="331">2.4 s</text></svg></div>
+      <p class="dim" style="font-size:0.8rem; font-family:var(--font-mono);">time until every body in the tower is asleep. the tests stop at 20 s.</p>
+
+      <p>the block solver is also much less sensitive to the iteration count. time until sleep, by iterations:</p>
+
+      <div class="table-wrap"><table class="data">
+        <thead><tr><th>iterations</th><th class="num">10-box tower</th><th class="num">20-box tower</th></tr></thead>
+        <tbody>
+          <tr><td>6</td><td class="num">1.1 s</td><td class="num">collapsed</td></tr>
+          <tr><td>8</td><td class="num">0.9 s</td><td class="num">3.0 s</td></tr>
+          <tr><td>10</td><td class="num">0.9 s</td><td class="num">2.4 s</td></tr>
+          <tr><td>15</td><td class="num">0.7 s</td><td class="num">1.7 s</td></tr>
+          <tr><td>20</td><td class="num">0.7 s</td><td class="num">1.4 s</td></tr>
+          <tr><td>30</td><td class="num">0.6 s</td><td class="num">1.0 s</td></tr>
+        </tbody>
+      </table></div>
+
+      <p>at 6 iterations the 20-box tower collapses. from 8 up it stands and sleeps, so 10 (the Box2D Lite default) has some margin.</p>
+
+      <h3>step time</h3>
+
+      <div class="chart-wrap"><svg class="chart" viewBox="0 0 720 224" role="img" aria-labelledby="c2t c2d"><title id="c2t">Average step time per scene against the 16.7 ms frame budget</title><desc id="c2d">Pyramid, 210 boxes: 0.86 ms. Pyramid, 210 boxes, sleeping on: 0.29 ms. Pile, 500 bodies: 1.47 ms. Pile, 500 bodies, sleeping on: 1.39 ms. Pile, 1000 bodies: 2.59 ms. Budget 16.7 ms.</desc><line class="grid" x1="244" y1="28" x2="244" y2="194"/><text class="tick" x="244" y="212" text-anchor="middle">0 ms</text><line class="grid" x1="348.94117647058823" y1="28" x2="348.94117647058823" y2="194"/><text class="tick" x="348.94117647058823" y="212" text-anchor="middle">4 ms</text><line class="grid" x1="453.88235294117646" y1="28" x2="453.88235294117646" y2="194"/><text class="tick" x="453.88235294117646" y="212" text-anchor="middle">8 ms</text><line class="grid" x1="558.8235294117648" y1="28" x2="558.8235294117648" y2="194"/><text class="tick" x="558.8235294117648" y="212" text-anchor="middle">12 ms</text><line class="grid" x1="663.7647058823529" y1="28" x2="663.7647058823529" y2="194"/><text class="tick" x="663.7647058823529" y="212" text-anchor="middle">16 ms</text><line class="budget" x1="682.1294117647059" y1="24" x2="682.1294117647059" y2="194"/><text class="lbl" x="682.1294117647059" y="18" text-anchor="end">16.7 ms = one frame at 60 fps</text><text class="lbl" x="232" y="53" text-anchor="end">Pyramid, 210 boxes</text><rect class="bar-after" x="244" y="40" width="22.56235294117647" height="16"/><text class="val hot" x="272.56235294117647" y="53">0.86 ms</text><text class="lbl" x="232" y="85" text-anchor="end">Pyramid, 210 boxes, sleeping on</text><rect class="bar-after" x="244" y="72" width="7.608235294117634" height="16"/><text class="val hot" x="257.60823529411766" y="85">0.29 ms</text><text class="lbl" x="232" y="117" text-anchor="end">Pile, 500 bodies</text><rect class="bar-after" x="244" y="104" width="38.56588235294117" height="16"/><text class="val hot" x="288.5658823529412" y="117">1.47 ms</text><text class="lbl" x="232" y="149" text-anchor="end">Pile, 500 bodies, sleeping on</text><rect class="bar-after" x="244" y="136" width="36.467058823529385" height="16"/><text class="val hot" x="286.4670588235294" y="149">1.39 ms</text><text class="lbl" x="232" y="181" text-anchor="end">Pile, 1000 bodies</text><rect class="bar-after" x="244" y="168" width="67.94941176470587" height="16"/><text class="val hot" x="317.94941176470587" y="181">2.59 ms</text></svg></div>
+
+      <div class="table-wrap"><table class="data">
+        <thead><tr><th>scene</th><th class="num">bodies</th><th class="num">avg ms</th><th class="num">p95 ms</th><th class="num">max ms</th><th class="num">peak contacts</th><th class="num">awake at end</th></tr></thead>
+        <tbody>
+          <tr><td>Pyramid, 210 boxes</td><td class="num">210</td><td class="num">0.86</td><td class="num">1.10</td><td class="num">1.50</td><td class="num">403</td><td class="num">210</td></tr>
+          <tr><td>Pyramid, 210 boxes, sleeping on</td><td class="num">210</td><td class="num">0.29</td><td class="num">0.90</td><td class="num">1.20</td><td class="num">403</td><td class="num">0</td></tr>
+          <tr><td>Pile, 500 bodies</td><td class="num">500</td><td class="num">1.47</td><td class="num">1.80</td><td class="num">2.50</td><td class="num">986</td><td class="num">500</td></tr>
+          <tr><td>Pile, 500 bodies, sleeping on</td><td class="num">500</td><td class="num">1.39</td><td class="num">1.70</td><td class="num">2.00</td><td class="num">986</td><td class="num">500</td></tr>
+          <tr><td>Pile, 1000 bodies</td><td class="num">1000</td><td class="num">2.59</td><td class="num">3.90</td><td class="num">4.70</td><td class="num">2116</td><td class="num">1000</td></tr>
+        </tbody>
+      </table></div>
+
+      <p>these are full <code>World.step</code> calls: contacts, solver, integration and sleeping. 1,000 awake bodies cost 2.6 ms of a 16.7 ms frame. sleeping is worth a lot when it works: the pyramid drops from 0.86 ms to 0.29 ms once it is asleep. it does not work everywhere. the 500-body pile never falls asleep in the 8 seconds I measured, so its two rows are the same.</p>
+
+      <h3>broadphase</h3>
+
+      <div class="chart-wrap"><svg class="chart" viewBox="0 0 720 320" role="img" aria-labelledby="c3t c3d"><title id="c3t">Broadphase time against body count, spatial hash versus brute force, log scale</title><desc id="c3d">250 bodies: hash 0.03 ms, brute force 0.12 ms. 500 bodies: hash 0.05 ms, brute force 0.38 ms. 1000 bodies: hash 0.1 ms, brute force 1.48 ms. 2000 bodies: hash 0.27 ms, brute force 6.05 ms. 4000 bodies: hash 0.6 ms, brute force 25.7 ms.</desc><line class="grid" x1="64" y1="276" x2="680" y2="276"/><text class="tick" x="56" y="280" text-anchor="end">0.01 ms</text><line class="grid" x1="64" y1="218.5" x2="680" y2="218.5"/><text class="tick" x="56" y="222.5" text-anchor="end">0.1 ms</text><line class="grid" x1="64" y1="161" x2="680" y2="161"/><text class="tick" x="56" y="165" text-anchor="end">1 ms</text><line class="grid" x1="64" y1="103.5" x2="680" y2="103.5"/><text class="tick" x="56" y="107.5" text-anchor="end">10 ms</text><line class="grid" x1="64" y1="46" x2="680" y2="46"/><text class="tick" x="56" y="50" text-anchor="end">100 ms</text><text class="tick" x="64" y="296" text-anchor="middle">250</text><text class="tick" x="218" y="296" text-anchor="middle">500</text><text class="tick" x="372" y="296" text-anchor="middle">1,000</text><text class="tick" x="526" y="296" text-anchor="middle">2,000</text><text class="tick" x="680" y="296" text-anchor="middle">4,000</text><text class="tick" x="372" y="314" text-anchor="middle">bodies</text><line class="key-line-brute" x1="64" y1="16" x2="86" y2="16"/><text class="lbl" x="92" y="20">brute force, every pair</text><line class="key-line-hash" x1="294" y1="16" x2="316" y2="16"/><text class="lbl" x="322" y="20">spatial hash</text><path class="line-brute" d="M64.0 213.9 L218.0 185.2 L372.0 151.2 L526.0 116.0 L680.0 79.9"/><path class="line-hash" d="M64.0 248.6 L218.0 235.8 L372.0 218.5 L526.0 193.7 L680.0 173.8"/><circle class="dot-brute" cx="64" cy="213.9470783522616" r="4"/><circle class="dot-hash" cx="64" cy="248.56552785361941" r="4"/><circle class="dot-brute" cx="218" cy="185.1624431945334" r="4"/><circle class="dot-hash" cx="218" cy="235.80922475067894" r="4"/><circle class="dot-brute" cx="372" cy="151.20995136478996" r="4"/><circle class="dot-hash" cx="372" cy="218.5" r="4"/><circle class="dot-brute" cx="526" cy="116.04906595748304" r="4"/><circle class="dot-hash" cx="526" cy="193.69658356085824" r="4"/><circle class="dot-brute" cx="680" cy="79.92884540845057" r="4"/><circle class="dot-hash" cx="680" cy="173.75630310294048" r="4"/><text class="val" x="672" y="69.92884540845057" text-anchor="end">25.7 ms</text><text class="val hot" x="672" y="163.75630310294048" text-anchor="end">0.6 ms</text></svg></div>
+
+      <div class="table-wrap"><table class="data">
+        <thead><tr><th>bodies</th><th class="num">overlapping pairs</th><th class="num">spatial hash</th><th class="num">brute force</th><th class="num">speedup</th></tr></thead>
+        <tbody>
+          <tr><td>250</td><td class="num">123</td><td class="num">0.03 ms</td><td class="num">0.12 ms</td><td class="num">4.4×</td></tr>
+          <tr><td>500</td><td class="num">251</td><td class="num">0.05 ms</td><td class="num">0.38 ms</td><td class="num">7.7×</td></tr>
+          <tr><td>1000</td><td class="num">488</td><td class="num">0.10 ms</td><td class="num">1.48 ms</td><td class="num">14.8×</td></tr>
+          <tr><td>2000</td><td class="num">980</td><td class="num">0.27 ms</td><td class="num">6.05 ms</td><td class="num">22.4×</td></tr>
+          <tr><td>4000</td><td class="num">2064</td><td class="num">0.60 ms</td><td class="num">25.70 ms</td><td class="num">42.5×</td></tr>
+        </tbody>
+      </table></div>
+
+      <p>the broadphase is a spatial hash. for 4,000 bodies it takes 0.6 ms, and testing every pair takes 25.7 ms, about 42 times slower. the gap grows with body count because one is roughly linear and the other is quadratic. both find exactly the same pairs, and the benchmark page checks that on every run.</p>
+
+      <div class="callout">
+        <p>how to read these numbers: production build, headless Chrome 153 driven by Playwright, Windows 11, AMD Ryzen 7 5800X. one machine, timer resolution 0.1 ms, and two runs differed by up to about 12% (the pyramid), usually by less.</p>
+        <p>the "before" tower times come from an earlier solver setup (30 iterations, no block solver), so that chart compares the whole change, not one part of it. the same goes for the step times: they dropped by roughly four times after the change, but I changed the iteration count and the browser mode at once, so I can't credit either one alone. it went from 3.3 ms to 0.86 ms for the pyramid, and from 10.4 ms to 2.6 ms for 1,000 bodies.</p>
+      </div>
+
+      <h2><span class="hash">##</span>how I checked it's right</h2>
+
+      <p>a physics engine can look right and be wrong, so most tests compare against something independent of the code they test:</p>
+
+      <div class="table-wrap"><table class="data">
+        <thead><tr><th>claim</th><th>what it is checked against</th></tr></thead>
+        <tbody>
+          <tr><td>free fall</td><td>the analytic formula, the exact semi-implicit Euler sum, and the first-order error bound between them</td></tr>
+          <tr><td>elastic collisions</td><td>conservation of momentum and energy, to 1e-9</td></tr>
+          <tr><td>pendulum</td><td>the period of a physical pendulum, within 2%</td></tr>
+          <tr><td>spring</td><td>the static deflection g/ω² and the requested frequency</td></tr>
+          <tr><td>polygon collision</td><td>the older box-box code on 4,000 random pairs, and a second distance computation on 3,000 random circle-polygon pairs</td></tr>
+          <tr><td>broadphase</td><td>a brute-force pair loop using independently computed bounds, at five cell sizes</td></tr>
+          <tr><td>tunneling</td><td>the same shot with continuous collision off, which must tunnel, so the setup itself is proven</td></tr>
+          <tr><td>determinism</td><td>two runs compared bit for bit, sleep flags included</td></tr>
+        </tbody>
+      </table></div>
+
+      <p>then I sabotaged the code on purpose and checked that the tests noticed. a test that has never failed hasn't proven anything.</p>
+
+      <div class="table-wrap"><table class="data">
+        <thead><tr><th>part</th><th>what I broke</th><th class="num">tests that failed</th></tr></thead>
+        <tbody>
+          <tr><td>polygon clipping</td><td>picked the wrong incident edge</td><td class="num">10 of 24</td></tr>
+          <tr><td>circle vs polygon</td><td>removed the corner region</td><td class="num">3 of 24</td></tr>
+          <tr><td>block solver</td><td>accepted negative (pulling) impulses</td><td class="num">3 of 26</td></tr>
+          <tr><td>block solver</td><td>never paired the two contact points</td><td class="num">5 of 26</td></tr>
+          <tr><td>broadphase</td><td>grid cells only one column wide</td><td class="num">11 of 12</td></tr>
+          <tr><td>joint limit</td><td>dropped the lower limit</td><td class="num">1 of 27</td></tr>
+          <tr><td>rope</td><td>let it push like a rod</td><td class="num">2 of 27</td></tr>
+          <tr><td>spring</td><td>dropped the spring bias</td><td class="num">2 of 27</td></tr>
+          <tr><td>motor</td><td>ignored the torque cap</td><td class="num">2 of 27</td></tr>
+          <tr><td>joints and sleep</td><td>stopped waking joint partners</td><td class="num">1 of 11</td></tr>
+          <tr><td>deploy</td><td>base path &quot;/&quot; instead of &quot;/impulse/&quot;</td><td class="num">1 of 2</td></tr>
+        </tbody>
+      </table></div>
+
+      <p>the sabotage and the ordinary failures turned up problems on both sides. several times a test failed because my test was wrong, not the engine: a vector helper mutated its input and broke my "is the point inside" oracle, and a test expected a bullet to stop against a small circle that it only grazed, when a glancing hit should deflect it. and one test found a real bug: removing a joint left a sleeping body asleep in mid-air, so removing a joint now wakes its bodies.</p>
+
+      <h2><span class="hash">##</span>what it still can't do</h2>
+
+      <p>a pile of 500 mixed bodies never falls asleep in the time I measured, so sleeping helps stacks and pyramids but not big chaotic piles.</p>
+
+      <p>continuous collision only stops bodies at static geometry. two fast dynamic bodies can still pass through each other.</p>
+
+      <p>a ball bouncing under gravity comes back about 3.5% too high at 1/60 s, because gravity is added before the impact is solved. I believe Box2D does the same. collisions without gravity are exact.</p>
+
+      <p>determinism was only checked on one machine's Node and Chrome. other browsers or CPUs may differ in <code>Math.sin</code> and <code>Math.cos</code>. and "no allocations in the hot paths" is a design goal that no test enforces.</p>
+
+      <p>the source, the tests and the benchmark are in the <a href="https://github.com/kaan0d/impulse" target="_blank" rel="noopener">repo</a>, and the <a href="https://kaan0d.github.io/impulse/" target="_blank" rel="noopener">demo</a> lets you drop shapes in and grab them with the mouse.</p>
+
+    </div>
+  </article>
+
+  <footer>
+    <span>Kaan Dinç</span>
+    <span>Çanakkale, Turkey</span>
+  </footer>
+</div>
+
+<script>
+(function(){
+  var canvas = document.getElementById('silk-bg');
+  var gl = canvas.getContext('webgl') || canvas.getContext('experimental-webgl');
+  var reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  if (!gl) return;
+
+  var VERT = 'attribute vec2 aPos;\nvarying vec2 vUv;\nvoid main(){\n  vUv = aPos * 0.5 + 0.5;\n  gl_Position = vec4(aPos, 0.0, 1.0);\n}';
+
+  var FRAG = [
+    '#ifdef GL_ES',
+    'precision mediump float;',
+    '#endif',
+    'varying vec2 vUv;',
+    'uniform float uTime;',
+    'uniform vec3 uColor;',
+    'uniform float uSpeed;',
+    'uniform float uScale;',
+    'uniform float uRotation;',
+    'uniform float uNoiseIntensity;',
+    'uniform float uLightMode;',
+    'const float e = 2.71828182845904523536;',
+    'float noise(vec2 texCoord){',
+    '  float G = e;',
+    '  vec2 r = (G * sin(G * texCoord));',
+    '  return fract(r.x * r.y * (1.0 + texCoord.x));',
+    '}',
+    'vec2 rotateUvs(vec2 uv, float angle){',
+    '  float c = cos(angle);',
+    '  float s = sin(angle);',
+    '  mat2 rot = mat2(c, -s, s, c);',
+    '  return rot * uv;',
+    '}',
+    'void main(){',
+    '  float rnd = noise(gl_FragCoord.xy);',
+    '  vec2 uv = rotateUvs(vUv * uScale, uRotation);',
+    '  vec2 tex = uv * uScale;',
+    '  float tOffset = uSpeed * uTime;',
+    '  tex.y += 0.03 * sin(8.0 * tex.x - tOffset);',
+    '  float pattern = 0.6 + 0.4 * sin(5.0 * (tex.x + tex.y + cos(3.0 * tex.x + 5.0 * tex.y) + 0.02 * tOffset) + sin(20.0 * (tex.x + tex.y - 0.1 * tOffset)));',
+    '  float grain = rnd / 15.0 * uNoiseIntensity;',
+    '  vec3 result = uColor * pattern - vec3(grain);',
+    '  if (uLightMode > 0.5) {',
+    '    float fold = smoothstep(0.28, 0.9, pattern);',
+    '    float specular = smoothstep(0.72, 0.98, pattern);',
+    '    vec3 shadowColor = uColor * 0.72;',
+    '    vec3 bodyColor = min(uColor * 1.18, vec3(1.0));',
+    '    vec3 lightBase = mix(shadowColor, bodyColor, fold);',
+    '    lightBase = mix(lightBase, vec3(1.0), specular * 0.92);',
+    '    float fineNoise = noise(gl_FragCoord.xy * 0.63 + vec2(17.0, 41.0));',
+    '    float grainSignal = (rnd + fineNoise - 1.0);',
+    '    float grainStrength = clamp(uNoiseIntensity * 0.038, 0.0, 0.16);',
+    '    result = lightBase + grainSignal * grainStrength;',
+    '  }',
+    '  gl_FragColor = vec4(clamp(result, 0.0, 1.0), 1.0);',
+    '}'
+  ].join('\n');
+
+  function compile(type, src){
+    var s = gl.createShader(type);
+    gl.shaderSource(s, src);
+    gl.compileShader(s);
+    return s;
+  }
+
+  var prog = gl.createProgram();
+  gl.attachShader(prog, compile(gl.VERTEX_SHADER, VERT));
+  gl.attachShader(prog, compile(gl.FRAGMENT_SHADER, FRAG));
+  gl.linkProgram(prog);
+  gl.useProgram(prog);
+
+  var quad = new Float32Array([-1, -1, 3, -1, -1, 3]);
+  var buf = gl.createBuffer();
+  gl.bindBuffer(gl.ARRAY_BUFFER, buf);
+  gl.bufferData(gl.ARRAY_BUFFER, quad, gl.STATIC_DRAW);
+  var aPos = gl.getAttribLocation(prog, 'aPos');
+  gl.enableVertexAttribArray(aPos);
+  gl.vertexAttribPointer(aPos, 2, gl.FLOAT, false, 0, 0);
+
+  var uTime = gl.getUniformLocation(prog, 'uTime');
+  var uColor = gl.getUniformLocation(prog, 'uColor');
+  var uSpeed = gl.getUniformLocation(prog, 'uSpeed');
+  var uScale = gl.getUniformLocation(prog, 'uScale');
+  var uRotation = gl.getUniformLocation(prog, 'uRotation');
+  var uNoiseIntensity = gl.getUniformLocation(prog, 'uNoiseIntensity');
+  var uLightMode = gl.getUniformLocation(prog, 'uLightMode');
+
+  function hexToRgb(hex){
+    hex = hex.replace('#', '');
+    return [parseInt(hex.slice(0,2),16)/255, parseInt(hex.slice(2,4),16)/255, parseInt(hex.slice(4,6),16)/255];
+  }
+
+  var col = hexToRgb('#7B7481');
+  gl.uniform3f(uColor, col[0], col[1], col[2]);
+  gl.uniform1f(uSpeed, 5);
+  gl.uniform1f(uScale, 0.8);
+  gl.uniform1f(uRotation, 0);
+  gl.uniform1f(uNoiseIntensity, 3.4);
+  gl.uniform1f(uLightMode, 0);
+
+  var time = 0, lastT = 0;
+
+  function resize(){
+    var DPR = Math.min(window.devicePixelRatio || 1, 2);
+    var W = window.innerWidth, H = window.innerHeight;
+    canvas.width = Math.floor(W * DPR);
+    canvas.height = Math.floor(H * DPR);
+    canvas.style.width = W + 'px';
+    canvas.style.height = H + 'px';
+    gl.viewport(0, 0, canvas.width, canvas.height);
+    draw();
+  }
+
+  function draw(){
+    gl.uniform1f(uTime, time);
+    gl.drawArrays(gl.TRIANGLES, 0, 3);
+  }
+
+  function frame(ts){
+    var delta = lastT ? (ts - lastT) / 1000 : 0;
+    lastT = ts;
+    time += 0.1 * delta;
+    draw();
+    requestAnimationFrame(frame);
+  }
+
+  window.addEventListener('resize', resize);
+  resize();
+  if (!reduceMotion) requestAnimationFrame(frame);
+})();
+</script>
+
+<script>
+(function(){
+  // Ported from AsciiGlitchRipple (React Bits style hover component) to vanilla JS.
+  if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+
+  var CHARS = '.,·-─~+:;=*π""┐┌┘┴┬╗╔╝╚╬╠╣╩╦║░▒▓█▄▀▌▐■!?&#$@0123456789*';
+  var WAVE_THRESH = 3, CHAR_MULT = 3, ANIM_STEP = 40, WAVE_BUF = 5, DUR = 1000;
+
+  function attach(el){
+    var origTxt = el.textContent;
+    var origChars = origTxt.split('');
+    var waves = [];
+    var animId = null, isAnim = false, isHover = false, cursorPos = 0, lockedWidth = null;
+
+    function updateCursorPos(e){
+      var rect = el.getBoundingClientRect();
+      var x = e.clientX - rect.left;
+      var len = origChars.length;
+      var pos = Math.round((x / rect.width) * len);
+      cursorPos = Math.max(0, Math.min(pos, len - 1));
+    }
+
+    function stop(){
+      el.textContent = origTxt;
+      if (lockedWidth !== null){ el.style.width = ''; lockedWidth = null; }
+      isAnim = false;
+      if (animId){ cancelAnimationFrame(animId); animId = null; }
+    }
+
+    function waveAt(charIdx, t){
+      var shouldAnim = false, resultChar = origChars[charIdx];
+      for (var w = 0; w < waves.length; w++){
+        var wave = waves[w];
+        var age = t - wave.startTime;
+        var prog = Math.min(age / DUR, 1);
+        var dist = Math.abs(charIdx - wave.startPos);
+        var maxDist = Math.max(wave.startPos, origChars.length - wave.startPos - 1);
+        var rad = prog * (maxDist + WAVE_BUF);
+        if (dist <= rad){
+          shouldAnim = true;
+          var intens = Math.max(0, rad - dist);
+          if (intens <= WAVE_THRESH && intens > 0){
+            resultChar = CHARS[(dist * CHAR_MULT + Math.floor(age / ANIM_STEP)) % CHARS.length];
+          }
+        }
+      }
+      return { shouldAnim: shouldAnim, ch: resultChar };
+    }
+
+    function scrambledText(t){
+      var out = '';
+      for (var i = 0; i < origChars.length; i++){
+        var ch = origChars[i];
+        if (ch === ' '){ out += ' '; continue; }
+        var res = waveAt(i, t);
+        out += res.shouldAnim ? res.ch : ch;
+      }
+      return out;
+    }
+
+    function animate(){
+      var t = Date.now();
+      waves = waves.filter(function(w){ return t - w.startTime < DUR; });
+      if (waves.length === 0){ stop(); return; }
+      el.textContent = scrambledText(t);
+      animId = requestAnimationFrame(animate);
+    }
+
+    function start(){
+      if (isAnim) return;
+      if (lockedWidth === null){
+        lockedWidth = el.getBoundingClientRect().width;
+        el.style.width = lockedWidth + 'px';
+      }
+      isAnim = true;
+      animId = requestAnimationFrame(animate);
+    }
+
+    function startWave(){
+      waves.push({ startPos: cursorPos, startTime: Date.now() });
+      if (!isAnim) start();
+    }
+
+    el.addEventListener('mouseenter', function(e){ isHover = true; updateCursorPos(e); startWave(); });
+    el.addEventListener('mousemove', function(e){
+      if (!isHover) return;
+      var old = cursorPos;
+      updateCursorPos(e);
+      if (cursorPos !== old) startWave();
+    });
+    el.addEventListener('mouseleave', function(){ isHover = false; });
+  }
+
+  var targets = document.querySelectorAll('header.topbar nav a');
+  for (var i = 0; i < targets.length; i++) attach(targets[i]);
+})();
+</script>
