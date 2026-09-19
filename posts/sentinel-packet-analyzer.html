@@ -120,6 +120,14 @@
   .post-body p.chain{ margin:26px 0 0; font-family:var(--font-mono); font-size:0.82rem; color:var(--text-dim); }
   .post-body p.chain b{ color:var(--accent); font-weight:500; }
   .post-body h3.sub{ margin-top:36px; }
+  .reasm{ display:grid; gap:12px; margin:24px 0 8px; }
+  .rrow{ display:grid; grid-template-columns:72px 1fr; gap:4px 12px; align-items:center; font-family:var(--font-mono); font-size:0.72rem; }
+  .rl{ color:var(--text); }
+  .rtrack{ position:relative; height:16px; background:rgba(255,255,255,0.04); border:1px solid var(--line); }
+  .rbar{ position:absolute; top:0; bottom:0; background:var(--accent); }
+  .rbar.dup{ background:transparent; outline:1px dashed var(--accent-dim); outline-offset:-1px; }
+  .rbar.done{ background:var(--text-dim); }
+  .rn{ grid-column:2; color:var(--text-dim); line-height:1.4; }
 
   footer{ font-family:var(--font-mono); font-size:0.76rem; color:var(--text-dim); margin-top:48px; padding-top:16px; border-top:1px solid var(--line); display:flex; justify-content:space-between; gap:10px; flex-wrap:wrap; }
 
@@ -144,17 +152,17 @@
     <div class="post-body">
       <p>Sentinel is a packet analyzer and, eventually, a rule-based intrusion detection system, written in Python from scratch. the protocol parsers are hand-written with <code>struct</code>: no Scapy, no dpkt, no pyshark. it reads pcap capture files and prints one line per packet, tcpdump style. it has no runtime dependencies.</p>
 
-      <p>this post covers stages 1 and 2 of 7. stage 1 is the pcap reader and writer, and parsers for Ethernet (with VLAN tags), ARP, IPv4, IPv6, TCP, UDP and ICMP. stage 2 is the application layer: DNS, plaintext HTTP and the TLS ClientHello (server name, versions, cipher list). flow tracking, a filter language, the detectors (port scans, SYN floods, ARP spoofing, DNS tunneling), live capture and benchmarks come after that. none of that exists yet, and I say so where it matters.</p>
+      <p>this post covers stages 1 to 3 of 7. stage 1 is the pcap reader and writer, and parsers for Ethernet (with VLAN tags), ARP, IPv4, IPv6, TCP, UDP and ICMP. stage 2 is the application layer: DNS, plaintext HTTP and the TLS ClientHello (server name, versions, cipher list). stage 3 is flow tracking and TCP stream reassembly. a filter language, the detectors (port scans, SYN floods, ARP spoofing, DNS tunneling), live capture and benchmarks come after that. none of that exists yet, and I say so where it matters.</p>
 
       <p>I worked the same way as with Impulse: one stage at a time, and the next one does not start until the tests pass and ruff and strict mypy are clean. most of this post is about what the parsers do with bad input, and how I tried to prove they are right.</p>
 
       <div class="stats">
         <div class="stat"><b>0</b><span>runtime dependencies</span></div>
-        <div class="stat"><b>2 of 7</b><span>stages finished; this post covers those two</span></div>
-        <div class="stat"><b>162</b><span>tests (106 after stage 1), ruff and strict mypy clean</span></div>
-        <div class="stat"><b>1,398</b><span>lines of source, backed by 1,862 lines of tests and generator</span></div>
-        <div class="stat"><b>8,119</b><span>broken packets decoded in the fuzz tests, 0 exceptions</span></div>
-        <div class="stat"><b>16 of 16</b><span>deliberate one-line breaks caught by the tests</span></div>
+        <div class="stat"><b>3 of 7</b><span>stages finished; this post covers those three</span></div>
+        <div class="stat"><b>226</b><span>tests (106 after stage 1, 162 after stage 2), ruff and strict mypy clean</span></div>
+        <div class="stat"><b>1,962</b><span>lines of source, backed by 2,695 lines of tests and generator</span></div>
+        <div class="stat"><b>12,427</b><span>broken packets pushed through the fuzz tests, 0 exceptions</span></div>
+        <div class="stat"><b>33 of 33</b><span>deliberate one-line breaks caught by the tests</span></div>
       </div>
 
       <h2><span class="hash">##</span>the rule I set first</h2>
@@ -233,7 +241,7 @@ Tcp(error=<span class="kw">None</span>,
 <span class="ts">2023-11-14 22:13:20.006000</span> IP 10.0.0.2.80 &gt; 10.0.0.1.40000: <span class="fl">Flags [S.]</span>, seq 5000, ack 1001, win 64240, options [mss 1460,sackOK,TS val 1000 ecr 0,nop,wscale 7], <span class="dim">length 0</span>
 <span class="ts">2023-11-14 22:13:20.007000</span> IP 10.0.0.1.40000 &gt; 10.0.0.2.80: <span class="fl">Flags [.]</span>, seq 1001, ack 5001, win 64240, <span class="dim">length 0</span>
 <span class="ts">2023-11-14 22:13:20.008000</span> IP 10.0.0.1.40000 &gt; 10.0.0.2.80: <span class="fl">Flags [P.]</span>, seq 1001, ack 5001, win 64240, <span class="dim">length 38</span><span class="fl">: HTTP: GET / HTTP/1.1, host example.test</span>
-<span class="ts">2023-11-14 22:13:20.009000</span> IP 10.0.0.1.40000 &gt; 10.0.0.2.80: <span class="fl">Flags [F.]</span>, seq 1041, ack 5001, win 64240, <span class="dim">length 0</span>
+<span class="ts">2023-11-14 22:13:20.009000</span> IP 10.0.0.1.40000 &gt; 10.0.0.2.80: <span class="fl">Flags [F.]</span>, seq 1039, ack 5001, win 64240, <span class="dim">length 0</span>
 <span class="ts">2023-11-14 22:13:20.010000</span> IP 10.0.0.1.53000 &gt; 10.0.0.2.53: UDP, <span class="dim">length 29</span><span class="fl">: DNS query 48879, A? example.com</span>
 <span class="ts">2023-11-14 22:13:20.011000</span> vlan 100, IP 10.0.0.1.53001 &gt; 10.0.0.2.53: UDP, <span class="dim">length 29</span><span class="fl">: DNS query 48879, A? example.com</span>
 <span class="ts">2023-11-14 22:13:20.012000</span> IP6 2001:db8::1.41000 &gt; 2001:db8::2.443: <span class="fl">Flags [S]</span>, seq 1, win 65535, <span class="dim">length 0</span>
@@ -241,7 +249,7 @@ Tcp(error=<span class="kw">None</span>,
 <span class="ts">2023-11-14 22:13:20.014000</span> IP 10.0.0.1.53003 &gt; 10.0.0.2.53: UDP, <span class="dim">length 33</span><span class="fl">: DNS query 4660, A? www.example.com</span>
 <span class="ts">2023-11-14 22:13:20.015000</span> IP 10.0.0.2.53 &gt; 10.0.0.1.53003: UDP, <span class="dim">length 63</span><span class="fl">: DNS response 4660 NOERROR, A? www.example.com, answers [CNAME example.com, A 192.0.2.1]</span>
 <span class="ts">2023-11-14 22:13:20.016000</span> IP 10.0.0.1.42000 &gt; 10.0.0.2.53: <span class="fl">Flags [P.]</span>, seq 1, ack 1, win 64240, <span class="dim">length 31</span><span class="fl">: DNS query 17185, AAAA? example.com</span>
-<span class="ts">2023-11-14 22:13:20.017000</span> IP 10.0.0.2.80 &gt; 10.0.0.1.40000: <span class="fl">Flags [P.]</span>, seq 5001, ack 1041, win 64240, <span class="dim">length 77</span><span class="fl">: HTTP: HTTP/1.1 200 OK</span>
+<span class="ts">2023-11-14 22:13:20.017000</span> IP 10.0.0.2.80 &gt; 10.0.0.1.40000: <span class="fl">Flags [P.]</span>, seq 5001, ack 1039, win 64240, <span class="dim">length 77</span><span class="fl">: HTTP: HTTP/1.1 200 OK</span>
 <span class="ts">2023-11-14 22:13:20.018000</span> IP 10.0.0.1.43000 &gt; 10.0.0.2.443: <span class="fl">Flags [P.]</span>, seq 1, ack 1, win 64240, <span class="dim">length 161</span><span class="fl">: TLS ClientHello, sni example.com, versions [TLS 1.3, TLS 1.2], ciphers (15) [TLS_AES_128_GCM_SHA256, TLS_AES_256_GCM_SHA384, TLS_CHACHA20_POLY1305_SHA256, +12 more]</span></pre></div>
       <p class="dim" style="font-size:0.76rem; font-family:var(--font-mono); margin-top:8px;">19 packets: an ARP request and reply, three ICMP messages, a TCP connection from SYN to FIN with an HTTP request in it, DNS over UDP (also inside a VLAN tag and over IPv6) and over TCP, a CNAME answer, an HTTP response and a TLS ClientHello. timestamps are UTC, so the output does not depend on the machine's time zone.</p>
 
@@ -366,15 +374,90 @@ host   = "\x07evil"</code></div>
 
       <p>the cost: a literal backslash-x written in the original data looks the same as an escape. for a display and detection string that is fine, and the raw bytes stay available where they matter (the DNS record data).</p>
 
+      <h2><span class="hash">##</span>stage 3: from packets to conversations</h2>
+
+      <p>stages 1 and 2 look at one packet at a time. but a web request is not one packet, and the packets of a TCP connection do not always arrive in order, or once. stage 3 adds a flow table that groups packets into conversations, and a reassembler that puts each direction of a TCP connection back into one byte stream. the new command is <code>python -m sentinel flows</code>.</p>
+
+      <h3 class="sub">flows</h3>
+
+      <p>a flow is a protocol plus two endpoints (an address and a port), in either direction. the client is whoever sent the SYN. a new flow starts when the same endpoints are used again after the old one ended, when a SYN arrives with a different initial sequence number, or after the flow sat idle for an hour (TCP) or two minutes (UDP). the state is worked out from what was seen: syn-sent, established, closing, closed, reset, or midstream when the capture missed the handshake. ICMP, ARP and IP fragments are not flows. they are only counted.</p>
+
+      <p>this stage has its own demo capture (32 packets, <code>gen_pcap.py --streams</code>): segments that arrive out of order and twice, messages split across segments, a lost segment, a reset, one UDP exchange and one ICMP echo. one line per flow:</p>
+
+      <div class="term"><pre><span class="pr">$ python -m sentinel flows streams.pcap
+</span>tcp 10.0.0.1:44000 &gt; 10.0.0.2:8080: closed, pkts 8/3, bytes 129/40, 0.010000s <span class="fl">[1 retransmitted client segment]</span> <span class="fl">[1 out-of-order client segment]</span><span class="dim"> | -&gt; </span>HTTP: POST /upload HTTP/1.1, host files.test<span class="dim"> | &lt;- </span>HTTP: HTTP/1.1 200 OK
+tcp 10.0.0.1:45000 &gt; 10.0.0.2:8443: established, pkts 4/1, bytes 161/0, 0.004000s <span class="fl">[1 out-of-order client segment]</span><span class="dim"> | -&gt; </span>TLS ClientHello, sni example.com, versions <span class="fl">[TLS 1.3, TLS 1.2]</span>, ciphers (15) <span class="fl">[TLS_AES_128_GCM_SHA256, TLS_AES_256_GCM_SHA384, TLS_CHACHA20_POLY1305_SHA256, +12 more]</span>
+tcp 10.0.0.1:46000 &gt; 10.0.0.2:53: established, pkts 4/1, bytes 66/0, 0.004000s<span class="dim"> | -&gt; </span>DNS query 1, A? example.com<span class="dim"> | -&gt; </span>DNS query 2, AAAA? www.example.com
+tcp 10.0.0.1:47000 &gt; 10.0.0.2:80: closing, pkts 5/1, bytes 160/0, 0.005000s <span class="fl">[100 client bytes missing]</span>
+tcp 10.0.0.1:48000 &gt; 10.0.0.2:22: reset, pkts 1/1, bytes 0/0, 0.001000s
+udp 10.0.0.1:53004 &gt; 10.0.0.2:53: pkts 1/1, bytes 33/63, 0.001000s<span class="dim"> | -&gt; </span>DNS query 4660, A? www.example.com<span class="dim"> | &lt;- </span>DNS response 4660 NOERROR, A? www.example.com, answers <span class="fl">[CNAME example.com, A 192.0.2.1]</span>
+<span class="dim"># 6 flows, 31 packets in flows, 1 not in a flow</span></pre></div>
+      <p class="dim" style="font-size:0.76rem; font-family:var(--font-mono); margin-top:8px;">6 flows. the numbers after <code>pkts</code> and <code>bytes</code> are client/server. anything odd is a <code>[note]</code>, and the messages found in the streams follow the bars: <code>-&gt;</code> from the client, <code>&lt;-</code> from the server.</p>
+
+      <h3 class="sub">putting segments back in order</h3>
+
+      <p>every direction of a connection gets its own stream. segments are kept as sorted byte ranges and merged when they touch. the first flow above is a POST request cut into three segments. they arrive out of order, and one of them arrives twice. this is that flow, replayed through the real reassembler one packet at a time:</p>
+
+      <div class="reasm"><div class="rrow"><span class="rl">arrival 1</span><div class="rtrack"><div class="rbar" style="left:31.250%;width:34.375%"></div></div><span class="rn">bytes 30 to 63: ahead of a gap, held until the gap is filled. contiguous so far: 0 of 96</span></div><div class="rrow"><span class="rl">arrival 2</span><div class="rtrack"><div class="rbar" style="left:0.000%;width:31.250%"></div></div><span class="rn">bytes 0 to 30: fills the gap. contiguous so far: 63 of 96</span></div><div class="rrow"><span class="rl">arrival 3</span><div class="rtrack"><div class="rbar" style="left:65.625%;width:34.375%"></div></div><span class="rn">bytes 63 to 96: in order. contiguous so far: 96 of 96</span></div><div class="rrow"><span class="rl">arrival 4</span><div class="rtrack"><div class="rbar dup" style="left:31.250%;width:34.375%"></div></div><span class="rn">bytes 30 to 63: a repeat: these bytes are already held. contiguous so far: 96 of 96</span></div><div class="rrow"><span class="rl">result</span><div class="rtrack"><div class="rbar done" style="left:0;width:100%"></div></div><span class="rn">96 bytes, in order, once. the request line and headers are whole, so the HTTP parser reads one POST.</span></div></div>
+
+      <p>a few rules that could each have gone the other way:</p>
+
+      <p>when two copies of the same bytes overlap, the first copy that arrived wins. if the later copy has different bytes, that is counted as a conflict, because sending different bytes for the same position is exactly how an attacker confuses an IDS. a capture does not say which operating system receives the data, so picking a side would be a guess. reporting the conflict is not.</p>
+
+      <div class="codeblock"><code>merged_start = min(start, self._starts[lo]) <span class="kw">if</span> lo &lt; hi <span class="kw">else</span> start
+merged_end = max(end, self._starts[hi - 1] + len(self._chunks[hi - 1])) <span class="kw">if</span> lo &lt; hi <span class="kw">else</span> end
+buf = bytearray(merged_end - merged_start)
+buf[start - merged_start : end - merged_start] = data
+<span class="kw">for</span> k <span class="kw">in</span> range(lo, hi):  <span class="cm"># bytes already stored win over the new copy</span>
+    s, chunk = self._starts[k], self._chunks[k]
+    a, b = max(start, s), min(end, s + len(chunk))
+    <span class="kw">if</span> a &lt; b <span class="kw">and</span> buf[a - merged_start : b - merged_start] != chunk[a - s : b - s]:
+        self.overlap_conflicts += 1
+    buf[s - merged_start : s - merged_start + len(chunk)] = chunk
+self._starts[lo:hi] = [merged_start]
+self._chunks[lo:hi] = [buf]</code></div>
+
+      <p>only the bytes that are contiguous from the start of the stream are returned. after a gap, later bytes are kept for the statistics and for a late arrival, but never handed out, and a gap is never filled with zeros, because a parser could then read straight across a hole. positions are signed offsets from the first sequence number seen, so sequence numbers that wrap past 2<sup>32</sup> need no special case. a stream with no SYN starts at the lowest byte received, and the flow says so.</p>
+
+      <p>the counters follow how Wireshark counts: a segment is out of order when it has new bytes below the highest byte already seen, and retransmitted when it carries bytes already held.</p>
+
+      <h3 class="sub">what read gets wrong and flows gets right</h3>
+
+      <p>stage 2 said it out loud: reading one segment at a time can be fooled. the demo capture has both cases. in the POST flow, the body contains text that looks like a request line, and it starts a segment of its own. in the TLS flow the ClientHello is split in two, and the second half arrives first.</p>
+
+      <div class="term"><pre><span class="pr">$ python -m sentinel read streams.pcap    # two of the packets
+</span><span class="ts">2023-11-14 22:13:20.005000</span> IP 10.0.0.1.44000 &gt; 10.0.0.2.8080: <span class="fl">Flags [P.]</span>, seq 7064, ack 9001, win 64240, <span class="dim">length 33</span><span class="fl">: HTTP: GET /inside-the-body HTTP/1.1</span>
+<span class="ts">2023-11-14 22:13:20.015000</span> IP 10.0.0.1.45000 &gt; 10.0.0.2.8443: <span class="fl">Flags [P.]</span>, seq 12001, ack 13001, win 64240, <span class="dim">length 90</span><span class="fl">: TLS ClientHello, versions [TLS 1.2], ciphers (0) [] [truncated client hello: 81 of 152 handshake bytes] [client hello ends before its fields do]</span></pre></div>
+      <div class="term"><pre><span class="pr">$ python -m sentinel flows streams.pcap   # the same two connections
+</span>tcp 10.0.0.1:44000 &gt; 10.0.0.2:8080: closed, pkts 8/3, bytes 129/40, 0.010000s <span class="fl">[1 retransmitted client segment]</span> <span class="fl">[1 out-of-order client segment]</span><span class="dim"> | -&gt; </span>HTTP: POST /upload HTTP/1.1, host files.test<span class="dim"> | &lt;- </span>HTTP: HTTP/1.1 200 OK
+tcp 10.0.0.1:45000 &gt; 10.0.0.2:8443: established, pkts 4/1, bytes 161/0, 0.004000s <span class="fl">[1 out-of-order client segment]</span><span class="dim"> | -&gt; </span>TLS ClientHello, sni example.com, versions <span class="fl">[TLS 1.3, TLS 1.2]</span>, ciphers (15) <span class="fl">[TLS_AES_128_GCM_SHA256, TLS_AES_256_GCM_SHA384, TLS_CHACHA20_POLY1305_SHA256, +12 more]</span></pre></div>
+
+      <p>read is fooled twice: it prints a request nobody made, and a half ClientHello with no server name. flows parses the streams. it looks for an HTTP message only where one can start, uses <code>Content-Length</code> to jump over the body, and reads the ClientHello from the whole client stream, so it finds one POST and one complete hello with <code>example.com</code>.</p>
+
+      <p>I did not make read stateful. it prints as it reads, in constant memory, and a packet's line does not depend on the rest of the capture. making it stateful would fix these two cases and cost both of those. so read keeps its known weaknesses, and flows is the command to use when they matter.</p>
+
+      <h3 class="sub">limits, all counted</h3>
+
+      <p>a stream is attacker-controlled input too. a sender can announce a sequence number four gigabytes ahead, or send a million one-byte segments with gaps between them. so everything that grows has a limit, and hitting a limit is counted and shown in the flow's notes, never silent:</p>
+
+      <div class="table-wrap"><table class="data">
+        <thead><tr><th>what</th><th>limit</th><th>when it is hit</th></tr></thead>
+        <tbody><tr><td>bytes kept per stream</td><td>1 MiB from its start</td><td>later bytes are counted as not buffered</td></tr><tr><td>separate byte ranges per stream</td><td>4,096</td><td>a segment that would start another range is dropped and counted</td></tr><tr><td>bytes buffered in all streams</td><td>256 MiB</td><td>a segment that does not fit is dropped and counted</td></tr><tr><td>flows</td><td>200,000</td><td>packets that would start another flow are counted; existing flows keep working</td></tr></tbody>
+      </table></div>
+
+      <h3 class="sub">a stage 2 bug that stage 3 found</h3>
+
+      <p>the HTTP parser reported <code>malformed http header line</code> when a segment ended exactly at a line break, because the empty last line was counted as a header. per-packet reading rarely ends there. reassembly tests cut messages at every position, and they hit it at once. it is fixed, with a test.</p>
+
       <h2><span class="hash">##</span>seven stages</h2>
 
       <div class="table-wrap"><table class="data">
         <thead><tr><th>stage</th><th>what it adds</th><th>state</th></tr></thead>
         <tbody>
           <tr><td>1</td><td>pcap reader and writer, Ethernet, ARP, IPv4, IPv6, TCP, UDP, ICMP parsers, command line summary</td><td class="dim">done</td></tr>
-          <tr><td>2</td><td>DNS, plaintext HTTP, TLS ClientHello (server name, versions, cipher list)</td><td class="dim">done, this post</td></tr>
-          <tr><td>3</td><td>flow tracking, TCP stream reassembly (out of order, retransmitted), per-flow statistics</td><td class="dim">next</td></tr>
-          <tr><td>4</td><td>a filter language like <code>tcp and (port 80 or port 443) and not src host 10.0.0.1</code></td><td class="dim">planned</td></tr>
+          <tr><td>2</td><td>DNS, plaintext HTTP, TLS ClientHello (server name, versions, cipher list)</td><td class="dim">done</td></tr>
+          <tr><td>3</td><td>flow tracking, TCP stream reassembly (out of order, retransmitted), per-flow statistics</td><td class="dim">done, this post</td></tr>
+          <tr><td>4</td><td>a filter language like <code>tcp and (port 80 or port 443) and not src host 10.0.0.1</code></td><td class="dim">next</td></tr>
           <tr><td>5</td><td>IDS engine: port scan, SYN flood, ARP spoofing, DNS tunneling, rule config, JSON alerts</td><td class="dim">planned</td></tr>
           <tr><td>6</td><td>live capture on Linux, feeding the same pipeline</td><td class="dim">planned</td></tr>
           <tr><td>7</td><td>benchmarks, fuzz tests, CI</td><td class="dim">planned</td></tr>
@@ -383,10 +466,10 @@ host   = "\x07evil"</code></div>
 
       <h2><span class="hash">##</span>the numbers</h2>
 
-      <div class="chart-wrap"><svg class="chart" viewBox="0 0 720 424" role="img" aria-labelledby="c1t c1d"><title id="c1t">Tests per test file</title><desc id="c1d">162 tests in total. test_pcap: 25; test_tls: 18; test_decode: 16; test_dns: 16; test_http: 16; test_ipv4: 14; test_tcp: 13; test_udp: 11; test_cli: 9; test_ethernet: 8; test_ipv6: 6; test_arp: 5; test_icmp: 5.</desc><line class="grid" x1="170" y1="12" x2="170" y2="384"/><text class="tick" x="170" y="402" text-anchor="middle">0</text><line class="grid" x1="274" y1="12" x2="274" y2="384"/><text class="tick" x="274" y="402" text-anchor="middle">5</text><line class="grid" x1="378" y1="12" x2="378" y2="384"/><text class="tick" x="378" y="402" text-anchor="middle">10</text><line class="grid" x1="482" y1="12" x2="482" y2="384"/><text class="tick" x="482" y="402" text-anchor="middle">15</text><line class="grid" x1="586" y1="12" x2="586" y2="384"/><text class="tick" x="586" y="402" text-anchor="middle">20</text><line class="grid" x1="690" y1="12" x2="690" y2="384"/><text class="tick" x="690" y="402" text-anchor="middle">25</text><text class="lbl" x="158" y="35" text-anchor="end">test_pcap</text><rect class="bar-after" x="170" y="24" width="520" height="14"/><text class="val hot" x="698" y="35">25</text><text class="lbl" x="158" y="63" text-anchor="end">test_tls</text><rect class="bar-after" x="170" y="52" width="374.4" height="14"/><text class="val hot" x="552.4" y="63">18</text><text class="lbl" x="158" y="91" text-anchor="end">test_decode</text><rect class="bar-after" x="170" y="80" width="332.8" height="14"/><text class="val hot" x="510.8" y="91">16</text><text class="lbl" x="158" y="119" text-anchor="end">test_dns</text><rect class="bar-after" x="170" y="108" width="332.8" height="14"/><text class="val hot" x="510.8" y="119">16</text><text class="lbl" x="158" y="147" text-anchor="end">test_http</text><rect class="bar-after" x="170" y="136" width="332.8" height="14"/><text class="val hot" x="510.8" y="147">16</text><text class="lbl" x="158" y="175" text-anchor="end">test_ipv4</text><rect class="bar-after" x="170" y="164" width="291.2" height="14"/><text class="val hot" x="469.2" y="175">14</text><text class="lbl" x="158" y="203" text-anchor="end">test_tcp</text><rect class="bar-after" x="170" y="192" width="270.4" height="14"/><text class="val hot" x="448.4" y="203">13</text><text class="lbl" x="158" y="231" text-anchor="end">test_udp</text><rect class="bar-after" x="170" y="220" width="228.8" height="14"/><text class="val hot" x="406.8" y="231">11</text><text class="lbl" x="158" y="259" text-anchor="end">test_cli</text><rect class="bar-after" x="170" y="248" width="187.2" height="14"/><text class="val hot" x="365.2" y="259">9</text><text class="lbl" x="158" y="287" text-anchor="end">test_ethernet</text><rect class="bar-after" x="170" y="276" width="166.4" height="14"/><text class="val hot" x="344.4" y="287">8</text><text class="lbl" x="158" y="315" text-anchor="end">test_ipv6</text><rect class="bar-after" x="170" y="304" width="124.8" height="14"/><text class="val hot" x="302.8" y="315">6</text><text class="lbl" x="158" y="343" text-anchor="end">test_arp</text><rect class="bar-after" x="170" y="332" width="104" height="14"/><text class="val hot" x="282" y="343">5</text><text class="lbl" x="158" y="371" text-anchor="end">test_icmp</text><rect class="bar-after" x="170" y="360" width="104" height="14"/><text class="val hot" x="282" y="371">5</text></svg></div>
-      <p class="dim" style="font-size:0.8rem; font-family:var(--font-mono);">tests per file. 162 in total.</p>
+      <div class="chart-wrap"><svg class="chart" viewBox="0 0 720 508" role="img" aria-labelledby="c1t c1d"><title id="c1t">Tests per test file</title><desc id="c1d">226 tests in total. test_flow: 25; test_pcap: 25; test_stream: 18; test_tls: 18; test_http: 17; test_cli: 16; test_decode: 16; test_dns: 16; test_ipv4: 14; test_flow_app: 13; test_tcp: 13; test_udp: 11; test_ethernet: 8; test_ipv6: 6; test_arp: 5; test_icmp: 5.</desc><line class="grid" x1="170" y1="12" x2="170" y2="468"/><text class="tick" x="170" y="486" text-anchor="middle">0</text><line class="grid" x1="274" y1="12" x2="274" y2="468"/><text class="tick" x="274" y="486" text-anchor="middle">5</text><line class="grid" x1="378" y1="12" x2="378" y2="468"/><text class="tick" x="378" y="486" text-anchor="middle">10</text><line class="grid" x1="482" y1="12" x2="482" y2="468"/><text class="tick" x="482" y="486" text-anchor="middle">15</text><line class="grid" x1="586" y1="12" x2="586" y2="468"/><text class="tick" x="586" y="486" text-anchor="middle">20</text><line class="grid" x1="690" y1="12" x2="690" y2="468"/><text class="tick" x="690" y="486" text-anchor="middle">25</text><text class="lbl" x="158" y="35" text-anchor="end">test_flow</text><rect class="bar-after" x="170" y="24" width="520" height="14"/><text class="val hot" x="698" y="35">25</text><text class="lbl" x="158" y="63" text-anchor="end">test_pcap</text><rect class="bar-after" x="170" y="52" width="520" height="14"/><text class="val hot" x="698" y="63">25</text><text class="lbl" x="158" y="91" text-anchor="end">test_stream</text><rect class="bar-after" x="170" y="80" width="374.4" height="14"/><text class="val hot" x="552.4" y="91">18</text><text class="lbl" x="158" y="119" text-anchor="end">test_tls</text><rect class="bar-after" x="170" y="108" width="374.4" height="14"/><text class="val hot" x="552.4" y="119">18</text><text class="lbl" x="158" y="147" text-anchor="end">test_http</text><rect class="bar-after" x="170" y="136" width="353.6" height="14"/><text class="val hot" x="531.6" y="147">17</text><text class="lbl" x="158" y="175" text-anchor="end">test_cli</text><rect class="bar-after" x="170" y="164" width="332.8" height="14"/><text class="val hot" x="510.8" y="175">16</text><text class="lbl" x="158" y="203" text-anchor="end">test_decode</text><rect class="bar-after" x="170" y="192" width="332.8" height="14"/><text class="val hot" x="510.8" y="203">16</text><text class="lbl" x="158" y="231" text-anchor="end">test_dns</text><rect class="bar-after" x="170" y="220" width="332.8" height="14"/><text class="val hot" x="510.8" y="231">16</text><text class="lbl" x="158" y="259" text-anchor="end">test_ipv4</text><rect class="bar-after" x="170" y="248" width="291.2" height="14"/><text class="val hot" x="469.2" y="259">14</text><text class="lbl" x="158" y="287" text-anchor="end">test_flow_app</text><rect class="bar-after" x="170" y="276" width="270.4" height="14"/><text class="val hot" x="448.4" y="287">13</text><text class="lbl" x="158" y="315" text-anchor="end">test_tcp</text><rect class="bar-after" x="170" y="304" width="270.4" height="14"/><text class="val hot" x="448.4" y="315">13</text><text class="lbl" x="158" y="343" text-anchor="end">test_udp</text><rect class="bar-after" x="170" y="332" width="228.8" height="14"/><text class="val hot" x="406.8" y="343">11</text><text class="lbl" x="158" y="371" text-anchor="end">test_ethernet</text><rect class="bar-after" x="170" y="360" width="166.4" height="14"/><text class="val hot" x="344.4" y="371">8</text><text class="lbl" x="158" y="399" text-anchor="end">test_ipv6</text><rect class="bar-after" x="170" y="388" width="124.8" height="14"/><text class="val hot" x="302.8" y="399">6</text><text class="lbl" x="158" y="427" text-anchor="end">test_arp</text><rect class="bar-after" x="170" y="416" width="104" height="14"/><text class="val hot" x="282" y="427">5</text><text class="lbl" x="158" y="455" text-anchor="end">test_icmp</text><rect class="bar-after" x="170" y="444" width="104" height="14"/><text class="val hot" x="282" y="455">5</text></svg></div>
+      <p class="dim" style="font-size:0.8rem; font-family:var(--font-mono);">tests per file. 226 in total.</p>
 
-      <p>each parser is tested with a valid packet, a truncated one, a malformed header (where the format has one) and random bytes. on top of that, three kinds of fuzzing run against the whole decoder, with fixed random seeds so a failure can be reproduced exactly:</p>
+      <p>each parser is tested with a valid packet, a truncated one, a malformed header (where the format has one) and random bytes. on top of that, four kinds of fuzzing run against the whole decoder and the flow table, with fixed random seeds so a failure can be reproduced exactly:</p>
 
       <div class="table-wrap"><table class="data">
         <thead><tr><th>fuzz</th><th>what it does</th><th class="num">inputs</th></tr></thead>
@@ -395,6 +478,7 @@ host   = "\x07evil"</code></div>
           <tr><td>corruption</td><td>every byte of each generated packet set to 0, 255 and two random values, one byte at a time</td><td class="num">6,480</td></tr>
           <tr><td>random bytes</td><td>500 seeded random strings of 0 to 200 bytes plus 9 all-zero or all-255 ones, into every parser, and into the decoder behind four ethertypes</td><td class="num">509 per parser</td></tr>
           <tr><td>capture files</td><td>every prefix of a 191-byte valid pcap, and every byte of it replaced once. the reader may only ever raise <code>PcapError</code></td><td class="num">192 + 191</td></tr>
+          <tr><td>flow table</td><td>every prefix of every packet of both demo captures (51 packets), three random single-byte corruptions of each, and the 509 random strings, all fed to one flow table, then every flow printed</td><td class="num">4,817</td></tr>
         </tbody>
       </table></div>
 
@@ -419,6 +503,8 @@ host   = "\x07evil"</code></div>
           <tr><td>DNS names</td><td>hand-built messages for every malformed pointer and label, with the exact anomaly text asserted, not just that something was reported</td></tr>
           <tr><td>ClientHello</td><td>a hand-built minimal hello and one cut at every byte, plus a browser-shaped one with GREASE</td></tr>
           <tr><td>safe printing</td><td>escape sequences in a request line, a host header and a server name; the printed line must contain only printable characters</td></tr>
+          <tr><td>reassembly</td><td>the bytes that were sent: 300 random payloads cut into overlapping, duplicated pieces, shuffled, with the SYN anywhere (even last) and initial numbers near the 32-bit wrap. the stream must equal the payload. the same check runs through the flow table with real packets</td></tr>
+          <tr><td>flow demo</td><td>the 6 lines above, read through by eye once and kept as a golden test</td></tr>
           <tr><td>command output</td><td>the 19 lines above, read through by eye once and kept as a golden test; running it twice gives the same text</td></tr>
         </tbody>
       </table></div>
@@ -427,39 +513,42 @@ host   = "\x07evil"</code></div>
 
       <h2><span class="hash">##</span>breaking it on purpose</h2>
 
-      <p>a test that has never failed hasn't proven much. so I broke the parsers on purpose, one line at a time, and counted how many tests noticed:</p>
+      <p>a test that has never failed hasn't proven much. so I broke the code on purpose, one line at a time, and counted how many tests noticed. this is the run for stage 3:</p>
 
       <div class="table-wrap"><table class="data">
         <thead><tr><th>stage</th><th>part</th><th>what I broke</th><th class="num">tests that failed</th></tr></thead>
         <tbody>
-          <tr><td>1</td><td>ipv4 header</td><td>skipped the header checksum</td><td class="num">3 of 162</td></tr>
-          <tr><td>1</td><td>tcp options</td><td>let an option run past the end</td><td class="num">1 of 162</td></tr>
-          <tr><td>1</td><td>checksum rule</td><td>verified checksums on truncated packets</td><td class="num">2 of 162</td></tr>
-          <tr><td>1</td><td>pcap reader</td><td>removed the captured-length cap</td><td class="num">1 of 162</td></tr>
-          <tr><td>1</td><td>udp header</td><td>accepted a length below 8</td><td class="num">1 of 162</td></tr>
-          <tr><td>1</td><td>vlan tag</td><td>kept the priority bits in the VLAN id</td><td class="num">1 of 162</td></tr>
-          <tr><td>2</td><td>dns names</td><td>allowed forward and self pointers</td><td class="num">1 of 162</td></tr>
-          <tr><td>2</td><td>dns names</td><td>did not escape dots inside labels</td><td class="num">1 of 162</td></tr>
-          <tr><td>2</td><td>dns names</td><td>let a label run past the message end</td><td class="num">1 of 162</td></tr>
-          <tr><td>2</td><td>dns message</td><td>ignored bytes after the last record</td><td class="num">2 of 162</td></tr>
-          <tr><td>2</td><td>http headers</td><td>stopped detecting conflicting content-length</td><td class="num">1 of 162</td></tr>
-          <tr><td>2</td><td>printing</td><td>let control characters through</td><td class="num">3 of 162</td></tr>
-          <tr><td>2</td><td>client hello</td><td>ignored an odd cipher list length</td><td class="num">1 of 162</td></tr>
-          <tr><td>2</td><td>client hello</td><td>treated GREASE values as real</td><td class="num">4 of 162</td></tr>
-          <tr><td>2</td><td>client hello</td><td>ignored the record length</td><td class="num">1 of 162</td></tr>
-          <tr><td>2</td><td>tcp dns</td><td>parsed a DNS message cut by the segment</td><td class="num">1 of 162</td></tr>
+          <tr><td>3</td><td>reassembly</td><td>let the newest copy of overlapping bytes win</td><td class="num">1 of 226</td></tr>
+          <tr><td>3</td><td>reassembly</td><td>stopped counting conflicting overlaps</td><td class="num">2 of 226</td></tr>
+          <tr><td>3</td><td>reassembly</td><td>stopped counting retransmitted segments</td><td class="num">5 of 226</td></tr>
+          <tr><td>3</td><td>reassembly</td><td>stopped counting out-of-order segments</td><td class="num">5 of 226</td></tr>
+          <tr><td>3</td><td>sequence numbers</td><td>read sequence numbers as unsigned offsets</td><td class="num">2 of 226</td></tr>
+          <tr><td>3</td><td>reassembly</td><td>removed the per-stream byte window</td><td class="num">1 of 226</td></tr>
+          <tr><td>3</td><td>reassembly</td><td>ignored the shared memory budget</td><td class="num">2 of 226</td></tr>
+          <tr><td>3</td><td>reassembly</td><td>removed the cap on separate ranges</td><td class="num">1 of 226</td></tr>
+          <tr><td>3</td><td>reassembly</td><td>ignored bytes missing before the FIN</td><td class="num">1 of 226</td></tr>
+          <tr><td>3</td><td>reassembly</td><td>kept bytes from before a late SYN</td><td class="num">1 of 226</td></tr>
+          <tr><td>3</td><td>flow key</td><td>made each direction its own flow</td><td class="num">13 of 226</td></tr>
+          <tr><td>3</td><td>flow reuse</td><td>kept reusing a finished flow for a new SYN</td><td class="num">1 of 226</td></tr>
+          <tr><td>3</td><td>flow reuse</td><td>never expired idle flows</td><td class="num">1 of 226</td></tr>
+          <tr><td>3</td><td>tcp state</td><td>called a connection closed after one FIN</td><td class="num">5 of 226</td></tr>
+          <tr><td>3</td><td>flow notes</td><td>counted split-message anomalies as packet anomalies</td><td class="num">5 of 226</td></tr>
+          <tr><td>3</td><td>http stream</td><td>did not skip bodies using Content-Length</td><td class="num">5 of 226</td></tr>
+          <tr><td>3</td><td>dns stream</td><td>misread the DNS length prefix</td><td class="num">6 of 226</td></tr>
         </tbody>
       </table></div>
 
-      <p>all 16 breaks are caught now, but the first run had three survivors, so the tests were weaker than I thought. a DNS name that pointed at itself, or forward, still ended as an anomaly, because other checks (the cap of 32 jumps, the end of the message) caught it, only with the wrong message. a label running past the end of the message was caught one step later by the next check. and nothing tested a TLS record that is shorter than the handshake it carries. I made the tests check the exact message, added the missing one, and ran it again.</p>
+      <p>all 17 breaks are caught, and the 16 from stages 1 and 2 still are, so 33 of 33. the first run of this stage had one survivor. the rule that a finished flow is never reused for a new SYN was not tested on its own: in my test the second SYN also had a different initial sequence number, and that alone starts a new flow. I added a test where only the end of the old flow tells the difference, and ran it again. in the earlier stages the same run found three weak tests, and they were tightened.</p>
 
-      <p>11 of the 16 breaks are caught by a single test, so the coverage is not deep. a mutation run like this only proves that the tests can fail. it says nothing about the cases nobody thought of.</p>
+      <p>18 of the 33 breaks are caught by a single test, so the coverage is not deep. a mutation run like this only proves that the tests can fail. it says nothing about the cases nobody thought of.</p>
 
       <h2><span class="hash">##</span>what it still can't do</h2>
 
       <p>IPv6 is the fixed 40-byte header only. extension headers are not walked and ICMPv6 is not parsed, so those packets print as <code>ip-proto-N</code>.</p>
 
-      <p>IP fragments are not reassembled, and neither are TCP streams. until stage 3, everything above the transport layer is read one segment at a time: a DNS-over-TCP message, an HTTP request or a ClientHello that spans segments is only partly seen.</p>
+      <p>IP fragments are not reassembled. TCP streams are, but only offline (read the result when the capture is done, not as it arrives), only the first megabyte of each, and with first-copy-wins for overlaps. another operating system may resolve an overlap the other way, and I cannot tell from a capture.</p>
+
+      <p>flows are TCP and UDP only. VLAN tags are not part of a flow's identity, and a connection that sits idle longer than the timeout is split in two. the <code>read</code> command still works one segment at a time, with the weaknesses shown above.</p>
 
       <p>ARP is Ethernet and IPv4 only. only the Ethernet link type is read; any other type is refused with a message. VLAN tags keep the VLAN id and drop the priority bits.</p>
 
@@ -469,7 +558,7 @@ host   = "\x07evil"</code></div>
 
       <p>and it has only ever seen traffic I generated. a real capture may show me things the tests do not cover.</p>
 
-      <p>next is stage 3: flow tracking and TCP stream reassembly, which should also fix the mid-stream <code>GET </code> problem.</p>
+      <p>next is stage 4: a filter language, so that <code>tcp and (port 80 or port 443) and not src host 10.0.0.1</code> selects packets.</p>
 
     </div>
   </article>
