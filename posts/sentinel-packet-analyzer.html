@@ -1,0 +1,588 @@
+<!doctype html>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>sentinel packet analyzer notes</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+<style>
+  :root{
+    --bg:#060607;
+    --panel:rgba(6,6,7,0.86);
+    --line:#1d1e20;
+    --text:#e9e6e0;
+    --text-dim:#8b8983;
+    --accent:#e8963f;
+    --accent-dim:#a5652a;
+    --accent-soft:#6b4a26;
+    --font-mono:'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
+    --font-sans:'IBM Plex Sans', system-ui, -apple-system, sans-serif;
+    --maxw:760px;
+  }
+  *{ box-sizing:border-box; }
+  html{ scroll-behavior:smooth; }
+  body{ margin:0; background:var(--bg); color:var(--text); font-family:var(--font-sans); font-size:16px; line-height:1.65; -webkit-font-smoothing:antialiased; }
+  a{ color:inherit; }
+  a:focus-visible, button:focus-visible{ outline:1px solid var(--accent); outline-offset:3px; }
+
+  #silk-bg{ position:fixed; inset:0; width:100vw; height:100vh; z-index:0; pointer-events:none; background:var(--bg); display:block; }
+
+  .wrap{ position:relative; z-index:1; max-width:var(--maxw); margin:0 auto; padding:40px 20px 56px; background:var(--panel); -webkit-backdrop-filter:blur(2px); backdrop-filter:blur(2px); }
+
+  header.topbar{ display:flex; flex-wrap:wrap; justify-content:space-between; align-items:baseline; gap:10px 20px; padding-bottom:16px; margin-bottom:36px; border-bottom:1px solid var(--line); font-family:var(--font-mono); }
+  .prompt{ font-size:1.05rem; }
+  .prompt .cash{ color:var(--accent); margin-right:8px; }
+  .prompt .name{ font-weight:700; }
+  header.topbar nav{ display:flex; gap:16px; flex-wrap:wrap; font-size:0.88rem; }
+  header.topbar nav a{ display:inline-block; user-select:none; text-decoration:none; color:var(--text-dim); }
+  header.topbar nav a:hover, header.topbar nav a:focus-visible{ color:var(--accent); }
+
+  .post-date{ font-family:var(--font-mono); font-size:0.8rem; color:var(--text-dim); margin:0 0 10px; }
+  .post-title{ font-family:var(--font-mono); font-size:clamp(1.5rem,4vw,2rem); font-weight:700; line-height:1.25; margin:0 0 32px; text-wrap:balance; }
+
+  .post-body p{ margin:0 0 16px; font-size:1rem; }
+  .post-body p:last-child{ margin-bottom:0; }
+
+  .post-body h2{ font-family:var(--font-mono); font-size:1.05rem; font-weight:700; margin:48px 0 18px; }
+  .post-body h2 .hash{ color:var(--accent-dim); margin-right:8px; }
+  .post-body h3{ font-family:var(--font-mono); font-size:0.92rem; font-weight:700; margin:32px 0 12px; color:var(--text); }
+  .post-body code{ font-family:var(--font-mono); font-size:0.88em; color:var(--accent); }
+  .post-body a{ color:var(--accent); text-decoration:underline; text-decoration-color:var(--accent-soft, #6b4a26); text-underline-offset:3px; }
+  .post-body a:hover{ text-decoration-color:var(--accent); }
+  .links{ font-family:var(--font-mono); font-size:0.88rem; }
+
+  .stats{ display:grid; grid-template-columns:repeat(3, 1fr); gap:1px; margin:32px 0; background:var(--line); border:1px solid var(--line); }
+  .stat{ background:rgba(6,6,7,0.94); padding:16px 14px; }
+  .stat b{ display:block; font-family:var(--font-mono); font-size:1.45rem; font-weight:700; color:var(--accent); line-height:1.2; }
+  @media (max-width:520px){ .stats{ grid-template-columns:repeat(2, 1fr); } }
+  .stat span{ display:block; margin-top:4px; font-size:0.82rem; color:var(--text-dim); line-height:1.4; }
+
+  figure{ margin:28px 0; }
+  figure img{ display:block; width:100%; height:auto; border:1px solid var(--line); border-radius:2px; background:#1a1d25; }
+  figcaption{ margin-top:8px; font-family:var(--font-mono); font-size:0.76rem; line-height:1.55; color:var(--text-dim); }
+  .pair{ display:grid; grid-template-columns:1fr 1fr; gap:12px; margin:28px 0; }
+  .pair figure{ margin:0; }
+  @media (max-width:640px){ .pair{ grid-template-columns:1fr; } }
+
+  .table-wrap{ overflow-x:auto; margin:24px 0; }
+  table.data{ width:100%; border-collapse:collapse; font-size:0.86rem; }
+  table.data th{ text-align:left; font-family:var(--font-mono); font-size:0.74rem; font-weight:500; color:var(--text-dim); padding:8px 12px 8px 0; border-bottom:1px solid var(--line); white-space:nowrap; }
+  table.data td{ padding:8px 12px 8px 0; border-bottom:1px solid var(--line); vertical-align:top; line-height:1.5; }
+  table.data .num{ text-align:right; font-family:var(--font-mono); font-variant-numeric:tabular-nums; white-space:nowrap; padding-right:0; padding-left:12px; }
+  table.data .dim, .dim{ color:var(--text-dim); }
+  table.data tr:last-child td{ border-bottom:none; }
+
+  .chart-wrap{ overflow-x:auto; margin:24px 0 8px; }
+  .chart{ display:block; width:100%; min-width:640px; height:auto; }
+  .chart .grid{ stroke:var(--line); stroke-width:1; }
+  .chart .lbl{ font-family:var(--font-mono); font-size:11.5px; fill:var(--text); }
+  .chart .tick{ font-family:var(--font-mono); font-size:10.5px; fill:var(--text-dim); }
+  .chart .val{ font-family:var(--font-mono); font-size:11px; fill:var(--text-dim); }
+  .chart .val.hot{ fill:var(--accent); }
+  .chart .val.dim{ fill:var(--text-dim); }
+  .chart .val.inside{ fill:var(--bg); font-weight:700; }
+  .chart .bar-before, .chart .key-before{ fill:#4a4844; }
+  .chart .bar-after, .chart .key-after{ fill:var(--accent); }
+  .chart .bar-never{ fill:#4a4844; stroke:var(--text-dim); stroke-dasharray:4 3; }
+  .chart .budget{ stroke:var(--text-dim); stroke-dasharray:4 4; }
+  .chart .line-brute{ fill:none; stroke:#b9b5ad; stroke-width:2; }
+  .chart .line-hash{ fill:none; stroke:var(--accent); stroke-width:2; }
+  .chart .dot-brute{ fill:#b9b5ad; }
+  .chart .dot-hash{ fill:var(--accent); }
+  .chart .key-line-brute{ stroke:#b9b5ad; stroke-width:2; }
+  .chart .key-line-hash{ stroke:var(--accent); stroke-width:2; }
+
+  .callout{ margin:28px 0; padding:14px 16px; border-left:2px solid var(--accent-dim); background:rgba(255,255,255,0.03); font-size:0.9rem; color:var(--text-dim); }
+  .callout p{ margin:0 0 10px; font-size:0.9rem; }
+  .callout p:last-child{ margin:0; }
+
+  .codeblock{ background:rgba(255,255,255,0.03); border:1px solid var(--line); border-radius:4px; padding:16px 18px; overflow-x:auto; margin:28px 0; }
+  .codeblock code{ font-family:var(--font-mono); font-size:0.85rem; color:var(--text); white-space:pre; line-height:1.6; }
+  .codeblock .cm{ color:var(--text-dim); }
+  .codeblock .kw{ color:var(--accent); }
+
+
+  .term{ background:rgba(255,255,255,0.03); border:1px solid var(--line); border-radius:4px; padding:16px 18px; overflow-x:auto; margin:28px 0 8px; }
+  .term pre{ margin:0; font-family:var(--font-mono); font-size:0.76rem; line-height:1.75; white-space:pre; color:var(--text); }
+  .term .pr, .term .ts, .term .dim{ color:var(--text-dim); }
+  .term .pr{ user-select:none; }
+  .term .fl{ color:var(--accent); }
+
+  .sizebar{ display:flex; height:30px; margin:24px 0 8px; font-family:var(--font-mono); font-size:0.74rem; }
+  .sizebar span{ display:block; padding:0 10px; line-height:30px; color:var(--bg); white-space:nowrap; overflow:hidden; }
+  .layer{ margin:26px 0 0; }
+  .layer-title{ display:flex; flex-wrap:wrap; gap:2px 12px; margin:0 0 10px; font-family:var(--font-mono); font-size:0.8rem; }
+  .layer-title b{ color:var(--c); font-weight:700; }
+  .layer-title span{ color:var(--text-dim); }
+  .fields{ display:flex; flex-wrap:wrap; gap:10px 8px; }
+  .fld{ display:flex; flex-direction:column; gap:3px; min-width:0; }
+  .fld .by{ font-family:var(--font-mono); font-size:0.8rem; padding:6px 8px; border:1px solid var(--c); border-radius:2px; background:rgba(255,255,255,0.03); white-space:nowrap; color:var(--text); }
+  .fld .lb{ font-family:var(--font-mono); font-size:0.66rem; letter-spacing:0.06em; text-transform:uppercase; color:var(--text-dim); }
+  .fld .vl{ font-family:var(--font-mono); font-size:0.72rem; color:var(--c); }
+  .post-body p.chain{ margin:26px 0 0; font-family:var(--font-mono); font-size:0.82rem; color:var(--text-dim); }
+  .post-body p.chain b{ color:var(--accent); font-weight:500; }
+
+  footer{ font-family:var(--font-mono); font-size:0.76rem; color:var(--text-dim); margin-top:48px; padding-top:16px; border-top:1px solid var(--line); display:flex; justify-content:space-between; gap:10px; flex-wrap:wrap; }
+
+  @media (prefers-reduced-motion: reduce){ *{ animation:none !important; transition:none !important; } }
+</style>
+
+<canvas id="silk-bg" aria-hidden="true"></canvas>
+
+<div class="wrap">
+  <header class="topbar">
+    <div class="prompt"><span class="cash">$</span><span class="name">Kaan Dinç</span></div>
+    <nav>
+      <a href="../blog">blog</a>
+      <a href="../">home</a>
+    </nav>
+  </header>
+
+<article>
+    <p class="post-date">Sep 2026</p>
+    <h1 class="post-title">writing a packet analyzer from scratch</h1>
+
+    <div class="post-body">
+      <p>Sentinel is a packet analyzer and, eventually, a rule-based intrusion detection system, written in Python from scratch. the protocol parsers are hand-written with <code>struct</code>: no Scapy, no dpkt, no pyshark. it reads pcap capture files and prints one line per packet, tcpdump style. it has no runtime dependencies.</p>
+
+      <p>this post is about stage 1 of 7 only: the pcap reader and writer, and parsers for Ethernet (with VLAN tags), ARP, IPv4, IPv6, TCP, UDP and ICMP. DNS, HTTP and TLS are stage 2. flow tracking, a filter language, the detectors (port scans, SYN floods, ARP spoofing, DNS tunneling), live capture and benchmarks come after that. none of that exists yet, and I say so where it matters.</p>
+
+      <p>I worked the same way as with Impulse: one stage at a time, and the next one does not start until the tests pass and ruff and strict mypy are clean. most of this post is about what the parsers do with bad input, and how I tried to prove they are right.</p>
+
+      <div class="stats">
+        <div class="stat"><b>0</b><span>runtime dependencies</span></div>
+        <div class="stat"><b>1 of 7</b><span>stages finished; this post covers only that one</span></div>
+        <div class="stat"><b>106</b><span>tests, ruff and strict mypy clean</span></div>
+        <div class="stat"><b>801</b><span>lines of source, backed by 1,205 lines of tests and generator</span></div>
+        <div class="stat"><b>5,059</b><span>broken packets decoded in the fuzz tests, 0 exceptions</span></div>
+        <div class="stat"><b>4</b><span>pcap variants read and written: two byte orders, two time units</span></div>
+      </div>
+
+      <h2><span class="hash">##</span>the rule I set first</h2>
+
+      <p>a packet analyzer reads bytes that anyone on the network can send. so the first rule is that a parser never raises on bad input: not on a truncated packet, not on a header that lies about its own length, not on random bytes. every parser returns a small dataclass instead, and they all share the same three fields.</p>
+
+      <div class="codeblock"><code><span class="kw">@dataclass</span>(frozen=<span class="kw">True</span>, slots=<span class="kw">True</span>, kw_only=<span class="kw">True</span>)
+<span class="kw">class</span> Layer:
+    <span class="cm">"""Base of every parse result. Parsers never raise.
+
+    `error` set: the header could not be parsed,
+        all other fields hold defaults and mean nothing.
+    `anomalies`: the header parsed, but something is off
+        (bad checksum, inconsistent length...).
+    `payload`: the bytes after this header, trimmed to
+        the length the header declares.
+    """</span>
+
+    payload: bytes = b<span class="cm">""</span>
+    error: str | <span class="kw">None</span> = <span class="kw">None</span>
+    anomalies: tuple[str, ...] = ()</code></div>
+
+      <p>two kinds of trouble are kept apart on purpose. an <code>error</code> means the header cannot be trusted at all: too short, the wrong IP version, a TCP data offset below 5. every other field is then a default and means nothing. an <code>anomaly</code> means the header parsed but something is off: a bad checksum, or a packet cut short by the capture's snap length. the packet is kept and the oddity is reported, because the IDS in stage 5 will want to see it, not lose it.</p>
+
+      <div>
+        <figure>
+          <div class="codeblock"><code><span class="cm"># parse_tcp(bytes(12))</span>
+Tcp(error='truncated tcp header: 12 of 20 bytes',
+    anomalies=(),
+    src_port=0, dst_port=0, seq=0, flags=0,
+    <span class="cm"># ...every other field is a default</span>)</code></div>
+          <figcaption>an error: nothing to trust, so nothing else is filled in.</figcaption>
+        </figure>
+        <figure>
+          <div class="codeblock"><code><span class="cm"># parse_tcp(segment, src=a, dst=b), one bit flipped</span>
+Tcp(error=<span class="kw">None</span>,
+    anomalies=('bad tcp checksum',),
+    src_port=1, dst_port=2, seq=3, flags=2,
+    <span class="cm"># ...every field parsed</span>)</code></div>
+          <figcaption>an anomaly: everything parsed, and the checksum is reported as wrong.</figcaption>
+        </figure>
+      </div>
+
+      <p>checksums need care. TCP and UDP checksums include a pseudo-header with the IP addresses, so those parsers only verify when they are given the addresses, and the decoder only gives them when the whole segment was captured. without that rule, a packet cut short by the snap length would report a bad checksum that is not real.</p>
+
+      <div class="codeblock"><code><span class="kw">def</span> _decode_l4(proto, payload, src, dst, complete):
+    <span class="cm"># Checksums are only checked when the whole L4 message was captured.</span>
+    s, d = (src, dst) <span class="kw">if</span> complete <span class="kw">else</span> (<span class="kw">None</span>, <span class="kw">None</span>)
+    <span class="kw">if</span> proto == PROTO_TCP:
+        <span class="kw">return</span> parse_tcp(payload, src=s, dst=d)
+    <span class="kw">if</span> proto == PROTO_UDP:
+        <span class="kw">return</span> parse_udp(payload, src=s, dst=d)
+    <span class="kw">if</span> proto == PROTO_ICMP <span class="kw">and</span> isinstance(src, IPv4Address):
+        <span class="kw">return</span> parse_icmp(payload, verify_checksum=complete)
+    <span class="kw">return</span> <span class="kw">None</span></code></div>
+
+      <p>there is one known false positive I have not solved. captures taken on the sending machine often show bad TCP checksums, because the network card fills them in later (checksum offload). those packets are reported as anomalies, not errors, so a detector can choose to ignore them.</p>
+
+      <h2><span class="hash">##</span>what it looks like</h2>
+
+      <p><code>tools/gen_pcap.py</code> builds a small pcap with the project's own writer, covering every protocol above. reading it back:</p>
+
+      <div class="term"><pre><span class="pr">$ python -m sentinel read demo.pcap
+</span><span class="ts">2023-11-14 22:13:20.000000</span> ARP, Request who-has 10.0.0.2 tell 10.0.0.1, <span class="dim">length 28</span>
+<span class="ts">2023-11-14 22:13:20.001000</span> ARP, Reply 10.0.0.2 is-at 02:00:00:00:00:02, <span class="dim">length 28</span>
+<span class="ts">2023-11-14 22:13:20.002000</span> IP 10.0.0.1 &gt; 10.0.0.2: ICMP echo request, id 1, seq 1, <span class="dim">length 40</span>
+<span class="ts">2023-11-14 22:13:20.003000</span> IP 10.0.0.2 &gt; 10.0.0.1: ICMP echo reply, id 1, seq 1, <span class="dim">length 40</span>
+<span class="ts">2023-11-14 22:13:20.004000</span> IP 10.0.0.2 &gt; 10.0.0.1: ICMP destination unreachable, code 3, <span class="dim">length 36</span>
+<span class="ts">2023-11-14 22:13:20.005000</span> IP 10.0.0.1.40000 &gt; 10.0.0.2.80: <span class="fl">Flags [S]</span>, seq 1000, win 64240, options [mss 1460,sackOK,TS val 1000 ecr 0,nop,wscale 7], <span class="dim">length 0</span>
+<span class="ts">2023-11-14 22:13:20.006000</span> IP 10.0.0.2.80 &gt; 10.0.0.1.40000: <span class="fl">Flags [S.]</span>, seq 5000, ack 1001, win 64240, options [mss 1460,sackOK,TS val 1000 ecr 0,nop,wscale 7], <span class="dim">length 0</span>
+<span class="ts">2023-11-14 22:13:20.007000</span> IP 10.0.0.1.40000 &gt; 10.0.0.2.80: <span class="fl">Flags [.]</span>, seq 1001, ack 5001, win 64240, <span class="dim">length 0</span>
+<span class="ts">2023-11-14 22:13:20.008000</span> IP 10.0.0.1.40000 &gt; 10.0.0.2.80: <span class="fl">Flags [P.]</span>, seq 1001, ack 5001, win 64240, <span class="dim">length 38</span>
+<span class="ts">2023-11-14 22:13:20.009000</span> IP 10.0.0.1.40000 &gt; 10.0.0.2.80: <span class="fl">Flags [F.]</span>, seq 1041, ack 5001, win 64240, <span class="dim">length 0</span>
+<span class="ts">2023-11-14 22:13:20.010000</span> IP 10.0.0.1.53000 &gt; 10.0.0.2.53: UDP, <span class="dim">length 29</span>
+<span class="ts">2023-11-14 22:13:20.011000</span> vlan 100, IP 10.0.0.1.53001 &gt; 10.0.0.2.53: UDP, <span class="dim">length 29</span>
+<span class="ts">2023-11-14 22:13:20.012000</span> IP6 2001:db8::1.41000 &gt; 2001:db8::2.443: <span class="fl">Flags [S]</span>, seq 1, win 65535, <span class="dim">length 0</span>
+<span class="ts">2023-11-14 22:13:20.013000</span> IP6 2001:db8::1.53002 &gt; 2001:db8::2.53: UDP, <span class="dim">length 29</span></pre></div>
+      <p class="dim" style="font-size:0.76rem; font-family:var(--font-mono); margin-top:8px;">14 packets: an ARP request and reply, three ICMP messages, a TCP connection from SYN to FIN with one request in it, a UDP packet, the same UDP packet inside a VLAN tag, and IPv6 TCP and UDP. timestamps are UTC, so the output does not depend on the machine's time zone.</p>
+
+      <h2><span class="hash">##</span>anatomy of a packet</h2>
+
+      <p>the SYN from that capture is 74 bytes: 14 of Ethernet, 20 of IPv4, 20 of fixed TCP header and 20 bytes of TCP options. each parser reads its own header, checks every length before it reads, and passes the remaining bytes on. <code>decode()</code> returns the layers as a tuple and stops at the first layer that has an error.</p>
+
+      <div class="sizebar" role="img" aria-label="The frame is 14 bytes of Ethernet, 20 bytes of IPv4, 20 bytes of TCP and 20 bytes of TCP options.">
+        <span style="flex:14;background:#8b8983">14</span>
+        <span style="flex:20;background:#b9b5ad">20</span>
+        <span style="flex:20;background:#e8963f">20</span>
+        <span style="flex:20;background:#a5652a">20</span>
+      </div>
+
+      <div class="layer" style="--c:#8b8983"><div class="layer-title"><b>ethernet</b><span>14 bytes</span></div><div class="fields"><div class="fld"><span class="by">02 00 00 00 00 02</span><span class="lb">dst mac</span><span class="vl">02:00:00:00:00:02</span></div><div class="fld"><span class="by">02 00 00 00 00 01</span><span class="lb">src mac</span><span class="vl">02:00:00:00:00:01</span></div><div class="fld"><span class="by">08 00</span><span class="lb">ethertype</span><span class="vl">IPv4</span></div></div></div>
+        <div class="layer" style="--c:#b9b5ad"><div class="layer-title"><b>ipv4</b><span>20 bytes</span></div><div class="fields"><div class="fld"><span class="by">45</span><span class="lb">version, ihl</span><span class="vl">4, 20 bytes</span></div><div class="fld"><span class="by">00</span><span class="lb">tos</span><span class="vl">0</span></div><div class="fld"><span class="by">00 3c</span><span class="lb">total length</span><span class="vl">60</span></div><div class="fld"><span class="by">00 01</span><span class="lb">ident</span><span class="vl">1</span></div><div class="fld"><span class="by">40 00</span><span class="lb">flags, frag</span><span class="vl">DF</span></div><div class="fld"><span class="by">40</span><span class="lb">ttl</span><span class="vl">64</span></div><div class="fld"><span class="by">06</span><span class="lb">protocol</span><span class="vl">TCP</span></div><div class="fld"><span class="by">26 b9</span><span class="lb">checksum</span><span class="vl">valid</span></div><div class="fld"><span class="by">0a 00 00 01</span><span class="lb">src</span><span class="vl">10.0.0.1</span></div><div class="fld"><span class="by">0a 00 00 02</span><span class="lb">dst</span><span class="vl">10.0.0.2</span></div></div></div>
+        <div class="layer" style="--c:#e8963f"><div class="layer-title"><b>tcp</b><span>20 bytes fixed header</span></div><div class="fields"><div class="fld"><span class="by">9c 40</span><span class="lb">src port</span><span class="vl">40000</span></div><div class="fld"><span class="by">00 50</span><span class="lb">dst port</span><span class="vl">80</span></div><div class="fld"><span class="by">00 00 03 e8</span><span class="lb">seq</span><span class="vl">1000</span></div><div class="fld"><span class="by">00 00 00 00</span><span class="lb">ack</span><span class="vl">0</span></div><div class="fld"><span class="by">a0</span><span class="lb">data offset</span><span class="vl">10 words</span></div><div class="fld"><span class="by">02</span><span class="lb">flags</span><span class="vl">SYN</span></div><div class="fld"><span class="by">fa f0</span><span class="lb">window</span><span class="vl">64240</span></div><div class="fld"><span class="by">94 ac</span><span class="lb">checksum</span><span class="vl">valid</span></div><div class="fld"><span class="by">00 00</span><span class="lb">urgent</span><span class="vl">0</span></div></div></div>
+        <div class="layer" style="--c:#a5652a"><div class="layer-title"><b>tcp options</b><span>20 bytes: kind, length, data</span></div><div class="fields"><div class="fld"><span class="by">02 04 05 b4</span><span class="lb">kind 2</span><span class="vl">mss 1460</span></div><div class="fld"><span class="by">04 02</span><span class="lb">kind 4</span><span class="vl">sack permitted</span></div><div class="fld"><span class="by">08 0a 00 00 03 e8 00 00 00 00</span><span class="lb">kind 8</span><span class="vl">timestamps</span></div><div class="fld"><span class="by">01</span><span class="lb">kind 1</span><span class="vl">nop</span></div><div class="fld"><span class="by">03 03 07</span><span class="lb">kind 3</span><span class="vl">window scale 7</span></div></div></div>
+
+      <p class="chain">decode(frame) returns <b>(Ethernet, IPv4, Tcp)</b></p>
+      <p class="dim" style="font-size:0.76rem; font-family:var(--font-mono); margin-top:8px;">every byte is copied from the generated packet. the checksums read "valid" because the parsers verified them.</p>
+
+      <p>the options are the part to be careful with. each one is a kind, a length and data, and the length comes from the packet. a length below 2, or one that runs past the end of the options, ends the walk and is reported as an anomaly. it never raises.</p>
+
+      <h2><span class="hash">##</span>the capture file</h2>
+
+      <p>a classic pcap file starts with a 24-byte global header, and every packet has a 16-byte record header in front of it. the first four bytes, the magic number, say two things at once: the byte order the file was written in, and whether timestamps are in microseconds or nanoseconds. so there are four variants, and the reader and the writer handle all of them.</p>
+
+      <div class="layer" style="--c:#8b8983"><div class="layer-title"><b>global header</b><span>24 bytes, once per file</span></div><div class="fields" style="--c:#8b8983"><div class="fld"><span class="by">d4 c3 b2 a1</span><span class="lb">magic</span><span class="vl">little-endian, µs</span></div><div class="fld"><span class="by">02 00</span><span class="lb">major</span><span class="vl">2</span></div><div class="fld"><span class="by">04 00</span><span class="lb">minor</span><span class="vl">4</span></div><div class="fld"><span class="by">00 00 00 00</span><span class="lb">time zone</span><span class="vl">0</span></div><div class="fld"><span class="by">00 00 00 00</span><span class="lb">sigfigs</span><span class="vl">0</span></div><div class="fld"><span class="by">00 00 04 00</span><span class="lb">snaplen</span><span class="vl">262144</span></div><div class="fld"><span class="by">01 00 00 00</span><span class="lb">link type</span><span class="vl">Ethernet</span></div></div></div>
+      <div class="layer" style="--c:#b9b5ad"><div class="layer-title"><b>record header</b><span>16 bytes, before every packet</span></div><div class="fields" style="--c:#b9b5ad"><div class="fld"><span class="by">00 f1 53 65</span><span class="lb">seconds</span><span class="vl">1700000000</span></div><div class="fld"><span class="by">00 00 00 00</span><span class="lb">microseconds</span><span class="vl">0</span></div><div class="fld"><span class="by">3c 00 00 00</span><span class="lb">captured length</span><span class="vl">60</span></div><div class="fld"><span class="by">3c 00 00 00</span><span class="lb">original length</span><span class="vl">60</span></div></div></div>
+
+      <div class="table-wrap"><table class="data">
+        <thead><tr><th>first 4 bytes on disk</th><th>byte order</th><th>timestamp unit</th></tr></thead>
+        <tbody>
+          <tr><td><code>d4 c3 b2 a1</code></td><td>little-endian</td><td>microseconds</td></tr>
+          <tr><td><code>a1 b2 c3 d4</code></td><td>big-endian</td><td>microseconds</td></tr>
+          <tr><td><code>4d 3c b2 a1</code></td><td>little-endian</td><td>nanoseconds</td></tr>
+          <tr><td><code>a1 b2 3c 4d</code></td><td>big-endian</td><td>nanoseconds</td></tr>
+        </tbody>
+      </table></div>
+
+      <p>inside the program a timestamp is an integer number of nanoseconds. floats would round and break exact round trips. a microsecond file drops the last three digits on write, and a test pins that down.</p>
+
+      <p>the reader streams from the file instead of loading it. the captured-length field in each record comes from the file, so it is capped at 262,144 bytes (libpcap's own limit) before anything is read, and a corrupt value cannot make it try to read gigabytes. a corrupt or cut-off record raises <code>PcapError</code> only after every earlier packet has been yielded, so the command prints the good packets, then the error, and exits with 1. this is the one place that raises, because a broken file is not a packet.</p>
+
+      <h2><span class="hash">##</span>seven stages</h2>
+
+      <div class="table-wrap"><table class="data">
+        <thead><tr><th>stage</th><th>what it adds</th><th>state</th></tr></thead>
+        <tbody>
+          <tr><td>1</td><td>pcap reader and writer, Ethernet, ARP, IPv4, IPv6, TCP, UDP, ICMP parsers, command line summary</td><td class="dim">done, this post</td></tr>
+          <tr><td>2</td><td>DNS, plaintext HTTP, TLS ClientHello (server name, versions, cipher list)</td><td class="dim">next</td></tr>
+          <tr><td>3</td><td>flow tracking, TCP stream reassembly (out of order, retransmitted), per-flow statistics</td><td class="dim">planned</td></tr>
+          <tr><td>4</td><td>a filter language like <code>tcp and (port 80 or port 443) and not src host 10.0.0.1</code></td><td class="dim">planned</td></tr>
+          <tr><td>5</td><td>IDS engine: port scan, SYN flood, ARP spoofing, DNS tunneling, rule config, JSON alerts</td><td class="dim">planned</td></tr>
+          <tr><td>6</td><td>live capture on Linux, feeding the same pipeline</td><td class="dim">planned</td></tr>
+          <tr><td>7</td><td>benchmarks, fuzz tests, CI</td><td class="dim">planned</td></tr>
+        </tbody>
+      </table></div>
+
+      <h2><span class="hash">##</span>the numbers</h2>
+
+      <div class="chart-wrap"><svg class="chart" viewBox="0 0 720 340" role="img" aria-labelledby="c1t c1d"><title id="c1t">Tests per test file</title><desc id="c1d">106 tests in total. test_pcap: 25; test_ipv4: 14; test_tcp: 13; test_udp: 11; test_decode: 10; test_cli: 9; test_ethernet: 8; test_ipv6: 6; test_arp: 5; test_icmp: 5.</desc><line class="grid" x1="170" y1="12" x2="170" y2="300"/><text class="tick" x="170" y="318" text-anchor="middle">0</text><line class="grid" x1="274" y1="12" x2="274" y2="300"/><text class="tick" x="274" y="318" text-anchor="middle">5</text><line class="grid" x1="378" y1="12" x2="378" y2="300"/><text class="tick" x="378" y="318" text-anchor="middle">10</text><line class="grid" x1="482" y1="12" x2="482" y2="300"/><text class="tick" x="482" y="318" text-anchor="middle">15</text><line class="grid" x1="586" y1="12" x2="586" y2="300"/><text class="tick" x="586" y="318" text-anchor="middle">20</text><line class="grid" x1="690" y1="12" x2="690" y2="300"/><text class="tick" x="690" y="318" text-anchor="middle">25</text><text class="lbl" x="158" y="35" text-anchor="end">test_pcap</text><rect class="bar-after" x="170" y="24" width="520" height="14"/><text class="val hot" x="698" y="35">25</text><text class="lbl" x="158" y="63" text-anchor="end">test_ipv4</text><rect class="bar-after" x="170" y="52" width="291.2" height="14"/><text class="val hot" x="469.2" y="63">14</text><text class="lbl" x="158" y="91" text-anchor="end">test_tcp</text><rect class="bar-after" x="170" y="80" width="270.4" height="14"/><text class="val hot" x="448.4" y="91">13</text><text class="lbl" x="158" y="119" text-anchor="end">test_udp</text><rect class="bar-after" x="170" y="108" width="228.8" height="14"/><text class="val hot" x="406.8" y="119">11</text><text class="lbl" x="158" y="147" text-anchor="end">test_decode</text><rect class="bar-after" x="170" y="136" width="208" height="14"/><text class="val hot" x="386" y="147">10</text><text class="lbl" x="158" y="175" text-anchor="end">test_cli</text><rect class="bar-after" x="170" y="164" width="187.2" height="14"/><text class="val hot" x="365.2" y="175">9</text><text class="lbl" x="158" y="203" text-anchor="end">test_ethernet</text><rect class="bar-after" x="170" y="192" width="166.4" height="14"/><text class="val hot" x="344.4" y="203">8</text><text class="lbl" x="158" y="231" text-anchor="end">test_ipv6</text><rect class="bar-after" x="170" y="220" width="124.8" height="14"/><text class="val hot" x="302.8" y="231">6</text><text class="lbl" x="158" y="259" text-anchor="end">test_arp</text><rect class="bar-after" x="170" y="248" width="104" height="14"/><text class="val hot" x="282" y="259">5</text><text class="lbl" x="158" y="287" text-anchor="end">test_icmp</text><rect class="bar-after" x="170" y="276" width="104" height="14"/><text class="val hot" x="282" y="287">5</text></svg></div>
+      <p class="dim" style="font-size:0.8rem; font-family:var(--font-mono);">tests per file. 106 in total.</p>
+
+      <p>each parser is tested with a valid packet, a truncated one, a malformed header (where the format has one) and random bytes. on top of that, three kinds of fuzzing run against the whole decoder, with fixed random seeds so a failure can be reproduced exactly:</p>
+
+      <div class="table-wrap"><table class="data">
+        <thead><tr><th>fuzz</th><th>what it does</th><th class="num">inputs</th></tr></thead>
+        <tbody>
+          <tr><td>truncation</td><td>every prefix of each of the 14 generated packets, through the decoder and the summary printer</td><td class="num">1,023</td></tr>
+          <tr><td>corruption</td><td>every byte of each generated packet set to 0, 255 and two random values, one byte at a time</td><td class="num">4,036</td></tr>
+          <tr><td>random bytes</td><td>500 seeded random strings of 0 to 200 bytes plus 9 all-zero or all-255 ones, into every parser, and into the decoder behind four ethertypes</td><td class="num">509 per parser</td></tr>
+          <tr><td>capture files</td><td>every prefix of a 191-byte valid pcap, and every byte of it replaced once. the reader may only ever raise <code>PcapError</code></td><td class="num">192 + 191</td></tr>
+        </tbody>
+      </table></div>
+
+      <p>I did not measure speed. benchmarks are stage 7, and a number from now would describe code that is going to change.</p>
+
+      <div class="callout">
+        <p>how to read these numbers: all traffic is synthetic, made by my own generator. that is a rule of the project, no real captures from other networks. so the fuzzing shows the parsers do not raise on bad input, not that they agree with every odd thing a real network does. one machine, Windows 11, Python 3.13. the project targets 3.12 and up, but I have only run it on 3.13.</p>
+      </div>
+
+      <h2><span class="hash">##</span>how I checked it's right</h2>
+
+      <p>the test packets come from builders in the generator, and the generator uses the same checksum function as the parsers. a bug in that function would cancel itself out. so wherever I could, the tests compare against something written separately:</p>
+
+      <div class="table-wrap"><table class="data">
+        <thead><tr><th>claim</th><th>what it is checked against</th></tr></thead>
+        <tbody>
+          <tr><td>IPv4 checksum</td><td>a textbook header with a known checksum (<code>0xb861</code>), independent of my builders</td></tr>
+          <tr><td>TCP checksum</td><td>a plain sum written separately in the test, over a pseudo-header laid out by hand</td></tr>
+          <tr><td>field extraction</td><td>one hand-written hex packet per protocol, not made by my builders</td></tr>
+          <tr><td>pcap reader</td><td>a big-endian file built by hand with <code>struct</code>, without my writer</td></tr>
+          <tr><td>round trip</td><td>all four variants, write then read, packets identical</td></tr>
+          <tr><td>command output</td><td>the 14 lines above, read through by eye once and kept as a golden test; running it twice gives the same text</td></tr>
+        </tbody>
+      </table></div>
+
+      <p>that already paid off once. I worked out the ICMP checksum of an 8-byte echo request header by hand and got <code>0xf7ff</code>. the test failed, and the parser was right: <code>0x0800 + 0x0001 + 0x0001 = 0x0802</code>, so the checksum is <code>0xf7fd</code>. my arithmetic was the bug.</p>
+
+      <p>unlike with Impulse, I have not sabotaged the parsers on purpose yet to see whether the tests notice. a test that has never failed hasn't proven much, so that is on the list.</p>
+
+      <h2><span class="hash">##</span>what it still can't do</h2>
+
+      <p>IPv6 is the fixed 40-byte header only. extension headers are not walked and ICMPv6 is not parsed, so those packets print as <code>ip-proto-N</code>.</p>
+
+      <p>IP fragments are not reassembled. a fragment is decoded down to its IP header and no further.</p>
+
+      <p>ARP is Ethernet and IPv4 only. only the Ethernet link type is read; any other type is refused with a message. VLAN tags keep the VLAN id and drop the priority bits.</p>
+
+      <p>the printed timestamps have microsecond precision, so a nanosecond file loses its last three digits on screen (not in memory).</p>
+
+      <p>and it has only ever seen traffic I generated. a real capture may show me things the tests do not cover.</p>
+
+      <p>next is stage 2: DNS, plaintext HTTP, and the TLS ClientHello.</p>
+
+    </div>
+  </article>
+
+
+  <footer>
+    <span>Kaan Dinç</span>
+    <span>Çanakkale, Turkey</span>
+  </footer>
+</div>
+
+<script>
+(function(){
+  var canvas = document.getElementById('silk-bg');
+  var gl = canvas.getContext('webgl') || canvas.getContext('experimental-webgl');
+  var reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  if (!gl) return;
+
+  var VERT = 'attribute vec2 aPos;\nvarying vec2 vUv;\nvoid main(){\n  vUv = aPos * 0.5 + 0.5;\n  gl_Position = vec4(aPos, 0.0, 1.0);\n}';
+
+  var FRAG = [
+    '#ifdef GL_ES',
+    'precision mediump float;',
+    '#endif',
+    'varying vec2 vUv;',
+    'uniform float uTime;',
+    'uniform vec3 uColor;',
+    'uniform float uSpeed;',
+    'uniform float uScale;',
+    'uniform float uRotation;',
+    'uniform float uNoiseIntensity;',
+    'uniform float uLightMode;',
+    'const float e = 2.71828182845904523536;',
+    'float noise(vec2 texCoord){',
+    '  float G = e;',
+    '  vec2 r = (G * sin(G * texCoord));',
+    '  return fract(r.x * r.y * (1.0 + texCoord.x));',
+    '}',
+    'vec2 rotateUvs(vec2 uv, float angle){',
+    '  float c = cos(angle);',
+    '  float s = sin(angle);',
+    '  mat2 rot = mat2(c, -s, s, c);',
+    '  return rot * uv;',
+    '}',
+    'void main(){',
+    '  float rnd = noise(gl_FragCoord.xy);',
+    '  vec2 uv = rotateUvs(vUv * uScale, uRotation);',
+    '  vec2 tex = uv * uScale;',
+    '  float tOffset = uSpeed * uTime;',
+    '  tex.y += 0.03 * sin(8.0 * tex.x - tOffset);',
+    '  float pattern = 0.6 + 0.4 * sin(5.0 * (tex.x + tex.y + cos(3.0 * tex.x + 5.0 * tex.y) + 0.02 * tOffset) + sin(20.0 * (tex.x + tex.y - 0.1 * tOffset)));',
+    '  float grain = rnd / 15.0 * uNoiseIntensity;',
+    '  vec3 result = uColor * pattern - vec3(grain);',
+    '  if (uLightMode > 0.5) {',
+    '    float fold = smoothstep(0.28, 0.9, pattern);',
+    '    float specular = smoothstep(0.72, 0.98, pattern);',
+    '    vec3 shadowColor = uColor * 0.72;',
+    '    vec3 bodyColor = min(uColor * 1.18, vec3(1.0));',
+    '    vec3 lightBase = mix(shadowColor, bodyColor, fold);',
+    '    lightBase = mix(lightBase, vec3(1.0), specular * 0.92);',
+    '    float fineNoise = noise(gl_FragCoord.xy * 0.63 + vec2(17.0, 41.0));',
+    '    float grainSignal = (rnd + fineNoise - 1.0);',
+    '    float grainStrength = clamp(uNoiseIntensity * 0.038, 0.0, 0.16);',
+    '    result = lightBase + grainSignal * grainStrength;',
+    '  }',
+    '  gl_FragColor = vec4(clamp(result, 0.0, 1.0), 1.0);',
+    '}'
+  ].join('\n');
+
+  function compile(type, src){
+    var s = gl.createShader(type);
+    gl.shaderSource(s, src);
+    gl.compileShader(s);
+    return s;
+  }
+
+  var prog = gl.createProgram();
+  gl.attachShader(prog, compile(gl.VERTEX_SHADER, VERT));
+  gl.attachShader(prog, compile(gl.FRAGMENT_SHADER, FRAG));
+  gl.linkProgram(prog);
+  gl.useProgram(prog);
+
+  var quad = new Float32Array([-1, -1, 3, -1, -1, 3]);
+  var buf = gl.createBuffer();
+  gl.bindBuffer(gl.ARRAY_BUFFER, buf);
+  gl.bufferData(gl.ARRAY_BUFFER, quad, gl.STATIC_DRAW);
+  var aPos = gl.getAttribLocation(prog, 'aPos');
+  gl.enableVertexAttribArray(aPos);
+  gl.vertexAttribPointer(aPos, 2, gl.FLOAT, false, 0, 0);
+
+  var uTime = gl.getUniformLocation(prog, 'uTime');
+  var uColor = gl.getUniformLocation(prog, 'uColor');
+  var uSpeed = gl.getUniformLocation(prog, 'uSpeed');
+  var uScale = gl.getUniformLocation(prog, 'uScale');
+  var uRotation = gl.getUniformLocation(prog, 'uRotation');
+  var uNoiseIntensity = gl.getUniformLocation(prog, 'uNoiseIntensity');
+  var uLightMode = gl.getUniformLocation(prog, 'uLightMode');
+
+  function hexToRgb(hex){
+    hex = hex.replace('#', '');
+    return [parseInt(hex.slice(0,2),16)/255, parseInt(hex.slice(2,4),16)/255, parseInt(hex.slice(4,6),16)/255];
+  }
+
+  var col = hexToRgb('#7B7481');
+  gl.uniform3f(uColor, col[0], col[1], col[2]);
+  gl.uniform1f(uSpeed, 5);
+  gl.uniform1f(uScale, 0.8);
+  gl.uniform1f(uRotation, 0);
+  gl.uniform1f(uNoiseIntensity, 3.4);
+  gl.uniform1f(uLightMode, 0);
+
+  var time = 0, lastT = 0;
+
+  function resize(){
+    var DPR = Math.min(window.devicePixelRatio || 1, 2);
+    var W = window.innerWidth, H = window.innerHeight;
+    canvas.width = Math.floor(W * DPR);
+    canvas.height = Math.floor(H * DPR);
+    canvas.style.width = W + 'px';
+    canvas.style.height = H + 'px';
+    gl.viewport(0, 0, canvas.width, canvas.height);
+    draw();
+  }
+
+  function draw(){
+    gl.uniform1f(uTime, time);
+    gl.drawArrays(gl.TRIANGLES, 0, 3);
+  }
+
+  function frame(ts){
+    var delta = lastT ? (ts - lastT) / 1000 : 0;
+    lastT = ts;
+    time += 0.1 * delta;
+    draw();
+    requestAnimationFrame(frame);
+  }
+
+  window.addEventListener('resize', resize);
+  resize();
+  if (!reduceMotion) requestAnimationFrame(frame);
+})();
+</script>
+
+<script>
+(function(){
+  // Ported from AsciiGlitchRipple (React Bits style hover component) to vanilla JS.
+  if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+
+  var CHARS = '.,·-─~+:;=*π""┐┌┘┴┬╗╔╝╚╬╠╣╩╦║░▒▓█▄▀▌▐■!?&#$@0123456789*';
+  var WAVE_THRESH = 3, CHAR_MULT = 3, ANIM_STEP = 40, WAVE_BUF = 5, DUR = 1000;
+
+  function attach(el){
+    var origTxt = el.textContent;
+    var origChars = origTxt.split('');
+    var waves = [];
+    var animId = null, isAnim = false, isHover = false, cursorPos = 0, lockedWidth = null;
+
+    function updateCursorPos(e){
+      var rect = el.getBoundingClientRect();
+      var x = e.clientX - rect.left;
+      var len = origChars.length;
+      var pos = Math.round((x / rect.width) * len);
+      cursorPos = Math.max(0, Math.min(pos, len - 1));
+    }
+
+    function stop(){
+      el.textContent = origTxt;
+      if (lockedWidth !== null){ el.style.width = ''; lockedWidth = null; }
+      isAnim = false;
+      if (animId){ cancelAnimationFrame(animId); animId = null; }
+    }
+
+    function waveAt(charIdx, t){
+      var shouldAnim = false, resultChar = origChars[charIdx];
+      for (var w = 0; w < waves.length; w++){
+        var wave = waves[w];
+        var age = t - wave.startTime;
+        var prog = Math.min(age / DUR, 1);
+        var dist = Math.abs(charIdx - wave.startPos);
+        var maxDist = Math.max(wave.startPos, origChars.length - wave.startPos - 1);
+        var rad = prog * (maxDist + WAVE_BUF);
+        if (dist <= rad){
+          shouldAnim = true;
+          var intens = Math.max(0, rad - dist);
+          if (intens <= WAVE_THRESH && intens > 0){
+            resultChar = CHARS[(dist * CHAR_MULT + Math.floor(age / ANIM_STEP)) % CHARS.length];
+          }
+        }
+      }
+      return { shouldAnim: shouldAnim, ch: resultChar };
+    }
+
+    function scrambledText(t){
+      var out = '';
+      for (var i = 0; i < origChars.length; i++){
+        var ch = origChars[i];
+        if (ch === ' '){ out += ' '; continue; }
+        var res = waveAt(i, t);
+        out += res.shouldAnim ? res.ch : ch;
+      }
+      return out;
+    }
+
+    function animate(){
+      var t = Date.now();
+      waves = waves.filter(function(w){ return t - w.startTime < DUR; });
+      if (waves.length === 0){ stop(); return; }
+      el.textContent = scrambledText(t);
+      animId = requestAnimationFrame(animate);
+    }
+
+    function start(){
+      if (isAnim) return;
+      if (lockedWidth === null){
+        lockedWidth = el.getBoundingClientRect().width;
+        el.style.width = lockedWidth + 'px';
+      }
+      isAnim = true;
+      animId = requestAnimationFrame(animate);
+    }
+
+    function startWave(){
+      waves.push({ startPos: cursorPos, startTime: Date.now() });
+      if (!isAnim) start();
+    }
+
+    el.addEventListener('mouseenter', function(e){ isHover = true; updateCursorPos(e); startWave(); });
+    el.addEventListener('mousemove', function(e){
+      if (!isHover) return;
+      var old = cursorPos;
+      updateCursorPos(e);
+      if (cursorPos !== old) startWave();
+    });
+    el.addEventListener('mouseleave', function(){ isHover = false; });
+  }
+
+  var targets = document.querySelectorAll('header.topbar nav a');
+  for (var i = 0; i < targets.length; i++) attach(targets[i]);
+})();
+</script>
