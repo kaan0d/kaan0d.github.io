@@ -178,15 +178,15 @@
     <div class="post-body">
       <p>the <a href="sentinel-packet-analyzer">first post</a> ended with seven finished stages and a list called "what it still can't do". Sentinel worked, but it had only ever seen traffic I generated myself, and it could not open the files people actually have. so I am taking it to the next level: this post is the sequel, and each stage in it goes after one item of that list, the one that matters most first.</p>
 
-      <p>the rules are the same as before. one stage at a time, tests and ruff and strict mypy clean before the next one, a sabotage run, and a plain note about what I could not check. this post grows a section per stage. it has one so far.</p>
+      <p>the rules are the same as before. one stage at a time, tests and ruff and strict mypy clean before the next one, a sabotage run, and a plain note about what I could not check. this post grows a section per stage. it has two so far.</p>
 
       <div class="stats">
         <div class="stat"><b>2</b><span>capture file formats read: classic pcap and pcapng, picked by the first four bytes</span></div>
-        <div class="stat"><b>727</b><span>tests, 107 of them new (6 more need Linux and root), ruff and strict mypy clean</span></div>
-        <div class="stat"><b>57 of 57</b><span>new deliberate one-line breaks caught by the tests (253 of 253 in all)</span></div>
-        <div class="stat"><b>183</b><span>lines for the whole pcapng reader, no dependencies</span></div>
-        <div class="stat"><b>3,000,000</b><span>damaged packets and capture files through the fuzzer, half of the files pcapng, 0 failures</span></div>
-        <div class="stat"><b>2,256</b><span>packets that an independent pcapng library and my reader agree on, both directions</span></div>
+        <div class="stat"><b>796</b><span>tests, 176 of them new in this post (6 more need Linux and root), ruff and strict mypy clean</span></div>
+        <div class="stat"><b>103 of 103</b><span>new deliberate one-line breaks caught by the tests (299 of 299 in all)</span></div>
+        <div class="stat"><b>68,756</b><span>field values compared with Wireshark's tshark on 10 captures, 6 of them public: no difference left unexplained</span></div>
+        <div class="stat"><b>6,000,000</b><span>damaged packets and capture files through the fuzzer in two runs, half of the files pcapng, 0 failures</span></div>
+        <div class="stat"><b>3</b><span>bugs in Sentinel found by other people's captures, and fixed</span></div>
       </div>
 
       <h2><span class="hash">##</span>stage 8: the file people actually have</h2>
@@ -290,7 +290,7 @@ ts_ns += interface.offset_ns
         </tbody>
       </table></div>
 
-      <p>it agreed on every packet. the attempts that failed while I wrote the check failed on how to call their writer (it refuses an empty packet, for one), not on the reader. what this does not show: I have no file written by Wireshark itself here, so a habit that only Wireshark has is not covered. stage 9 is meant to close that.</p>
+      <p>it agreed on every packet. the attempts that failed while I wrote the check failed on how to call their writer (it refuses an empty packet, for one), not on the reader. what this does not show, at this stage: I had no file written by Wireshark itself, so a habit that only Wireshark has was not covered. stage 9 below closes that.</p>
 
       <h3 class="sub">the fuzzer learned a second format</h3>
 
@@ -300,19 +300,19 @@ ts_ns += interface.offset_ns
 
       <h3 class="sub">breaking it on purpose</h3>
 
-      <p>the sabotage run has 57 new breaks for this stage, one line each: the byte order read from the wrong place, a block length that is not a multiple of four let through, base 2 read as base 10, an offset subtracted instead of added, an option that is not padded, an off-by-one on the interface number, and so on. all 57 are caught, and the 196 from stages 1 to 7 still are, so 253 of 253. 25 of the new breaks are caught by a single test.</p>
+      <p>the sabotage run has 57 new breaks for this stage, one line each: the byte order read from the wrong place, a block length that is not a multiple of four let through, base 2 read as base 10, an offset subtracted instead of added, an option that is not padded, an off-by-one on the interface number, and so on. all 57 are caught, and the 196 from stages 1 to 7 still were, so 253 of 253. 25 of the new breaks are caught by a single test.</p>
 
       <div class="table-wrap"><table class="data">
         <thead><tr><th>part</th><th class="num">breaks</th><th class="num">tests that noticed</th></tr></thead>
         <tbody>
-          <tr><td>pcapng blocks</td><td class="num">13</td><td class="num">1 to 88</td></tr>
+          <tr><td>pcapng blocks</td><td class="num">13</td><td class="num">1 to 92</td></tr>
           <tr><td>pcapng section</td><td class="num">2</td><td class="num">1 to 1</td></tr>
-          <tr><td>pcapng interface</td><td class="num">10</td><td class="num">1 to 43</td></tr>
+          <tr><td>pcapng interface</td><td class="num">10</td><td class="num">1 to 47</td></tr>
           <tr><td>pcapng options</td><td class="num">2</td><td class="num">1 to 4</td></tr>
           <tr><td>pcapng packets</td><td class="num">12</td><td class="num">1 to 30</td></tr>
           <tr><td>pcapng simple packets</td><td class="num">6</td><td class="num">1 to 4</td></tr>
-          <tr><td>capture file detection</td><td class="num">4</td><td class="num">1 to 46</td></tr>
-          <tr><td>pcapng generator</td><td class="num">5</td><td class="num">1 to 42</td></tr>
+          <tr><td>capture file detection</td><td class="num">4</td><td class="num">1 to 57</td></tr>
+          <tr><td>pcapng generator</td><td class="num">5</td><td class="num">1 to 46</td></tr>
           <tr><td>fuzz run</td><td class="num">3</td><td class="num">1 to 1</td></tr>
         </tbody>
       </table></div>
@@ -329,7 +329,145 @@ ts_ns += interface.offset_ns
 
       <p>there is no pcapng writer in the package, only the generator in <code>tools/gen_pcap.py</code> (one section, one interface, enhanced packets). <code>live --write</code> still saves classic pcap. reading was the missing half, and I did not add a feature nobody asked for.</p>
 
-      <p>and, once more, I have not read a file that Wireshark wrote. the reader agrees with the format description, with my hand-built files and with another library. that is a lot, and it is not the same thing.</p>
+      <p>and, at the end of this stage, I had not read a file that Wireshark wrote. the reader agreed with the format description, with my hand-built files and with another library. that is a lot, and it is not the same thing. stage 9 fixes it.</p>
+
+      <h2><span class="hash">##</span>stage 9: comparing with tshark</h2>
+
+      <p>everything so far was tested against traffic that I generated and against my own reading of the protocols, so a misreading of mine could sit in both. <code>tshark</code>, the command line of Wireshark, was written by other people and has read far more traffic than my generator will ever make. so this stage puts the two side by side, and fixes what differs. the rule from the plan was: fix every difference. what that came to is below.</p>
+
+      <h3 class="sub">a tool that compares two decoders</h3>
+
+      <p><code>tools/compare_tshark.py</code> is a development tool. Sentinel does not need it and does not depend on <code>tshark</code>. it runs <code>tshark</code> on a capture with reassembly, sequence analysis and defragmentation switched off, because <code>read</code> looks at one packet at a time, and with checksums verified. then it asks for about 75 fields per packet: the frame length, Ethernet and VLAN, ARP, IPv4, IPv6, TCP with its options, UDP, ICMP, DNS, HTTP and the TLS ClientHello. it turns each one into the form Sentinel has and compares. a field that only one of them reports is listed apart, and so is a difference in the packet count.</p>
+
+      <p>most of the work was in what "equal" means. <code>tshark</code> prints a 12-bit TCP flags field where Sentinel keeps nine bits, it counts the IPv4 fragment offset in units of eight bytes, it prints the window after scaling unless asked for the raw value, and the ethertype of a VLAN frame is in another field. none of that is a difference in the packets, so the tool translates it, and a test checks every translation.</p>
+
+      <p>the tool also compares conversations: the TCP and UDP streams <code>tshark</code> numbers, against the flows Sentinel finds (protocol, both ends and packet count, with the idle timeouts of Sentinel switched off since <code>tshark</code> has none).</p>
+
+      <h3 class="sub">ten captures</h3>
+
+      <p>four are the captures my generator makes. six are public: small files from the Wireshark sample captures page, 1,245 packets and about 110 KB in all, that other people recorded on their own networks. I asked before downloading them, and they are not in the repository, which holds only traffic that I generated. one of them, <code>200722_win_scale_examples_anon.pcapng</code>, is a pcapng that Wireshark itself wrote. the tool ran with Wireshark 4.6.8.</p>
+
+      <div class="table-wrap"><table class="data">
+        <thead><tr><th>capture</th><th class="num">packets</th><th class="num">values compared</th><th class="num">differences</th><th class="num">explained</th></tr></thead>
+        <tbody>
+          <tr><td><code>sample.pcap</code><br><span class="dim">one packet of every supported protocol; generated here</span></td><td class="num">19</td><td class="num">529</td><td class="num">0</td><td class="num">20</td></tr>
+          <tr><td><code>streams.pcap</code><br><span class="dim">reordered, repeated and split TCP segments; generated here</span></td><td class="num">32</td><td class="num">892</td><td class="num">0</td><td class="num">27</td></tr>
+          <tr><td><code>benign.pcap</code><br><span class="dim">busy, harmless traffic; generated here</span></td><td class="num">647</td><td class="num">17,906</td><td class="num">0</td><td class="num">156</td></tr>
+          <tr><td><code>attacks.pcap</code><br><span class="dim">one of each attack; generated here</span></td><td class="num">1,044</td><td class="num">29,884</td><td class="num">0</td><td class="num">333</td></tr>
+          <tr><td><code>dns.cap</code><br><span class="dim">DNS lookups over UDP; Wireshark sample capture</span></td><td class="num">38</td><td class="num">1,356</td><td class="num">0</td><td class="num">57</td></tr>
+          <tr><td><code>ipv4frags.pcap</code><br><span class="dim">an ICMP echo in IPv4 fragments; Wireshark sample capture</span></td><td class="num">3</td><td class="num">57</td><td class="num">0</td><td class="num">0</td></tr>
+          <tr><td><code>200722_win_scale_examples_anon.pcapng</code><br><span class="dim">TCP window scaling, written by Wireshark as pcapng; Wireshark sample capture</span></td><td class="num">26</td><td class="num">719</td><td class="num">0</td><td class="num">0</td></tr>
+          <tr><td><code>v6.pcap</code><br><span class="dim">IPv6 and ICMPv6 (6bone, 1999); Wireshark sample capture</span></td><td class="num">161</td><td class="num">3,548</td><td class="num">0</td><td class="num">126</td></tr>
+          <tr><td><code>vlan.cap</code><br><span class="dim">many protocols over 802.1Q VLANs (1999); Wireshark sample capture</span></td><td class="num">395</td><td class="num">7,645</td><td class="num">0</td><td class="num">25</td></tr>
+          <tr><td><code>arp-storm.pcap</code><br><span class="dim">over 20 ARP requests per second on a cable modem link; Wireshark sample capture</span></td><td class="num">622</td><td class="num">6,220</td><td class="num">0</td><td class="num">0</td></tr>
+        </tbody>
+      </table></div>
+
+      <p>10 captures, 2,987 packets, 68,756 values compared, and no difference left. that sentence hides three fixes and 744 explained differences, and the order matters: the first run on the public captures had differences that were real.</p>
+
+      <h3 class="sub">three bugs that other people's traffic found</h3>
+
+      <p><b>a checksum that the network card had not finished.</b> the <code>win_scale</code> capture looks like one recorded on the sending machine. there the network card computes the TCP checksum after the capture point, so the field holds the sum of the pseudo-header alone, not complemented, and the card adds the rest. Sentinel reported 14 of the 26 TCP packets as bad. <code>tshark</code> calls them correct, and says why: "matches partial checksum, likely caused by TCP checksum offload". this was the known false positive that the first post listed as unsolved.</p>
+
+      <div class="term"><pre><span class="pr">$ python -m sentinel read win_scale.pcapng   # before
+</span><span class="ts">20:22:25.360596 IP</span> 192.168.200.135.6711 &gt; 192.168.200.21.2000: <span class="fl">Flags [S]</span> [bad tcp checksum]
+<span class="ts">20:22:25.363991 IP</span> 192.168.200.21.2000 &gt; 192.168.200.135.6711: <span class="fl">Flags [S.]</span>
+<span class="ts">20:22:25.364075 IP</span> 192.168.200.135.6711 &gt; 192.168.200.21.2000: <span class="fl">Flags [.]</span> [bad tcp checksum]</pre></div>
+
+      <p>the fix is small once the cause is known. for the first packet of that capture the pseudo-header is these six 16-bit words, and their folded sum is <code>0x1215</code>, which is exactly what the packet holds in its checksum field:</p>
+
+      <div class="table-wrap"><table class="data">
+        <thead><tr><th>pseudo-header word</th><th class="num">value</th></tr></thead>
+        <tbody>
+          <tr><td>source address, first half</td><td class="num">0xc0a8</td></tr>
+          <tr><td>source address, second half</td><td class="num">0xc887</td></tr>
+          <tr><td>destination address, first half</td><td class="num">0xc0a8</td></tr>
+          <tr><td>destination address, second half</td><td class="num">0xc815</td></tr>
+          <tr><td>protocol (TCP)</td><td class="num">0x0006</td></tr>
+          <tr><td>TCP length</td><td class="num">0x0020</td></tr>
+          <tr><td>sum, folded to 16 bits</td><td class="num">0x1215</td></tr>
+          <tr><td>checksum field in the packet</td><td class="num">0x1215</td></tr>
+        </tbody>
+      </table></div>
+
+      <div class="term"><pre><span class="pr">$ python -m sentinel read win_scale.pcapng   # after
+</span><span class="ts">20:22:25.360596 IP</span> 192.168.200.135.6711 &gt; 192.168.200.21.2000: <span class="fl">Flags [S]</span>
+<span class="ts">20:22:25.363991 IP</span> 192.168.200.21.2000 &gt; 192.168.200.135.6711: <span class="fl">Flags [S.]</span>
+<span class="ts">20:22:25.364075 IP</span> 192.168.200.135.6711 &gt; 192.168.200.21.2000: <span class="fl">Flags [.]</span></pre></div>
+
+      <p>now a checksum that is exactly the partial sum is not reported as bad, for TCP and UDP, over IPv4 and IPv6. any other wrong value still is: the tests try the partial sum plus one, minus one, with the top bit flipped, complemented, for another length, and, for TCP, for other addresses. what is still not handled is an IPv4 header checksum that the card fills in.</p>
+
+      <p><b>the first fragment.</b> <code>decode</code> stopped after the IP header of every fragment, on the argument that the transport header may be in another packet. but the first fragment holds it. <code>ipv4frags.pcap</code> is one ICMP echo cut in fragments:</p>
+
+      <div class="term"><pre><span class="pr">$ python -m sentinel read ipv4frags.pcap   # before
+</span><span class="ts">2017-10-02 12:03:32.535132</span> IP 2.1.1.2 &gt; 2.1.1.1: ip-proto-1, <span class="dim">length 976</span>
+<span class="ts">2017-10-02 12:03:32.535197</span> IP 2.1.1.2 &gt; 2.1.1.1: ip-proto-1, <span class="dim">length 432</span>
+<span class="ts">2017-10-02 12:03:32.535641</span> IP 2.1.1.1 &gt; 2.1.1.2: ICMP echo reply, id 5058, seq 1, <span class="dim">length 1408</span></pre></div>
+      <div class="term"><pre><span class="pr">$ python -m sentinel read ipv4frags.pcap   # after
+</span><span class="ts">2017-10-02 12:03:32.535132</span> IP 2.1.1.2 &gt; 2.1.1.1: ICMP echo request, id 5058, seq 1, <span class="dim">length 976</span>
+<span class="ts">2017-10-02 12:03:32.535197</span> IP 2.1.1.2 &gt; 2.1.1.1: ip-proto-1, <span class="dim">length 432</span>
+<span class="ts">2017-10-02 12:03:32.535641</span> IP 2.1.1.1 &gt; 2.1.1.2: ICMP echo reply, id 5058, seq 1, <span class="dim">length 1408</span></pre></div>
+
+      <p>now the first fragment is decoded, without verifying its checksum (the message is not whole), and the later ones still stop at the IP header, since they have no such header. the filters and the flows follow: <code>tcp</code> and <code>port</code> match a first fragment, and a first UDP fragment is a flow. this also matches what tshark shows.</p>
+
+      <p><b>a length that looked like an ethertype.</b> a frame whose type field is below 0x0600 has a length there and an LLC header behind it: spanning tree, NetBIOS. <code>vlan.cap</code>, recorded in 1999, has a lot of them, and <code>read</code> printed the length as if it were a type:</p>
+
+      <div class="term"><pre><span class="pr">$ python -m sentinel read vlan.cap   # frame 44
+</span><span class="dim">before:</span> vlan 5, 00:20:18:62:73:a1 &gt; 03:00:00:00:00:01, ethertype 0x00a6, length 184
+<span class="dim">after: </span> vlan 5, 00:20:18:62:73:a1 &gt; 03:00:00:00:00:01, 802.3, length 184</pre></div>
+
+      <p>that one is a wrong statement, not a missing feature, so it is fixed: it prints <code>802.3</code>. the frame is still not decoded above Ethernet. ARP inside LLC and SNAP, which the same capture has, is not seen.</p>
+
+      <h3 class="sub">differences that are not disagreements</h3>
+
+      <p>744 field differences are left, and none is a disagreement about a packet. each has a rule with a reason, and the report counts them by reason instead of dropping them, so a new kind of difference cannot hide among them. a rule covers one kind of difference and one group of fields: the tests check that a rule for "only Sentinel" does not explain "only tshark", and that a field which is different, not missing, is not explained.</p>
+
+      <div class="table-wrap"><table class="data">
+        <thead><tr><th>why it is not a disagreement</th><th class="num">differences</th></tr></thead>
+        <tbody>
+          <tr><td>the DNS flags aa, ra and rcode: tshark prints them for a response and leaves them out of a query, Sentinel reads them from every message</td><td class="num">618</td></tr>
+          <tr><td>an ICMP error quotes the start of the packet that caused it, and tshark reads that header too (Sentinel does not, and ICMPv6 is not parsed at all)</td><td class="num">76</td></tr>
+          <tr><td>a frame with a length where the ethertype would be: tshark reads the LLC header behind it (spanning tree, NetBIOS, ARP over SNAP), Sentinel stops after Ethernet</td><td class="num">25</td></tr>
+          <tr><td>DNS over TCP where a message is split over segments: tshark decodes a partial message, <code>read</code> skips it and <code>flows</code> reads it whole</td><td class="num">21</td></tr>
+          <tr><td>an HTTP response: tshark also prints the method, target and version of the request it answers</td><td class="num">2</td></tr>
+          <tr><td>a ClientHello cut by the capture: Sentinel reads what is there and says it is cut, tshark reads none</td><td class="num">2</td></tr>
+        </tbody>
+      </table></div>
+
+      <h3 class="sub">Wireshark's own pcapng</h3>
+
+      <p>stage 8 could only check the pcapng reader against files that I and a library wrote. this stage had Wireshark to write them. <code>editcap -F pcapng</code> converted 9 of the captures, and the reader gave back the same 2,961 packets as the classic files, timestamps included. and <code>win_scale</code>, a pcapng that Wireshark wrote, is in the table above: it compares clean.</p>
+
+      <h3 class="sub">does the tool notice anything?</h3>
+
+      <p>a comparison that always says "equal" would look the same. so there is a test that runs the real <code>tshark</code> and changes one of Sentinel's fields before comparing (every TCP window becomes 1). the tool must report exactly that field, and once for each of the nine TCP segments of the demo capture. and the sabotage run has 46 new breaks for this stage, in the three fixes and in the tool itself (a flags mask that keeps too many bits, the fragment offset counted in units of 4, a rule that explains too much).</p>
+
+      <div class="table-wrap"><table class="data">
+        <thead><tr><th>part</th><th class="num">breaks</th><th class="num">tests that noticed</th></tr></thead>
+        <tbody>
+          <tr><td>checksum offload</td><td class="num">7</td><td class="num">1 to 24</td></tr>
+          <tr><td>ip fragments</td><td class="num">4</td><td class="num">1 to 5</td></tr>
+          <tr><td>802.3 frames</td><td class="num">4</td><td class="num">1 to 3</td></tr>
+          <tr><td>tshark values</td><td class="num">7</td><td class="num">1 to 12</td></tr>
+          <tr><td>sentinel values</td><td class="num">4</td><td class="num">1 to 8</td></tr>
+          <tr><td>explained differences</td><td class="num">9</td><td class="num">1 to 8</td></tr>
+          <tr><td>comparing a file</td><td class="num">2</td><td class="num">1 to 1</td></tr>
+          <tr><td>comparing flows</td><td class="num">4</td><td class="num">1 to 1</td></tr>
+          <tr><td>the report</td><td class="num">1</td><td class="num">1 to 1</td></tr>
+          <tr><td>the command</td><td class="num">1</td><td class="num">1 to 1</td></tr>
+          <tr><td>running tshark</td><td class="num">3</td><td class="num">1 to 7</td></tr>
+        </tbody>
+      </table></div>
+
+      <p>all 46 are caught, and so are the 253 before them: 299 of 299. but not at the first try. seven of the 46 survived the first run, and every one was in the tests of the tool: a rule that explained a difference of any kind and not just the kind it was written for, a count of compared values that took the fields of either side, a packet count that was reported only when tshark had fewer, a flow that only tshark has that was counted once however many there were, a line of tshark output with too many columns that was taken for a row, and two more like them. I tightened the tests and ran those seven again. 27 of the 46 are caught by a single test.</p>
+
+      <p>the fuzzer ran again, with the changed decoder: 3,000,000 inputs (seed 9), 0 failures. the tests of stage 9: 69 new, 796 in all.</p>
+
+      <h3 class="sub">what this stage does not show</h3>
+
+      <p>it compares header fields and the number of packets in a conversation. it does not compare the bytes of a reassembled stream, or the content of an HTTP body. it ran against one version of <code>tshark</code>, and it is skipped where <code>tshark</code> is not installed, so CI does not run it. six public captures of about 110 KB are a small sample of what a network sends, and two of them are from 1999. and the two programs can be wrong in the same way, although they were written by different people, from the same documents.</p>
+
+      <p>one more thing it does not show is a capture of my own machine. everything public in it was recorded by someone else on some other network, which is why they are the right test for the parser and the wrong thing to keep in the repository.</p>
 
       <h2><span class="hash">##</span>where this goes</h2>
 
@@ -338,15 +476,15 @@ ts_ns += interface.offset_ns
       <div class="table-wrap"><table class="data">
         <thead><tr><th>stage</th><th>what it adds</th><th>state</th></tr></thead>
         <tbody>
-          <tr><td>8</td><td>a pcapng reader, so Wireshark's default files open</td><td class="dim">done, this post</td></tr>
-          <tr><td>9</td><td>compare against <code>tshark</code> on public sample captures, and fix every difference</td><td class="dim">next</td></tr>
-          <tr><td>10</td><td>two more detectors: SSH brute force and ICMP tunneling</td><td class="dim">planned</td></tr>
+          <tr><td>8</td><td>a pcapng reader, so Wireshark's default files open</td><td class="dim">done</td></tr>
+          <tr><td>9</td><td>compare against <code>tshark</code> on public sample captures, and fix every difference</td><td class="dim">done, this post</td></tr>
+          <tr><td>10</td><td>two more detectors: SSH brute force and ICMP tunneling</td><td class="dim">next</td></tr>
           <tr><td>11</td><td>a TLS fingerprint (JA3) from the ClientHello</td><td class="dim">planned</td></tr>
           <tr><td>12</td><td>live capture on Windows, IP level only, if it turns out to be reliable</td><td class="dim">maybe</td></tr>
         </tbody>
       </table></div>
 
-      <p>stage 9 is the one I care about most. everything Sentinel has learned it learned from traffic I made, and the first real test of a parser is a capture it was not written for.</p>
+      <p>stage 10 goes back to the intrusion detection side: two more detectors, tested the way the first four were, with a harmless capture built to sit just below every threshold and an attack capture with exactly the alerts I expect.</p>
 
     </div>
   </article>
