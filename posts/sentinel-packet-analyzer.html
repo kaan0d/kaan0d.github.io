@@ -120,6 +120,13 @@
   .post-body p.chain{ margin:26px 0 0; font-family:var(--font-mono); font-size:0.82rem; color:var(--text-dim); }
   .post-body p.chain b{ color:var(--accent); font-weight:500; }
   .post-body h3.sub{ margin-top:36px; }
+  .matrix{ display:grid; gap:6px; margin:24px 0 8px; overflow-x:auto; }
+  .mrow{ display:grid; grid-template-columns:230px minmax(340px,1fr) 28px; align-items:center; gap:12px; font-family:var(--font-mono); font-size:0.72rem; min-width:620px; }
+  .ml{ color:var(--text); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .cells{ display:grid; grid-template-columns:repeat(19,1fr); gap:3px; }
+  .cells i{ display:block; height:14px; background:rgba(255,255,255,0.05); border:1px solid var(--line); }
+  .cells i.on{ background:var(--accent); border-color:var(--accent); }
+  .mc{ text-align:right; color:var(--text-dim); }
   .reasm{ display:grid; gap:12px; margin:24px 0 8px; }
   .rrow{ display:grid; grid-template-columns:72px 1fr; gap:4px 12px; align-items:center; font-family:var(--font-mono); font-size:0.72rem; }
   .rl{ color:var(--text); }
@@ -152,17 +159,17 @@
     <div class="post-body">
       <p>Sentinel is a packet analyzer and, eventually, a rule-based intrusion detection system, written in Python from scratch. the protocol parsers are hand-written with <code>struct</code>: no Scapy, no dpkt, no pyshark. it reads pcap capture files and prints one line per packet, tcpdump style. it has no runtime dependencies.</p>
 
-      <p>this post covers stages 1 to 3 of 7. stage 1 is the pcap reader and writer, and parsers for Ethernet (with VLAN tags), ARP, IPv4, IPv6, TCP, UDP and ICMP. stage 2 is the application layer: DNS, plaintext HTTP and the TLS ClientHello (server name, versions, cipher list). stage 3 is flow tracking and TCP stream reassembly. a filter language, the detectors (port scans, SYN floods, ARP spoofing, DNS tunneling), live capture and benchmarks come after that. none of that exists yet, and I say so where it matters.</p>
+      <p>this post covers stages 1 to 4 of 7. stage 1 is the pcap reader and writer, and parsers for Ethernet (with VLAN tags), ARP, IPv4, IPv6, TCP, UDP and ICMP. stage 2 is the application layer: DNS, plaintext HTTP and the TLS ClientHello (server name, versions, cipher list). stage 3 is flow tracking and TCP stream reassembly. stage 4 is a filter language. the detectors (port scans, SYN floods, ARP spoofing, DNS tunneling), live capture and benchmarks come after that. none of that exists yet, and I say so where it matters.</p>
 
       <p>I worked the same way as with Impulse: one stage at a time, and the next one does not start until the tests pass and ruff and strict mypy are clean. most of this post is about what the parsers do with bad input, and how I tried to prove they are right.</p>
 
       <div class="stats">
         <div class="stat"><b>0</b><span>runtime dependencies</span></div>
-        <div class="stat"><b>3 of 7</b><span>stages finished; this post covers those three</span></div>
-        <div class="stat"><b>226</b><span>tests (106 after stage 1, 162 after stage 2), ruff and strict mypy clean</span></div>
-        <div class="stat"><b>1,962</b><span>lines of source, backed by 2,695 lines of tests and generator</span></div>
+        <div class="stat"><b>4 of 7</b><span>stages finished; this post covers those four</span></div>
+        <div class="stat"><b>331</b><span>tests (106 after stage 1, 162 after 2, 226 after 3), ruff and strict mypy clean</span></div>
+        <div class="stat"><b>2,494</b><span>lines of source, backed by 3,477 lines of tests and generator</span></div>
         <div class="stat"><b>12,427</b><span>broken packets pushed through the fuzz tests, 0 exceptions</span></div>
-        <div class="stat"><b>33 of 33</b><span>deliberate one-line breaks caught by the tests</span></div>
+        <div class="stat"><b>59 of 59</b><span>deliberate one-line breaks caught by the tests</span></div>
       </div>
 
       <h2><span class="hash">##</span>the rule I set first</h2>
@@ -449,6 +456,97 @@ tcp 10.0.0.1:45000 &gt; 10.0.0.2:8443: established, pkts 4/1, bytes 161/0, 0.004
 
       <p>the HTTP parser reported <code>malformed http header line</code> when a segment ended exactly at a line break, because the empty last line was counted as a header. per-packet reading rarely ends there. reassembly tests cut messages at every position, and they hit it at once. it is fixed, with a test.</p>
 
+      <h2><span class="hash">##</span>stage 4: asking for the packets you want</h2>
+
+      <p>after stage 3 the tools print everything they see. stage 4 adds a filter language, close to the one tcpdump uses, so you can ask for what you want: <code>--filter "tcp and (port 80 or port 443) and not src host 10.0.0.1"</code>. it works on both commands. it is a small language with its own lexer, parser and evaluator, and no library.</p>
+
+      <h3 class="sub">from text to a tree</h3>
+
+      <p>the lexer cuts the text into tokens and remembers where each one started. the parser builds a tree from them, and it follows the usual precedence: <code>not</code> binds tighter than <code>and</code>, and <code>and</code> binds tighter than <code>or</code>. parentheses group. a protocol followed by a qualifier is an implicit <code>and</code>, so <code>tcp port 80</code> means <code>tcp and port 80</code>, as in tcpdump.</p>
+
+      <div class="layer"><div class="fields"><div class="fld" style="--c:#b9b5ad"><span class="by">tcp</span><span class="lb">word</span><span class="vl">at 0</span></div><div class="fld" style="--c:#e8963f"><span class="by">and</span><span class="lb">and</span><span class="vl">at 4</span></div><div class="fld" style="--c:#8b8983"><span class="by">(</span><span class="lb">paren</span><span class="vl">at 8</span></div><div class="fld" style="--c:#b9b5ad"><span class="by">port</span><span class="lb">word</span><span class="vl">at 9</span></div><div class="fld" style="--c:#b9b5ad"><span class="by">80</span><span class="lb">word</span><span class="vl">at 14</span></div><div class="fld" style="--c:#e8963f"><span class="by">or</span><span class="lb">or</span><span class="vl">at 17</span></div><div class="fld" style="--c:#b9b5ad"><span class="by">port</span><span class="lb">word</span><span class="vl">at 20</span></div><div class="fld" style="--c:#b9b5ad"><span class="by">443</span><span class="lb">word</span><span class="vl">at 25</span></div><div class="fld" style="--c:#8b8983"><span class="by">)</span><span class="lb">paren</span><span class="vl">at 28</span></div><div class="fld" style="--c:#e8963f"><span class="by">and</span><span class="lb">and</span><span class="vl">at 30</span></div><div class="fld" style="--c:#e8963f"><span class="by">not</span><span class="lb">not</span><span class="vl">at 34</span></div><div class="fld" style="--c:#b9b5ad"><span class="by">src</span><span class="lb">word</span><span class="vl">at 38</span></div><div class="fld" style="--c:#b9b5ad"><span class="by">host</span><span class="lb">word</span><span class="vl">at 42</span></div><div class="fld" style="--c:#b9b5ad"><span class="by">10.0.0.1</span><span class="lb">word</span><span class="vl">at 47</span></div></div></div>
+      <div class="term"><pre><span class="pr">$ tree of the filter
+</span>and
+├─ tcp
+├─ or
+│  ├─ port 80
+│  └─ port 443
+└─ not
+   └─ src host 10.0.0.1</pre></div>
+
+      <p>the tree prints back as <code>tcp and (port 80 or port 443) and not src host 10.0.0.1</code>, which parses to an equal tree. a test does that round trip for 1,500 random trees. <code>and</code> and <code>or</code> keep all their operands in one flat node, so a chain of a thousand <code>and</code>s is one node, not a thousand deep. that keeps both the parser and the evaluator from recursing on a long filter.</p>
+
+      <h3 class="sub">asking the evaluator</h3>
+
+      <p>the evaluator answers one question about one decoded packet: does it match? here is what 11 filters pick out of the 19 packets of the demo capture. each column is a packet, in the order of the <code>read</code> output above, and orange means it matches.</p>
+
+      <div class="matrix" role="img" aria-label="Which of the 19 demo packets each filter matches"><div class="mrow"><span class="ml" title="tcp">tcp</span><span class="cells"><i class=""></i><i class=""></i><i class=""></i><i class=""></i><i class=""></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class=""></i><i class=""></i><i class="on"></i><i class=""></i><i class=""></i><i class=""></i><i class="on"></i><i class="on"></i><i class="on"></i></span><span class="mc">9</span></div><div class="mrow"><span class="ml" title="udp">udp</span><span class="cells"><i class=""></i><i class=""></i><i class=""></i><i class=""></i><i class=""></i><i class=""></i><i class=""></i><i class=""></i><i class=""></i><i class=""></i><i class="on"></i><i class="on"></i><i class=""></i><i class="on"></i><i class="on"></i><i class="on"></i><i class=""></i><i class=""></i><i class=""></i></span><span class="mc">5</span></div><div class="mrow"><span class="ml" title="arp">arp</span><span class="cells"><i class="on"></i><i class="on"></i><i class=""></i><i class=""></i><i class=""></i><i class=""></i><i class=""></i><i class=""></i><i class=""></i><i class=""></i><i class=""></i><i class=""></i><i class=""></i><i class=""></i><i class=""></i><i class=""></i><i class=""></i><i class=""></i><i class=""></i></span><span class="mc">2</span></div><div class="mrow"><span class="ml" title="vlan">vlan</span><span class="cells"><i class=""></i><i class=""></i><i class=""></i><i class=""></i><i class=""></i><i class=""></i><i class=""></i><i class=""></i><i class=""></i><i class=""></i><i class=""></i><i class="on"></i><i class=""></i><i class=""></i><i class=""></i><i class=""></i><i class=""></i><i class=""></i><i class=""></i></span><span class="mc">1</span></div><div class="mrow"><span class="ml" title="dns">dns</span><span class="cells"><i class=""></i><i class=""></i><i class=""></i><i class=""></i><i class=""></i><i class=""></i><i class=""></i><i class=""></i><i class=""></i><i class=""></i><i class="on"></i><i class="on"></i><i class=""></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class=""></i><i class=""></i></span><span class="mc">6</span></div><div class="mrow"><span class="ml" title="http">http</span><span class="cells"><i class=""></i><i class=""></i><i class=""></i><i class=""></i><i class=""></i><i class=""></i><i class=""></i><i class=""></i><i class="on"></i><i class=""></i><i class=""></i><i class=""></i><i class=""></i><i class=""></i><i class=""></i><i class=""></i><i class=""></i><i class="on"></i><i class=""></i></span><span class="mc">2</span></div><div class="mrow"><span class="ml" title="port 53">port 53</span><span class="cells"><i class=""></i><i class=""></i><i class=""></i><i class=""></i><i class=""></i><i class=""></i><i class=""></i><i class=""></i><i class=""></i><i class=""></i><i class="on"></i><i class="on"></i><i class=""></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class=""></i><i class=""></i></span><span class="mc">6</span></div><div class="mrow"><span class="ml" title="host 10.0.0.1">host 10.0.0.1</span><span class="cells"><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class=""></i><i class=""></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i></span><span class="mc">17</span></div><div class="mrow"><span class="ml" title="src host 10.0.0.1">src host 10.0.0.1</span><span class="cells"><i class="on"></i><i class=""></i><i class="on"></i><i class=""></i><i class=""></i><i class="on"></i><i class=""></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class=""></i><i class=""></i><i class="on"></i><i class=""></i><i class="on"></i><i class=""></i><i class="on"></i></span><span class="mc">11</span></div><div class="mrow"><span class="ml" title="net 2001:db8::/32">net 2001:db8::/32</span><span class="cells"><i class=""></i><i class=""></i><i class=""></i><i class=""></i><i class=""></i><i class=""></i><i class=""></i><i class=""></i><i class=""></i><i class=""></i><i class=""></i><i class=""></i><i class="on"></i><i class="on"></i><i class=""></i><i class=""></i><i class=""></i><i class=""></i><i class=""></i></span><span class="mc">2</span></div><div class="mrow"><span class="ml" title="tcp and (port 80 or port 443) and not src host 10.0.0.1">tcp and (port 80 or port 443) and not src host 10.0.0.1</span><span class="cells"><i class=""></i><i class=""></i><i class=""></i><i class=""></i><i class=""></i><i class=""></i><i class="on"></i><i class=""></i><i class=""></i><i class=""></i><i class=""></i><i class=""></i><i class="on"></i><i class=""></i><i class=""></i><i class=""></i><i class=""></i><i class="on"></i><i class=""></i></span><span class="mc">3</span></div></div>
+      <p class="dim" style="font-size:0.76rem; font-family:var(--font-mono); margin-top:8px;">the number on the right is how many of the 19 packets match. the last row is the filter from the top of this section.</p>
+
+      <div class="codeblock"><code><span class="kw">def</span> matches(expr: Expr, layers: Sequence[Layer]) -&gt; bool:
+    """Does the packet, as decoded by `decode()`, match the filter?"""
+    <span class="kw">match</span> expr:
+        <span class="kw">case</span> Proto(name):
+            <span class="kw">return</span> any(isinstance(layer, _PROTO_LAYERS[name]) <span class="kw">for</span> layer <span class="kw">in</span> layers)
+        <span class="kw">case</span> Vlan(vid):
+            eth = layers[0] <span class="kw">if</span> layers <span class="kw">else</span> <span class="kw">None</span>
+            <span class="kw">if</span> <span class="kw">not</span> isinstance(eth, Ethernet) <span class="kw">or</span> eth.error:
+                <span class="kw">return</span> <span class="kw">False</span>
+            <span class="kw">return</span> bool(eth.vlans) <span class="kw">if</span> vid <span class="kw">is</span> <span class="kw">None</span> <span class="kw">else</span> vid <span class="kw">in</span> eth.vlans
+        <span class="kw">case</span> Host(direction, addr):
+            <span class="kw">return</span> _side(_addresses(layers), direction, lambda a: a == addr)
+        <span class="kw">case</span> Net(direction, net):
+            <span class="kw">return</span> _side(_addresses(layers), direction, lambda a: a <span class="kw">in</span> net)
+        <span class="kw">case</span> Port(direction, lo, hi):
+            <span class="kw">return</span> _side(_ports(layers), direction, lambda p: lo &lt;= p &lt;= hi)
+        <span class="kw">case</span> Not(operand):
+            <span class="kw">return</span> <span class="kw">not</span> matches(operand, layers)
+        <span class="kw">case</span> And(operands):
+            <span class="kw">return</span> all(matches(o, layers) <span class="kw">for</span> o <span class="kw">in</span> operands)
+        <span class="kw">case</span> Or(operands):
+            <span class="kw">return</span> any(matches(o, layers) <span class="kw">for</span> o <span class="kw">in</span> operands)</code></div>
+
+      <p>a few meanings could each have gone the other way. a protocol word is true when the layer is there, even if the layer has an error: a broken TCP header is still a TCP packet. but <code>host</code>, <code>net</code> and <code>port</code> need an intact header. a layer with an error leaves zeros behind, and those zeros must not match <code>port 0</code> or <code>host 0.0.0.0</code>. <code>host</code> and <code>net</code> also look at the addresses in ARP packets, and an IPv4 address never matches an IPv6 network.</p>
+
+      <p>IP fragments are not decoded past the IP header, so they match <code>ip</code> and <code>host</code> but not <code>tcp</code> or <code>port</code>. and <code>http</code> matches the packets where a segment starts an HTTP message, not every packet of an HTTP connection. that is the per-packet view from stage 2. the whole-connection view is what <code>flows</code> is for.</p>
+
+      <h3 class="sub">a typo is not a traceback</h3>
+
+      <p>a filter comes from a person, so a mistake in it has to be an ordinary answer. like the packet parsers, <code>parse_filter</code> never raises. it returns a result with an <code>error</code> and the <code>position</code> in the text, and the command shows a caret under it and exits with code 2, before it opens the file.</p>
+
+      <div class="term"><pre><span class="pr">$ python -m sentinel read demo.pcap -f "tcp and port http"    # exit code 2
+</span>sentinel: invalid filter: expected a port number (0-65535), got 'http'
+  tcp and port http
+               ^</pre></div>
+
+      <div class="table-wrap"><table class="data">
+        <thead><tr><th>filter</th><th>what it says</th><th class="num">at</th></tr></thead>
+        <tbody><tr><td><code>tcp and port http</code></td><td>expected a port number (0-65535), got 'http'</td><td class="num">13</td></tr><tr><td><code>host example.com</code></td><td>expected an IP address, got 'example.com'</td><td class="num">5</td></tr><tr><td><code>(tcp or udp</code></td><td>expected ')'</td><td class="num">11</td></tr><tr><td><code>tcp udp</code></td><td>unexpected 'udp', expected 'and', 'or' or end of filter</td><td class="num">4</td></tr><tr><td><code>portrange 90-80</code></td><td>invalid port range '90-80'</td><td class="num">10</td></tr><tr><td><code>port 70000</code></td><td>expected a port number (0-65535), got '70000'</td><td class="num">5</td></tr><tr><td><code>src tcp</code></td><td>expected host, net, port or portrange, got 'tcp'</td><td class="num">4</td></tr><tr><td><code>tcp &amp; udp</code></td><td>unexpected '&amp;', did you mean '&amp;&amp;'?</td><td class="num">4</td></tr><tr><td><code>not</code></td><td>unexpected end of filter, expected a filter primitive or '('</td><td class="num">3</td></tr></tbody>
+      </table></div>
+
+      <p>two things I found by trying to break my own parser. Python's <code>int()</code> raises on a very long string of digits, so a filter with a five-thousand-digit port could have been a traceback after all. numbers are now limited to ten digits, and nesting to 100 levels and the filter to 1,000 tokens. and my first error messages quoted the whole offending token, so that same port filled the terminal. messages now cut a token at 40 characters.</p>
+
+      <h3 class="sub">filters and flows</h3>
+
+      <p>the filter picks packets before anything else happens, so <code>flows</code> builds its flows from the matching packets only. a filter on the endpoints keeps whole conversations:</p>
+
+      <div class="term"><pre><span class="pr">$ python -m sentinel flows streams.pcap -f "port 53"
+</span>tcp 10.0.0.1:46000 &gt; 10.0.0.2:53: established, pkts 4/1, bytes 66/0, 0.004000s<span class="dim"> | -&gt; </span>DNS query 1, A? example.com<span class="dim"> | -&gt; </span>DNS query 2, AAAA? www.example.com
+udp 10.0.0.1:53004 &gt; 10.0.0.2:53: pkts 1/1, bytes 33/63, 0.001000s<span class="dim"> | -&gt; </span>DNS query 4660, A? www.example.com<span class="dim"> | &lt;- </span>DNS response 4660 NOERROR, A? www.example.com, answers <span class="fl">[CNAME example.com, A 192.0.2.1]</span>
+<span class="dim"># 2 flows, 7 packets in flows, 0 not in a flow</span></pre></div>
+
+      <p>a filter that drops some packets of a connection does not. <code>http</code> matches the packets that start an HTTP message, so the rest of the connection disappears from the flow, and reassembly says so:</p>
+
+      <div class="term"><pre><span class="pr">$ python -m sentinel flows streams.pcap -f http
+</span>tcp 10.0.0.1:44000 &gt; 10.0.0.2:8080: midstream, pkts 2/1, bytes 63/40, 0.003000s <span class="fl">[client stream start not captured]</span> <span class="fl">[33 client bytes missing]</span> <span class="fl">[server stream start not captured]</span><span class="dim"> | -&gt; </span>HTTP: POST /upload HTTP/1.1, host f <span class="fl">[http headers incomplete: no blank line in this segment]</span><span class="dim"> | &lt;- </span>HTTP: HTTP/1.1 200 OK
+<span class="dim"># 1 flows, 3 packets in flows, 0 not in a flow</span></pre></div>
+
+      <p>I did not add flow-level filters. <code>src</code> and <code>dst</code> describe one packet, while the two ends of a flow have no direction, so a flow filter needs its own meaning. that can come later.</p>
+
+      <h3 class="sub">how it is tested</h3>
+
+      <p>the evaluator is compared with predicates I wrote by hand, straight from the meaning of each word and without using the filter code: 34 primitives over a corpus of 80 packets (both demo captures, fragments, cut headers, stacked VLAN tags, garbage). then 400 random combinations of <code>and</code>, <code>or</code> and <code>not</code> are compared with Python's own logic over the same predicates. the parser is tested with exact trees, 31 error messages with positions, the print-and-parse round trip, and 25,000 random texts that must never raise.</p>
+
       <h2><span class="hash">##</span>seven stages</h2>
 
       <div class="table-wrap"><table class="data">
@@ -456,9 +554,9 @@ tcp 10.0.0.1:45000 &gt; 10.0.0.2:8443: established, pkts 4/1, bytes 161/0, 0.004
         <tbody>
           <tr><td>1</td><td>pcap reader and writer, Ethernet, ARP, IPv4, IPv6, TCP, UDP, ICMP parsers, command line summary</td><td class="dim">done</td></tr>
           <tr><td>2</td><td>DNS, plaintext HTTP, TLS ClientHello (server name, versions, cipher list)</td><td class="dim">done</td></tr>
-          <tr><td>3</td><td>flow tracking, TCP stream reassembly (out of order, retransmitted), per-flow statistics</td><td class="dim">done, this post</td></tr>
-          <tr><td>4</td><td>a filter language like <code>tcp and (port 80 or port 443) and not src host 10.0.0.1</code></td><td class="dim">next</td></tr>
-          <tr><td>5</td><td>IDS engine: port scan, SYN flood, ARP spoofing, DNS tunneling, rule config, JSON alerts</td><td class="dim">planned</td></tr>
+          <tr><td>3</td><td>flow tracking, TCP stream reassembly (out of order, retransmitted), per-flow statistics</td><td class="dim">done</td></tr>
+          <tr><td>4</td><td>a filter language like <code>tcp and (port 80 or port 443) and not src host 10.0.0.1</code></td><td class="dim">done, this post</td></tr>
+          <tr><td>5</td><td>IDS engine: port scan, SYN flood, ARP spoofing, DNS tunneling, rule config, JSON alerts</td><td class="dim">next</td></tr>
           <tr><td>6</td><td>live capture on Linux, feeding the same pipeline</td><td class="dim">planned</td></tr>
           <tr><td>7</td><td>benchmarks, fuzz tests, CI</td><td class="dim">planned</td></tr>
         </tbody>
@@ -466,10 +564,10 @@ tcp 10.0.0.1:45000 &gt; 10.0.0.2:8443: established, pkts 4/1, bytes 161/0, 0.004
 
       <h2><span class="hash">##</span>the numbers</h2>
 
-      <div class="chart-wrap"><svg class="chart" viewBox="0 0 720 508" role="img" aria-labelledby="c1t c1d"><title id="c1t">Tests per test file</title><desc id="c1d">226 tests in total. test_flow: 25; test_pcap: 25; test_stream: 18; test_tls: 18; test_http: 17; test_cli: 16; test_decode: 16; test_dns: 16; test_ipv4: 14; test_flow_app: 13; test_tcp: 13; test_udp: 11; test_ethernet: 8; test_ipv6: 6; test_arp: 5; test_icmp: 5.</desc><line class="grid" x1="170" y1="12" x2="170" y2="468"/><text class="tick" x="170" y="486" text-anchor="middle">0</text><line class="grid" x1="274" y1="12" x2="274" y2="468"/><text class="tick" x="274" y="486" text-anchor="middle">5</text><line class="grid" x1="378" y1="12" x2="378" y2="468"/><text class="tick" x="378" y="486" text-anchor="middle">10</text><line class="grid" x1="482" y1="12" x2="482" y2="468"/><text class="tick" x="482" y="486" text-anchor="middle">15</text><line class="grid" x1="586" y1="12" x2="586" y2="468"/><text class="tick" x="586" y="486" text-anchor="middle">20</text><line class="grid" x1="690" y1="12" x2="690" y2="468"/><text class="tick" x="690" y="486" text-anchor="middle">25</text><text class="lbl" x="158" y="35" text-anchor="end">test_flow</text><rect class="bar-after" x="170" y="24" width="520" height="14"/><text class="val hot" x="698" y="35">25</text><text class="lbl" x="158" y="63" text-anchor="end">test_pcap</text><rect class="bar-after" x="170" y="52" width="520" height="14"/><text class="val hot" x="698" y="63">25</text><text class="lbl" x="158" y="91" text-anchor="end">test_stream</text><rect class="bar-after" x="170" y="80" width="374.4" height="14"/><text class="val hot" x="552.4" y="91">18</text><text class="lbl" x="158" y="119" text-anchor="end">test_tls</text><rect class="bar-after" x="170" y="108" width="374.4" height="14"/><text class="val hot" x="552.4" y="119">18</text><text class="lbl" x="158" y="147" text-anchor="end">test_http</text><rect class="bar-after" x="170" y="136" width="353.6" height="14"/><text class="val hot" x="531.6" y="147">17</text><text class="lbl" x="158" y="175" text-anchor="end">test_cli</text><rect class="bar-after" x="170" y="164" width="332.8" height="14"/><text class="val hot" x="510.8" y="175">16</text><text class="lbl" x="158" y="203" text-anchor="end">test_decode</text><rect class="bar-after" x="170" y="192" width="332.8" height="14"/><text class="val hot" x="510.8" y="203">16</text><text class="lbl" x="158" y="231" text-anchor="end">test_dns</text><rect class="bar-after" x="170" y="220" width="332.8" height="14"/><text class="val hot" x="510.8" y="231">16</text><text class="lbl" x="158" y="259" text-anchor="end">test_ipv4</text><rect class="bar-after" x="170" y="248" width="291.2" height="14"/><text class="val hot" x="469.2" y="259">14</text><text class="lbl" x="158" y="287" text-anchor="end">test_flow_app</text><rect class="bar-after" x="170" y="276" width="270.4" height="14"/><text class="val hot" x="448.4" y="287">13</text><text class="lbl" x="158" y="315" text-anchor="end">test_tcp</text><rect class="bar-after" x="170" y="304" width="270.4" height="14"/><text class="val hot" x="448.4" y="315">13</text><text class="lbl" x="158" y="343" text-anchor="end">test_udp</text><rect class="bar-after" x="170" y="332" width="228.8" height="14"/><text class="val hot" x="406.8" y="343">11</text><text class="lbl" x="158" y="371" text-anchor="end">test_ethernet</text><rect class="bar-after" x="170" y="360" width="166.4" height="14"/><text class="val hot" x="344.4" y="371">8</text><text class="lbl" x="158" y="399" text-anchor="end">test_ipv6</text><rect class="bar-after" x="170" y="388" width="124.8" height="14"/><text class="val hot" x="302.8" y="399">6</text><text class="lbl" x="158" y="427" text-anchor="end">test_arp</text><rect class="bar-after" x="170" y="416" width="104" height="14"/><text class="val hot" x="282" y="427">5</text><text class="lbl" x="158" y="455" text-anchor="end">test_icmp</text><rect class="bar-after" x="170" y="444" width="104" height="14"/><text class="val hot" x="282" y="455">5</text></svg></div>
-      <p class="dim" style="font-size:0.8rem; font-family:var(--font-mono);">tests per file. 226 in total.</p>
+      <div class="chart-wrap"><svg class="chart" viewBox="0 0 720 592" role="img" aria-labelledby="c1t c1d"><title id="c1t">Tests per test file</title><desc id="c1d">331 tests in total. test_filter_parser: 47; test_filter_eval: 44; test_flow: 25; test_pcap: 25; test_cli: 21; test_stream: 18; test_tls: 18; test_http: 17; test_decode: 16; test_dns: 16; test_ipv4: 14; test_flow_app: 13; test_tcp: 13; test_udp: 11; test_filter_lexer: 9; test_ethernet: 8; test_ipv6: 6; test_arp: 5; test_icmp: 5.</desc><line class="grid" x1="170" y1="12" x2="170" y2="552"/><text class="tick" x="170" y="570" text-anchor="middle">0</text><line class="grid" x1="222" y1="12" x2="222" y2="552"/><text class="tick" x="222" y="570" text-anchor="middle">5</text><line class="grid" x1="274" y1="12" x2="274" y2="552"/><text class="tick" x="274" y="570" text-anchor="middle">10</text><line class="grid" x1="326" y1="12" x2="326" y2="552"/><text class="tick" x="326" y="570" text-anchor="middle">15</text><line class="grid" x1="378" y1="12" x2="378" y2="552"/><text class="tick" x="378" y="570" text-anchor="middle">20</text><line class="grid" x1="430" y1="12" x2="430" y2="552"/><text class="tick" x="430" y="570" text-anchor="middle">25</text><line class="grid" x1="482" y1="12" x2="482" y2="552"/><text class="tick" x="482" y="570" text-anchor="middle">30</text><line class="grid" x1="534" y1="12" x2="534" y2="552"/><text class="tick" x="534" y="570" text-anchor="middle">35</text><line class="grid" x1="586" y1="12" x2="586" y2="552"/><text class="tick" x="586" y="570" text-anchor="middle">40</text><line class="grid" x1="638" y1="12" x2="638" y2="552"/><text class="tick" x="638" y="570" text-anchor="middle">45</text><line class="grid" x1="690" y1="12" x2="690" y2="552"/><text class="tick" x="690" y="570" text-anchor="middle">50</text><text class="lbl" x="158" y="35" text-anchor="end">test_filter_parser</text><rect class="bar-after" x="170" y="24" width="488.8" height="14"/><text class="val hot" x="666.8" y="35">47</text><text class="lbl" x="158" y="63" text-anchor="end">test_filter_eval</text><rect class="bar-after" x="170" y="52" width="457.6" height="14"/><text class="val hot" x="635.6" y="63">44</text><text class="lbl" x="158" y="91" text-anchor="end">test_flow</text><rect class="bar-after" x="170" y="80" width="260" height="14"/><text class="val hot" x="438" y="91">25</text><text class="lbl" x="158" y="119" text-anchor="end">test_pcap</text><rect class="bar-after" x="170" y="108" width="260" height="14"/><text class="val hot" x="438" y="119">25</text><text class="lbl" x="158" y="147" text-anchor="end">test_cli</text><rect class="bar-after" x="170" y="136" width="218.4" height="14"/><text class="val hot" x="396.4" y="147">21</text><text class="lbl" x="158" y="175" text-anchor="end">test_stream</text><rect class="bar-after" x="170" y="164" width="187.2" height="14"/><text class="val hot" x="365.2" y="175">18</text><text class="lbl" x="158" y="203" text-anchor="end">test_tls</text><rect class="bar-after" x="170" y="192" width="187.2" height="14"/><text class="val hot" x="365.2" y="203">18</text><text class="lbl" x="158" y="231" text-anchor="end">test_http</text><rect class="bar-after" x="170" y="220" width="176.8" height="14"/><text class="val hot" x="354.8" y="231">17</text><text class="lbl" x="158" y="259" text-anchor="end">test_decode</text><rect class="bar-after" x="170" y="248" width="166.4" height="14"/><text class="val hot" x="344.4" y="259">16</text><text class="lbl" x="158" y="287" text-anchor="end">test_dns</text><rect class="bar-after" x="170" y="276" width="166.4" height="14"/><text class="val hot" x="344.4" y="287">16</text><text class="lbl" x="158" y="315" text-anchor="end">test_ipv4</text><rect class="bar-after" x="170" y="304" width="145.6" height="14"/><text class="val hot" x="323.6" y="315">14</text><text class="lbl" x="158" y="343" text-anchor="end">test_flow_app</text><rect class="bar-after" x="170" y="332" width="135.2" height="14"/><text class="val hot" x="313.2" y="343">13</text><text class="lbl" x="158" y="371" text-anchor="end">test_tcp</text><rect class="bar-after" x="170" y="360" width="135.2" height="14"/><text class="val hot" x="313.2" y="371">13</text><text class="lbl" x="158" y="399" text-anchor="end">test_udp</text><rect class="bar-after" x="170" y="388" width="114.4" height="14"/><text class="val hot" x="292.4" y="399">11</text><text class="lbl" x="158" y="427" text-anchor="end">test_filter_lexer</text><rect class="bar-after" x="170" y="416" width="93.6" height="14"/><text class="val hot" x="271.6" y="427">9</text><text class="lbl" x="158" y="455" text-anchor="end">test_ethernet</text><rect class="bar-after" x="170" y="444" width="83.2" height="14"/><text class="val hot" x="261.2" y="455">8</text><text class="lbl" x="158" y="483" text-anchor="end">test_ipv6</text><rect class="bar-after" x="170" y="472" width="62.4" height="14"/><text class="val hot" x="240.4" y="483">6</text><text class="lbl" x="158" y="511" text-anchor="end">test_arp</text><rect class="bar-after" x="170" y="500" width="52" height="14"/><text class="val hot" x="230" y="511">5</text><text class="lbl" x="158" y="539" text-anchor="end">test_icmp</text><rect class="bar-after" x="170" y="528" width="52" height="14"/><text class="val hot" x="230" y="539">5</text></svg></div>
+      <p class="dim" style="font-size:0.8rem; font-family:var(--font-mono);">tests per file. 331 in total.</p>
 
-      <p>each parser is tested with a valid packet, a truncated one, a malformed header (where the format has one) and random bytes. on top of that, four kinds of fuzzing run against the whole decoder and the flow table, with fixed random seeds so a failure can be reproduced exactly:</p>
+      <p>each parser is tested with a valid packet, a truncated one, a malformed header (where the format has one) and random bytes. on top of that, five kinds of fuzzing run against the whole decoder, the flow table and the filter, with fixed random seeds so a failure can be reproduced exactly:</p>
 
       <div class="table-wrap"><table class="data">
         <thead><tr><th>fuzz</th><th>what it does</th><th class="num">inputs</th></tr></thead>
@@ -479,6 +577,7 @@ tcp 10.0.0.1:45000 &gt; 10.0.0.2:8443: established, pkts 4/1, bytes 161/0, 0.004
           <tr><td>random bytes</td><td>500 seeded random strings of 0 to 200 bytes plus 9 all-zero or all-255 ones, into every parser, and into the decoder behind four ethertypes</td><td class="num">509 per parser</td></tr>
           <tr><td>capture files</td><td>every prefix of a 191-byte valid pcap, and every byte of it replaced once. the reader may only ever raise <code>PcapError</code></td><td class="num">192 + 191</td></tr>
           <tr><td>flow table</td><td>every prefix of every packet of both demo captures (51 packets), three random single-byte corruptions of each, and the 509 random strings, all fed to one flow table, then every flow printed</td><td class="num">4,817</td></tr>
+          <tr><td>filter</td><td>25,000 random texts (symbols, Unicode, and a soup of filter words) through the lexer and parser, 1,500 random trees printed and parsed back, and 300 random frames tried against every primitive</td><td class="num">26,800</td></tr>
         </tbody>
       </table></div>
 
@@ -504,6 +603,8 @@ tcp 10.0.0.1:45000 &gt; 10.0.0.2:8443: established, pkts 4/1, bytes 161/0, 0.004
           <tr><td>ClientHello</td><td>a hand-built minimal hello and one cut at every byte, plus a browser-shaped one with GREASE</td></tr>
           <tr><td>safe printing</td><td>escape sequences in a request line, a host header and a server name; the printed line must contain only printable characters</td></tr>
           <tr><td>reassembly</td><td>the bytes that were sent: 300 random payloads cut into overlapping, duplicated pieces, shuffled, with the SYN anywhere (even last) and initial numbers near the 32-bit wrap. the stream must equal the payload. the same check runs through the flow table with real packets</td></tr>
+          <tr><td>filter evaluator</td><td>34 predicates written by hand from the meaning of each word, over 80 packets, and 400 random and/or/not combinations compared with Python's own logic</td></tr>
+          <tr><td>filter parser</td><td>exact trees for the documented cases, 31 error messages with exact positions, and random trees that must print and parse back to themselves</td></tr>
           <tr><td>flow demo</td><td>the 6 lines above, read through by eye once and kept as a golden test</td></tr>
           <tr><td>command output</td><td>the 19 lines above, read through by eye once and kept as a golden test; running it twice gives the same text</td></tr>
         </tbody>
@@ -513,34 +614,43 @@ tcp 10.0.0.1:45000 &gt; 10.0.0.2:8443: established, pkts 4/1, bytes 161/0, 0.004
 
       <h2><span class="hash">##</span>breaking it on purpose</h2>
 
-      <p>a test that has never failed hasn't proven much. so I broke the code on purpose, one line at a time, and counted how many tests noticed. this is the run for stage 3:</p>
+      <p>a test that has never failed hasn't proven much. so I broke the code on purpose, one line at a time, and counted how many tests noticed. this is the run for stage 4:</p>
 
       <div class="table-wrap"><table class="data">
         <thead><tr><th>stage</th><th>part</th><th>what I broke</th><th class="num">tests that failed</th></tr></thead>
         <tbody>
-          <tr><td>3</td><td>reassembly</td><td>let the newest copy of overlapping bytes win</td><td class="num">1 of 226</td></tr>
-          <tr><td>3</td><td>reassembly</td><td>stopped counting conflicting overlaps</td><td class="num">2 of 226</td></tr>
-          <tr><td>3</td><td>reassembly</td><td>stopped counting retransmitted segments</td><td class="num">5 of 226</td></tr>
-          <tr><td>3</td><td>reassembly</td><td>stopped counting out-of-order segments</td><td class="num">5 of 226</td></tr>
-          <tr><td>3</td><td>sequence numbers</td><td>read sequence numbers as unsigned offsets</td><td class="num">2 of 226</td></tr>
-          <tr><td>3</td><td>reassembly</td><td>removed the per-stream byte window</td><td class="num">1 of 226</td></tr>
-          <tr><td>3</td><td>reassembly</td><td>ignored the shared memory budget</td><td class="num">2 of 226</td></tr>
-          <tr><td>3</td><td>reassembly</td><td>removed the cap on separate ranges</td><td class="num">1 of 226</td></tr>
-          <tr><td>3</td><td>reassembly</td><td>ignored bytes missing before the FIN</td><td class="num">1 of 226</td></tr>
-          <tr><td>3</td><td>reassembly</td><td>kept bytes from before a late SYN</td><td class="num">1 of 226</td></tr>
-          <tr><td>3</td><td>flow key</td><td>made each direction its own flow</td><td class="num">13 of 226</td></tr>
-          <tr><td>3</td><td>flow reuse</td><td>kept reusing a finished flow for a new SYN</td><td class="num">1 of 226</td></tr>
-          <tr><td>3</td><td>flow reuse</td><td>never expired idle flows</td><td class="num">1 of 226</td></tr>
-          <tr><td>3</td><td>tcp state</td><td>called a connection closed after one FIN</td><td class="num">5 of 226</td></tr>
-          <tr><td>3</td><td>flow notes</td><td>counted split-message anomalies as packet anomalies</td><td class="num">5 of 226</td></tr>
-          <tr><td>3</td><td>http stream</td><td>did not skip bodies using Content-Length</td><td class="num">5 of 226</td></tr>
-          <tr><td>3</td><td>dns stream</td><td>misread the DNS length prefix</td><td class="num">6 of 226</td></tr>
+          <tr><td>4</td><td>lexer</td><td>stopped recognizing &amp;&amp; and ||</td><td class="num">3 of 331</td></tr>
+          <tr><td>4</td><td>lexer</td><td>made keywords case-sensitive</td><td class="num">1 of 331</td></tr>
+          <tr><td>4</td><td>lexer</td><td>removed the token limit</td><td class="num">1 of 331</td></tr>
+          <tr><td>4</td><td>lexer</td><td>accepted non-ASCII letters in words</td><td class="num">1 of 331</td></tr>
+          <tr><td>4</td><td>parser</td><td>dropped the meaning of not</td><td class="num">10 of 331</td></tr>
+          <tr><td>4</td><td>parser</td><td>removed the nesting limit</td><td class="num">1 of 331</td></tr>
+          <tr><td>4</td><td>parser</td><td>stopped flattening nested and</td><td class="num">1 of 331</td></tr>
+          <tr><td>4</td><td>parser</td><td>stopped reading tcp port 80 as tcp and port 80</td><td class="num">2 of 331</td></tr>
+          <tr><td>4</td><td>parser</td><td>accepted a port range that runs backward</td><td class="num">1 of 331</td></tr>
+          <tr><td>4</td><td>parser</td><td>rejected networks with host bits set</td><td class="num">1 of 331</td></tr>
+          <tr><td>4</td><td>parser</td><td>removed the length check on numbers</td><td class="num">1 of 331</td></tr>
+          <tr><td>4</td><td>parser</td><td>echoed whole tokens in error messages</td><td class="num">1 of 331</td></tr>
+          <tr><td>4</td><td>parser</td><td>reported end-of-filter errors at position 0</td><td class="num">5 of 331</td></tr>
+          <tr><td>4</td><td>evaluator</td><td>made host match the wrong addresses</td><td class="num">10 of 331</td></tr>
+          <tr><td>4</td><td>evaluator</td><td>swapped src and dst</td><td class="num">8 of 331</td></tr>
+          <tr><td>4</td><td>evaluator</td><td>stopped matching ARP addresses</td><td class="num">11 of 331</td></tr>
+          <tr><td>4</td><td>evaluator</td><td>trusted addresses in a layer with an error</td><td class="num">3 of 331</td></tr>
+          <tr><td>4</td><td>evaluator</td><td>excluded the last port of a range</td><td class="num">11 of 331</td></tr>
+          <tr><td>4</td><td>evaluator</td><td>matched a network only at its first address</td><td class="num">7 of 331</td></tr>
+          <tr><td>4</td><td>evaluator</td><td>made and behave like or</td><td class="num">5 of 331</td></tr>
+          <tr><td>4</td><td>evaluator</td><td>made or behave like and</td><td class="num">4 of 331</td></tr>
+          <tr><td>4</td><td>evaluator</td><td>looked only at the outer VLAN tag</td><td class="num">3 of 331</td></tr>
+          <tr><td>4</td><td>evaluator</td><td>ignored protocol layers that have errors</td><td class="num">5 of 331</td></tr>
+          <tr><td>4</td><td>command line</td><td>printed the packets the filter rejects</td><td class="num">2 of 331</td></tr>
+          <tr><td>4</td><td>command line</td><td>ignored the filter in flows</td><td class="num">1 of 331</td></tr>
+          <tr><td>4</td><td>command line</td><td>exited with 1 for a bad filter</td><td class="num">2 of 331</td></tr>
         </tbody>
       </table></div>
 
-      <p>all 17 breaks are caught, and the 16 from stages 1 and 2 still are, so 33 of 33. the first run of this stage had one survivor. the rule that a finished flow is never reused for a new SYN was not tested on its own: in my test the second SYN also had a different initial sequence number, and that alone starts a new flow. I added a test where only the end of the old flow tells the difference, and ran it again. in the earlier stages the same run found three weak tests, and they were tightened.</p>
+      <p>all 26 breaks are caught, and the 33 from stages 1 to 3 still are, so 59 of 59. this time no break survived the first run. that is partly because I wrote the list of breaks first and added two tests for the ones I doubted: an errored layer leaves zeros behind, and nothing checked that <code>port 0</code> or <code>host 0.0.0.0</code> ignore them. in the earlier stages the same run found four weak tests (three in stage 2, one in stage 3), and they were tightened.</p>
 
-      <p>18 of the 33 breaks are caught by a single test, so the coverage is not deep. a mutation run like this only proves that the tests can fail. it says nothing about the cases nobody thought of.</p>
+      <p>28 of the 59 breaks are caught by a single test, so the coverage is not deep. a mutation run like this only proves that the tests can fail. it says nothing about the cases nobody thought of.</p>
 
       <h2><span class="hash">##</span>what it still can't do</h2>
 
@@ -550,6 +660,8 @@ tcp 10.0.0.1:45000 &gt; 10.0.0.2:8443: established, pkts 4/1, bytes 161/0, 0.004
 
       <p>flows are TCP and UDP only. VLAN tags are not part of a flow's identity, and a connection that sits idle longer than the timeout is split in two. the <code>read</code> command still works one segment at a time, with the weaknesses shown above.</p>
 
+      <p>filters have no host names (a lookup would make the output depend on the network), no <code>ether host</code>, no <code>len</code>, no byte offsets like <code>tcp[13]</code> and no TCP flag words. <code>dns</code>, <code>http</code> and <code>tls</code> match per packet, and <code>flows --filter</code> filters packets, not whole flows.</p>
+
       <p>ARP is Ethernet and IPv4 only. only the Ethernet link type is read; any other type is refused with a message. VLAN tags keep the VLAN id and drop the priority bits.</p>
 
       <p>HTTP is HTTP/1.x only. TLS is the ClientHello only: no ALPN, no fingerprints, and the cipher and version name tables cover the common ones (the rest print as hex).</p>
@@ -558,7 +670,7 @@ tcp 10.0.0.1:45000 &gt; 10.0.0.2:8443: established, pkts 4/1, bytes 161/0, 0.004
 
       <p>and it has only ever seen traffic I generated. a real capture may show me things the tests do not cover.</p>
 
-      <p>next is stage 4: a filter language, so that <code>tcp and (port 80 or port 443) and not src host 10.0.0.1</code> selects packets.</p>
+      <p>next is stage 5: the IDS engine, with detectors for port scans, SYN floods, ARP spoofing and DNS tunneling, a rule config and JSON alerts.</p>
 
     </div>
   </article>
