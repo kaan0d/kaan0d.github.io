@@ -113,12 +113,13 @@
   .layer-title b{ color:var(--c); font-weight:700; }
   .layer-title span{ color:var(--text-dim); }
   .fields{ display:flex; flex-wrap:wrap; gap:10px 8px; }
-  .fld{ display:flex; flex-direction:column; gap:3px; min-width:0; }
-  .fld .by{ font-family:var(--font-mono); font-size:0.8rem; padding:6px 8px; border:1px solid var(--c); border-radius:2px; background:rgba(255,255,255,0.03); white-space:nowrap; color:var(--text); }
+  .fld{ display:flex; flex-direction:column; gap:3px; min-width:0; max-width:100%; }
+  .fld .by{ font-family:var(--font-mono); font-size:0.8rem; padding:6px 8px; border:1px solid var(--c); border-radius:2px; background:rgba(255,255,255,0.03); overflow-wrap:anywhere; color:var(--text); }
   .fld .lb{ font-family:var(--font-mono); font-size:0.66rem; letter-spacing:0.06em; text-transform:uppercase; color:var(--text-dim); }
   .fld .vl{ font-family:var(--font-mono); font-size:0.72rem; color:var(--c); }
   .post-body p.chain{ margin:26px 0 0; font-family:var(--font-mono); font-size:0.82rem; color:var(--text-dim); }
   .post-body p.chain b{ color:var(--accent); font-weight:500; }
+  .post-body h3.sub{ margin-top:36px; }
 
   footer{ font-family:var(--font-mono); font-size:0.76rem; color:var(--text-dim); margin-top:48px; padding-top:16px; border-top:1px solid var(--line); display:flex; justify-content:space-between; gap:10px; flex-wrap:wrap; }
 
@@ -143,26 +144,26 @@
     <div class="post-body">
       <p>Sentinel is a packet analyzer and, eventually, a rule-based intrusion detection system, written in Python from scratch. the protocol parsers are hand-written with <code>struct</code>: no Scapy, no dpkt, no pyshark. it reads pcap capture files and prints one line per packet, tcpdump style. it has no runtime dependencies.</p>
 
-      <p>this post is about stage 1 of 7 only: the pcap reader and writer, and parsers for Ethernet (with VLAN tags), ARP, IPv4, IPv6, TCP, UDP and ICMP. DNS, HTTP and TLS are stage 2. flow tracking, a filter language, the detectors (port scans, SYN floods, ARP spoofing, DNS tunneling), live capture and benchmarks come after that. none of that exists yet, and I say so where it matters.</p>
+      <p>this post covers stages 1 and 2 of 7. stage 1 is the pcap reader and writer, and parsers for Ethernet (with VLAN tags), ARP, IPv4, IPv6, TCP, UDP and ICMP. stage 2 is the application layer: DNS, plaintext HTTP and the TLS ClientHello (server name, versions, cipher list). flow tracking, a filter language, the detectors (port scans, SYN floods, ARP spoofing, DNS tunneling), live capture and benchmarks come after that. none of that exists yet, and I say so where it matters.</p>
 
       <p>I worked the same way as with Impulse: one stage at a time, and the next one does not start until the tests pass and ruff and strict mypy are clean. most of this post is about what the parsers do with bad input, and how I tried to prove they are right.</p>
 
       <div class="stats">
         <div class="stat"><b>0</b><span>runtime dependencies</span></div>
-        <div class="stat"><b>1 of 7</b><span>stages finished; this post covers only that one</span></div>
-        <div class="stat"><b>106</b><span>tests, ruff and strict mypy clean</span></div>
-        <div class="stat"><b>801</b><span>lines of source, backed by 1,205 lines of tests and generator</span></div>
-        <div class="stat"><b>5,059</b><span>broken packets decoded in the fuzz tests, 0 exceptions</span></div>
-        <div class="stat"><b>4</b><span>pcap variants read and written: two byte orders, two time units</span></div>
+        <div class="stat"><b>2 of 7</b><span>stages finished; this post covers those two</span></div>
+        <div class="stat"><b>162</b><span>tests (106 after stage 1), ruff and strict mypy clean</span></div>
+        <div class="stat"><b>1,398</b><span>lines of source, backed by 1,862 lines of tests and generator</span></div>
+        <div class="stat"><b>8,119</b><span>broken packets decoded in the fuzz tests, 0 exceptions</span></div>
+        <div class="stat"><b>16 of 16</b><span>deliberate one-line breaks caught by the tests</span></div>
       </div>
 
       <h2><span class="hash">##</span>the rule I set first</h2>
 
       <p>a packet analyzer reads bytes that anyone on the network can send. so the first rule is that a parser never raises on bad input: not on a truncated packet, not on a header that lies about its own length, not on random bytes. every parser returns a small dataclass instead, and they all share the same three fields.</p>
 
-      <div class="codeblock"><code><span class="kw">@dataclass</span>(frozen=<span class="kw">True</span>, slots=<span class="kw">True</span>, kw_only=<span class="kw">True</span>)
+      <div class="codeblock"><code>@dataclass(frozen=<span class="kw">True</span>, slots=<span class="kw">True</span>, kw_only=<span class="kw">True</span>)
 <span class="kw">class</span> Layer:
-    <span class="cm">"""Base of every parse result. Parsers never raise.
+    """Base of every parse result. Parsers never raise.
 
     `error` set: the header could not be parsed,
         all other fields hold defaults and mean nothing.
@@ -170,9 +171,9 @@
         (bad checksum, inconsistent length...).
     `payload`: the bytes after this header, trimmed to
         the length the header declares.
-    """</span>
+    """
 
-    payload: bytes = b<span class="cm">""</span>
+    payload: bytes = b""
     error: str | <span class="kw">None</span> = <span class="kw">None</span>
     anomalies: tuple[str, ...] = ()</code></div>
 
@@ -184,7 +185,7 @@
 Tcp(error='truncated tcp header: 12 of 20 bytes',
     anomalies=(),
     src_port=0, dst_port=0, seq=0, flags=0,
-    <span class="cm"># ...every other field is a default</span>)</code></div>
+    <span class="cm"># ...every other field is a default)</span></code></div>
           <figcaption>an error: nothing to trust, so nothing else is filled in.</figcaption>
         </figure>
         <figure>
@@ -192,14 +193,20 @@ Tcp(error='truncated tcp header: 12 of 20 bytes',
 Tcp(error=<span class="kw">None</span>,
     anomalies=('bad tcp checksum',),
     src_port=1, dst_port=2, seq=3, flags=2,
-    <span class="cm"># ...every field parsed</span>)</code></div>
+    <span class="cm"># ...every field parsed)</span></code></div>
           <figcaption>an anomaly: everything parsed, and the checksum is reported as wrong.</figcaption>
         </figure>
       </div>
 
       <p>checksums need care. TCP and UDP checksums include a pseudo-header with the IP addresses, so those parsers only verify when they are given the addresses, and the decoder only gives them when the whole segment was captured. without that rule, a packet cut short by the snap length would report a bad checksum that is not real.</p>
 
-      <div class="codeblock"><code><span class="kw">def</span> _decode_l4(proto, payload, src, dst, complete):
+      <div class="codeblock"><code><span class="kw">def</span> _decode_l4(
+    proto: int,
+    payload: bytes,
+    src: IPv4Address | IPv6Address,
+    dst: IPv4Address | IPv6Address,
+    complete: bool,
+) -&gt; Layer | <span class="kw">None</span>:
     <span class="cm"># Checksums are only checked when the whole L4 message was captured.</span>
     s, d = (src, dst) <span class="kw">if</span> complete <span class="kw">else</span> (<span class="kw">None</span>, <span class="kw">None</span>)
     <span class="kw">if</span> proto == PROTO_TCP:
@@ -225,13 +232,18 @@ Tcp(error=<span class="kw">None</span>,
 <span class="ts">2023-11-14 22:13:20.005000</span> IP 10.0.0.1.40000 &gt; 10.0.0.2.80: <span class="fl">Flags [S]</span>, seq 1000, win 64240, options [mss 1460,sackOK,TS val 1000 ecr 0,nop,wscale 7], <span class="dim">length 0</span>
 <span class="ts">2023-11-14 22:13:20.006000</span> IP 10.0.0.2.80 &gt; 10.0.0.1.40000: <span class="fl">Flags [S.]</span>, seq 5000, ack 1001, win 64240, options [mss 1460,sackOK,TS val 1000 ecr 0,nop,wscale 7], <span class="dim">length 0</span>
 <span class="ts">2023-11-14 22:13:20.007000</span> IP 10.0.0.1.40000 &gt; 10.0.0.2.80: <span class="fl">Flags [.]</span>, seq 1001, ack 5001, win 64240, <span class="dim">length 0</span>
-<span class="ts">2023-11-14 22:13:20.008000</span> IP 10.0.0.1.40000 &gt; 10.0.0.2.80: <span class="fl">Flags [P.]</span>, seq 1001, ack 5001, win 64240, <span class="dim">length 38</span>
+<span class="ts">2023-11-14 22:13:20.008000</span> IP 10.0.0.1.40000 &gt; 10.0.0.2.80: <span class="fl">Flags [P.]</span>, seq 1001, ack 5001, win 64240, <span class="dim">length 38</span><span class="fl">: HTTP: GET / HTTP/1.1, host example.test</span>
 <span class="ts">2023-11-14 22:13:20.009000</span> IP 10.0.0.1.40000 &gt; 10.0.0.2.80: <span class="fl">Flags [F.]</span>, seq 1041, ack 5001, win 64240, <span class="dim">length 0</span>
-<span class="ts">2023-11-14 22:13:20.010000</span> IP 10.0.0.1.53000 &gt; 10.0.0.2.53: UDP, <span class="dim">length 29</span>
-<span class="ts">2023-11-14 22:13:20.011000</span> vlan 100, IP 10.0.0.1.53001 &gt; 10.0.0.2.53: UDP, <span class="dim">length 29</span>
+<span class="ts">2023-11-14 22:13:20.010000</span> IP 10.0.0.1.53000 &gt; 10.0.0.2.53: UDP, <span class="dim">length 29</span><span class="fl">: DNS query 48879, A? example.com</span>
+<span class="ts">2023-11-14 22:13:20.011000</span> vlan 100, IP 10.0.0.1.53001 &gt; 10.0.0.2.53: UDP, <span class="dim">length 29</span><span class="fl">: DNS query 48879, A? example.com</span>
 <span class="ts">2023-11-14 22:13:20.012000</span> IP6 2001:db8::1.41000 &gt; 2001:db8::2.443: <span class="fl">Flags [S]</span>, seq 1, win 65535, <span class="dim">length 0</span>
-<span class="ts">2023-11-14 22:13:20.013000</span> IP6 2001:db8::1.53002 &gt; 2001:db8::2.53: UDP, <span class="dim">length 29</span></pre></div>
-      <p class="dim" style="font-size:0.76rem; font-family:var(--font-mono); margin-top:8px;">14 packets: an ARP request and reply, three ICMP messages, a TCP connection from SYN to FIN with one request in it, a UDP packet, the same UDP packet inside a VLAN tag, and IPv6 TCP and UDP. timestamps are UTC, so the output does not depend on the machine's time zone.</p>
+<span class="ts">2023-11-14 22:13:20.013000</span> IP6 2001:db8::1.53002 &gt; 2001:db8::2.53: UDP, <span class="dim">length 29</span><span class="fl">: DNS query 48879, A? example.com</span>
+<span class="ts">2023-11-14 22:13:20.014000</span> IP 10.0.0.1.53003 &gt; 10.0.0.2.53: UDP, <span class="dim">length 33</span><span class="fl">: DNS query 4660, A? www.example.com</span>
+<span class="ts">2023-11-14 22:13:20.015000</span> IP 10.0.0.2.53 &gt; 10.0.0.1.53003: UDP, <span class="dim">length 63</span><span class="fl">: DNS response 4660 NOERROR, A? www.example.com, answers [CNAME example.com, A 192.0.2.1]</span>
+<span class="ts">2023-11-14 22:13:20.016000</span> IP 10.0.0.1.42000 &gt; 10.0.0.2.53: <span class="fl">Flags [P.]</span>, seq 1, ack 1, win 64240, <span class="dim">length 31</span><span class="fl">: DNS query 17185, AAAA? example.com</span>
+<span class="ts">2023-11-14 22:13:20.017000</span> IP 10.0.0.2.80 &gt; 10.0.0.1.40000: <span class="fl">Flags [P.]</span>, seq 5001, ack 1041, win 64240, <span class="dim">length 77</span><span class="fl">: HTTP: HTTP/1.1 200 OK</span>
+<span class="ts">2023-11-14 22:13:20.018000</span> IP 10.0.0.1.43000 &gt; 10.0.0.2.443: <span class="fl">Flags [P.]</span>, seq 1, ack 1, win 64240, <span class="dim">length 161</span><span class="fl">: TLS ClientHello, sni example.com, versions [TLS 1.3, TLS 1.2], ciphers (15) [TLS_AES_128_GCM_SHA256, TLS_AES_256_GCM_SHA384, TLS_CHACHA20_POLY1305_SHA256, +12 more]</span></pre></div>
+      <p class="dim" style="font-size:0.76rem; font-family:var(--font-mono); margin-top:8px;">19 packets: an ARP request and reply, three ICMP messages, a TCP connection from SYN to FIN with an HTTP request in it, DNS over UDP (also inside a VLAN tag and over IPv6) and over TCP, a CNAME answer, an HTTP response and a TLS ClientHello. timestamps are UTC, so the output does not depend on the machine's time zone.</p>
 
       <h2><span class="hash">##</span>anatomy of a packet</h2>
 
@@ -275,14 +287,93 @@ Tcp(error=<span class="kw">None</span>,
 
       <p>the reader streams from the file instead of loading it. the captured-length field in each record comes from the file, so it is capped at 262,144 bytes (libpcap's own limit) before anything is read, and a corrupt value cannot make it try to read gigabytes. a corrupt or cut-off record raises <code>PcapError</code> only after every earlier packet has been yielded, so the command prints the good packets, then the error, and exits with 1. this is the one place that raises, because a broken file is not a packet.</p>
 
+      <h2><span class="hash">##</span>stage 2: what the payload says</h2>
+
+      <p>stage 1 stopped at the transport layer. stage 2 looks at what TCP and UDP carry. the new parsers follow the same rules as the old ones: never raise, put trouble in <code>error</code> or <code>anomalies</code>. <code>decode()</code> now returns up to four layers, for example <code>(Ethernet, IPv4, Udp, Dns)</code>.</p>
+
+      <h3 class="sub">finding the protocol</h3>
+
+      <div class="table-wrap"><table class="data">
+        <thead><tr><th>protocol</th><th>how it is found</th></tr></thead>
+        <tbody>
+          <tr><td>DNS</td><td>port 53 on UDP, or on TCP when the whole length-prefixed message is in the segment</td></tr>
+          <tr><td>HTTP</td><td>the payload starts with a request method or <code>HTTP/1.</code></td></tr>
+          <tr><td>TLS</td><td>the payload starts with <code>16 03</code> and has a ClientHello (<code>01</code>) as the handshake type</td></tr>
+        </tbody>
+      </table></div>
+
+      <p>DNS has no magic bytes, so it goes by port. HTTP and TLS are found by content, so a web server on 8080 or TLS on 8443 still works. the weak spot is that there is no stream reassembly yet. a segment from the middle of a stream that happens to start with <code>GET </code> would be read as HTTP. stage 3 fixes that by parsing streams instead of segments.</p>
+
+      <p>for the same reason every application parser works on one segment or datagram. a DNS-over-TCP message split across two segments gets no DNS layer. HTTP headers cut off by the segment are parsed as far as they go, with an anomaly. a ClientHello that continues in another record is parsed as far as it is present, with a <code>truncated client hello</code> anomaly. buffering across packets here would do the job of stage 3 twice.</p>
+
+      <h3 class="sub">DNS names and compression pointers</h3>
+
+      <p>a DNS name is a list of length-prefixed labels. to save space, a name can end in a pointer (two bytes starting with binary 11) to an earlier name. that is where the danger is: a pointer that points at itself, or two that point at each other, loops forever. so a pointer has to point backward, into the message body and not the header, a name may follow at most 32 of them, and a name is at most 255 bytes.</p>
+
+      <div class="layer" style="--c:#8b8983"><div class="layer-title"><b>header</b><span>12 bytes</span></div><div class="fields"><div class="fld"><span class="by">12 34</span><span class="lb">id</span><span class="vl">4660</span></div><div class="fld"><span class="by">81 80</span><span class="lb">flags</span><span class="vl">response, RD, RA</span></div><div class="fld"><span class="by">00 01</span><span class="lb">questions</span><span class="vl">1</span></div><div class="fld"><span class="by">00 02</span><span class="lb">answers</span><span class="vl">2</span></div><div class="fld"><span class="by">00 00</span><span class="lb">authority</span><span class="vl">0</span></div><div class="fld"><span class="by">00 00</span><span class="lb">additional</span><span class="vl">0</span></div></div></div>
+      <div class="layer" style="--c:#b9b5ad"><div class="layer-title"><b>question</b><span>www.example.com, type A</span></div><div class="fields"><div class="fld"><span class="by">03 77 77 77</span><span class="lb">label, offset 12</span><span class="vl">www</span></div><div class="fld"><span class="by">07 65 78 61 … 6d 00</span><span class="lb">labels, offset 16</span><span class="vl">example.com</span></div><div class="fld"><span class="by">00 01</span><span class="lb">type</span><span class="vl">A</span></div><div class="fld"><span class="by">00 01</span><span class="lb">class</span><span class="vl">IN</span></div></div></div>
+      <div class="layer" style="--c:#e8963f"><div class="layer-title"><b>answer 1</b><span>a CNAME</span></div><div class="fields"><div class="fld"><span class="by">c0 0c</span><span class="lb">name</span><span class="vl">pointer to offset 12: www.example.com</span></div><div class="fld"><span class="by">00 05</span><span class="lb">type</span><span class="vl">CNAME</span></div><div class="fld"><span class="by">00 01</span><span class="lb">class</span><span class="vl">IN</span></div><div class="fld"><span class="by">00 00 01 2c</span><span class="lb">ttl</span><span class="vl">300</span></div><div class="fld"><span class="by">00 02</span><span class="lb">rdlength</span><span class="vl">2</span></div><div class="fld"><span class="by">c0 10</span><span class="lb">rdata</span><span class="vl">pointer to offset 16: example.com</span></div></div></div>
+      <div class="layer" style="--c:#a5652a"><div class="layer-title"><b>answer 2</b><span>an A record</span></div><div class="fields"><div class="fld"><span class="by">c0 10</span><span class="lb">name</span><span class="vl">pointer to offset 16: example.com</span></div><div class="fld"><span class="by">00 01</span><span class="lb">type</span><span class="vl">A</span></div><div class="fld"><span class="by">00 01</span><span class="lb">class</span><span class="vl">IN</span></div><div class="fld"><span class="by">00 00 01 2c</span><span class="lb">ttl</span><span class="vl">300</span></div><div class="fld"><span class="by">00 04</span><span class="lb">rdlength</span><span class="vl">4</span></div><div class="fld"><span class="by">c0 00 02 01</span><span class="lb">rdata</span><span class="vl">192.0.2.1</span></div></div></div>
+      <p class="dim" style="font-size:0.76rem; font-family:var(--font-mono); margin-top:14px;">the answer to <code>www.example.com A</code> from the generated capture, 63 bytes. both answers use pointers: <code>c0 0c</code> is offset 12, <code>c0 10</code> is offset 16, where <code>example.com</code> starts.</p>
+
+      <div class="codeblock"><code><span class="kw">if</span> kind == 0xC0:
+    <span class="kw">if</span> pos + 1 &gt;= len(data):
+        <span class="kw">raise</span> _Malformed("truncated compression pointer")
+    target = ((n &amp; 0x3F) &lt;&lt; 8) | data[pos + 1]
+    <span class="kw">if</span> end &lt; 0:
+        end = pos + 2
+    jumps += 1
+    <span class="kw">if</span> jumps &gt; _MAX_JUMPS:
+        <span class="kw">raise</span> _Malformed("too many compression pointers")
+    <span class="kw">if</span> <span class="kw">not</span> _HEADER_LEN &lt;= target &lt; pos:
+        <span class="kw">raise</span> _Malformed("compression pointer does not point backward into the message")
+    pos = target
+    <span class="kw">continue</span></code></div>
+
+      <p>the header also carries the number of records in each section, up to 65,535, and it is just as untrusted. the loops stop at the first record that is missing, so a lying header costs nothing.</p>
+
+      <div class="codeblock"><code><span class="cm"># a header that claims 65,535 records in each section, and nothing after it</span>
+parse_dns(header).anomalies == ('truncated dns message: question 1 of 65535 is missing',)</code></div>
+
+      <p>only a header that cannot be read is an <code>error</code>. a broken or missing record ends parsing as an anomaly, and the records before it are kept. the record data is turned into text for A, AAAA, NS, CNAME, PTR, MX and TXT, and the raw bytes are always kept too, because the DNS tunneling detector in stage 5 will need the real bytes.</p>
+
+      <h3 class="sub">HTTP</h3>
+
+      <p>the HTTP parser reads the start line, the headers and the body bytes that are in the segment. HTTP/1.x only: HTTP/2 needs TLS and is binary. it has limits (8 KB for the start line, 16 KB of headers, 100 headers) so a hostile packet cannot make it work hard. two anomalies are there because they are cheap and an IDS will want them: conflicting <code>Content-Length</code> values, and a non-numeric one. both are signs of request smuggling.</p>
+
+      <h3 class="sub">the TLS ClientHello</h3>
+
+      <p>the ClientHello is the first thing a client sends, in the clear, and it says a lot: the server name it wants (SNI), the versions it offers and every cipher suite it supports. the parser reads those, plus the list of extension ids in order. real clients mix in GREASE values (RFC 8701), random placeholders that servers must ignore. the parser keeps them in the data and the printed line hides them.</p>
+
+      <div class="sizebar" role="img" aria-label="The ClientHello payload is 161 bytes: 9 of headers, 67 of hello fields, 34 of cipher suites, 2 of compression and 49 of extensions."><span style="flex:9;background:#8b8983">9</span><span style="flex:67;background:#b9b5ad">67</span><span style="flex:34;background:#e8963f">34</span><span style="flex:2;background:#8b8983"></span><span style="flex:49;background:#a5652a">49</span></div>
+
+      <div class="layer" style="--c:#8b8983"><div class="layer-title"><b>record and handshake headers</b><span>9 bytes</span></div><div class="fields"><div class="fld"><span class="by">16</span><span class="lb">record type</span><span class="vl">handshake</span></div><div class="fld"><span class="by">03 01</span><span class="lb">record version</span><span class="vl">TLS 1.0 (legacy)</span></div><div class="fld"><span class="by">00 9c</span><span class="lb">record length</span><span class="vl">156</span></div><div class="fld"><span class="by">01</span><span class="lb">handshake type</span><span class="vl">ClientHello</span></div><div class="fld"><span class="by">00 00 98</span><span class="lb">handshake length</span><span class="vl">152</span></div></div></div>
+      <div class="layer" style="--c:#b9b5ad"><div class="layer-title"><b>hello</b><span>2 + 32 + 33 bytes</span></div><div class="fields"><div class="fld"><span class="by">03 03</span><span class="lb">client version</span><span class="vl">TLS 1.2 (legacy)</span></div><div class="fld"><span class="by">00 01 02 03 … 1e 1f</span><span class="lb">random</span><span class="vl">32 bytes</span></div><div class="fld"><span class="by">20</span><span class="lb">session id length</span><span class="vl">32</span></div><div class="fld"><span class="by">20 21 22 23 … 3e 3f</span><span class="lb">session id</span><span class="vl">32 bytes</span></div></div></div>
+      <div class="layer" style="--c:#e8963f"><div class="layer-title"><b>cipher suites</b><span>2 + 32 bytes</span></div><div class="fields"><div class="fld"><span class="by">00 20</span><span class="lb">length</span><span class="vl">32 = 16 suites</span></div><div class="fld"><span class="by">0a 0a 13 01 … 00 35</span><span class="lb">suites</span><span class="vl">0a0a is GREASE, then 1301, 1302 ...</span></div></div></div>
+      <div class="layer" style="--c:#8b8983"><div class="layer-title"><b>compression</b><span>2 bytes</span></div><div class="fields"><div class="fld"><span class="by">01 00</span><span class="lb">methods</span><span class="vl">null only</span></div></div></div>
+      <div class="layer" style="--c:#a5652a"><div class="layer-title"><b>extensions</b><span>2 + 47 bytes</span></div><div class="fields"><div class="fld"><span class="by">00 2f</span><span class="lb">length</span><span class="vl">47</span></div><div class="fld"><span class="by">1a 1a 00 00</span><span class="lb">type 0x1a1a</span><span class="vl">GREASE, empty</span></div><div class="fld"><span class="by">00 00 00 10 … 6f 6d</span><span class="lb">type 0, server_name</span><span class="vl">example.com</span></div><div class="fld"><span class="by">00 0a 00 08 00 06 00 1d 00 17 00 18</span><span class="lb">type 10, groups</span><span class="vl">x25519, secp256r1, secp384r1</span></div><div class="fld"><span class="by">00 2b 00 07 06 2a 2a 03 04 03 03</span><span class="lb">type 43, versions</span><span class="vl">GREASE, TLS 1.3, TLS 1.2</span></div></div></div>
+      <p class="dim" style="font-size:0.76rem; font-family:var(--font-mono); margin-top:14px;">the 161-byte ClientHello from the generated capture. long fields are shortened with an ellipsis. the command prints it as: <code>TLS ClientHello, sni example.com, versions [TLS 1.3, TLS 1.2], ciphers (15) [TLS_AES_128_GCM_SHA256, TLS_AES_256_GCM_SHA384, TLS_CHACHA20_POLY1305_SHA256, +12 more]</code></p>
+
+      <h3 class="sub">printing what the network sends you</h3>
+
+      <p>names, header values and the server name come from the network, and the command prints them. a terminal escape sequence inside a hostname would run in the analyst's terminal. so the parsers escape everything before they hand it out: control characters become <code>\xNN</code>, and DNS labels use the escapes from RFC 4343. this happens at parse time, not print time, because stage 4 filters and stage 5 JSON alerts will use the same strings and should not have to remember.</p>
+
+      <div class="codeblock"><code><span class="kw">def</span> printable(data: bytes) -&gt; str:
+    <span class="kw">return</span> "".join(chr(b) <span class="kw">if</span> 0x20 &lt;= b &lt; 0x7F <span class="kw">else</span> f"\\x{b:02x}" <span class="kw">for</span> b <span class="kw">in</span> data)</code></div>
+      <div class="codeblock"><code><span class="cm"># request line:  GET /a&lt;ESC&gt;[2J HTTP/1.1</span>
+target = "/a\x1b[2J"
+host   = "\x07evil"</code></div>
+
+      <p>the cost: a literal backslash-x written in the original data looks the same as an escape. for a display and detection string that is fine, and the raw bytes stay available where they matter (the DNS record data).</p>
+
       <h2><span class="hash">##</span>seven stages</h2>
 
       <div class="table-wrap"><table class="data">
         <thead><tr><th>stage</th><th>what it adds</th><th>state</th></tr></thead>
         <tbody>
-          <tr><td>1</td><td>pcap reader and writer, Ethernet, ARP, IPv4, IPv6, TCP, UDP, ICMP parsers, command line summary</td><td class="dim">done, this post</td></tr>
-          <tr><td>2</td><td>DNS, plaintext HTTP, TLS ClientHello (server name, versions, cipher list)</td><td class="dim">next</td></tr>
-          <tr><td>3</td><td>flow tracking, TCP stream reassembly (out of order, retransmitted), per-flow statistics</td><td class="dim">planned</td></tr>
+          <tr><td>1</td><td>pcap reader and writer, Ethernet, ARP, IPv4, IPv6, TCP, UDP, ICMP parsers, command line summary</td><td class="dim">done</td></tr>
+          <tr><td>2</td><td>DNS, plaintext HTTP, TLS ClientHello (server name, versions, cipher list)</td><td class="dim">done, this post</td></tr>
+          <tr><td>3</td><td>flow tracking, TCP stream reassembly (out of order, retransmitted), per-flow statistics</td><td class="dim">next</td></tr>
           <tr><td>4</td><td>a filter language like <code>tcp and (port 80 or port 443) and not src host 10.0.0.1</code></td><td class="dim">planned</td></tr>
           <tr><td>5</td><td>IDS engine: port scan, SYN flood, ARP spoofing, DNS tunneling, rule config, JSON alerts</td><td class="dim">planned</td></tr>
           <tr><td>6</td><td>live capture on Linux, feeding the same pipeline</td><td class="dim">planned</td></tr>
@@ -292,16 +383,16 @@ Tcp(error=<span class="kw">None</span>,
 
       <h2><span class="hash">##</span>the numbers</h2>
 
-      <div class="chart-wrap"><svg class="chart" viewBox="0 0 720 340" role="img" aria-labelledby="c1t c1d"><title id="c1t">Tests per test file</title><desc id="c1d">106 tests in total. test_pcap: 25; test_ipv4: 14; test_tcp: 13; test_udp: 11; test_decode: 10; test_cli: 9; test_ethernet: 8; test_ipv6: 6; test_arp: 5; test_icmp: 5.</desc><line class="grid" x1="170" y1="12" x2="170" y2="300"/><text class="tick" x="170" y="318" text-anchor="middle">0</text><line class="grid" x1="274" y1="12" x2="274" y2="300"/><text class="tick" x="274" y="318" text-anchor="middle">5</text><line class="grid" x1="378" y1="12" x2="378" y2="300"/><text class="tick" x="378" y="318" text-anchor="middle">10</text><line class="grid" x1="482" y1="12" x2="482" y2="300"/><text class="tick" x="482" y="318" text-anchor="middle">15</text><line class="grid" x1="586" y1="12" x2="586" y2="300"/><text class="tick" x="586" y="318" text-anchor="middle">20</text><line class="grid" x1="690" y1="12" x2="690" y2="300"/><text class="tick" x="690" y="318" text-anchor="middle">25</text><text class="lbl" x="158" y="35" text-anchor="end">test_pcap</text><rect class="bar-after" x="170" y="24" width="520" height="14"/><text class="val hot" x="698" y="35">25</text><text class="lbl" x="158" y="63" text-anchor="end">test_ipv4</text><rect class="bar-after" x="170" y="52" width="291.2" height="14"/><text class="val hot" x="469.2" y="63">14</text><text class="lbl" x="158" y="91" text-anchor="end">test_tcp</text><rect class="bar-after" x="170" y="80" width="270.4" height="14"/><text class="val hot" x="448.4" y="91">13</text><text class="lbl" x="158" y="119" text-anchor="end">test_udp</text><rect class="bar-after" x="170" y="108" width="228.8" height="14"/><text class="val hot" x="406.8" y="119">11</text><text class="lbl" x="158" y="147" text-anchor="end">test_decode</text><rect class="bar-after" x="170" y="136" width="208" height="14"/><text class="val hot" x="386" y="147">10</text><text class="lbl" x="158" y="175" text-anchor="end">test_cli</text><rect class="bar-after" x="170" y="164" width="187.2" height="14"/><text class="val hot" x="365.2" y="175">9</text><text class="lbl" x="158" y="203" text-anchor="end">test_ethernet</text><rect class="bar-after" x="170" y="192" width="166.4" height="14"/><text class="val hot" x="344.4" y="203">8</text><text class="lbl" x="158" y="231" text-anchor="end">test_ipv6</text><rect class="bar-after" x="170" y="220" width="124.8" height="14"/><text class="val hot" x="302.8" y="231">6</text><text class="lbl" x="158" y="259" text-anchor="end">test_arp</text><rect class="bar-after" x="170" y="248" width="104" height="14"/><text class="val hot" x="282" y="259">5</text><text class="lbl" x="158" y="287" text-anchor="end">test_icmp</text><rect class="bar-after" x="170" y="276" width="104" height="14"/><text class="val hot" x="282" y="287">5</text></svg></div>
-      <p class="dim" style="font-size:0.8rem; font-family:var(--font-mono);">tests per file. 106 in total.</p>
+      <div class="chart-wrap"><svg class="chart" viewBox="0 0 720 424" role="img" aria-labelledby="c1t c1d"><title id="c1t">Tests per test file</title><desc id="c1d">162 tests in total. test_pcap: 25; test_tls: 18; test_decode: 16; test_dns: 16; test_http: 16; test_ipv4: 14; test_tcp: 13; test_udp: 11; test_cli: 9; test_ethernet: 8; test_ipv6: 6; test_arp: 5; test_icmp: 5.</desc><line class="grid" x1="170" y1="12" x2="170" y2="384"/><text class="tick" x="170" y="402" text-anchor="middle">0</text><line class="grid" x1="274" y1="12" x2="274" y2="384"/><text class="tick" x="274" y="402" text-anchor="middle">5</text><line class="grid" x1="378" y1="12" x2="378" y2="384"/><text class="tick" x="378" y="402" text-anchor="middle">10</text><line class="grid" x1="482" y1="12" x2="482" y2="384"/><text class="tick" x="482" y="402" text-anchor="middle">15</text><line class="grid" x1="586" y1="12" x2="586" y2="384"/><text class="tick" x="586" y="402" text-anchor="middle">20</text><line class="grid" x1="690" y1="12" x2="690" y2="384"/><text class="tick" x="690" y="402" text-anchor="middle">25</text><text class="lbl" x="158" y="35" text-anchor="end">test_pcap</text><rect class="bar-after" x="170" y="24" width="520" height="14"/><text class="val hot" x="698" y="35">25</text><text class="lbl" x="158" y="63" text-anchor="end">test_tls</text><rect class="bar-after" x="170" y="52" width="374.4" height="14"/><text class="val hot" x="552.4" y="63">18</text><text class="lbl" x="158" y="91" text-anchor="end">test_decode</text><rect class="bar-after" x="170" y="80" width="332.8" height="14"/><text class="val hot" x="510.8" y="91">16</text><text class="lbl" x="158" y="119" text-anchor="end">test_dns</text><rect class="bar-after" x="170" y="108" width="332.8" height="14"/><text class="val hot" x="510.8" y="119">16</text><text class="lbl" x="158" y="147" text-anchor="end">test_http</text><rect class="bar-after" x="170" y="136" width="332.8" height="14"/><text class="val hot" x="510.8" y="147">16</text><text class="lbl" x="158" y="175" text-anchor="end">test_ipv4</text><rect class="bar-after" x="170" y="164" width="291.2" height="14"/><text class="val hot" x="469.2" y="175">14</text><text class="lbl" x="158" y="203" text-anchor="end">test_tcp</text><rect class="bar-after" x="170" y="192" width="270.4" height="14"/><text class="val hot" x="448.4" y="203">13</text><text class="lbl" x="158" y="231" text-anchor="end">test_udp</text><rect class="bar-after" x="170" y="220" width="228.8" height="14"/><text class="val hot" x="406.8" y="231">11</text><text class="lbl" x="158" y="259" text-anchor="end">test_cli</text><rect class="bar-after" x="170" y="248" width="187.2" height="14"/><text class="val hot" x="365.2" y="259">9</text><text class="lbl" x="158" y="287" text-anchor="end">test_ethernet</text><rect class="bar-after" x="170" y="276" width="166.4" height="14"/><text class="val hot" x="344.4" y="287">8</text><text class="lbl" x="158" y="315" text-anchor="end">test_ipv6</text><rect class="bar-after" x="170" y="304" width="124.8" height="14"/><text class="val hot" x="302.8" y="315">6</text><text class="lbl" x="158" y="343" text-anchor="end">test_arp</text><rect class="bar-after" x="170" y="332" width="104" height="14"/><text class="val hot" x="282" y="343">5</text><text class="lbl" x="158" y="371" text-anchor="end">test_icmp</text><rect class="bar-after" x="170" y="360" width="104" height="14"/><text class="val hot" x="282" y="371">5</text></svg></div>
+      <p class="dim" style="font-size:0.8rem; font-family:var(--font-mono);">tests per file. 162 in total.</p>
 
       <p>each parser is tested with a valid packet, a truncated one, a malformed header (where the format has one) and random bytes. on top of that, three kinds of fuzzing run against the whole decoder, with fixed random seeds so a failure can be reproduced exactly:</p>
 
       <div class="table-wrap"><table class="data">
         <thead><tr><th>fuzz</th><th>what it does</th><th class="num">inputs</th></tr></thead>
         <tbody>
-          <tr><td>truncation</td><td>every prefix of each of the 14 generated packets, through the decoder and the summary printer</td><td class="num">1,023</td></tr>
-          <tr><td>corruption</td><td>every byte of each generated packet set to 0, 255 and two random values, one byte at a time</td><td class="num">4,036</td></tr>
+          <tr><td>truncation</td><td>every prefix of each of the 19 generated packets, through the decoder and the summary printer</td><td class="num">1,639</td></tr>
+          <tr><td>corruption</td><td>every byte of each generated packet set to 0, 255 and two random values, one byte at a time</td><td class="num">6,480</td></tr>
           <tr><td>random bytes</td><td>500 seeded random strings of 0 to 200 bytes plus 9 all-zero or all-255 ones, into every parser, and into the decoder behind four ethertypes</td><td class="num">509 per parser</td></tr>
           <tr><td>capture files</td><td>every prefix of a 191-byte valid pcap, and every byte of it replaced once. the reader may only ever raise <code>PcapError</code></td><td class="num">192 + 191</td></tr>
         </tbody>
@@ -325,27 +416,60 @@ Tcp(error=<span class="kw">None</span>,
           <tr><td>field extraction</td><td>one hand-written hex packet per protocol, not made by my builders</td></tr>
           <tr><td>pcap reader</td><td>a big-endian file built by hand with <code>struct</code>, without my writer</td></tr>
           <tr><td>round trip</td><td>all four variants, write then read, packets identical</td></tr>
-          <tr><td>command output</td><td>the 14 lines above, read through by eye once and kept as a golden test; running it twice gives the same text</td></tr>
+          <tr><td>DNS names</td><td>hand-built messages for every malformed pointer and label, with the exact anomaly text asserted, not just that something was reported</td></tr>
+          <tr><td>ClientHello</td><td>a hand-built minimal hello and one cut at every byte, plus a browser-shaped one with GREASE</td></tr>
+          <tr><td>safe printing</td><td>escape sequences in a request line, a host header and a server name; the printed line must contain only printable characters</td></tr>
+          <tr><td>command output</td><td>the 19 lines above, read through by eye once and kept as a golden test; running it twice gives the same text</td></tr>
         </tbody>
       </table></div>
 
       <p>that already paid off once. I worked out the ICMP checksum of an 8-byte echo request header by hand and got <code>0xf7ff</code>. the test failed, and the parser was right: <code>0x0800 + 0x0001 + 0x0001 = 0x0802</code>, so the checksum is <code>0xf7fd</code>. my arithmetic was the bug.</p>
 
-      <p>unlike with Impulse, I have not sabotaged the parsers on purpose yet to see whether the tests notice. a test that has never failed hasn't proven much, so that is on the list.</p>
+      <h2><span class="hash">##</span>breaking it on purpose</h2>
+
+      <p>a test that has never failed hasn't proven much. so I broke the parsers on purpose, one line at a time, and counted how many tests noticed:</p>
+
+      <div class="table-wrap"><table class="data">
+        <thead><tr><th>stage</th><th>part</th><th>what I broke</th><th class="num">tests that failed</th></tr></thead>
+        <tbody>
+          <tr><td>1</td><td>ipv4 header</td><td>skipped the header checksum</td><td class="num">3 of 162</td></tr>
+          <tr><td>1</td><td>tcp options</td><td>let an option run past the end</td><td class="num">1 of 162</td></tr>
+          <tr><td>1</td><td>checksum rule</td><td>verified checksums on truncated packets</td><td class="num">2 of 162</td></tr>
+          <tr><td>1</td><td>pcap reader</td><td>removed the captured-length cap</td><td class="num">1 of 162</td></tr>
+          <tr><td>1</td><td>udp header</td><td>accepted a length below 8</td><td class="num">1 of 162</td></tr>
+          <tr><td>1</td><td>vlan tag</td><td>kept the priority bits in the VLAN id</td><td class="num">1 of 162</td></tr>
+          <tr><td>2</td><td>dns names</td><td>allowed forward and self pointers</td><td class="num">1 of 162</td></tr>
+          <tr><td>2</td><td>dns names</td><td>did not escape dots inside labels</td><td class="num">1 of 162</td></tr>
+          <tr><td>2</td><td>dns names</td><td>let a label run past the message end</td><td class="num">1 of 162</td></tr>
+          <tr><td>2</td><td>dns message</td><td>ignored bytes after the last record</td><td class="num">2 of 162</td></tr>
+          <tr><td>2</td><td>http headers</td><td>stopped detecting conflicting content-length</td><td class="num">1 of 162</td></tr>
+          <tr><td>2</td><td>printing</td><td>let control characters through</td><td class="num">3 of 162</td></tr>
+          <tr><td>2</td><td>client hello</td><td>ignored an odd cipher list length</td><td class="num">1 of 162</td></tr>
+          <tr><td>2</td><td>client hello</td><td>treated GREASE values as real</td><td class="num">4 of 162</td></tr>
+          <tr><td>2</td><td>client hello</td><td>ignored the record length</td><td class="num">1 of 162</td></tr>
+          <tr><td>2</td><td>tcp dns</td><td>parsed a DNS message cut by the segment</td><td class="num">1 of 162</td></tr>
+        </tbody>
+      </table></div>
+
+      <p>all 16 breaks are caught now, but the first run had three survivors, so the tests were weaker than I thought. a DNS name that pointed at itself, or forward, still ended as an anomaly, because other checks (the cap of 32 jumps, the end of the message) caught it, only with the wrong message. a label running past the end of the message was caught one step later by the next check. and nothing tested a TLS record that is shorter than the handshake it carries. I made the tests check the exact message, added the missing one, and ran it again.</p>
+
+      <p>11 of the 16 breaks are caught by a single test, so the coverage is not deep. a mutation run like this only proves that the tests can fail. it says nothing about the cases nobody thought of.</p>
 
       <h2><span class="hash">##</span>what it still can't do</h2>
 
       <p>IPv6 is the fixed 40-byte header only. extension headers are not walked and ICMPv6 is not parsed, so those packets print as <code>ip-proto-N</code>.</p>
 
-      <p>IP fragments are not reassembled. a fragment is decoded down to its IP header and no further.</p>
+      <p>IP fragments are not reassembled, and neither are TCP streams. until stage 3, everything above the transport layer is read one segment at a time: a DNS-over-TCP message, an HTTP request or a ClientHello that spans segments is only partly seen.</p>
 
       <p>ARP is Ethernet and IPv4 only. only the Ethernet link type is read; any other type is refused with a message. VLAN tags keep the VLAN id and drop the priority bits.</p>
+
+      <p>HTTP is HTTP/1.x only. TLS is the ClientHello only: no ALPN, no fingerprints, and the cipher and version name tables cover the common ones (the rest print as hex).</p>
 
       <p>the printed timestamps have microsecond precision, so a nanosecond file loses its last three digits on screen (not in memory).</p>
 
       <p>and it has only ever seen traffic I generated. a real capture may show me things the tests do not cover.</p>
 
-      <p>next is stage 2: DNS, plaintext HTTP, and the TLS ClientHello.</p>
+      <p>next is stage 3: flow tracking and TCP stream reassembly, which should also fix the mid-stream <code>GET </code> problem.</p>
 
     </div>
   </article>
