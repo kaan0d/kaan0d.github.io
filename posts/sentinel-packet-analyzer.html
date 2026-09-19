@@ -178,7 +178,7 @@
     <div class="post-body">
       <p>Sentinel is a packet analyzer and, eventually, a rule-based intrusion detection system, written in Python from scratch. the protocol parsers are hand-written with <code>struct</code>: no Scapy, no dpkt, no pyshark. it reads pcap capture files and prints one line per packet, tcpdump style. it has no runtime dependencies.</p>
 
-      <p>this post covers all seven stages. stage 1 is the pcap reader and writer, and parsers for Ethernet (with VLAN tags), ARP, IPv4, IPv6, TCP, UDP and ICMP. stage 2 is the application layer: DNS, plaintext HTTP and the TLS ClientHello (server name, versions, cipher list). stage 3 is flow tracking and TCP stream reassembly. stage 4 is a filter language. stage 5 is the intrusion detection part: four detectors (port scans, SYN floods, ARP spoofing, DNS tunneling), rules, and JSON alerts. stage 6 is live capture on Linux: the same pipeline, fed from a network interface. stage 7 measures it (packets per second), adds a fuzzer, and sets up CI. some of that has never run on the machines it is for, and I say so where it matters.</p>
+      <p>this post covers all seven stages. stage 1 is the pcap reader and writer, and parsers for Ethernet (with VLAN tags), ARP, IPv4, IPv6, TCP, UDP and ICMP. stage 2 is the application layer: DNS, plaintext HTTP and the TLS ClientHello (server name, versions, cipher list). stage 3 is flow tracking and TCP stream reassembly. stage 4 is a filter language. stage 5 is the intrusion detection part: four detectors (port scans, SYN floods, ARP spoofing, DNS tunneling), rules, and JSON alerts. stage 6 is live capture on Linux: the same pipeline, fed from a network interface. stage 7 measures it (packets per second), adds a fuzzer, and sets up CI. some of it I wrote but have not tested on the machines it is for, and I say so where it matters.</p>
 
       <p>I worked the same way as with Impulse: one stage at a time, and the next one does not start until the tests pass and ruff and strict mypy are clean. most of this post is about what the parsers do with bad input, and how I tried to prove they are right.</p>
 
@@ -663,7 +663,7 @@ window_seconds = 30</code></div>
 
       <p>until now every command read a file. stage 6 reads a network interface instead. <code>live</code> receives the Ethernet frames of one interface, on Linux, and sends them through the steps that already exist: decode, filter, then print them, run the detectors, or write them to a pcap file. what is new is small. most of this stage is about what a file never shows.</p>
 
-      <p>I have to say what I could not do. I write this on Windows, with no WSL and no Docker, and the packet socket (<code>AF_PACKET</code>) does not exist here. so the code that talks to the real socket has not been run. everything around it has, against a stand-in.</p>
+      <p>I have to say what I have not tested. I write this on Windows, with no WSL and no Docker, and the packet socket (<code>AF_PACKET</code>) does not exist here. so I wrote the code that talks to the real socket, but I have not tested it. everything around it has been tested, against a stand-in.</p>
 
       <h3 class="sub">the same pipeline</h3>
 
@@ -722,7 +722,7 @@ window_seconds = 30</code></div>
 
       <h2><span class="hash">##</span>stage 7: measuring it</h2>
 
-      <p>the last stage adds no feature. it answers three questions about what exists: how fast is it, what does it do with input nobody planned for, and does it still work on a machine that is not mine. the answers are a benchmark tool, a fuzzer, and a CI workflow. the first two ran here. the third has not run yet, and I will say what that means.</p>
+      <p>the last stage adds no feature. it answers three questions about what exists: how fast is it, what does it do with input nobody planned for, and does it still work on a machine that is not mine. the answers are a benchmark tool, a fuzzer, and a CI workflow. the first two ran here. the third I wrote but have not tested yet, and I will say what that means.</p>
 
       <h3 class="sub">how fast is it</h3>
 
@@ -736,7 +736,7 @@ window_seconds = 30</code></div>
 
       <p>I expected one slow function. I profiled decoding, 30,000 packets, to find it:</p>
 
-      <div class="chart-wrap"><svg class="chart" viewBox="0 0 720 268" role="img" aria-labelledby="c11t c11d"><title id="c11t">Where the time goes when decoding a packet</title><desc id="c11d">No function takes more than about 15 percent of the decoding time.</desc><text class="lbl" x="196" y="34" text-anchor="end">ipv4 parser</text><rect class="b7g" x="210" y="20" width="249.3" height="20"/><text class="val" x="467.3" y="34">13%</text><text class="lbl" x="196" y="64" text-anchor="end">decode (dispatch)</text><rect class="b7g" x="210" y="50" width="248.5" height="20"/><text class="val" x="466.5" y="64">13%</text><text class="lbl" x="196" y="94" text-anchor="end">ipaddress objects</text><rect class="b7g" x="210" y="80" width="213.0" height="20"/><text class="val" x="431.0" y="94">11%</text><text class="lbl" x="196" y="124" text-anchor="end">tcp parser</text><rect class="b7g" x="210" y="110" width="179.5" height="20"/><text class="val" x="397.5" y="124">9%</text><text class="lbl" x="196" y="154" text-anchor="end">checksum</text><rect class="b7g" x="210" y="140" width="145.3" height="20"/><text class="val" x="363.3" y="154">8%</text><text class="lbl" x="196" y="184" text-anchor="end">ethernet parser</text><rect class="b7g" x="210" y="170" width="105.3" height="20"/><text class="val" x="323.3" y="184">6%</text><text class="lbl" x="196" y="214" text-anchor="end">len()</text><rect class="b7g" x="210" y="200" width="97.5" height="20"/><text class="val" x="315.5" y="214">5%</text><text class="lbl" x="196" y="244" text-anchor="end">dns names</text><rect class="b7g" x="210" y="230" width="73.2" height="20"/><text class="val" x="291.2" y="244">4%</text></svg></div>
+      <div class="chart-wrap"><svg class="chart" viewBox="0 0 720 268" role="img" aria-labelledby="c11t c11d"><title id="c11t">Where the time goes when decoding a packet</title><desc id="c11d">No function takes more than about 15 percent of the decoding time.</desc><text class="lbl" x="196" y="34" text-anchor="end">decode (dispatch)</text><rect class="b7g" x="210" y="20" width="251.0" height="20"/><text class="val" x="469.0" y="34">13%</text><text class="lbl" x="196" y="64" text-anchor="end">ipv4 parser</text><rect class="b7g" x="210" y="50" width="247.6" height="20"/><text class="val" x="465.6" y="64">13%</text><text class="lbl" x="196" y="94" text-anchor="end">ipaddress objects</text><rect class="b7g" x="210" y="80" width="212.4" height="20"/><text class="val" x="430.4" y="94">11%</text><text class="lbl" x="196" y="124" text-anchor="end">tcp parser</text><rect class="b7g" x="210" y="110" width="179.3" height="20"/><text class="val" x="397.3" y="124">9%</text><text class="lbl" x="196" y="154" text-anchor="end">checksum</text><rect class="b7g" x="210" y="140" width="146.1" height="20"/><text class="val" x="364.1" y="154">8%</text><text class="lbl" x="196" y="184" text-anchor="end">ethernet parser</text><rect class="b7g" x="210" y="170" width="105.0" height="20"/><text class="val" x="323.0" y="184">6%</text><text class="lbl" x="196" y="214" text-anchor="end">len()</text><rect class="b7g" x="210" y="200" width="96.6" height="20"/><text class="val" x="314.6" y="214">5%</text><text class="lbl" x="196" y="244" text-anchor="end">dns names</text><rect class="b7g" x="210" y="230" width="73.0" height="20"/><text class="val" x="291.0" y="244">4%</text></svg></div>
 
       <p>there is none. the biggest share is 13% and the rest is spread over the parsers, the checksums and the <code>ipaddress</code> objects the parsers build. a profiler makes small functions look bigger than they are, so read it as a rough picture. it says that no single fix would make decoding faster, and I did not change anything to improve a number. this stage measures.</p>
 
@@ -758,9 +758,9 @@ window_seconds = 30</code></div>
 
       <p>2 of 148 is 1.4%, which is very little. what it catches are the breaks that make something raise or print a broken line: "let control characters through" put a control character in a line it prints, and "counted any ACK as a completed handshake" made the detector raise a <code>KeyError</code>. what it cannot catch is a wrong answer that is well formed: "skipped the header checksum" or "let an option run past the end" leave every output looking fine. that is the job of the tests with expected values, and this is why the project has both. one more break, "stopped reading tcp port 80 as tcp and port 80", made the fuzzer's own list of filters stop parsing, so it crashed before its first input. I do not count that as a catch.</p>
 
-      <h3 class="sub">CI I could not run</h3>
+      <h3 class="sub">CI: written, not tested</h3>
 
-      <p>the project claims Python 3.12 and up. I have only run 3.13, on Windows, and the live capture has never run on Linux. so the workflow in <code>.github/workflows/ci.yml</code> (58 lines) runs everything on Python 3.12 and 3.13, on Linux and on Windows: ruff, the format check, strict mypy, the tests, 200,000 fuzz inputs, and a small benchmark. the fuzz seed is the run number, so a failure can be repeated with that number. the benchmark is for information only: no threshold, because a speed test that fails on a slow runner teaches people to ignore red.</p>
+      <p>I developed this project with Python 3.13 on Windows, but it should also work on Python 3.12 and above, and you are welcome to try it on 3.12 yourself. so I wrote a workflow, <code>.github/workflows/ci.yml</code> (58 lines), that runs everything on Python 3.12 and 3.13, on Linux and on Windows: ruff, the format check, strict mypy, the tests, 200,000 fuzz inputs, and a small benchmark. the fuzz seed is the run number, so a failure can be repeated with that number. the benchmark is for information only: no threshold, because a speed test that fails on a slow runner teaches people to ignore red.</p>
 
       <div class="codeblock"><code>strategy:
   fail-fast: false
@@ -777,7 +777,7 @@ window_seconds = 30</code></div>
 
       <p>the second job is the reason it matters to me. it runs <code>tests/test_live_linux.py</code> as root on a Linux runner, on the loopback interface, and fails if those tests were skipped. that will be the first time the real packet socket is used, so it is where my two unchecked assumptions from stage 6 get checked.</p>
 
-      <p>but the workflow has not run, and I have no way to run it here. I wrote it carefully and checked what I could: 6 tests read the file and the README. they check that the workflow runs every command the README lists under development, in the right order, on the Python versions the project claims, that the fuzz seed is the run number, that the live job runs the root tests and fails on a skip, and that the workflow can only read the repository. that is a check on the text and not on GitHub, so the first red or green run will be news to me.</p>
+      <p>I wrote this workflow, but I have not tested it: I have no way to run it from here, so it has not run on GitHub yet. I wrote it carefully and checked what I could: 6 tests read the file and the README. they check that the workflow runs every command the README lists under development, in the right order, on Python 3.12 and 3.13, that the fuzz seed is the run number, that the live job runs the root tests and fails on a skip, and that the workflow can only read the repository. that is a check on the text and not on GitHub, so the first red or green run will be news to me.</p>
 
       <h2><span class="hash">##</span>seven stages</h2>
 
@@ -819,7 +819,7 @@ window_seconds = 30</code></div>
       <p>speed is measured in stage 7, above. the fuzzer of stage 7 is separate from these: it runs longer and through everything at once.</p>
 
       <div class="callout">
-        <p>how to read these numbers: all traffic is synthetic, made by my own generator. that is a rule of the project, no real captures from other networks. so the fuzzing shows the parsers do not raise on bad input, not that they agree with every odd thing a real network does. one machine, Windows 11, Python 3.13. the project targets 3.12 and up, and the CI workflow is set up for 3.12, but I have only run it on 3.13.</p>
+        <p>how to read these numbers: all traffic is synthetic, made by my own generator. that is a rule of the project, no real captures from other networks. so the fuzzing shows the parsers do not raise on bad input, not that they agree with every odd thing a real network does. one machine, Windows 11, Python 3.13. I developed the project with 3.13, but it should also work on 3.12 and above, and you can try it there.</p>
       </div>
 
       <h2><span class="hash">##</span>how I checked it's right</h2>
@@ -890,13 +890,13 @@ window_seconds = 30</code></div>
 
       <p>detectors work on packets, so a scan that is slower than the window (one probe every two seconds, say) is not seen, and neither is one spread over many sources.</p>
 
-      <p>live capture is Linux only, and needs root. and the real socket has never been run: the tests that use one exist, they need Linux and root, and I could not run them. everything else was tested with a stand-in, so what is proven is the loop around the socket, and not that the socket does what I think. two of my assumptions are unchecked: that the kernel gives a packet on loopback twice, and what the frames of a real network card look like.</p>
+      <p>live capture is Linux only, and needs root. and I have not tested the real socket. I wrote the code and the tests that use it (they need Linux and root), but I have not run them. everything else was tested with a stand-in, so what is proven is the loop around the socket, and not that the socket does what I think. two of my assumptions are unchecked: that the kernel gives a packet on loopback twice, and what the frames of a real network card look like.</p>
 
       <p>what the frames look like matters. the interface is not put in promiscuous mode, so it sees only what it would receive anyway (or what a mirror port sends it). packets that the machine itself sends often have checksums that are not filled in yet, because the network card does it, so they can show up as <code>[bad ... checksum]</code>. a VLAN tag may already be removed. <code>flows</code> does not work on a live capture, and a detector's state-limit alert is printed when the run ends, not while it runs.</p>
 
       <p>it is slow, in the way a pure Python program on one core is slow: about 98,710 packets per second to decode and about 34,551 through the live loop. a busy network makes the kernel drop packets, and I did not try to fix that. the numbers are from one machine.</p>
 
-      <p>the fuzzer only checks that nothing raises and that the output is well formed. random damage will not find what needs specific bytes in specific places, and a smarter fuzzer that watches which code it reaches would find more. and the CI workflow has never run.</p>
+      <p>the fuzzer only checks that nothing raises and that the output is well formed. random damage will not find what needs specific bytes in specific places, and a smarter fuzzer that watches which code it reaches would find more. and I have not tested the CI workflow.</p>
 
       <p>ARP is Ethernet and IPv4 only. only the Ethernet link type is read; any other type is refused with a message. VLAN tags keep the VLAN id and drop the priority bits.</p>
 
