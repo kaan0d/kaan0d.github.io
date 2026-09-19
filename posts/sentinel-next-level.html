@@ -1,0 +1,590 @@
+<!doctype html>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>taking sentinel further</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+<style>
+  :root{
+    --bg:#060607;
+    --panel:rgba(6,6,7,0.86);
+    --line:#1d1e20;
+    --text:#e9e6e0;
+    --text-dim:#8b8983;
+    --accent:#e8963f;
+    --accent-dim:#a5652a;
+    --accent-soft:#6b4a26;
+    --font-mono:'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
+    --font-sans:'IBM Plex Sans', system-ui, -apple-system, sans-serif;
+    --maxw:760px;
+  }
+  *{ box-sizing:border-box; }
+  html{ scroll-behavior:smooth; }
+  body{ margin:0; background:var(--bg); color:var(--text); font-family:var(--font-sans); font-size:16px; line-height:1.65; -webkit-font-smoothing:antialiased; }
+  a{ color:inherit; }
+  a:focus-visible, button:focus-visible{ outline:1px solid var(--accent); outline-offset:3px; }
+
+  #silk-bg{ position:fixed; inset:0; width:100vw; height:100vh; z-index:0; pointer-events:none; background:var(--bg); display:block; }
+
+  .wrap{ position:relative; z-index:1; max-width:var(--maxw); margin:0 auto; padding:40px 20px 56px; background:var(--panel); -webkit-backdrop-filter:blur(2px); backdrop-filter:blur(2px); }
+
+  header.topbar{ display:flex; flex-wrap:wrap; justify-content:space-between; align-items:baseline; gap:10px 20px; padding-bottom:16px; margin-bottom:36px; border-bottom:1px solid var(--line); font-family:var(--font-mono); }
+  .prompt{ font-size:1.05rem; }
+  .prompt .cash{ color:var(--accent); margin-right:8px; }
+  .prompt .name{ font-weight:700; }
+  header.topbar nav{ display:flex; gap:16px; flex-wrap:wrap; font-size:0.88rem; }
+  header.topbar nav a{ display:inline-block; user-select:none; text-decoration:none; color:var(--text-dim); }
+  header.topbar nav a:hover, header.topbar nav a:focus-visible{ color:var(--accent); }
+
+  .post-date{ font-family:var(--font-mono); font-size:0.8rem; color:var(--text-dim); margin:0 0 10px; }
+  .post-title{ font-family:var(--font-mono); font-size:clamp(1.5rem,4vw,2rem); font-weight:700; line-height:1.25; margin:0 0 32px; text-wrap:balance; }
+
+  .post-body p{ margin:0 0 16px; font-size:1rem; }
+  .post-body p:last-child{ margin-bottom:0; }
+
+  .post-body h2{ font-family:var(--font-mono); font-size:1.05rem; font-weight:700; margin:48px 0 18px; }
+  .post-body h2 .hash{ color:var(--accent-dim); margin-right:8px; }
+  .post-body h3{ font-family:var(--font-mono); font-size:0.92rem; font-weight:700; margin:32px 0 12px; color:var(--text); }
+  .post-body code{ font-family:var(--font-mono); font-size:0.88em; color:var(--accent); }
+  .post-body a{ color:var(--accent); text-decoration:underline; text-decoration-color:var(--accent-soft, #6b4a26); text-underline-offset:3px; }
+  .post-body a:hover{ text-decoration-color:var(--accent); }
+  .links{ font-family:var(--font-mono); font-size:0.88rem; }
+
+  .stats{ display:grid; grid-template-columns:repeat(3, 1fr); gap:1px; margin:32px 0; background:var(--line); border:1px solid var(--line); }
+  .stat{ background:rgba(6,6,7,0.94); padding:16px 14px; }
+  .stat b{ display:block; font-family:var(--font-mono); font-size:1.45rem; font-weight:700; color:var(--accent); line-height:1.2; }
+  @media (max-width:520px){ .stats{ grid-template-columns:repeat(2, 1fr); } }
+  .stat span{ display:block; margin-top:4px; font-size:0.82rem; color:var(--text-dim); line-height:1.4; }
+
+  figure{ margin:28px 0; }
+  figure img{ display:block; width:100%; height:auto; border:1px solid var(--line); border-radius:2px; background:#1a1d25; }
+  figcaption{ margin-top:8px; font-family:var(--font-mono); font-size:0.76rem; line-height:1.55; color:var(--text-dim); }
+  .pair{ display:grid; grid-template-columns:1fr 1fr; gap:12px; margin:28px 0; }
+  .pair figure{ margin:0; }
+  @media (max-width:640px){ .pair{ grid-template-columns:1fr; } }
+
+  .table-wrap{ overflow-x:auto; margin:24px 0; }
+  table.data{ width:100%; border-collapse:collapse; font-size:0.86rem; }
+  table.data th{ text-align:left; font-family:var(--font-mono); font-size:0.74rem; font-weight:500; color:var(--text-dim); padding:8px 12px 8px 0; border-bottom:1px solid var(--line); white-space:nowrap; }
+  table.data td{ padding:8px 12px 8px 0; border-bottom:1px solid var(--line); vertical-align:top; line-height:1.5; }
+  table.data .num{ text-align:right; font-family:var(--font-mono); font-variant-numeric:tabular-nums; white-space:nowrap; padding-right:0; padding-left:12px; }
+  table.data .dim, .dim{ color:var(--text-dim); }
+  table.data tr:last-child td{ border-bottom:none; }
+
+  .chart-wrap{ overflow-x:auto; margin:24px 0 8px; }
+  .chart{ display:block; width:100%; min-width:640px; height:auto; }
+  .chart .grid{ stroke:var(--line); stroke-width:1; }
+  .chart .lbl{ font-family:var(--font-mono); font-size:11.5px; fill:var(--text); }
+  .chart .tick{ font-family:var(--font-mono); font-size:10.5px; fill:var(--text-dim); }
+  .chart .val{ font-family:var(--font-mono); font-size:11px; fill:var(--text-dim); }
+  .chart .val.hot{ fill:var(--accent); }
+  .chart .val.dim{ fill:var(--text-dim); }
+  .chart .val.inside{ fill:var(--bg); font-weight:700; }
+  .chart .bar-before, .chart .key-before{ fill:#4a4844; }
+  .chart .bar-after, .chart .key-after{ fill:var(--accent); }
+  .chart .bar-never{ fill:#4a4844; stroke:var(--text-dim); stroke-dasharray:4 3; }
+  .chart .budget{ stroke:var(--text-dim); stroke-dasharray:4 4; }
+  .chart .line-brute{ fill:none; stroke:#b9b5ad; stroke-width:2; }
+  .chart .line-hash{ fill:none; stroke:var(--accent); stroke-width:2; }
+  .chart .dot-brute{ fill:#b9b5ad; }
+  .chart .dot-hash{ fill:var(--accent); }
+  .chart .key-line-brute{ stroke:#b9b5ad; stroke-width:2; }
+  .chart .key-line-hash{ stroke:var(--accent); stroke-width:2; }
+
+  .callout{ margin:28px 0; padding:14px 16px; border-left:2px solid var(--accent-dim); background:rgba(255,255,255,0.03); font-size:0.9rem; color:var(--text-dim); }
+  .callout p{ margin:0 0 10px; font-size:0.9rem; }
+  .callout p:last-child{ margin:0; }
+
+  .codeblock{ background:rgba(255,255,255,0.03); border:1px solid var(--line); border-radius:4px; padding:16px 18px; overflow-x:auto; margin:28px 0; }
+  .codeblock code{ font-family:var(--font-mono); font-size:0.85rem; color:var(--text); white-space:pre; line-height:1.6; }
+  .codeblock .cm{ color:var(--text-dim); }
+  .codeblock .kw{ color:var(--accent); }
+
+
+  .term{ background:rgba(255,255,255,0.03); border:1px solid var(--line); border-radius:4px; padding:16px 18px; overflow-x:auto; margin:28px 0 8px; }
+  .term pre{ margin:0; font-family:var(--font-mono); font-size:0.76rem; line-height:1.75; white-space:pre; color:var(--text); }
+  .term .pr, .term .ts, .term .dim{ color:var(--text-dim); }
+  .term .pr{ user-select:none; }
+  .term .fl{ color:var(--accent); }
+
+  .sizebar{ display:flex; height:30px; margin:24px 0 8px; font-family:var(--font-mono); font-size:0.74rem; }
+  .sizebar span{ display:block; padding:0 10px; line-height:30px; color:var(--bg); white-space:nowrap; overflow:hidden; }
+  .layer{ margin:26px 0 0; }
+  .layer-title{ display:flex; flex-wrap:wrap; gap:2px 12px; margin:0 0 10px; font-family:var(--font-mono); font-size:0.8rem; }
+  .layer-title b{ color:var(--c); font-weight:700; }
+  .layer-title span{ color:var(--text-dim); }
+  .fields{ display:flex; flex-wrap:wrap; gap:10px 8px; }
+  .fld{ display:flex; flex-direction:column; gap:3px; min-width:0; max-width:100%; }
+  .fld .by{ font-family:var(--font-mono); font-size:0.8rem; padding:6px 8px; border:1px solid var(--c); border-radius:2px; background:rgba(255,255,255,0.03); overflow-wrap:anywhere; color:var(--text); }
+  .fld .lb{ font-family:var(--font-mono); font-size:0.66rem; letter-spacing:0.06em; text-transform:uppercase; color:var(--text-dim); }
+  .fld .vl{ font-family:var(--font-mono); font-size:0.72rem; color:var(--c); }
+  .post-body p.chain{ margin:26px 0 0; font-family:var(--font-mono); font-size:0.82rem; color:var(--text-dim); }
+  .post-body p.chain b{ color:var(--accent); font-weight:500; }
+  .post-body h3.sub{ margin-top:36px; }
+  .chart .key-line-dash{ stroke:var(--text-dim); stroke-width:2; stroke-dasharray:4 3; }
+  .chart .dash-brute{ fill:none; stroke:#b9b5ad; stroke-width:2; stroke-dasharray:5 4; }
+  .chart .dash-hash{ fill:none; stroke:var(--accent); stroke-width:2; stroke-dasharray:5 4; }
+  .chart .tickmark{ stroke:#b9b5ad; stroke-width:1.5; opacity:0.45; }
+  .chart .tickmark.hot{ stroke:var(--accent); }
+  .chart .tickmark.alarm{ stroke:#e0e0e0; }
+  .chart .box{ fill:rgba(255,255,255,0.03); stroke:var(--line); stroke-width:1.5; }
+  .chart .box.hot{ stroke:var(--accent); }
+  .chart .arrow{ fill:none; stroke:var(--text-dim); stroke-width:1.5; }
+  .chart .head{ fill:var(--text-dim); }
+  .chart text.nt{ fill:var(--text); font-family:var(--font-mono); font-size:12.5px; text-anchor:middle; }
+  .chart text.nt.hotlabel{ fill:var(--accent); }
+  .chart text.nd{ fill:var(--text-dim); font-family:var(--font-mono); font-size:10.5px; text-anchor:middle; }
+  .chart .hollow{ fill:none; stroke:#b9b5ad; stroke-width:2; }
+  .chart .stem{ stroke:#b9b5ad; stroke-width:1.5; opacity:0.5; }
+  .chart .stem.hot{ stroke:var(--accent); opacity:0.7; }
+  .chart .dot-plain{ fill:#b9b5ad; }
+  .chart .b7{ fill:var(--accent); }
+  .chart .b7g{ fill:#b9b5ad; }
+  .matrix{ display:grid; gap:6px; margin:24px 0 8px; overflow-x:auto; }
+  .mrow{ display:grid; grid-template-columns:230px minmax(340px,1fr) 28px; align-items:center; gap:12px; font-family:var(--font-mono); font-size:0.72rem; min-width:620px; }
+  .ml{ color:var(--text); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .cells{ display:grid; grid-template-columns:repeat(19,1fr); gap:3px; }
+  .cells i{ display:block; height:14px; background:rgba(255,255,255,0.05); border:1px solid var(--line); }
+  .cells i.on{ background:var(--accent); border-color:var(--accent); }
+  .mc{ text-align:right; color:var(--text-dim); }
+  .reasm{ display:grid; gap:12px; margin:24px 0 8px; }
+  .rrow{ display:grid; grid-template-columns:72px 1fr; gap:4px 12px; align-items:center; font-family:var(--font-mono); font-size:0.72rem; }
+  .rl{ color:var(--text); }
+  .rtrack{ position:relative; height:16px; background:rgba(255,255,255,0.04); border:1px solid var(--line); }
+  .rbar{ position:absolute; top:0; bottom:0; background:var(--accent); }
+  .rbar.dup{ background:transparent; outline:1px dashed var(--accent-dim); outline-offset:-1px; }
+  .rbar.done{ background:var(--text-dim); }
+  .rn{ grid-column:2; color:var(--text-dim); line-height:1.4; }
+
+  footer{ font-family:var(--font-mono); font-size:0.76rem; color:var(--text-dim); margin-top:48px; padding-top:16px; border-top:1px solid var(--line); display:flex; justify-content:space-between; gap:10px; flex-wrap:wrap; }
+
+  @media (prefers-reduced-motion: reduce){ *{ animation:none !important; transition:none !important; } }
+</style>
+
+<canvas id="silk-bg" aria-hidden="true"></canvas>
+
+<div class="wrap">
+  <header class="topbar">
+    <div class="prompt"><span class="cash">$</span><span class="name">Kaan Dinç</span></div>
+    <nav>
+      <a href="../blog">blog</a>
+      <a href="../">home</a>
+    </nav>
+  </header>
+
+<article>
+    <p class="post-date">Sep 2026</p>
+    <h1 class="post-title">taking sentinel to the next level</h1>
+
+    <div class="post-body">
+      <p>the <a href="sentinel-packet-analyzer">first post</a> ended with seven finished stages and a list called "what it still can't do". Sentinel worked, but it had only ever seen traffic I generated myself, and it could not open the files people actually have. so I am taking it to the next level: this post is the sequel, and each stage in it goes after one item of that list, the one that matters most first.</p>
+
+      <p>the rules are the same as before. one stage at a time, tests and ruff and strict mypy clean before the next one, a sabotage run, and a plain note about what I could not check. this post grows a section per stage. it has one so far.</p>
+
+      <div class="stats">
+        <div class="stat"><b>2</b><span>capture file formats read: classic pcap and pcapng, picked by the first four bytes</span></div>
+        <div class="stat"><b>727</b><span>tests, 107 of them new (6 more need Linux and root), ruff and strict mypy clean</span></div>
+        <div class="stat"><b>57 of 57</b><span>new deliberate one-line breaks caught by the tests (253 of 253 in all)</span></div>
+        <div class="stat"><b>183</b><span>lines for the whole pcapng reader, no dependencies</span></div>
+        <div class="stat"><b>3,000,000</b><span>damaged packets and capture files through the fuzzer, half of the files pcapng, 0 failures</span></div>
+        <div class="stat"><b>2,256</b><span>packets that an independent pcapng library and my reader agree on, both directions</span></div>
+      </div>
+
+      <h2><span class="hash">##</span>stage 8: the file people actually have</h2>
+
+      <p>the first thing anyone does with a packet analyzer is open a capture from Wireshark. Wireshark has saved pcapng by default for years, and the reader I wrote in stage 1 knew only classic pcap. this is what it said to a pcapng file:</p>
+
+      <div class="term"><pre><span class="pr">$ python -m sentinel read demo.pcapng
+</span>sentinel: demo.pcapng: not a pcap file: bad magic 0a0d0d0a</pre></div>
+
+      <p>that message is true and useless. after this stage the same command reads it, and prints exactly what it prints for the same packets in a classic file:</p>
+
+      <div class="term"><pre><span class="pr">$ python -m sentinel read demo.pcapng
+</span><span class="ts">2023-11-14 22:13:20.000000</span> ARP, Request who-has 10.0.0.2 tell 10.0.0.1, <span class="dim">length 28</span>
+<span class="ts">2023-11-14 22:13:20.001000</span> ARP, Reply 10.0.0.2 is-at 02:00:00:00:00:02, <span class="dim">length 28</span>
+<span class="ts">2023-11-14 22:13:20.002000</span> IP 10.0.0.1 &gt; 10.0.0.2: ICMP echo request, id 1, seq 1, <span class="dim">length 40</span>
+<span class="ts">2023-11-14 22:13:20.003000</span> IP 10.0.0.2 &gt; 10.0.0.1: ICMP echo reply, id 1, seq 1, <span class="dim">length 40</span>
+<span class="ts">2023-11-14 22:13:20.004000</span> IP 10.0.0.2 &gt; 10.0.0.1: ICMP destination unreachable, code 3, <span class="dim">length 36</span>
+<span class="dim">... 14 more lines, the same as for demo.pcap</span></pre></div>
+
+      <p>the rest of this section is what that took. the whole reader is 183 lines in <code>sentinel/pcap/pcapng.py</code>, and one more small function, <code>open_reader</code>, chooses between the two readers. <code>read</code>, <code>flows</code> and <code>ids</code> use it, so all three take either format.</p>
+
+      <h3 class="sub">what is inside a pcapng file</h3>
+
+      <p>a classic pcap file is a 24-byte header and then one record per packet. a pcapng file is a list of blocks. every block starts with a type and its total length, and ends with its total length again, and its length is a multiple of four, so a reader can skip a block it does not understand without knowing anything about it. that is the whole design, and it is the reason the format could grow. these are the first three blocks of the demo capture, and the bytes are read from the real file:</p>
+
+      <div style="margin-bottom:24px">
+      <div class="layer" style="--c:#8b8983"><div class="layer-title"><b>section header</b><span>28 bytes: the start of the file</span></div><div class="fields"><div class="fld"><span class="by">0a 0d 0d 0a</span><span class="lb">block type</span><span class="vl">section header</span></div><div class="fld"><span class="by">1c 00 00 00</span><span class="lb">block length</span><span class="vl">28</span></div><div class="fld"><span class="by">4d 3c 2b 1a</span><span class="lb">byte-order</span><span class="vl">little endian</span></div><div class="fld"><span class="by">01 00</span><span class="lb">major</span><span class="vl">1</span></div><div class="fld"><span class="by">00 00</span><span class="lb">minor</span><span class="vl">0</span></div><div class="fld"><span class="by">ff ff ff ff ff ff ff ff</span><span class="lb">section length</span><span class="vl">-1: unknown</span></div><div class="fld"><span class="by">1c 00 00 00</span><span class="lb">length again</span><span class="vl">28</span></div></div></div>
+      <div class="layer" style="--c:#b9b5ad"><div class="layer-title"><b>interface description</b><span>32 bytes: what the packets came from</span></div><div class="fields"><div class="fld"><span class="by">01 00 00 00</span><span class="lb">block type</span><span class="vl">interface</span></div><div class="fld"><span class="by">20 00 00 00</span><span class="lb">block length</span><span class="vl">32</span></div><div class="fld"><span class="by">01 00</span><span class="lb">link type</span><span class="vl">1: Ethernet</span></div><div class="fld"><span class="by">00 00</span><span class="lb">reserved</span><span class="vl">0</span></div><div class="fld"><span class="by">00 00 04 00</span><span class="lb">snap length</span><span class="vl">262144</span></div><div class="fld"><span class="by">09 00</span><span class="lb">option code</span><span class="vl">9: tsresol</span></div><div class="fld"><span class="by">01 00</span><span class="lb">option length</span><span class="vl">1</span></div><div class="fld"><span class="by">09</span><span class="lb">value</span><span class="vl">9: ns</span></div><div class="fld"><span class="by">00 00 00</span><span class="lb">padding</span><span class="vl">to 4 bytes</span></div><div class="fld"><span class="by">00 00 00 00</span><span class="lb">end of options</span><span class="vl">0, 0</span></div><div class="fld"><span class="by">20 00 00 00</span><span class="lb">length again</span><span class="vl">32</span></div></div></div>
+      <div class="layer" style="--c:#e8963f"><div class="layer-title"><b>enhanced packet</b><span>92 bytes: the first packet of the demo capture</span></div><div class="fields"><div class="fld"><span class="by">06 00 00 00</span><span class="lb">block type</span><span class="vl">packet</span></div><div class="fld"><span class="by">5c 00 00 00</span><span class="lb">block length</span><span class="vl">92</span></div><div class="fld"><span class="by">00 00 00 00</span><span class="lb">interface</span><span class="vl">0</span></div><div class="fld"><span class="by">fe 9c 97 17</span><span class="lb">time, high</span><span class="vl">395812094</span></div><div class="fld"><span class="by">00 00 2a 36</span><span class="lb">time, low</span><span class="vl">908722176</span></div><div class="fld"><span class="by">3c 00 00 00</span><span class="lb">captured len</span><span class="vl">60</span></div><div class="fld"><span class="by">3c 00 00 00</span><span class="lb">original len</span><span class="vl">60</span></div><div class="fld"><span class="by">ff ff ff ff … 00 00</span><span class="lb">packet data</span><span class="vl">60 bytes</span></div><div class="fld"><span class="by">5c 00 00 00</span><span class="lb">length again</span><span class="vl">92</span></div></div></div>
+      </div>
+
+      <p>the section header says what follows and how to read the numbers. the interface description says what the packets came from (a link type, and here one option that tells the resolution of the timestamps). every packet then costs one enhanced packet block: seven fixed fields, the frame padded to a multiple of four bytes, and the length repeated. here is where the 92 bytes of the first one go:</p>
+
+      <div class="sizebar" role="img" aria-label="An enhanced packet block of 92 bytes: 8 bytes of type and length, 4 of interface, 8 of time, 8 of lengths, 60 of frame, 0 of padding and 4 of length again."><span style="flex:8;background:#8b8983">8</span><span style="flex:12;background:#b9b5ad">12</span><span style="flex:8;background:#e8963f">8</span><span style="flex:60;background:#a5652a">60</span><span style="flex:4;background:#8b8983">4</span></div>
+      <p class="dim" style="font-size:0.8rem; font-family:var(--font-mono);">type and length 8 · interface and time 12 · captured and original length 8 · the frame 60 · padding 0 · length again 4</p>
+
+      <p>so a packet costs 33.3 bytes of overhead on average here, against 16 in a classic file. the same 19 packets are 1,948 bytes as pcap and 2,312 bytes as pcapng.</p>
+
+      <h3 class="sub">which format, and which byte order</h3>
+
+      <p>the first four bytes of a pcapng file are <code>0a 0d 0d 0a</code>. that is the block type of the section header, and it reads the same forwards and backwards, so it is the same in a little-endian and a big-endian file. it also cannot be the start of a classic file, whose magic numbers are <code>d4 c3 b2 a1</code> and its three relatives. so the choice is four bytes:</p>
+
+      <div class="codeblock"><code>magic = fp.read(4)
+fp.seek(-len(magic), io.SEEK_CUR)
+<span class="kw">return</span> PcapngReader(fp) <span class="kw">if</span> magic == SHB_BYTES <span class="kw">else</span> PcapReader(fp)</code></div>
+
+      <p>the byte order comes next, from the byte-order magic in the section header. it is the number <code>0x1A2B3C4D</code> written in the file's own order: <code>4d 3c 2b 1a</code> on disk means little endian, <code>1a 2b 3c 4d</code> big endian. a file can hold several sections, each with its own header, so the order can change in the middle of a file (a capture that two machines appended to each other). the reader keeps the byte order per section and forgets the interface list at every new section, because a packet's interface number only means something inside its own section.</p>
+
+      <h3 class="sub">timestamps</h3>
+
+      <p>classic pcap has two variants, microseconds and nanoseconds, told apart by the magic number. pcapng lets each interface say it, with an option, <code>if_tsresol</code>, one byte. if the top bit is 0 the timestamp counts units of 10<sup>-n</sup> seconds, and if it is 1, units of 2<sup>-n</sup> seconds. if the option is missing the units are microseconds. a second option, <code>if_tsoffset</code>, is a number of seconds to add. the timestamp is a 64-bit count split in two 32-bit halves. the same moment, three seconds, is stored like this, and read back as the same 3,000,000,000 nanoseconds each time:</p>
+
+      <div class="table-wrap"><table class="data">
+        <thead><tr><th>resolution</th><th class="num">option</th><th class="num">ticks per second</th><th class="num">3 s is stored as</th><th class="num">read back (ns)</th></tr></thead>
+        <tbody>
+          <tr><td>microseconds (the default when the option is missing)</td><td class="num">not written</td><td class="num">1,000,000</td><td class="num">3,000,000</td><td class="num">3,000,000,000</td></tr>
+          <tr><td>nanoseconds</td><td class="num">0x09</td><td class="num">1,000,000,000</td><td class="num">3,000,000,000</td><td class="num">3,000,000,000</td></tr>
+          <tr><td>milliseconds</td><td class="num">0x03</td><td class="num">1,000</td><td class="num">3,000</td><td class="num">3,000,000,000</td></tr>
+          <tr><td>whole seconds</td><td class="num">0x00</td><td class="num">1</td><td class="num">3</td><td class="num">3,000,000,000</td></tr>
+          <tr><td>1/1024 of a second</td><td class="num">0x8a</td><td class="num">1,024</td><td class="num">3,072</td><td class="num">3,000,000,000</td></tr>
+        </tbody>
+      </table></div>
+
+      <p>the reader turns every timestamp into integer nanoseconds, like the classic reader does, and the arithmetic is integers only:</p>
+
+      <div class="codeblock"><code>ts_ns = (high &lt;&lt; 32 | low) * 1_000_000_000 // interface.ticks_per_second
+ts_ns += interface.offset_ns
+<span class="kw">if</span> <span class="kw">not</span> 0 &lt;= ts_ns &lt;= MAX_TS_NS:
+    <span class="kw">raise</span> PcapError(f"pcapng timestamp {ts_ns} ns is out of range")</code></div>
+
+      <p>there is a reason for no floats. a timestamp from the demo capture is 1,700,000,000,000,000,000 nanoseconds, a number of 61 bits, and a float keeps 53. a float that big can only step by 256 nanoseconds, so it would round every one of them, and two packets 100 nanoseconds apart could get the same time. integers keep them exact.</p>
+
+      <p>the last two lines are there because of a mistake I almost made. with a resolution of whole seconds, a 64-bit count can name a moment 585 billion years from now. the summary line turns a timestamp into a <code>datetime</code>, and a <code>datetime</code> stops at the year 9999. so a corrupt or hostile timestamp would make <code>read</code> raise an <code>OverflowError</code> on the printing, which the first rule of the project forbids. so the reader refuses a timestamp before 1970 or after 31 December 9999 with a <code>PcapError</code>, and one test checks that the last second it accepts can be printed and the next one cannot.</p>
+
+      <h3 class="sub">what it reads, what it skips, what it refuses</h3>
+
+      <div class="table-wrap"><table class="data">
+        <thead><tr><th>block</th><th>what the reader does</th></tr></thead>
+        <tbody>
+          <tr><td>section header</td><td>reads the byte order and the version (only 1.x), starts a new list of interfaces</td></tr>
+          <tr><td>interface description</td><td>reads the link type, the snap length, <code>if_tsresol</code> and <code>if_tsoffset</code></td></tr>
+          <tr><td>enhanced packet</td><td>a packet: interface, 64-bit timestamp, captured length, original length, data. options after the data are skipped</td></tr>
+          <tr><td>simple packet</td><td>a packet with no timestamp. it gets the time of the packet before it (0 if it is the first), and is cut at the snap length of the first interface</td></tr>
+          <tr><td>name resolution, interface statistics, decryption secrets, custom, the old packet block</td><td>skipped, by their length</td></tr>
+        </tbody>
+      </table></div>
+
+      <p>and it refuses, with a <code>PcapError</code> that says what is wrong: a block length that is under 12 (28 for a section header), not a multiple of four, or over 16 MiB; a length that is not repeated at the end of the block; a block that is cut short; a version other than 1; a packet for an interface the section never described; a captured length over 262,144 or past the end of its block; a known option of the wrong size, or one that runs past its block; a timestamp out of range. as in the classic reader, the packets before the damage are still yielded first, so <code>read</code> prints them and then reports the error.</p>
+
+      <p>a pcapng file can describe several interfaces, say an Ethernet card and a Wi-Fi card, with different link types. the rest of Sentinel decodes Ethernet only, so the file's link type is the first interface's, and a packet that arrives on an interface with a different link type stops the read with an error naming both. it does not decode those bytes as Ethernet by mistake, and it does not drop them without saying so.</p>
+
+      <h3 class="sub">checking it against something I did not write</h3>
+
+      <p>my tests build their files by hand, block by block, from the description of the format, and not with the generator that I also wrote. that keeps a misreading of mine from cancelling out. but it is still me reading my own reading. so I also checked it against a package that another person wrote, <code>python-pcapng</code>, which I installed in a scratch folder for this one check. it is not a dependency of Sentinel and it is not part of the test suite.</p>
+
+      <div class="table-wrap"><table class="data">
+        <thead><tr><th>direction</th><th>what was written</th><th>result</th></tr></thead>
+        <tbody>
+          <tr><td>their writer, my reader</td><td>little and big endian, six timestamp resolutions (default, ns, 10 ns, ms, s and 1/1024 s), a timestamp above 2<sup>32</sup> seconds, options in the headers</td><td>66 packets, all agree: data, length, timestamp to the nanosecond</td></tr>
+          <tr><td>my writer, their reader</td><td>the generated captures (sample, streams, attacks), both byte orders</td><td>2,190 packets, all agree</td></tr>
+        </tbody>
+      </table></div>
+
+      <p>it agreed on every packet. the attempts that failed while I wrote the check failed on how to call their writer (it refuses an empty packet, for one), not on the reader. what this does not show: I have no file written by Wireshark itself here, so a habit that only Wireshark has is not covered. stage 9 is meant to close that.</p>
+
+      <h3 class="sub">the fuzzer learned a second format</h3>
+
+      <p>the fuzzer of stage 7 sends a damaged small capture file to the reader every fifth input. those files are now half classic and half pcapng, and some of them are one of each spliced together, so a header from one format sits in front of the blocks of the other. I ran 3,000,000 inputs (seed 8: 2,400,000 packets and 600,000 capture files): 0 failures. that is the same modest claim as in the first post: the reader only ever raises <code>PcapError</code> and everything after it stays well formed, and random damage will not find what needs three specific bytes to line up.</p>
+
+      <p>the tests do the systematic part: every prefix of a valid pcapng file, in both byte orders, is either read as a shorter capture or refused with a <code>PcapError</code>, and never gives back a packet that was not in the file. every byte of the file replaced in turn by three different values does the same. and random strings of 0 to 200 bytes behind a valid section header, behind a valid section and interface header, and on their own.</p>
+
+      <h3 class="sub">breaking it on purpose</h3>
+
+      <p>the sabotage run has 57 new breaks for this stage, one line each: the byte order read from the wrong place, a block length that is not a multiple of four let through, base 2 read as base 10, an offset subtracted instead of added, an option that is not padded, an off-by-one on the interface number, and so on. all 57 are caught, and the 196 from stages 1 to 7 still are, so 253 of 253. 25 of the new breaks are caught by a single test.</p>
+
+      <div class="table-wrap"><table class="data">
+        <thead><tr><th>part</th><th class="num">breaks</th><th class="num">tests that noticed</th></tr></thead>
+        <tbody>
+          <tr><td>pcapng blocks</td><td class="num">13</td><td class="num">1 to 88</td></tr>
+          <tr><td>pcapng section</td><td class="num">2</td><td class="num">1 to 1</td></tr>
+          <tr><td>pcapng interface</td><td class="num">10</td><td class="num">1 to 43</td></tr>
+          <tr><td>pcapng options</td><td class="num">2</td><td class="num">1 to 4</td></tr>
+          <tr><td>pcapng packets</td><td class="num">12</td><td class="num">1 to 30</td></tr>
+          <tr><td>pcapng simple packets</td><td class="num">6</td><td class="num">1 to 4</td></tr>
+          <tr><td>capture file detection</td><td class="num">4</td><td class="num">1 to 46</td></tr>
+          <tr><td>pcapng generator</td><td class="num">5</td><td class="num">1 to 42</td></tr>
+          <tr><td>fuzz run</td><td class="num">3</td><td class="num">1 to 1</td></tr>
+        </tbody>
+      </table></div>
+
+      <p>none survived. but the first run hung on three of them, and that taught me something about a test, not about the code. the three breaks changed how the high half of a timestamp is read, so every packet got a wrong time and the test that compares the pcap and pcapng output of the 647-line benign capture failed. and when an <code>assert a == b</code> fails on two long texts, pytest tries to explain it by building a diff of them, which took minutes. <code>mutate.py</code> stops a run after 300 seconds and counts that as one failure, so the results said "1 failed of 0 run" and hid it. the code was fine and the test was the problem. the test now compares first and reports the number of the first line that differs. the three breaks fail in about six seconds (20 to 30 tests each), and I re-ran those three by hand to replace the timeouts.</p>
+
+      <h3 class="sub">what this stage does not do</h3>
+
+      <p>a simple packet block has no timestamp, so it borrows the previous packet's. a file of only simple packets has every time at 0, and its flow durations are all zero. Wireshark cannot do better, since the time is not in the file, but it is worth knowing.</p>
+
+      <p>name resolution blocks (the addresses Wireshark saved next to their names) and interface statistics blocks (which hold the kernel's drop count) are skipped, not shown. comments, hashes and the packet flags are skipped too. a compressed file (<code>.pcapng.gz</code>) is not opened.</p>
+
+      <p>only Ethernet is decoded. a Linux capture from the <code>any</code> pseudo-interface (link type 113) is refused up front, with its link type in the message.</p>
+
+      <p>there is no pcapng writer in the package, only the generator in <code>tools/gen_pcap.py</code> (one section, one interface, enhanced packets). <code>live --write</code> still saves classic pcap. reading was the missing half, and I did not add a feature nobody asked for.</p>
+
+      <p>and, once more, I have not read a file that Wireshark wrote. the reader agrees with the format description, with my hand-built files and with another library. that is a lot, and it is not the same thing.</p>
+
+      <h2><span class="hash">##</span>where this goes</h2>
+
+      <p>the list is my plan, in the order I think it should go, and it can change when a stage teaches me something.</p>
+
+      <div class="table-wrap"><table class="data">
+        <thead><tr><th>stage</th><th>what it adds</th><th>state</th></tr></thead>
+        <tbody>
+          <tr><td>8</td><td>a pcapng reader, so Wireshark's default files open</td><td class="dim">done, this post</td></tr>
+          <tr><td>9</td><td>compare against <code>tshark</code> on public sample captures, and fix every difference</td><td class="dim">next</td></tr>
+          <tr><td>10</td><td>two more detectors: SSH brute force and ICMP tunneling</td><td class="dim">planned</td></tr>
+          <tr><td>11</td><td>a TLS fingerprint (JA3) from the ClientHello</td><td class="dim">planned</td></tr>
+          <tr><td>12</td><td>live capture on Windows, IP level only, if it turns out to be reliable</td><td class="dim">maybe</td></tr>
+        </tbody>
+      </table></div>
+
+      <p>stage 9 is the one I care about most. everything Sentinel has learned it learned from traffic I made, and the first real test of a parser is a capture it was not written for.</p>
+
+    </div>
+  </article>
+
+
+
+  <footer>
+    <span>Kaan Dinç</span>
+    <span>Çanakkale, Turkey</span>
+  </footer>
+</div>
+
+<script>
+(function(){
+  var canvas = document.getElementById('silk-bg');
+  var gl = canvas.getContext('webgl') || canvas.getContext('experimental-webgl');
+  var reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  if (!gl) return;
+
+  var VERT = 'attribute vec2 aPos;\nvarying vec2 vUv;\nvoid main(){\n  vUv = aPos * 0.5 + 0.5;\n  gl_Position = vec4(aPos, 0.0, 1.0);\n}';
+
+  var FRAG = [
+    '#ifdef GL_ES',
+    'precision mediump float;',
+    '#endif',
+    'varying vec2 vUv;',
+    'uniform float uTime;',
+    'uniform vec3 uColor;',
+    'uniform float uSpeed;',
+    'uniform float uScale;',
+    'uniform float uRotation;',
+    'uniform float uNoiseIntensity;',
+    'uniform float uLightMode;',
+    'const float e = 2.71828182845904523536;',
+    'float noise(vec2 texCoord){',
+    '  float G = e;',
+    '  vec2 r = (G * sin(G * texCoord));',
+    '  return fract(r.x * r.y * (1.0 + texCoord.x));',
+    '}',
+    'vec2 rotateUvs(vec2 uv, float angle){',
+    '  float c = cos(angle);',
+    '  float s = sin(angle);',
+    '  mat2 rot = mat2(c, -s, s, c);',
+    '  return rot * uv;',
+    '}',
+    'void main(){',
+    '  float rnd = noise(gl_FragCoord.xy);',
+    '  vec2 uv = rotateUvs(vUv * uScale, uRotation);',
+    '  vec2 tex = uv * uScale;',
+    '  float tOffset = uSpeed * uTime;',
+    '  tex.y += 0.03 * sin(8.0 * tex.x - tOffset);',
+    '  float pattern = 0.6 + 0.4 * sin(5.0 * (tex.x + tex.y + cos(3.0 * tex.x + 5.0 * tex.y) + 0.02 * tOffset) + sin(20.0 * (tex.x + tex.y - 0.1 * tOffset)));',
+    '  float grain = rnd / 15.0 * uNoiseIntensity;',
+    '  vec3 result = uColor * pattern - vec3(grain);',
+    '  if (uLightMode > 0.5) {',
+    '    float fold = smoothstep(0.28, 0.9, pattern);',
+    '    float specular = smoothstep(0.72, 0.98, pattern);',
+    '    vec3 shadowColor = uColor * 0.72;',
+    '    vec3 bodyColor = min(uColor * 1.18, vec3(1.0));',
+    '    vec3 lightBase = mix(shadowColor, bodyColor, fold);',
+    '    lightBase = mix(lightBase, vec3(1.0), specular * 0.92);',
+    '    float fineNoise = noise(gl_FragCoord.xy * 0.63 + vec2(17.0, 41.0));',
+    '    float grainSignal = (rnd + fineNoise - 1.0);',
+    '    float grainStrength = clamp(uNoiseIntensity * 0.038, 0.0, 0.16);',
+    '    result = lightBase + grainSignal * grainStrength;',
+    '  }',
+    '  gl_FragColor = vec4(clamp(result, 0.0, 1.0), 1.0);',
+    '}'
+  ].join('\n');
+
+  function compile(type, src){
+    var s = gl.createShader(type);
+    gl.shaderSource(s, src);
+    gl.compileShader(s);
+    return s;
+  }
+
+  var prog = gl.createProgram();
+  gl.attachShader(prog, compile(gl.VERTEX_SHADER, VERT));
+  gl.attachShader(prog, compile(gl.FRAGMENT_SHADER, FRAG));
+  gl.linkProgram(prog);
+  gl.useProgram(prog);
+
+  var quad = new Float32Array([-1, -1, 3, -1, -1, 3]);
+  var buf = gl.createBuffer();
+  gl.bindBuffer(gl.ARRAY_BUFFER, buf);
+  gl.bufferData(gl.ARRAY_BUFFER, quad, gl.STATIC_DRAW);
+  var aPos = gl.getAttribLocation(prog, 'aPos');
+  gl.enableVertexAttribArray(aPos);
+  gl.vertexAttribPointer(aPos, 2, gl.FLOAT, false, 0, 0);
+
+  var uTime = gl.getUniformLocation(prog, 'uTime');
+  var uColor = gl.getUniformLocation(prog, 'uColor');
+  var uSpeed = gl.getUniformLocation(prog, 'uSpeed');
+  var uScale = gl.getUniformLocation(prog, 'uScale');
+  var uRotation = gl.getUniformLocation(prog, 'uRotation');
+  var uNoiseIntensity = gl.getUniformLocation(prog, 'uNoiseIntensity');
+  var uLightMode = gl.getUniformLocation(prog, 'uLightMode');
+
+  function hexToRgb(hex){
+    hex = hex.replace('#', '');
+    return [parseInt(hex.slice(0,2),16)/255, parseInt(hex.slice(2,4),16)/255, parseInt(hex.slice(4,6),16)/255];
+  }
+
+  var col = hexToRgb('#7B7481');
+  gl.uniform3f(uColor, col[0], col[1], col[2]);
+  gl.uniform1f(uSpeed, 5);
+  gl.uniform1f(uScale, 0.8);
+  gl.uniform1f(uRotation, 0);
+  gl.uniform1f(uNoiseIntensity, 3.4);
+  gl.uniform1f(uLightMode, 0);
+
+  var time = 0, lastT = 0;
+
+  function resize(){
+    var DPR = Math.min(window.devicePixelRatio || 1, 2);
+    var W = window.innerWidth, H = window.innerHeight;
+    canvas.width = Math.floor(W * DPR);
+    canvas.height = Math.floor(H * DPR);
+    canvas.style.width = W + 'px';
+    canvas.style.height = H + 'px';
+    gl.viewport(0, 0, canvas.width, canvas.height);
+    draw();
+  }
+
+  function draw(){
+    gl.uniform1f(uTime, time);
+    gl.drawArrays(gl.TRIANGLES, 0, 3);
+  }
+
+  function frame(ts){
+    var delta = lastT ? (ts - lastT) / 1000 : 0;
+    lastT = ts;
+    time += 0.1 * delta;
+    draw();
+    requestAnimationFrame(frame);
+  }
+
+  window.addEventListener('resize', resize);
+  resize();
+  if (!reduceMotion) requestAnimationFrame(frame);
+})();
+</script>
+
+<script>
+(function(){
+  // Ported from AsciiGlitchRipple (React Bits style hover component) to vanilla JS.
+  if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+
+  var CHARS = '.,·-─~+:;=*π""┐┌┘┴┬╗╔╝╚╬╠╣╩╦║░▒▓█▄▀▌▐■!?&#$@0123456789*';
+  var WAVE_THRESH = 3, CHAR_MULT = 3, ANIM_STEP = 40, WAVE_BUF = 5, DUR = 1000;
+
+  function attach(el){
+    var origTxt = el.textContent;
+    var origChars = origTxt.split('');
+    var waves = [];
+    var animId = null, isAnim = false, isHover = false, cursorPos = 0, lockedWidth = null;
+
+    function updateCursorPos(e){
+      var rect = el.getBoundingClientRect();
+      var x = e.clientX - rect.left;
+      var len = origChars.length;
+      var pos = Math.round((x / rect.width) * len);
+      cursorPos = Math.max(0, Math.min(pos, len - 1));
+    }
+
+    function stop(){
+      el.textContent = origTxt;
+      if (lockedWidth !== null){ el.style.width = ''; lockedWidth = null; }
+      isAnim = false;
+      if (animId){ cancelAnimationFrame(animId); animId = null; }
+    }
+
+    function waveAt(charIdx, t){
+      var shouldAnim = false, resultChar = origChars[charIdx];
+      for (var w = 0; w < waves.length; w++){
+        var wave = waves[w];
+        var age = t - wave.startTime;
+        var prog = Math.min(age / DUR, 1);
+        var dist = Math.abs(charIdx - wave.startPos);
+        var maxDist = Math.max(wave.startPos, origChars.length - wave.startPos - 1);
+        var rad = prog * (maxDist + WAVE_BUF);
+        if (dist <= rad){
+          shouldAnim = true;
+          var intens = Math.max(0, rad - dist);
+          if (intens <= WAVE_THRESH && intens > 0){
+            resultChar = CHARS[(dist * CHAR_MULT + Math.floor(age / ANIM_STEP)) % CHARS.length];
+          }
+        }
+      }
+      return { shouldAnim: shouldAnim, ch: resultChar };
+    }
+
+    function scrambledText(t){
+      var out = '';
+      for (var i = 0; i < origChars.length; i++){
+        var ch = origChars[i];
+        if (ch === ' '){ out += ' '; continue; }
+        var res = waveAt(i, t);
+        out += res.shouldAnim ? res.ch : ch;
+      }
+      return out;
+    }
+
+    function animate(){
+      var t = Date.now();
+      waves = waves.filter(function(w){ return t - w.startTime < DUR; });
+      if (waves.length === 0){ stop(); return; }
+      el.textContent = scrambledText(t);
+      animId = requestAnimationFrame(animate);
+    }
+
+    function start(){
+      if (isAnim) return;
+      if (lockedWidth === null){
+        lockedWidth = el.getBoundingClientRect().width;
+        el.style.width = lockedWidth + 'px';
+      }
+      isAnim = true;
+      animId = requestAnimationFrame(animate);
+    }
+
+    function startWave(){
+      waves.push({ startPos: cursorPos, startTime: Date.now() });
+      if (!isAnim) start();
+    }
+
+    el.addEventListener('mouseenter', function(e){ isHover = true; updateCursorPos(e); startWave(); });
+    el.addEventListener('mousemove', function(e){
+      if (!isHover) return;
+      var old = cursorPos;
+      updateCursorPos(e);
+      if (cursorPos !== old) startWave();
+    });
+    el.addEventListener('mouseleave', function(){ isHover = false; });
+  }
+
+  var targets = document.querySelectorAll('header.topbar nav a');
+  for (var i = 0; i < targets.length; i++) attach(targets[i]);
+})();
+</script>
