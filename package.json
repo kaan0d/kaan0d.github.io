@@ -1,6 +1,7 @@
 {
   "name": "kaandinc-com",
   "private": true,
+  "license": "UNLICENSED",
   "type": "module",
   "scripts": {
     "build": "node build.mjs",
