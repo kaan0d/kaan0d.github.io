@@ -1,0 +1,526 @@
+<!doctype html>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>sentinel meets real traffic (part 3)</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+<style>
+  :root{
+    --bg:#060607;
+    --panel:rgba(6,6,7,0.86);
+    --line:#1d1e20;
+    --text:#e9e6e0;
+    --text-dim:#8b8983;
+    --accent:#e8963f;
+    --accent-dim:#a5652a;
+    --accent-soft:#6b4a26;
+    --font-mono:'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
+    --font-sans:'IBM Plex Sans', system-ui, -apple-system, sans-serif;
+    --maxw:760px;
+  }
+  *{ box-sizing:border-box; }
+  html{ scroll-behavior:smooth; }
+  body{ margin:0; background:var(--bg); color:var(--text); font-family:var(--font-sans); font-size:16px; line-height:1.65; -webkit-font-smoothing:antialiased; }
+  a{ color:inherit; }
+  a:focus-visible, button:focus-visible{ outline:1px solid var(--accent); outline-offset:3px; }
+
+  #silk-bg{ position:fixed; inset:0; width:100vw; height:100vh; z-index:0; pointer-events:none; background:var(--bg); display:block; }
+
+  .wrap{ position:relative; z-index:1; max-width:var(--maxw); margin:0 auto; padding:40px 20px 56px; background:var(--panel); -webkit-backdrop-filter:blur(2px); backdrop-filter:blur(2px); }
+
+  header.topbar{ display:flex; flex-wrap:wrap; justify-content:space-between; align-items:baseline; gap:10px 20px; padding-bottom:16px; margin-bottom:36px; border-bottom:1px solid var(--line); font-family:var(--font-mono); }
+  .prompt{ font-size:1.05rem; }
+  .prompt .cash{ color:var(--accent); margin-right:8px; }
+  .prompt .name{ font-weight:700; }
+  header.topbar nav{ display:flex; gap:16px; flex-wrap:wrap; font-size:0.88rem; }
+  header.topbar nav a{ display:inline-block; user-select:none; text-decoration:none; color:var(--text-dim); }
+  header.topbar nav a:hover, header.topbar nav a:focus-visible{ color:var(--accent); }
+
+  .post-date{ font-family:var(--font-mono); font-size:0.8rem; color:var(--text-dim); margin:0 0 10px; }
+  .post-title{ font-family:var(--font-mono); font-size:clamp(1.5rem,4vw,2rem); font-weight:700; line-height:1.25; margin:0 0 32px; text-wrap:balance; }
+
+  .post-body p{ margin:0 0 16px; font-size:1rem; }
+  .post-body p:last-child{ margin-bottom:0; }
+
+  .post-body h2{ font-family:var(--font-mono); font-size:1.05rem; font-weight:700; margin:48px 0 18px; }
+  .post-body h2 .hash{ color:var(--accent-dim); margin-right:8px; }
+  .post-body h3{ font-family:var(--font-mono); font-size:0.92rem; font-weight:700; margin:32px 0 12px; color:var(--text); }
+  .post-body code{ font-family:var(--font-mono); font-size:0.88em; color:var(--accent); }
+  .post-body a{ color:var(--accent); text-decoration:underline; text-decoration-color:var(--accent-soft, #6b4a26); text-underline-offset:3px; }
+  .post-body a:hover{ text-decoration-color:var(--accent); }
+  .links{ font-family:var(--font-mono); font-size:0.88rem; }
+  .series{ font-family:var(--font-mono); font-size:0.8rem; color:var(--text-dim); margin:0 0 18px; }
+  .series a{ color:var(--accent); text-decoration:none; }
+  .series a:hover{ text-decoration:underline; text-underline-offset:3px; }
+
+  .stats{ display:grid; grid-template-columns:repeat(3, 1fr); gap:1px; margin:32px 0; background:var(--line); border:1px solid var(--line); }
+  .stat{ background:rgba(6,6,7,0.94); padding:16px 14px; }
+  .stat b{ display:block; font-family:var(--font-mono); font-size:1.45rem; font-weight:700; color:var(--accent); line-height:1.2; }
+  @media (max-width:520px){ .stats{ grid-template-columns:repeat(2, 1fr); } }
+  .stat span{ display:block; margin-top:4px; font-size:0.82rem; color:var(--text-dim); line-height:1.4; }
+
+  figure{ margin:28px 0; }
+  figure img{ display:block; width:100%; height:auto; border:1px solid var(--line); border-radius:2px; background:#1a1d25; }
+  figcaption{ margin-top:8px; font-family:var(--font-mono); font-size:0.76rem; line-height:1.55; color:var(--text-dim); }
+  .pair{ display:grid; grid-template-columns:1fr 1fr; gap:12px; margin:28px 0; }
+  .pair figure{ margin:0; }
+  @media (max-width:640px){ .pair{ grid-template-columns:1fr; } }
+
+  .table-wrap{ overflow-x:auto; margin:24px 0; }
+  table.data{ width:100%; border-collapse:collapse; font-size:0.86rem; }
+  table.data th{ text-align:left; font-family:var(--font-mono); font-size:0.74rem; font-weight:500; color:var(--text-dim); padding:8px 12px 8px 0; border-bottom:1px solid var(--line); white-space:nowrap; }
+  table.data td{ padding:8px 12px 8px 0; border-bottom:1px solid var(--line); vertical-align:top; line-height:1.5; }
+  table.data .num{ text-align:right; font-family:var(--font-mono); font-variant-numeric:tabular-nums; white-space:nowrap; padding-right:0; padding-left:12px; }
+  table.data .dim, .dim{ color:var(--text-dim); }
+  table.data tr:last-child td{ border-bottom:none; }
+
+  .chart-wrap{ overflow-x:auto; margin:24px 0 8px; }
+  .chart{ display:block; width:100%; min-width:640px; height:auto; }
+  .chart .grid{ stroke:var(--line); stroke-width:1; }
+  .chart .lbl{ font-family:var(--font-mono); font-size:11.5px; fill:var(--text); }
+  .chart .tick{ font-family:var(--font-mono); font-size:10.5px; fill:var(--text-dim); }
+  .chart .val{ font-family:var(--font-mono); font-size:11px; fill:var(--text-dim); }
+  .chart .val.hot{ fill:var(--accent); }
+  .chart .val.dim{ fill:var(--text-dim); }
+  .chart .val.inside{ fill:var(--bg); font-weight:700; }
+  .chart .bar-before, .chart .key-before{ fill:#4a4844; }
+  .chart .bar-after, .chart .key-after{ fill:var(--accent); }
+  .chart .bar-never{ fill:#4a4844; stroke:var(--text-dim); stroke-dasharray:4 3; }
+  .chart .budget{ stroke:var(--text-dim); stroke-dasharray:4 4; }
+  .chart .line-brute{ fill:none; stroke:#b9b5ad; stroke-width:2; }
+  .chart .line-hash{ fill:none; stroke:var(--accent); stroke-width:2; }
+  .chart .dot-brute{ fill:#b9b5ad; }
+  .chart .dot-hash{ fill:var(--accent); }
+  .chart .key-line-brute{ stroke:#b9b5ad; stroke-width:2; }
+  .chart .key-line-hash{ stroke:var(--accent); stroke-width:2; }
+
+  .callout{ margin:28px 0; padding:14px 16px; border-left:2px solid var(--accent-dim); background:rgba(255,255,255,0.03); font-size:0.9rem; color:var(--text-dim); }
+  .callout p{ margin:0 0 10px; font-size:0.9rem; }
+  .callout p:last-child{ margin:0; }
+
+  .codeblock{ background:rgba(255,255,255,0.03); border:1px solid var(--line); border-radius:4px; padding:16px 18px; overflow-x:auto; margin:28px 0; }
+  .codeblock code{ font-family:var(--font-mono); font-size:0.85rem; color:var(--text); white-space:pre; line-height:1.6; }
+  .codeblock .cm{ color:var(--text-dim); }
+  .codeblock .kw{ color:var(--accent); }
+
+
+  .term{ background:rgba(255,255,255,0.03); border:1px solid var(--line); border-radius:4px; padding:16px 18px; overflow-x:auto; margin:28px 0 8px; }
+  .term pre{ margin:0; font-family:var(--font-mono); font-size:0.76rem; line-height:1.75; white-space:pre; color:var(--text); }
+  .term .pr, .term .ts, .term .dim{ color:var(--text-dim); }
+  .term .pr{ user-select:none; }
+  .term .fl{ color:var(--accent); }
+
+  .sizebar{ display:flex; height:30px; margin:24px 0 8px; font-family:var(--font-mono); font-size:0.74rem; }
+  .sizebar span{ display:block; padding:0 10px; line-height:30px; color:var(--bg); white-space:nowrap; overflow:hidden; }
+  .layer{ margin:26px 0 0; }
+  .layer-title{ display:flex; flex-wrap:wrap; gap:2px 12px; margin:0 0 10px; font-family:var(--font-mono); font-size:0.8rem; }
+  .layer-title b{ color:var(--c); font-weight:700; }
+  .layer-title span{ color:var(--text-dim); }
+  .fields{ display:flex; flex-wrap:wrap; gap:10px 8px; }
+  .fld{ display:flex; flex-direction:column; gap:3px; min-width:0; max-width:100%; }
+  .fld .by{ font-family:var(--font-mono); font-size:0.8rem; padding:6px 8px; border:1px solid var(--c); border-radius:2px; background:rgba(255,255,255,0.03); overflow-wrap:anywhere; color:var(--text); }
+  .fld .lb{ font-family:var(--font-mono); font-size:0.66rem; letter-spacing:0.06em; text-transform:uppercase; color:var(--text-dim); }
+  .fld .vl{ font-family:var(--font-mono); font-size:0.72rem; color:var(--c); }
+  .post-body p.chain{ margin:26px 0 0; font-family:var(--font-mono); font-size:0.82rem; color:var(--text-dim); }
+  .post-body p.chain b{ color:var(--accent); font-weight:500; }
+  .post-body h3.sub{ margin-top:36px; }
+  .chart .key-line-dash{ stroke:var(--text-dim); stroke-width:2; stroke-dasharray:4 3; }
+  .chart .dash-brute{ fill:none; stroke:#b9b5ad; stroke-width:2; stroke-dasharray:5 4; }
+  .chart .dash-hash{ fill:none; stroke:var(--accent); stroke-width:2; stroke-dasharray:5 4; }
+  .chart .tickmark{ stroke:#b9b5ad; stroke-width:1.5; opacity:0.45; }
+  .chart .tickmark.hot{ stroke:var(--accent); }
+  .chart .tickmark.alarm{ stroke:#e0e0e0; }
+  .chart .box{ fill:rgba(255,255,255,0.03); stroke:var(--line); stroke-width:1.5; }
+  .chart .box.hot{ stroke:var(--accent); }
+  .chart .arrow{ fill:none; stroke:var(--text-dim); stroke-width:1.5; }
+  .chart .head{ fill:var(--text-dim); }
+  .chart text.nt{ fill:var(--text); font-family:var(--font-mono); font-size:12.5px; text-anchor:middle; }
+  .chart text.nt.hotlabel{ fill:var(--accent); }
+  .chart text.nd{ fill:var(--text-dim); font-family:var(--font-mono); font-size:10.5px; text-anchor:middle; }
+  .chart .hollow{ fill:none; stroke:#b9b5ad; stroke-width:2; }
+  .chart .stem{ stroke:#b9b5ad; stroke-width:1.5; opacity:0.5; }
+  .chart .stem.hot{ stroke:var(--accent); opacity:0.7; }
+  .chart .dot-plain{ fill:#b9b5ad; }
+  .chart .b7{ fill:var(--accent); }
+  .chart .b7g{ fill:#b9b5ad; }
+  .matrix{ display:grid; gap:6px; margin:24px 0 8px; overflow-x:auto; }
+  .mrow{ display:grid; grid-template-columns:230px minmax(340px,1fr) 28px; align-items:center; gap:12px; font-family:var(--font-mono); font-size:0.72rem; min-width:620px; }
+  .ml{ color:var(--text); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .cells{ display:grid; grid-template-columns:repeat(19,1fr); gap:3px; }
+  .cells i{ display:block; height:14px; background:rgba(255,255,255,0.05); border:1px solid var(--line); }
+  .cells i.on{ background:var(--accent); border-color:var(--accent); }
+  .mc{ text-align:right; color:var(--text-dim); }
+  .reasm{ display:grid; gap:12px; margin:24px 0 8px; }
+  .rrow{ display:grid; grid-template-columns:72px 1fr; gap:4px 12px; align-items:center; font-family:var(--font-mono); font-size:0.72rem; }
+  .rl{ color:var(--text); }
+  .rtrack{ position:relative; height:16px; background:rgba(255,255,255,0.04); border:1px solid var(--line); }
+  .rbar{ position:absolute; top:0; bottom:0; background:var(--accent); }
+  .rbar.dup{ background:transparent; outline:1px dashed var(--accent-dim); outline-offset:-1px; }
+  .rbar.done{ background:var(--text-dim); }
+  .rn{ grid-column:2; color:var(--text-dim); line-height:1.4; }
+
+  footer{ font-family:var(--font-mono); font-size:0.76rem; color:var(--text-dim); margin-top:48px; padding-top:16px; border-top:1px solid var(--line); display:flex; justify-content:space-between; gap:10px; flex-wrap:wrap; }
+
+  @media (prefers-reduced-motion: reduce){ *{ animation:none !important; transition:none !important; } }
+</style>
+
+<canvas id="silk-bg" aria-hidden="true"></canvas>
+
+<div class="wrap">
+  <header class="topbar">
+    <div class="prompt"><span class="cash">$</span><span class="name">Kaan Dinç</span></div>
+    <nav>
+      <a href="../blog">blog</a>
+      <a href="../">home</a>
+    </nav>
+  </header>
+
+<article>
+    <p class="series">sentinel series: <a href="sentinel-packet-analyzer">part 1: writing a packet analyzer from scratch</a> · <a href="sentinel-next-level">part 2: taking sentinel to the next level</a> · part 3 (this post)</p>
+    <p class="post-date">Sep 2026</p>
+    <h1 class="post-title">part 3: sentinel meets real traffic</h1>
+
+    <div class="post-body">
+      <p>the <a href="sentinel-next-level">last post</a> ended with the honest top of the limits list: almost everything in Sentinel had been tested on traffic I made myself or on a handful of small public files, and hardly at all on a busy real network. this post is that test. I took real captures, some of them attacks made by other people and some of them ordinary traffic that nobody has labelled, and ran the detectors over them. I did not change a line of the program. the rules are the ones it ships with.</p>
+
+      <p>it is a different kind of stage from the others, because there is nothing to build and the interesting part is what I am allowed to conclude. so most of this post is about that.</p>
+
+      <div class="stats">
+        <div class="stat"><b>2,716,636</b><span>packets in 7 real captures made by other people (211 MB), none of them in the repository</span></div>
+        <div class="stat"><b>5 of 5</b><span>real attack captures raised the alert of their own kind, and no other</span></div>
+        <div class="stat"><b>376</b><span>scanning sources found on a 1 Gbps backbone slice, the same 376 as an independent recount from tshark: none missed, none added</span></div>
+        <div class="stat"><b>165</b><span>DNS alerts on that link, all one check, that I think are false alarms</span></div>
+        <div class="stat"><b>1/3</b><span>of the link's own packet rate is what Sentinel got through (50,394 packets a second, on a link with 148,000)</span></div>
+        <div class="stat"><b>0</b><span>lines of the program changed: the 942 tests, 405 breaks and fuzz runs of stage 12 still stand</span></div>
+      </div>
+
+      <h2><span class="hash">##</span>finding real traffic</h2>
+
+      <p>this took longer than the measuring. what I wanted was labelled data, where someone says which packets are the attack, and the well-known datasets have it. they are also big. CIC-IDS2017 is about 50 GB and asks for a registration form. Kitsune has labels for every packet, including ARP spoofing and SYN floods, and its page lists files of 2 GB, but those are feature tables and not captures; the captures are 147 to 334 MB. the only way to get them is one zip of 19 GB, and the server answers a request for a part of a file with the whole file, so I could not take six files out of it. CTU-13 has captures that hold only the botnet's own traffic. on a slow connection, that was three ways of not getting it.</p>
+
+      <p>what I used instead is small, and I wrote each file down with its source before I fetched it:</p>
+
+      <div class="table-wrap"><table class="data">
+        <thead><tr><th>capture</th><th>what it is</th><th class="num">packets</th><th>from</th></tr></thead>
+        <tbody>
+<tr><td><code>pkt.TCP.synflood.spoofed</code></td><td>a spoofed SYN flood: only SYNs, from 37,623 different addresses, in 23.7 s</td><td class="num">37,841</td><td><a href="https://github.com/StopDDoS/packet-captures">StopDDoS</a></td></tr>
+<tr><td><code>pkt.TCP.DOMINATE.syn.ecn.cwr</code></td><td>a SYN flood with the ECN and CWR flags set</td><td class="num">9,878</td><td>StopDDoS</td></tr>
+<tr><td><code>arpspoofing</code></td><td>ARP spoofing on a small LAN</td><td class="num">1,887</td><td><a href="https://github.com/vivekseth/cs3">cs3</a> (a course repository)</td></tr>
+<tr><td><code>portscan</code></td><td>one host sends 1,365 SYNs to 1,000 ports of another</td><td class="num">2,401</td><td>cs3</td></tr>
+<tr><td><code>dns-tunnel-iodine</code></td><td>a DNS tunnel made by iodine</td><td class="num">438</td><td><a href="https://github.com/elastic/examples">Elastic examples</a></td></tr>
+<tr><td><code>2026-08-07</code></td><td>seven days of scans and probes at a web server</td><td class="num">500,923</td><td><a href="https://www.malware-traffic-analysis.net/2026/08/07/index.html">malware-traffic-analysis.net</a></td></tr>
+<tr><td><code>MAWI 2025-01-01 14:00</code></td><td>the first 14.6 s of a 1 Gbps backbone link, packets cut to 96 bytes</td><td class="num">2,163,268</td><td><a href="https://mawi.wide.ad.jp/mawi/">MAWI (WIDE project)</a></td></tr>
+        </tbody>
+      </table></div>
+
+      <p>7 files, 2,716,636 packets. two of them needed a trick. the backbone trace of MAWI is 3.9 GB compressed for 15 minutes, but that server does answer a request for a part of a file, and a gzip cut in the middle still opens up to the cut, so I took the first 60 MiB and got 2,163,268 packets, the last one cut in half. the file of the web server is a zip with a password, and the password is on the site's about page, as a picture.</p>
+
+      <p>one file I did not trust. the two cs3 captures come from a course repository that does not say where they come from, so before using them I looked inside with <code>tshark</code>: in the ARP file one MAC address (7c:d1:c3:94:9e:b8) answers for both the gateway and another host, which is what ARP spoofing looks like, and in the other 192.168.0.100 sends SYNs to 1,000 different ports of 192.168.0.101, which is what nmap's default scan looks like. they are what their names say. where they come from is still not known, and this post says so again at the end.</p>
+
+      <h2><span class="hash">##</span>do the detectors fire on real attacks?</h2>
+
+      <div class="table-wrap"><table class="data">
+        <thead><tr><th>capture</th><th>alerts</th><th class="num">time</th></tr></thead>
+        <tbody>
+<tr><td>spoofed SYN flood</td><td>4 <code>syn-flood</code></td><td class="num">1.236 s</td></tr>
+<tr><td>SYN flood with ECN and CWR</td><td>1 <code>syn-flood</code></td><td class="num">0.307 s</td></tr>
+<tr><td>ARP spoofing</td><td>5 <code>arp-spoof</code></td><td class="num">0.049 s</td></tr>
+<tr><td>port scan</td><td>5 <code>port-scan</code></td><td class="num">0.062 s</td></tr>
+<tr><td>iodine tunnel</td><td>3 <code>dns-tunnel</code></td><td class="num">0.02 s</td></tr>
+        </tbody>
+      </table></div>
+
+      <p>yes, all five, and each raised only the alert it should. this is what the port scan and the ARP spoofing look like from the command line, the real output:</p>
+
+      <div class="term"><pre><span class="pr">$ python -m sentinel ids --format text portscan.pcap
+</span>2014-02-25T05:11:20.956948Z [medium] port-scan: 192.168.0.100 probed 15 ports on 192.168.0.101 in 0.1s
+2014-02-25T05:11:30.974438Z [medium] port-scan: 192.168.0.100 probed 46 ports on 192.168.0.101 in 1.4s
+2014-02-25T05:11:41.015451Z [medium] port-scan: 192.168.0.100 probed 64 ports on 192.168.0.101 in 2.7s</pre></div>
+      <div class="term"><pre><span class="pr">$ python -m sentinel ids --format text arpspoofing.pcap
+</span>2014-02-25T06:11:11.070534Z [high] arp-spoof: 192.168.0.1 moved from f8:1a:67:cd:57:6e to 7c:d1:c3:94:9e:b8
+2014-02-25T06:11:15.399497Z [high] arp-spoof: 192.168.0.1 moved from 7c:d1:c3:94:9e:b8 to f8:1a:67:cd:57:6e
+2014-02-25T06:14:03.123374Z [high] arp-spoof: ARP says 192.168.0.103 is at d8:96:95:01:a5:c9, but the frame came from 7c:d1:c3:94:9e:b8</pre></div>
+
+      <p>in the ARP file the alerts include 7c:d1:c3:94:9e:b8, the address that <code>tshark</code> showed claiming two hosts. the labels of these files are one per file, "this is a SYN flood", so the honest reading is small: on one real example of each attack the detector for it fires. the two StopDDoS files have nothing but attack traffic in them, so they cannot show a false alarm, and one file of each kind says nothing about how many attacks would be missed.</p>
+
+      <h2><span class="hash">##</span>traffic that nobody labelled</h2>
+
+      <p>the other two captures are the ones I was afraid of: a week of what reaches a web server on the internet, and 14.6 seconds of a link that carries a gigabit. nobody can say which of their packets are attacks, so I cannot score the alerts as right or wrong. I asked <code>tshark</code> two things that I can check without trusting Sentinel. is what an alert says true: a port-scan alert says a source probed 30 hosts on one port within 10 seconds, so I count the SYNs again from <code>tshark</code>'s own output. and does an independent recount of the same rule find scanners that Sentinel did not report.</p>
+
+      <h3 class="sub">a week at a web server</h3>
+
+      <p>27 port-scan alerts and 1 DNS alert in 500,923 packets. <code>tshark</code> counts the same number of ports for all 27 of the alerts, and the recount finds 16 scanning sources, the same 16 that Sentinel reported. none missed, none extra. the one DNS alert is a random-looking name under icann.org, which I did not look into.</p>
+
+      <h3 class="sub">a gigabit for fourteen seconds</h3>
+
+      <p>2,163,268 packets and 795 alerts: 627 port scans, 165 DNS tunnels and 3 SYN floods.</p>
+
+      <p><b>the port scans.</b> 624 of them are one source probing one port on 30 or more hosts. they come from 376 sources, and the recount finds the same 376. all 626 alerts that can be counted again reach the threshold in <code>tshark</code>'s count, 551 of them with exactly the number in the alert. in the others the recount is higher, and that fits something I could see in the code: a window holds at most four times the threshold in events, so the number in an alert is between 30 and 120, and 443 say exactly 30, whatever the size of the sweep. the alert is true, and it understates a fast sweep. the ports that were probed most were 4117, 23, 22, 80, 443, 34567, 8080, 2222: mostly telnet, ssh and web ports, and a few odd ones such as 4117 and 34567.</p>
+
+      <p><b>the state limit.</b> the last port-scan alert is not a scan:</p>
+
+      <div class="codeblock"><code>19629 packets were not tracked: the detector's state limit was reached</code></div>
+
+      <p>every detector keeps bounded state, and reports it when it has to forget something. one table of the port-scan detector, the sources it is following, reached its 100,000 entries. that took fourteen seconds on this link. Sentinel said so, as it was written to in stage 5, and the recount found no scanning source that it had failed to report, so the limit did not hide a scanner from this slice. on a longer one it could.</p>
+
+      <p><b>the DNS alerts.</b> all 165 come from one check: twenty "no such name" answers to one client within a minute. <code>tshark</code> confirms all 165, and shows 31,006 such answers to 1,815 clients in those 14.6 seconds, one client with 757. none of the other signals, a long name, a random-looking name or many different subdomains, fired once. so these are not tunnels, I think: on a backbone a client is often a resolver or a gateway that asks for many names for many people, and a threshold made for one client fires at once. I cannot prove it, because nobody labelled it.</p>
+
+      <p><b>the SYN floods.</b> three alerts, all for one address and one port, 131.112.115.241:993 (IMAPS): 100 SYNs from 16, 18 and 22 addresses within a second, and <code>tshark</code> counts the same. over the whole slice 844 SYNs from 110 addresses went to that port, and no SYN-ACK from it was captured. that could be an attack, or clients trying again and again against a mail server that is down. the capture cannot tell me which. the link does not help: only 5.3% of the SYNs on it have a SYN-ACK in the capture (57.5% for port 443), because a backbone carries only some of the return paths.</p>
+
+      <h3 class="sub">a mistake of mine</h3>
+
+      <p>the first recount told me Sentinel had missed a scanner. 202.121.34.125 looked like a source of SYNs to 30 hosts within 10 seconds, and Sentinel had not reported it. I looked at its packets: they were <code>ip:icmp:ip:tcp</code>. it was a router. what it sent were ICMP errors that quote the packet they refuse, and my <code>tshark</code> filter counted the SYN inside the quote as if the router had sent it. Sentinel ignores those, and it was right. I fixed the filter, and with it, and IPv6 counted, the two lists of sources are the same. it would have been easy to write "one scanner missed" and move on, and the number would have looked like a finding.</p>
+
+      <h3 class="sub">speed</h3>
+
+      <p>50,394 packets a second through the detectors on the backbone slice (35,073 on the week at the web server, 30,618 on the SYN flood), on the same machine as the benchmark of stage 7. the link carried about 148,000 packets a second, so Sentinel ran at a third of real time. pure Python on one core. for a gigabit link that is a limit, and the README says so.</p>
+
+      <h2><span class="hash">##</span>what this does not show</h2>
+
+      <p>how many packets of an attack Sentinel got right, and a false alarm rate. the labels are per file, and the two big captures have none, so what I checked is that what the alerts say is true, and not that each one is an attack. it is one slice of one link and one week at one server. the backbone is not symmetric, so "unanswered" cannot be read as "a scan", and a detector that waits for a handshake sees half of it. there is one ARP spoofing file, one iodine capture, and no SYN flood with ordinary traffic in it. where the cs3 files come from is not known.</p>
+
+      <p>and I changed nothing. what I found is three limits: a DNS check whose threshold suits one client and not a backbone, a state limit that a backbone reaches in fourteen seconds, and a count in a port-scan alert that stops at four times the threshold. I could turn a number down until this slice looked clean, but that would only tune Sentinel to fourteen seconds of one link. they are in the limits list of the README, where the next person will find them.</p>
+
+      <h2><span class="hash">##</span>where this goes</h2>
+
+      <p>there is no stage 14 planned. what would make this stronger is data with a label for every packet, so that "fires" can become "gets right, this many times". Kitsune has it, and it is 19 GB behind a server that will not hand over a part. if I find a mirror that does, that is the next measurement.</p>
+
+    </div>
+  </article>
+
+
+
+  <footer>
+    <span>Kaan Dinç</span>
+    <span>Çanakkale, Turkey</span>
+  </footer>
+</div>
+
+<script>
+(function(){
+  var canvas = document.getElementById('silk-bg');
+  var gl = canvas.getContext('webgl') || canvas.getContext('experimental-webgl');
+  var reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  if (!gl) return;
+
+  var VERT = 'attribute vec2 aPos;\nvarying vec2 vUv;\nvoid main(){\n  vUv = aPos * 0.5 + 0.5;\n  gl_Position = vec4(aPos, 0.0, 1.0);\n}';
+
+  var FRAG = [
+    '#ifdef GL_ES',
+    'precision mediump float;',
+    '#endif',
+    'varying vec2 vUv;',
+    'uniform float uTime;',
+    'uniform vec3 uColor;',
+    'uniform float uSpeed;',
+    'uniform float uScale;',
+    'uniform float uRotation;',
+    'uniform float uNoiseIntensity;',
+    'uniform float uLightMode;',
+    'const float e = 2.71828182845904523536;',
+    'float noise(vec2 texCoord){',
+    '  float G = e;',
+    '  vec2 r = (G * sin(G * texCoord));',
+    '  return fract(r.x * r.y * (1.0 + texCoord.x));',
+    '}',
+    'vec2 rotateUvs(vec2 uv, float angle){',
+    '  float c = cos(angle);',
+    '  float s = sin(angle);',
+    '  mat2 rot = mat2(c, -s, s, c);',
+    '  return rot * uv;',
+    '}',
+    'void main(){',
+    '  float rnd = noise(gl_FragCoord.xy);',
+    '  vec2 uv = rotateUvs(vUv * uScale, uRotation);',
+    '  vec2 tex = uv * uScale;',
+    '  float tOffset = uSpeed * uTime;',
+    '  tex.y += 0.03 * sin(8.0 * tex.x - tOffset);',
+    '  float pattern = 0.6 + 0.4 * sin(5.0 * (tex.x + tex.y + cos(3.0 * tex.x + 5.0 * tex.y) + 0.02 * tOffset) + sin(20.0 * (tex.x + tex.y - 0.1 * tOffset)));',
+    '  float grain = rnd / 15.0 * uNoiseIntensity;',
+    '  vec3 result = uColor * pattern - vec3(grain);',
+    '  if (uLightMode > 0.5) {',
+    '    float fold = smoothstep(0.28, 0.9, pattern);',
+    '    float specular = smoothstep(0.72, 0.98, pattern);',
+    '    vec3 shadowColor = uColor * 0.72;',
+    '    vec3 bodyColor = min(uColor * 1.18, vec3(1.0));',
+    '    vec3 lightBase = mix(shadowColor, bodyColor, fold);',
+    '    lightBase = mix(lightBase, vec3(1.0), specular * 0.92);',
+    '    float fineNoise = noise(gl_FragCoord.xy * 0.63 + vec2(17.0, 41.0));',
+    '    float grainSignal = (rnd + fineNoise - 1.0);',
+    '    float grainStrength = clamp(uNoiseIntensity * 0.038, 0.0, 0.16);',
+    '    result = lightBase + grainSignal * grainStrength;',
+    '  }',
+    '  gl_FragColor = vec4(clamp(result, 0.0, 1.0), 1.0);',
+    '}'
+  ].join('\n');
+
+  function compile(type, src){
+    var s = gl.createShader(type);
+    gl.shaderSource(s, src);
+    gl.compileShader(s);
+    return s;
+  }
+
+  var prog = gl.createProgram();
+  gl.attachShader(prog, compile(gl.VERTEX_SHADER, VERT));
+  gl.attachShader(prog, compile(gl.FRAGMENT_SHADER, FRAG));
+  gl.linkProgram(prog);
+  gl.useProgram(prog);
+
+  var quad = new Float32Array([-1, -1, 3, -1, -1, 3]);
+  var buf = gl.createBuffer();
+  gl.bindBuffer(gl.ARRAY_BUFFER, buf);
+  gl.bufferData(gl.ARRAY_BUFFER, quad, gl.STATIC_DRAW);
+  var aPos = gl.getAttribLocation(prog, 'aPos');
+  gl.enableVertexAttribArray(aPos);
+  gl.vertexAttribPointer(aPos, 2, gl.FLOAT, false, 0, 0);
+
+  var uTime = gl.getUniformLocation(prog, 'uTime');
+  var uColor = gl.getUniformLocation(prog, 'uColor');
+  var uSpeed = gl.getUniformLocation(prog, 'uSpeed');
+  var uScale = gl.getUniformLocation(prog, 'uScale');
+  var uRotation = gl.getUniformLocation(prog, 'uRotation');
+  var uNoiseIntensity = gl.getUniformLocation(prog, 'uNoiseIntensity');
+  var uLightMode = gl.getUniformLocation(prog, 'uLightMode');
+
+  function hexToRgb(hex){
+    hex = hex.replace('#', '');
+    return [parseInt(hex.slice(0,2),16)/255, parseInt(hex.slice(2,4),16)/255, parseInt(hex.slice(4,6),16)/255];
+  }
+
+  var col = hexToRgb('#7B7481');
+  gl.uniform3f(uColor, col[0], col[1], col[2]);
+  gl.uniform1f(uSpeed, 5);
+  gl.uniform1f(uScale, 0.8);
+  gl.uniform1f(uRotation, 0);
+  gl.uniform1f(uNoiseIntensity, 3.4);
+  gl.uniform1f(uLightMode, 0);
+
+  var time = 0, lastT = 0;
+
+  function resize(){
+    var DPR = Math.min(window.devicePixelRatio || 1, 2);
+    var W = window.innerWidth, H = window.innerHeight;
+    canvas.width = Math.floor(W * DPR);
+    canvas.height = Math.floor(H * DPR);
+    canvas.style.width = W + 'px';
+    canvas.style.height = H + 'px';
+    gl.viewport(0, 0, canvas.width, canvas.height);
+    draw();
+  }
+
+  function draw(){
+    gl.uniform1f(uTime, time);
+    gl.drawArrays(gl.TRIANGLES, 0, 3);
+  }
+
+  function frame(ts){
+    var delta = lastT ? (ts - lastT) / 1000 : 0;
+    lastT = ts;
+    time += 0.1 * delta;
+    draw();
+    requestAnimationFrame(frame);
+  }
+
+  window.addEventListener('resize', resize);
+  resize();
+  if (!reduceMotion) requestAnimationFrame(frame);
+})();
+</script>
+
+<script>
+(function(){
+  // Ported from AsciiGlitchRipple (React Bits style hover component) to vanilla JS.
+  if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+
+  var CHARS = '.,·-─~+:;=*π""┐┌┘┴┬╗╔╝╚╬╠╣╩╦║░▒▓█▄▀▌▐■!?&#$@0123456789*';
+  var WAVE_THRESH = 3, CHAR_MULT = 3, ANIM_STEP = 40, WAVE_BUF = 5, DUR = 1000;
+
+  function attach(el){
+    var origTxt = el.textContent;
+    var origChars = origTxt.split('');
+    var waves = [];
+    var animId = null, isAnim = false, isHover = false, cursorPos = 0, lockedWidth = null;
+
+    function updateCursorPos(e){
+      var rect = el.getBoundingClientRect();
+      var x = e.clientX - rect.left;
+      var len = origChars.length;
+      var pos = Math.round((x / rect.width) * len);
+      cursorPos = Math.max(0, Math.min(pos, len - 1));
+    }
+
+    function stop(){
+      el.textContent = origTxt;
+      if (lockedWidth !== null){ el.style.width = ''; lockedWidth = null; }
+      isAnim = false;
+      if (animId){ cancelAnimationFrame(animId); animId = null; }
+    }
+
+    function waveAt(charIdx, t){
+      var shouldAnim = false, resultChar = origChars[charIdx];
+      for (var w = 0; w < waves.length; w++){
+        var wave = waves[w];
+        var age = t - wave.startTime;
+        var prog = Math.min(age / DUR, 1);
+        var dist = Math.abs(charIdx - wave.startPos);
+        var maxDist = Math.max(wave.startPos, origChars.length - wave.startPos - 1);
+        var rad = prog * (maxDist + WAVE_BUF);
+        if (dist <= rad){
+          shouldAnim = true;
+          var intens = Math.max(0, rad - dist);
+          if (intens <= WAVE_THRESH && intens > 0){
+            resultChar = CHARS[(dist * CHAR_MULT + Math.floor(age / ANIM_STEP)) % CHARS.length];
+          }
+        }
+      }
+      return { shouldAnim: shouldAnim, ch: resultChar };
+    }
+
+    function scrambledText(t){
+      var out = '';
+      for (var i = 0; i < origChars.length; i++){
+        var ch = origChars[i];
+        if (ch === ' '){ out += ' '; continue; }
+        var res = waveAt(i, t);
+        out += res.shouldAnim ? res.ch : ch;
+      }
+      return out;
+    }
+
+    function animate(){
+      var t = Date.now();
+      waves = waves.filter(function(w){ return t - w.startTime < DUR; });
+      if (waves.length === 0){ stop(); return; }
+      el.textContent = scrambledText(t);
+      animId = requestAnimationFrame(animate);
+    }
+
+    function start(){
+      if (isAnim) return;
+      if (lockedWidth === null){
+        lockedWidth = el.getBoundingClientRect().width;
+        el.style.width = lockedWidth + 'px';
+      }
+      isAnim = true;
+      animId = requestAnimationFrame(animate);
+    }
+
+    function startWave(){
+      waves.push({ startPos: cursorPos, startTime: Date.now() });
+      if (!isAnim) start();
+    }
+
+    el.addEventListener('mouseenter', function(e){ isHover = true; updateCursorPos(e); startWave(); });
+    el.addEventListener('mousemove', function(e){
+      if (!isHover) return;
+      var old = cursorPos;
+      updateCursorPos(e);
+      if (cursorPos !== old) startWave();
+    });
+    el.addEventListener('mouseleave', function(){ isHover = false; });
+  }
+
+  var targets = document.querySelectorAll('header.topbar nav a');
+  for (var i = 0; i < targets.length; i++) attach(targets[i]);
+})();
+</script>
