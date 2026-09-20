@@ -51,6 +51,55 @@
   .codeblock code{ font-family:var(--font-mono); font-size:0.85rem; color:var(--text); white-space:pre; line-height:1.6; }
   .codeblock .cm{ color:var(--text-dim); }
   .codeblock .kw{ color:var(--accent); }
+
+  .post-body h2{ font-family:var(--font-mono); font-size:1.05rem; font-weight:700; margin:48px 0 18px; }
+  .post-body h2 .hash{ color:var(--accent-dim); margin-right:8px; }
+  .post-body h3{ font-family:var(--font-mono); font-size:0.92rem; font-weight:700; margin:32px 0 12px; color:var(--text); }
+  .post-body code{ font-family:var(--font-mono); font-size:0.88em; color:var(--accent); }
+  .post-body a{ color:var(--accent); text-decoration:underline; text-decoration-color:#6b4a26; text-underline-offset:3px; }
+  .post-body a:hover{ text-decoration-color:var(--accent); }
+  .links{ font-family:var(--font-mono); font-size:0.88rem; }
+
+  .stats{ display:grid; grid-template-columns:repeat(3, 1fr); gap:1px; margin:32px 0; background:var(--line); border:1px solid var(--line); }
+  .stat{ background:rgba(6,6,7,0.94); padding:16px 14px; }
+  .stat b{ display:block; font-family:var(--font-mono); font-size:1.45rem; font-weight:700; color:var(--accent); line-height:1.2; }
+  .stat span{ display:block; margin-top:4px; font-size:0.82rem; color:var(--text-dim); line-height:1.4; }
+  @media (max-width:520px){ .stats{ grid-template-columns:repeat(2, 1fr); } }
+
+  figure{ margin:28px 0; }
+  figure img{ display:block; width:100%; height:auto; border:1px solid var(--line); border-radius:2px; background:#060607; }
+  figcaption{ margin-top:8px; font-family:var(--font-mono); font-size:0.76rem; line-height:1.55; color:var(--text-dim); }
+
+  .diagram-wrap{ overflow-x:auto; }
+  .diagram{ display:block; width:100%; min-width:640px; height:auto; }
+  .diagram .box{ fill:rgba(255,255,255,0.03); stroke:#2a2b2e; stroke-width:1; }
+  .diagram .box.hot{ stroke:var(--accent-dim); }
+  .diagram .fill{ fill:rgba(232,150,63,0.16); stroke:var(--accent-dim); stroke-width:1; }
+  .diagram .t{ font-family:var(--font-mono); font-size:13px; fill:var(--text); }
+  .diagram .s{ font-family:var(--font-mono); font-size:11px; fill:var(--text-dim); }
+  .diagram .hotT{ font-family:var(--font-mono); font-size:11px; fill:var(--accent); }
+  .diagram .arrow{ stroke:var(--accent-dim); stroke-width:1.5; fill:none; }
+  .diagram .head{ fill:var(--accent-dim); }
+  .diagram .axis{ stroke:var(--text-dim); stroke-width:1; }
+  .diagram .dash{ stroke:var(--text-dim); stroke-width:1; stroke-dasharray:4 3; }
+  .diagram .hotLine{ stroke:var(--accent); stroke-width:1.5; }
+
+  .table-wrap{ overflow-x:auto; margin:24px 0; }
+  table.data{ width:100%; border-collapse:collapse; font-size:0.86rem; }
+  table.data th{ text-align:left; font-family:var(--font-mono); font-size:0.74rem; font-weight:500; color:var(--text-dim); padding:8px 12px 8px 0; border-bottom:1px solid var(--line); white-space:nowrap; }
+  table.data td{ padding:8px 12px 8px 0; border-bottom:1px solid var(--line); vertical-align:top; line-height:1.5; }
+  table.data td.mono, table.data td.num{ font-family:var(--font-mono); font-size:0.82rem; }
+  table.data .dim, .dim{ color:var(--text-dim); }
+  table.data tr:last-child td{ border-bottom:none; }
+
+  .callout{ margin:28px 0; padding:14px 16px; border-left:2px solid var(--accent-dim); background:rgba(255,255,255,0.03); font-size:0.9rem; color:var(--text-dim); }
+  .callout p{ margin:0 0 10px; font-size:0.9rem; }
+  .callout p:last-child{ margin:0; }
+
+  .codeblock{ background:rgba(255,255,255,0.03); border:1px solid var(--line); border-radius:4px; padding:16px 18px; overflow-x:auto; margin:28px 0; }
+  .codeblock code{ font-family:var(--font-mono); font-size:0.85rem; color:var(--text); white-space:pre; line-height:1.6; }
+  .codeblock .cm{ color:var(--text-dim); }
+  .codeblock .kw{ color:var(--accent); }
 </style>
 
 <canvas id="silk-bg" aria-hidden="true"></canvas>
@@ -69,9 +118,28 @@
     <h1 class="post-title">a shop site that isn't a shop</h1>
 
     <div class="post-body">
-<p>this is the website for an electrical and security-equipment shop in Çanakkale: switches, cable, cameras, intercoms, satellite gear. the first decision made everything simpler: it isn't a webshop. it's a live price-and-stock catalog, and every product page has a button that opens WhatsApp with the message already written ("hi, i'd like the price and stock for this product"). customers still talk to a person, and the site makes sure they ask about the right thing.</p>
+<p>this is the website for an electrical and security-equipment shop in Çanakkale: switches, cable, cameras, intercoms, satellite gear. the first decision made everything simpler: it isn't a webshop. it's a live price-and-stock catalog, and every product page has a button that opens WhatsApp with the message already written. customers still talk to a person, and the site makes sure they ask about the right thing.</p>
 
-      <p>the stack is TanStack Start (React 19), Tailwind v4 and Zod, deployed as a Cloudflare Worker with D1 (SQLite) for the data and R2 for the photos. GitHub Actions deploys on every push to main. there's a custom admin panel, so the owner never has to ask me to change a price.</p>
+      <div class="codeblock"><code><span class="kw">export</span> <span class="kw">function</span> waLink(number: string, message: string) {
+  <span class="kw">const</span> digits = (number || "").replace(/[^\d]/g, "");
+  <span class="kw">return</span> `https:<span class="cm">//wa.me/${digits}?text=${encodeURIComponent(message)}`;</span>
+}</code></div>
+
+      <p>the stack is TanStack Start (React 19), Tailwind v4 and Zod, deployed as a Cloudflare Worker with D1 (SQLite) for the data and R2 for the photos. there's a custom admin panel, so the owner never has to ask me to change a price.</p>
+
+      <div class="stats">
+        <div class="stat"><b>7</b><span>tables in D1</span></div>
+        <div class="stat"><b>7</b><span>admin tabs</span></div>
+        <div class="stat"><b>5 MB</b><span>upload cap</span></div>
+        <div class="stat"><b>100,000</b><span>PBKDF2 iterations</span></div>
+        <div class="stat"><b>7 days</b><span>admin session</span></div>
+        <div class="stat"><b>0</b><span>servers to keep alive</span></div>
+      </div>
+
+      <figure>
+        <div class="diagram-wrap"><svg class="diagram" viewBox="0 0 760 200" role="img" aria-label="architecture: browser, worker, D1, R2, GitHub Actions"><defs><marker id="ah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0 L10 5 L0 10 z" class="head"/></marker></defs><rect class="box" x="0" y="65" width="150" height="70" rx="3"/><text class="t" x="75.0" y="93" text-anchor="middle">browser</text><text class="s" x="75.0" y="113" text-anchor="middle">React 19 + Tailwind</text><rect class="box hot" x="230" y="65" width="190" height="70" rx="3"/><text class="t" x="325.0" y="93" text-anchor="middle">Cloudflare Worker</text><text class="s" x="325.0" y="113" text-anchor="middle">TanStack Start, server fns</text><rect class="box" x="520" y="10" width="240" height="70" rx="3"/><text class="t" x="640.0" y="38" text-anchor="middle">D1</text><text class="s" x="640.0" y="58" text-anchor="middle">products, settings, stats, admins</text><rect class="box" x="520" y="120" width="240" height="70" rx="3"/><text class="t" x="640.0" y="148" text-anchor="middle">R2</text><text class="s" x="640.0" y="168" text-anchor="middle">product photos, logos, hero images</text><line class="arrow" x1="154" y1="100" x2="226" y2="100" marker-end="url(#ah)"/><line class="arrow" x1="424" y1="85" x2="516" y2="52" marker-end="url(#ah)"/><line class="arrow" x1="424" y1="115" x2="516" y2="148" marker-end="url(#ah)"/><text class="s" x="325" y="160" text-anchor="middle">GitHub Actions deploys on push to main</text></svg></div>
+        <figcaption>no server to run and no disk to back up: D1 and R2 hold all the state, and the Worker is redeployed from git.</figcaption>
+      </figure>
 
       <h2><span class="hash">##</span>counting without inflating</h2>
 
@@ -80,35 +148,102 @@
       <div class="codeblock"><code><span class="cm">// primary key = (product, kind, fingerprint, day)</span>
 <span class="kw">try</span> {
   <span class="kw">await</span> db.run(
-    <span class="cm">"INSERT INTO product_stat_hits (product_id, kind, fingerprint) VALUES (?, ?, ?)"</span>,
-    [productId, kind, <span class="kw">await</span> clientFingerprint()],
+    "INSERT INTO product_stat_hits (product_id, kind, fingerprint) VALUES (?, ?, ?)",
+    [data.productId, data.kind, <span class="kw">await</span> clientFingerprint()],
   );
 } <span class="kw">catch</span> {
-  <span class="kw">return</span> { counted: <span class="kw">false</span> }; <span class="cm">// already counted today</span>
+  <span class="kw">return</span> { counted: <span class="kw">false</span> };   <span class="cm">// already counted today</span>
 }
-<span class="kw">await</span> db.run(<span class="cm">`UPDATE products SET ${column} = ${column} + 1 WHERE id = ?`</span>, [productId]);</code></div>
+<span class="kw">await</span> db.run(`UPDATE products SET ${column} = ${column} + 1 WHERE id = ?`, [data.productId]);</code></div>
 
       <h2><span class="hash">##</span>discounts as an operation</h2>
 
-      <p>the discount tab applies a percentage (1 to 99) to everything, one category or one brand. the new price is computed from the list price, rounded to kuruş and stored beside it, and the panel keeps a note of what it applied so it can be undone in one click. the storefront only shows a discount when the discounted price is really lower than the list price, so a bad value can't show up as a sale. the <code>price_updated_at</code> date moves only when a price field changes, not on every edit, and product cards show it, so a shopper can judge how fresh a price is.</p>
+      <p>the discount tab applies a percentage (1 to 99) to everything, one category or one brand. the new price is computed from the list price, rounded to kuruş and stored beside it, and the panel keeps a note of what it applied so it can be undone in one click.</p>
+
+      <div class="codeblock"><code><span class="kw">const</span> value = clear ? <span class="kw">null</span> : Math.round(p.price * (1 - pct / 100) * 100) / 100;</code></div>
+
+      <p>the storefront only shows a discount when the discounted price is really lower than the list price, so a bad value can't show up as a sale. and <code>price_updated_at</code> moves only when a price field changes, not on every edit, so the date on a product card tells a shopper how fresh the price is.</p>
+
+      <div class="codeblock"><code><span class="kw">export</span> <span class="kw">function</span> hasDiscount(p: Pick&lt;Product, "price" | "discount_price"&gt;) {
+  <span class="kw">return</span> p.discount_price != <span class="kw">null</span> &amp;&amp; p.discount_price &gt; 0 &amp;&amp; p.discount_price &lt; p.price;
+}</code></div>
 
       <h2><span class="hash">##</span>photos that clean up after themselves</h2>
 
-      <p>uploads are admin-only, capped at 5 MB, and limited to an allowlist of image types. SVG is deliberately not on it: an SVG can carry a script, and opening the file's URL directly would run it, which is stored XSS. files are also served with <code>nosniff</code>. each product gets its own folder in R2, named by slug, and new photos are numbered from what's already in the bucket (slug, slug_2, slug_3), so an old file is never overwritten. removing a photo or deleting a product deletes the objects, so nothing is left orphaned. fixed slots like the favicon and hero images replace their previous file, and if the new extension differs, the stale one is removed too. the one exception is the header and footer logos: they can fall back to a shared file, so they are never deleted on clear.</p>
+      <p>uploads are admin-only, capped at 5 MB, and limited to an allowlist of image types. SVG is deliberately not on it: an SVG can carry a script, and opening the file's URL directly would run it, which is stored XSS. files are also served with <code>nosniff</code>.</p>
+
+      <div class="codeblock"><code><span class="kw">export</span> <span class="kw">const</span> MIME: Record&lt;string, string&gt; = {
+  ".jpg": "image/jpeg",  ".jpeg": "image/jpeg",  ".png": "image/png",
+  ".webp": "image/webp", ".gif": "image/gif",    ".ico": "image/x-icon",
+  <span class="cm">// no ".svg": it can embed &lt;script&gt;</span>
+};</code></div>
+
+      <p>everything lives in one R2 bucket, laid out so a file's key says what it is:</p>
+
+      <div class="table-wrap"><table class="data">
+        <thead><tr><th>key</th><th>what lives there</th></tr></thead>
+        <tbody>
+          <tr><td class="mono">products/&lt;slug&gt;/&lt;slug&gt;.jpg, &lt;slug&gt;_2.jpg</td><td class="">product photos, numbered from what's already in the folder</td></tr>
+          <tr><td class="mono">uploads/header-footer/logo-header.&lt;ext&gt;</td><td class="">fixed slot, a new upload replaces it</td></tr>
+          <tr><td class="mono">uploads/main-page/hero-1.&lt;ext&gt;</td><td class="">fixed slot, same rule</td></tr>
+          <tr><td class="mono">uploads/site-favicon.&lt;ext&gt;</td><td class="">fixed slot, same rule</td></tr>
+          <tr><td class="mono">uploads/&lt;uuid&gt;.&lt;ext&gt;</td><td class="">one-off images such as brand logos</td></tr>
+        </tbody>
+      </table></div>
+
+      <p>new product photos are numbered from what's already in the folder, so an old file is never overwritten, even if one was deleted in between.</p>
+
+      <div class="codeblock"><code><span class="kw">function</span> nextProductFilename(existing: string[], slug: string, ext: string): string {
+  <span class="kw">const</span> suffixPattern = <span class="kw">new</span> RegExp(`^${slug}_(\\d+)$`);
+  <span class="kw">let</span> maxIndex = 0;
+  <span class="kw">for</span> (<span class="kw">const</span> name <span class="kw">of</span> existing) {
+    <span class="kw">const</span> base = name.replace(/\.[^./]+$/, "");
+    <span class="kw">if</span> (base === slug) maxIndex = Math.max(maxIndex, 1);
+    <span class="kw">else</span> {
+      <span class="kw">const</span> match = base.match(suffixPattern);
+      <span class="kw">if</span> (match) maxIndex = Math.max(maxIndex, Number(match[1]));
+    }
+  }
+  <span class="kw">const</span> nextIndex = maxIndex + 1;
+  <span class="kw">return</span> nextIndex === 1 ? `${slug}${ext}` : `${slug}_${nextIndex}${ext}`;
+}</code></div>
+
+      <p>removing a photo or deleting a product deletes the objects, so nothing is left orphaned. fixed slots replace their previous file, and if the new extension differs, the stale one is removed too. the one exception is the header and footer logos: they can fall back to a shared file, so they are never deleted on clear.</p>
 
       <h2><span class="hash">##</span>login without an auth service</h2>
 
-      <p>admin auth is one small file. passwords are hashed with PBKDF2-SHA256 through Web Crypto, which Workers support natively, and sessions are a sealed cookie that expires after seven days. there's no sign-up: admins are created by other admins, nobody can revoke their own access, and the very first admin comes from environment variables, only when the users table is empty. secrets live in Wrangler secrets, not in the config. every server function sits behind CSRF middleware, and the admin route is marked noindex.</p>
+      <p>admin auth is one small file. passwords are hashed with PBKDF2-SHA256 through Web Crypto, which Workers support natively, and sessions are a sealed cookie that expires after seven days. the iteration count is stored inside the hash string, so it can be raised later without breaking old passwords.</p>
+
+      <div class="codeblock"><code><span class="kw">const</span> hash = <span class="kw">await</span> pbkdf2(password, salt, ITERATIONS);
+<span class="kw">return</span> `${ITERATIONS}:${toHex(salt)}:${toHex(hash)}`;     <span class="cm">// iterations travel with the hash</span></code></div>
+
+      <p>there's no sign-up: admins are created by other admins, nobody can revoke their own access, and the very first admin comes from environment variables, only when the users table is empty. secrets live in Wrangler secrets, not in the config. every server function sits behind CSRF middleware, and the admin route is marked noindex.</p>
 
       <h2><span class="hash">##</span>workers gotchas</h2>
 
-      <p>three things cost me time. first, route files ship their top-level imports to the browser, so importing the database module at the top of a route pulls <code>cloudflare:workers</code> into the client bundle and breaks it. every server function imports what it needs inside its handler. second, D1's <code>exec()</code> splits statements on newlines, which breaks multi-line <code>CREATE TABLE</code>, so the schema is applied one statement at a time with <code>prepare().run()</code>. third, when a server function throws, the framework swallows it into a generic 500 JSON body with no stack trace. a small wrapper around <code>console.error</code> remembers the real error, and the server entry recognizes that swallowed body, logs the full cause chain and serves a friendly HTML error page instead of raw JSON.</p>
+      <p>three things cost me time. first, route files ship their top-level imports to the browser, so importing the database module at the top of a route pulls <code>cloudflare:workers</code> into the client bundle and breaks it. every server function imports what it needs inside its handler.</p>
+
+      <div class="codeblock"><code><span class="kw">export</span> <span class="kw">const</span> someServerFn = createServerFn({ method: "POST" }).handler(<span class="kw">async</span> () =&gt; {
+  <span class="kw">const</span> { getDb } = <span class="kw">await</span> <span class="kw">import</span>("@/lib/db.server");   <span class="cm">// inside the handler, never at the top of the file</span>
+  <span class="kw">const</span> db = <span class="kw">await</span> getDb();
+});</code></div>
+
+      <p>second, D1's <code>exec()</code> splits statements on newlines, which breaks multi-line <code>CREATE TABLE</code>, so the schema is applied one statement at a time with <code>prepare().run()</code>.</p>
+
+      <p>third, when a server function throws, the framework swallows it into a generic 500 JSON body with no stack trace. a small wrapper around <code>console.error</code> remembers the real error, and the server entry recognizes the swallowed body, logs the full cause chain and serves a friendly HTML error page instead of raw JSON.</p>
+
+      <div class="codeblock"><code><span class="kw">function</span> isH3SwallowedErrorBody(body: string): boolean {
+  <span class="kw">const</span> payload = JSON.parse(body) as { unhandled?: unknown; message?: unknown };
+  <span class="kw">return</span> payload.unhandled === <span class="kw">true</span> &amp;&amp; payload.message === "HTTPError";
+}</code></div>
 
       <h2><span class="hash">##</span>small things</h2>
 
       <p>filters and sorting live in the URL (category, brand, price range, in stock, discounted, sort) and are validated by the router, so any filtered view is a link you can send someone on WhatsApp. search lowercases with the Turkish locale so İ and I behave, and slugs transliterate ç ğ ı ö ş ü. the sitemap is generated from the active products, and there's a <code>security.txt</code>.</p>
 
-      <p>a shop site is really two products: the one customers see, and the one the owner uses every day. the second one deserves as much design as the first.</p>
+      <div class="callout">
+        <p>a shop site is really two products: the one customers see, and the one the owner uses every day. the second one deserves as much design as the first.</p>
+      </div>
     </div>
   </article>
 

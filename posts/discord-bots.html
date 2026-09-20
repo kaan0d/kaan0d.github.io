@@ -51,6 +51,55 @@
   .codeblock code{ font-family:var(--font-mono); font-size:0.85rem; color:var(--text); white-space:pre; line-height:1.6; }
   .codeblock .cm{ color:var(--text-dim); }
   .codeblock .kw{ color:var(--accent); }
+
+  .post-body h2{ font-family:var(--font-mono); font-size:1.05rem; font-weight:700; margin:48px 0 18px; }
+  .post-body h2 .hash{ color:var(--accent-dim); margin-right:8px; }
+  .post-body h3{ font-family:var(--font-mono); font-size:0.92rem; font-weight:700; margin:32px 0 12px; color:var(--text); }
+  .post-body code{ font-family:var(--font-mono); font-size:0.88em; color:var(--accent); }
+  .post-body a{ color:var(--accent); text-decoration:underline; text-decoration-color:#6b4a26; text-underline-offset:3px; }
+  .post-body a:hover{ text-decoration-color:var(--accent); }
+  .links{ font-family:var(--font-mono); font-size:0.88rem; }
+
+  .stats{ display:grid; grid-template-columns:repeat(3, 1fr); gap:1px; margin:32px 0; background:var(--line); border:1px solid var(--line); }
+  .stat{ background:rgba(6,6,7,0.94); padding:16px 14px; }
+  .stat b{ display:block; font-family:var(--font-mono); font-size:1.45rem; font-weight:700; color:var(--accent); line-height:1.2; }
+  .stat span{ display:block; margin-top:4px; font-size:0.82rem; color:var(--text-dim); line-height:1.4; }
+  @media (max-width:520px){ .stats{ grid-template-columns:repeat(2, 1fr); } }
+
+  figure{ margin:28px 0; }
+  figure img{ display:block; width:100%; height:auto; border:1px solid var(--line); border-radius:2px; background:#060607; }
+  figcaption{ margin-top:8px; font-family:var(--font-mono); font-size:0.76rem; line-height:1.55; color:var(--text-dim); }
+
+  .diagram-wrap{ overflow-x:auto; }
+  .diagram{ display:block; width:100%; min-width:640px; height:auto; }
+  .diagram .box{ fill:rgba(255,255,255,0.03); stroke:#2a2b2e; stroke-width:1; }
+  .diagram .box.hot{ stroke:var(--accent-dim); }
+  .diagram .fill{ fill:rgba(232,150,63,0.16); stroke:var(--accent-dim); stroke-width:1; }
+  .diagram .t{ font-family:var(--font-mono); font-size:13px; fill:var(--text); }
+  .diagram .s{ font-family:var(--font-mono); font-size:11px; fill:var(--text-dim); }
+  .diagram .hotT{ font-family:var(--font-mono); font-size:11px; fill:var(--accent); }
+  .diagram .arrow{ stroke:var(--accent-dim); stroke-width:1.5; fill:none; }
+  .diagram .head{ fill:var(--accent-dim); }
+  .diagram .axis{ stroke:var(--text-dim); stroke-width:1; }
+  .diagram .dash{ stroke:var(--text-dim); stroke-width:1; stroke-dasharray:4 3; }
+  .diagram .hotLine{ stroke:var(--accent); stroke-width:1.5; }
+
+  .table-wrap{ overflow-x:auto; margin:24px 0; }
+  table.data{ width:100%; border-collapse:collapse; font-size:0.86rem; }
+  table.data th{ text-align:left; font-family:var(--font-mono); font-size:0.74rem; font-weight:500; color:var(--text-dim); padding:8px 12px 8px 0; border-bottom:1px solid var(--line); white-space:nowrap; }
+  table.data td{ padding:8px 12px 8px 0; border-bottom:1px solid var(--line); vertical-align:top; line-height:1.5; }
+  table.data td.mono, table.data td.num{ font-family:var(--font-mono); font-size:0.82rem; }
+  table.data .dim, .dim{ color:var(--text-dim); }
+  table.data tr:last-child td{ border-bottom:none; }
+
+  .callout{ margin:28px 0; padding:14px 16px; border-left:2px solid var(--accent-dim); background:rgba(255,255,255,0.03); font-size:0.9rem; color:var(--text-dim); }
+  .callout p{ margin:0 0 10px; font-size:0.9rem; }
+  .callout p:last-child{ margin:0; }
+
+  .codeblock{ background:rgba(255,255,255,0.03); border:1px solid var(--line); border-radius:4px; padding:16px 18px; overflow-x:auto; margin:28px 0; }
+  .codeblock code{ font-family:var(--font-mono); font-size:0.85rem; color:var(--text); white-space:pre; line-height:1.6; }
+  .codeblock .cm{ color:var(--text-dim); }
+  .codeblock .kw{ color:var(--accent); }
 </style>
 
 <canvas id="silk-bg" aria-hidden="true"></canvas>
@@ -71,29 +120,95 @@
     <div class="post-body">
 <p>i've written two discord bots that have nothing to do with each other on paper, and they turned out to be the same program. <b>Lespy</b> hands out XP for saying thanks. <b>rejs</b> watches a game server and reports who joins and leaves. both boil down to the same loop: watch something, remember what changed, tell the right channel.</p>
 
+      <p class="links">source: <a href="https://github.com/kaan0d/Lespy" target="_blank" rel="noopener">Lespy</a> · <a href="https://github.com/kaan0d/rejs" target="_blank" rel="noopener">rejs</a></p>
+
+      <div class="stats">
+        <div class="stat"><b>2</b><span>bots, one loop</span></div>
+        <div class="stat"><b>1 s</b><span>rejs poll interval</span></div>
+        <div class="stat"><b>60 s</b><span>Lespy cooldown per sender</span></div>
+        <div class="stat"><b>10 to 1000</b><span>XP per level, clamped</span></div>
+        <div class="stat"><b>500</b><span>level cap</span></div>
+        <div class="stat"><b>3</b><span>permission tiers</span></div>
+      </div>
+
+      <h2><span class="hash">##</span>the loop</h2>
+
+      <figure>
+        <div class="diagram-wrap"><svg class="diagram" viewBox="0 0 760 112" role="img" aria-label="poll, diff, store, announce"><defs><marker id="ah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0 L10 5 L0 10 z" class="head"/></marker></defs><rect class="box" x="0" y="20" width="150" height="70" rx="3"/><text class="t" x="75" y="52" text-anchor="middle">poll</text><text class="s" x="75" y="72" text-anchor="middle">endpoint or chat</text><line class="arrow" x1="156" y1="55" x2="195" y2="55" marker-end="url(#ah)"/><rect class="box hot" x="203" y="20" width="150" height="70" rx="3"/><text class="t" x="278" y="52" text-anchor="middle">diff</text><text class="s" x="278" y="72" text-anchor="middle">what changed</text><line class="arrow" x1="359" y1="55" x2="399" y2="55" marker-end="url(#ah)"/><rect class="box" x="407" y="20" width="150" height="70" rx="3"/><text class="t" x="482" y="52" text-anchor="middle">store</text><text class="s" x="482" y="72" text-anchor="middle">SQLite file</text><line class="arrow" x1="563" y1="55" x2="602" y2="55" marker-end="url(#ah)"/><rect class="box" x="610" y="20" width="150" height="70" rx="3"/><text class="t" x="685" y="52" text-anchor="middle">announce</text><text class="s" x="685" y="72" text-anchor="middle">the right channel</text></svg></div>
+        <figcaption>the whole design of both bots. the diff step is where each one has its own rules.</figcaption>
+      </figure>
+
       <h2><span class="hash">##</span>Lespy: xp for saying thanks</h2>
 
       <p>Lespy is a Python bot on discord.py with SQLite behind it, built for a community server. the rule is small: if a message contains one of a few trigger words ("ty", "thanks", "thank you") and it replies to or mentions someone else, that person gets 1 XP. thanking yourself gets you nothing. the point is to reward whoever actually helped, not whoever talks the most.</p>
 
-      <p>levels get harder as you climb. with the default multiplier, the XP needed for the next level grows by about 2.4 per level, clamped between 10 and 1000, with a cap at level 500. every number (trigger words, multiplier, caps, cooldowns) lives in one config file instead of the code, so tuning the pace of a server doesn't mean touching the bot.</p>
+      <div class="codeblock"><code><span class="cm"># condensed from bot.py: a thank-you only counts when it points at someone else</span>
+<span class="kw">if</span> message.reference:
+    replied_to = <span class="kw">await</span> message.channel.fetch_message(message.reference.message_id)
+    <span class="kw">if</span> replied_to.author == message.author:   <span class="cm"># thanking yourself</span>
+        <span class="kw">return</span>
+    user = replied_to.author
+<span class="kw">elif</span> message.mentions:
+    user = message.mentions[0]</code></div>
 
-      <p>there are three permission tiers, each in its own file: everyone gets a leaderboard and a progress command, admins (kept in their own SQLite table) can set levels and grant XP, and super admins (Discord IDs in the config) manage the admins and can reset or delete users.</p>
+      <p>levels get harder as you climb. the XP needed for the next level is <code>level * 2 * multiplier</code>, clamped between a minimum and a maximum, with a level cap on top. every number (trigger words, multiplier, clamps, cooldowns) lives in one config file instead of the code, so tuning the pace of a server doesn't mean touching the bot.</p>
 
-      <p>the part that took longest was the cooldown. without one, two friends can farm each other with "thanks" all day, so a sender gets 60 seconds between XP-giving messages. one thing i'd change now: the cooldown check runs before the message is handed to the command handler, so someone on cooldown can't run commands until it expires. the fix is to process commands first and keep XP as its own concern.</p>
+      <div class="codeblock"><code>required_xp = round(level * 2 * level_xp_multiplier)                              <span class="cm"># 1.2 by default</span>
+required_xp = max(min_level_experience, min(required_xp, max_level_experience))   <span class="cm"># 10 .. 1000</span></code></div>
+
+      <p>there are three permission tiers, each in its own file, so a command's audience is decided by where it lives.</p>
+
+      <div class="table-wrap"><table class="data">
+        <thead><tr><th>tier</th><th>who</th><th>commands</th></tr></thead>
+        <tbody>
+          <tr><td class="">user</td><td class="">everyone</td><td class="mono">leaderboard, progress, help</td></tr>
+          <tr><td class="">admin</td><td class="">rows in the admins table</td><td class="mono">setlevel, addxp, showadmins</td></tr>
+          <tr><td class="">super admin</td><td class="">Discord IDs in the config file</td><td class="mono">addadmin, removeadmin, resetall, deleteuser, deleteusers</td></tr>
+        </tbody>
+      </table></div>
+
+      <p>the part that took longest was the cooldown. without one, two friends can farm each other with "thanks" all day, so a sender gets 60 seconds between XP-giving messages. one thing i'd change now: the cooldown check runs before the message reaches the command handler, so someone on cooldown can't run commands until it expires. the fix is to process commands first and keep XP as its own concern:</p>
+
+      <div class="codeblock"><code><span class="cm"># what i'd change it to</span>
+@bot.event
+<span class="kw">async</span> <span class="kw">def</span> on_message(message):
+    <span class="kw">if</span> message.author.bot:
+        <span class="kw">return</span>
+    <span class="kw">await</span> bot.process_commands(message)   <span class="cm"># commands never depend on the xp cooldown</span>
+    <span class="kw">await</span> award_thanks_xp(message)        <span class="cm"># xp logic, cooldown included, lives here</span></code></div>
 
       <h2><span class="hash">##</span>rejs: who's online</h2>
 
-      <p>rejs is Node with discord.js and SQLite. FiveM game servers expose their player list as JSON, so the bot polls that endpoint once a second and compares it with the players it already has marked as in-game. new ids get a green "joined" line in a channel; missing ones get a red "left" line and a leave timestamp. the bot's status shows the live count from a second endpoint, like "64/128 players".</p>
+      <p>rejs is Node with discord.js and SQLite. FiveM game servers expose their player list as JSON, so the bot polls that endpoint once a second and compares it with the players it already has marked as in-game. the diff is two sets:</p>
 
-      <p>a few details i like. <code>!setservermonitor</code> doesn't trust its arguments: it fetches the endpoint first and refuses to save unless it returns a JSON array. the player table keeps names plus steam and discord identifiers, so a session traces back to an account and not just a display name. on startup the bot copies the database into a timestamped backup and then clears the table, so every run starts a fresh log without losing history. commands load from a folder, and <code>!reload</code> re-reads them without restarting the bot.</p>
+      <div class="codeblock"><code><span class="kw">const</span> currentIds  = <span class="kw">new</span> Set(currentData.map(player =&gt; player.id));
+<span class="kw">const</span> previousIds = <span class="kw">new</span> Set(previousData.map(player =&gt; player.id));
+
+<span class="kw">const</span> joined = currentData.filter(player =&gt; !previousIds.has(player.id));
+<span class="kw">const</span> left   = previousData.filter(player =&gt; !currentIds.has(player.id));</code></div>
+
+      <p>new ids get a green "joined" line in the channel. missing ones get a red "left" line and a leave timestamp. the bot's status shows the live count from a second endpoint, like "64/128 players". the player table keeps names plus steam and discord identifiers, so a session traces back to an account and not just a display name.</p>
+
+      <p><code>!setservermonitor</code> doesn't trust its arguments. before saving anything, it fetches the endpoint and refuses unless the answer is a JSON array:</p>
+
+      <div class="codeblock"><code><span class="kw">const</span> response = <span class="kw">await</span> fetch(playersUrl);
+<span class="kw">if</span> (!response.ok) <span class="kw">return</span> message.reply('Failed to fetch data from the provided IP address.');
+
+<span class="kw">const</span> data = <span class="kw">await</span> response.json();
+<span class="kw">if</span> (!Array.isArray(data)) <span class="kw">return</span> message.reply('The provided IP address does not <span class="kw">return</span> valid JSON data.');</code></div>
+
+      <p>on startup the bot copies every table into a timestamped backup and then clears the players table, so each run starts a fresh log without losing history. commands load from a folder, and <code>!reload</code> re-reads them without restarting the bot.</p>
+
+      <div class="codeblock"><code><span class="kw">async</span> <span class="kw">function</span> initializeDatabase() {
+  <span class="kw">await</span> backupDatabase();   <span class="cm">// every table into logs/backup_&lt;timestamp&gt;.db</span>
+  <span class="kw">await</span> clearDatabase();    <span class="cm">// then this run starts with an empty players table</span>
+}</code></div>
 
       <p>the least tidy part is server restarts. the server goes away on a schedule, and a bot that treats every failed fetch as an outage either spams retries or gives up. rejs knows two ten-minute restart windows and backs off differently inside them, but the retry counters are module-level globals and the windows are hard-coded. before adding anything else i'd rebuild that as a small state machine: up, down, restarting.</p>
 
       <h2><span class="hash">##</span>what they share</h2>
 
       <p>poll, diff, persist, announce. SQLite is enough for both: one file, no server, and the state survives a restart, which is all a bot needs. neither one has to be a Discord bot. chat is just the interface people already keep open, a free notification channel with permissions and history built in.</p>
-
-      <p class="links">source: <a href="https://github.com/kaan0d/Lespy" target="_blank" rel="noopener">Lespy</a> · <a href="https://github.com/kaan0d/rejs" target="_blank" rel="noopener">rejs</a></p>
     </div>
   </article>
 
