@@ -1,6 +1,7 @@
 // Static site build: src/ -> index.html, blog.html, posts/*.html. Run: npm run build
 import fs from 'node:fs';
 import path from 'node:path';
+import { buildSync } from 'esbuild';
 
 const SITE = 'https://kaandinc.com';
 const NAME = 'Kaan Dinç';
@@ -189,6 +190,7 @@ ${posts.filter((p) => p.date.startsWith(year)).map((p) => `        <li><a class=
     </section>`).join('\n');
 
   return `<section class="blog-hero">
+  <div class="obj" data-obj="torus" aria-hidden="true"></div>
   <h1 class="blog-hero__title" data-split="lines" data-hero>blog</h1>
   <p class="blog-hero__lede" data-fade data-hero>notes on what i've been building.</p>
 </section>
@@ -236,6 +238,9 @@ for (const [from, to] of Object.entries(VENDOR)) {
   fs.mkdirSync(path.dirname(to), { recursive: true });
   fs.copyFileSync(from, to);
 }
+
+// Three.js is tree-shaken into one file that core.js loads lazily on wide screens.
+buildSync({ entryPoints: ['src/js/objects.js'], bundle: true, minify: true, format: 'esm', outfile: 'assets/js/objects.js' });
 
 const posts = loadPosts();
 const urls = [`${SITE}/`, `${SITE}/blog`];

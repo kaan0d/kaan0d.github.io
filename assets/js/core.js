@@ -1,5 +1,6 @@
 // Shared behavior for every page: smooth scroll, header, menu, page transitions, reveals.
 (() => {
+  const scriptBase = document.currentScript.src.replace(/core.js.*$/, '');
   const root = document.documentElement;
   const reduce = root.classList.contains('reduce');
   const $ = (sel, ctx = document) => ctx.querySelector(sel);
@@ -185,6 +186,10 @@
     if (!reduce) {
       initReveals();
       intro();
+    }
+    // Decorative solids: wide screens only, loaded after everything else.
+    if (!reduce && matchMedia('(min-width: 1000px)').matches && $('[data-obj]')) {
+      import(scriptBase + 'objects.js').catch(() => {});
     }
     if (location.hash) {
       const target = document.getElementById(location.hash.slice(1));
