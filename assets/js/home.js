@@ -104,7 +104,7 @@
         ScrollTrigger.create({ trigger: card, start: 'top top', endTrigger: last, end: 'top top', pin: true, pinSpacing: false });
         gsap.to($('.stack-card__inner', card), {
           scale: 0.93,
-          opacity: 0.4,
+          '--dim': 0.72,
           ease: 'none',
           scrollTrigger: { trigger: cards[i + 1], start: 'top bottom', end: 'top top', scrub: true },
         });

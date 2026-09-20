@@ -1,8 +1,8 @@
 // Decorative 3D solids on one fixed canvas. Each solid follows an empty [data-obj] slot in the layout.
 import {
-  AmbientLight, BoxGeometry, DirectionalLight, DodecahedronGeometry, EdgesGeometry, Group,
-  IcosahedronGeometry, LineBasicMaterial, LineSegments, Mesh, MeshStandardMaterial, OctahedronGeometry,
-  OrthographicCamera, Scene, TorusGeometry, TorusKnotGeometry, WebGLRenderer, WireframeGeometry,
+  AmbientLight, BoxGeometry, CylinderGeometry, DirectionalLight, DodecahedronGeometry, EdgesGeometry,
+  Group, IcosahedronGeometry, LineBasicMaterial, LineSegments, Mesh, MeshStandardMaterial, OctahedronGeometry,
+  OrthographicCamera, Scene, TetrahedronGeometry, WebGLRenderer,
 } from 'three';
 
 const AMBER = 0xe8963f;
@@ -11,19 +11,11 @@ const BASE_SIZE = 2.2; // world units spanned by every shape, so slot width maps
 // Dark metal faces; polygon offset keeps outlines from z-fighting with them.
 const faceOptions = { color: 0x2a2620, roughness: 0.38, metalness: 0.45, polygonOffset: true, polygonOffsetFactor: 1, polygonOffsetUnits: 1 };
 const flatFaces = new MeshStandardMaterial({ ...faceOptions, flatShading: true });
-const smoothFaces = new MeshStandardMaterial(faceOptions);
 const outline = new LineBasicMaterial({ color: AMBER, transparent: true, opacity: 0.85 });
-const grid = new LineBasicMaterial({ color: AMBER, transparent: true, opacity: 0.28 });
 
 const faceted = (geometry) => {
   const group = new Group();
   group.add(new Mesh(geometry, flatFaces), new LineSegments(new EdgesGeometry(geometry, 20), outline));
-  return group;
-};
-
-const gridded = (geometry) => {
-  const group = new Group();
-  group.add(new Mesh(geometry, smoothFaces), new LineSegments(new WireframeGeometry(geometry), grid));
   return group;
 };
 
@@ -44,12 +36,12 @@ const pyramid = () => {
 };
 
 const SHAPES = {
-  knot: () => { const g = new Group(); g.add(new Mesh(new TorusKnotGeometry(0.72, 0.26, 240, 24, 2, 3), smoothFaces)); return g; },
   ico: () => faceted(new IcosahedronGeometry(1.05, 0)),
-  sphere: () => faceted(new IcosahedronGeometry(1.05, 1)),
   octa: () => faceted(new OctahedronGeometry(1.1, 0)),
   dodeca: () => faceted(new DodecahedronGeometry(1.05, 0)),
-  torus: () => gridded(new TorusGeometry(0.78, 0.3, 20, 56)),
+  tetra: () => faceted(new TetrahedronGeometry(1.25, 0)),
+  prism: () => faceted(new CylinderGeometry(0.85, 0.85, 1.5, 6)),
+  cube: () => faceted(new BoxGeometry(1.45, 1.45, 1.45)),
   pyramid,
 };
 
