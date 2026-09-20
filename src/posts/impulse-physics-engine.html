@@ -1,86 +1,8 @@
-<!doctype html>
-<html lang="en" data-page="post">
-<head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>building a 2d physics engine from scratch | Kaan Dinç</title>
-<meta name="description" content="Impulse is a 2D rigid body physics engine I wrote from scratch in TypeScript, with no physics libraries: no Matter.js, no Planck, no Rapier. it simulates...">
-<meta name="theme-color" content="#0a0a09">
-<link rel="canonical" href="https://kaandinc.com/posts/impulse-physics-engine">
-<meta property="og:type" content="article">
-<meta property="og:title" content="building a 2d physics engine from scratch | Kaan Dinç">
-<meta property="og:description" content="Impulse is a 2D rigid body physics engine I wrote from scratch in TypeScript, with no physics libraries: no Matter.js, no Planck, no Rapier. it simulates...">
-<meta property="og:url" content="https://kaandinc.com/posts/impulse-physics-engine">
-<link rel="icon" href="../assets/favicon.svg" type="image/svg+xml">
-<link rel="preload" href="../assets/fonts/Geist-Variable.woff2" as="font" type="font/woff2" crossorigin>
-<link rel="stylesheet" href="../assets/css/base.css">
-<link rel="stylesheet" href="../assets/css/post.css">
-<script>
-(function (d) {
-  d.classList.add('js');
-  if (matchMedia('(prefers-reduced-motion: reduce)').matches) d.classList.add('reduce');
-  try { if (sessionStorage.getItem('curtain')) d.classList.add('curtain-on'); } catch (e) {}
-  // Safety net: reveal content if the animation scripts never report ready.
-  setTimeout(function () { if (!d.classList.contains('ready')) d.classList.add('no-anim'); }, 4000);
-})(document.documentElement);
-</script>
-
-</head>
-<body>
-<div class="curtain" aria-hidden="true"></div>
-<a class="skip" href="#main">skip to content</a>
-
-<header class="site-header">
-  <a class="site-header__brand" href="../" aria-label="Kaan Dinç, home">Kaan Dinç</a>
-  <nav class="site-nav" aria-label="primary">
-    <a class="roll" href="../#projects"><span class="roll__in" data-text="projects">projects</span></a>
-    <a class="roll" href="../blog"><span class="roll__in" data-text="blog">blog</span></a>
-    <a class="roll" href="https://drive.google.com/file/d/1M5Ri6U8PAwSgwr31EN4JDeT90P7OuCPo/view" target="_blank" rel="noopener"><span class="roll__in" data-text="cv">cv</span></a>
-    <button class="site-nav__menu roll" type="button" aria-expanded="false" aria-controls="menu"><span class="roll__in" data-text="menu">menu</span></button>
-  </nav>
-</header>
-
-<div class="menu" id="menu" hidden>
-  <div class="menu__inner">
-    <ul class="menu__list">
-      <li><a href="../#about"><span>about</span></a></li>
-      <li><a href="../#projects"><span>projects</span></a></li>
-      <li><a href="../#experience"><span>experience</span></a></li>
-      <li><a href="../#skills"><span>skills</span></a></li>
-      <li><a href="../#education"><span>education</span></a></li>
-      <li><a href="../#repos"><span>repos</span></a></li>
-      <li><a href="../#links"><span>links</span></a></li>
-      <li><a href="../blog"><span>blog</span></a></li>
-    </ul>
-    <ul class="menu__ext">
-      <li><a class="roll" href="mailto:kaan.dnc.7505@gmail.com"><span class="roll__in" data-text="email">email</span></a></li>
-      <li><a class="roll" href="https://github.com/kaan0d" target="_blank" rel="noopener"><span class="roll__in" data-text="github">github</span></a></li>
-      <li><a class="roll" href="https://www.linkedin.com/in/kaandinc/" target="_blank" rel="noopener"><span class="roll__in" data-text="linkedin">linkedin</span></a></li>
-      <li><a class="roll" href="https://drive.google.com/file/d/1M5Ri6U8PAwSgwr31EN4JDeT90P7OuCPo/view" target="_blank" rel="noopener"><span class="roll__in" data-text="cv">cv</span></a></li>
-    </ul>
-  </div>
-</div>
-
-<main id="main">
-<div class="progress" aria-hidden="true"><span></span></div>
-<article class="post">
-  <header class="post-head">
-    <a class="post-head__back roll" href="../blog"><span class="roll__in" data-text="&amp;larr; blog">&larr; blog</span></a>
-    <p class="post-head__meta" data-hero><time datetime="2026-09-17">Sep 2026</time> &nbsp;/&nbsp; 5 min read</p>
-    <h1 class="post-head__title" data-split="lines" data-hero>building a 2d physics engine from scratch</h1>
-  </header>
-  <div class="post-layout has-toc">
-    <aside class="toc" aria-label="on this page">
-      <ol>
-        <li><a href="#the-rules-i-set-first">the rules I set first</a></li>
-        <li><a href="#twelve-stages">twelve stages</a></li>
-        <li><a href="#what-it-looks-like">what it looks like</a></li>
-        <li><a href="#the-numbers">the numbers</a></li>
-        <li><a href="#how-i-checked-it-s-right">how I checked it's right</a></li>
-        <li><a href="#what-it-still-can-t-do">what it still can't do</a></li>
-      </ol>
-    </aside>
-    <div class="post-body">
+---
+title: building a 2d physics engine from scratch
+date: 2026-09-17
+label: Sep 2026
+---
 <p>Impulse is a 2D rigid body physics engine I wrote from scratch in TypeScript, with no physics libraries: no Matter.js, no Planck, no Rapier. it simulates circles, boxes and convex polygons that collide, stack, fall asleep, get pinned together with joints and get grabbed with the mouse. it runs in the browser, has zero runtime dependencies, and the whole demo is about 36 kB of JavaScript.</p>
 
       <p>my map was Erin Catto's Box2D Lite: sequential impulses, warm starting, accumulated impulse clamping. I used it for the ideas and wrote every piece to fit this codebase, then tried to prove each piece against something other than itself. most of this post is about that second part.</p>
@@ -96,7 +18,7 @@
         <div class="stat"><b>2.6 ms</b><span>per step with 1,000 bodies awake</span></div>
       </div>
 
-      <h2 id="the-rules-i-set-first">the rules I set first</h2>
+      <h2>the rules I set first</h2>
 
       <p>four rules before any physics: a fixed 1/60 s timestep, a deterministic engine (no <code>Math.random</code>), no allocations in the hot paths, and an engine that never touches the DOM or the canvas. the first one is the one that bites, so it lives in one small class.</p>
 
@@ -114,7 +36,7 @@ advance(frameSeconds: <span class="kw">number</span>): <span class="kw">number</
 
       <p>the browser gives you a different frame time on every frame, and the engine never sees it. the accumulator turns frame time into whole fixed steps, and a long frame (a background tab, a breakpoint) is capped at 0.25 s so catching up cannot spiral. the test feeds the same simulation frames at 30, 60 and 144 fps and as an uneven sequence, and requires each result to match plain manual stepping of the same number of steps, bit for bit.</p>
 
-      <h2 id="twelve-stages">twelve stages</h2>
+      <h2>twelve stages</h2>
 
       <p>I built it in stages and did not start the next one until the current one had green tests and a working demo:</p>
 
@@ -136,7 +58,7 @@ advance(frameSeconds: <span class="kw">number</span>): <span class="kw">number</
         </tbody>
       </table></div>
 
-      <h2 id="what-it-looks-like">what it looks like</h2>
+      <h2>what it looks like</h2>
 
       <figure>
         <img src="img/impulse-pyramid.png" width="902" height="602" alt="A pyramid of 55 boxes drawn in dark blue on a dark background." loading="lazy">
@@ -164,7 +86,7 @@ advance(frameSeconds: <span class="kw">number</span>): <span class="kw">number</
         <figcaption>the joints scene: a motor-driven paddle, a hinge that stops at its angle limits, and a spring. green marks the joints.</figcaption>
       </figure>
 
-      <h2 id="the-numbers">the numbers</h2>
+      <h2>the numbers</h2>
 
       <h3>stacking</h3>
 
@@ -230,7 +152,7 @@ advance(frameSeconds: <span class="kw">number</span>): <span class="kw">number</
         <p>the "before" tower times come from an earlier solver setup (30 iterations, no block solver), so that chart compares the whole change, not one part of it. the same goes for the step times: they dropped by roughly four times after the change, but I changed the iteration count and the browser mode at once, so I can't credit either one alone. it went from 3.3 ms to 0.86 ms for the pyramid, and from 10.4 ms to 2.6 ms for 1,000 bodies.</p>
       </div>
 
-      <h2 id="how-i-checked-it-s-right">how I checked it's right</h2>
+      <h2>how I checked it's right</h2>
 
       <p>a physics engine can look right and be wrong, so most tests compare against something independent of the code they test:</p>
 
@@ -269,7 +191,7 @@ advance(frameSeconds: <span class="kw">number</span>): <span class="kw">number</
 
       <p>the sabotage and the ordinary failures turned up problems on both sides. several times a test failed because my test was wrong, not the engine: a vector helper mutated its input and broke my "is the point inside" oracle, and a test expected a bullet to stop against a small circle that it only grazed, when a glancing hit should deflect it. and one test found a real bug: removing a joint left a sleeping body asleep in mid-air, so removing a joint now wakes its bodies.</p>
 
-      <h2 id="what-it-still-can-t-do">what it still can't do</h2>
+      <h2>what it still can't do</h2>
 
       <p>a pile of 500 mixed bodies never falls asleep in the time I measured, so sleeping helps stacks and pyramids but not big chaotic piles.</p>
 
@@ -280,33 +202,3 @@ advance(frameSeconds: <span class="kw">number</span>): <span class="kw">number</
       <p>determinism was only checked on one machine's Node and Chrome. other browsers or CPUs may differ in <code>Math.sin</code> and <code>Math.cos</code>. and "no allocations in the hot paths" is a design goal that no test enforces.</p>
 
       <p>the source, the tests and the benchmark are in the <a href="https://github.com/kaan0d/impulse" target="_blank" rel="noopener">repo</a>, and the <a href="https://kaan0d.github.io/impulse/" target="_blank" rel="noopener">demo</a> lets you drop shapes in and grab them with the mouse.</p>
-
-    </div>
-  </div>
-</article>
-<nav class="post-steps" aria-label="more posts">
-  <a class="post-step post-step--newer" href="sentinel-packet-analyzer">
-      <span class="post-step__dir">&larr; newer</span>
-      <span class="post-step__title">part 1: writing a packet analyzer from scratch</span>
-    </a>
-  <a class="post-step post-step--older" href="volume-extension">
-      <span class="post-step__dir">older &rarr;</span>
-      <span class="post-step__title">a chrome extension for one annoying problem</span>
-    </a>
-</nav>
-</main>
-
-<footer class="site-footer">
-  <span>Kaan Dinç</span>
-  <span>Çanakkale, Turkey</span>
-  <button class="roll" type="button" data-top><span class="roll__in" data-text="back to top">back to top</span></button>
-</footer>
-
-<script defer src="../assets/vendor/gsap.min.js"></script>
-<script defer src="../assets/vendor/ScrollTrigger.min.js"></script>
-<script defer src="../assets/vendor/SplitText.min.js"></script>
-<script defer src="../assets/vendor/lenis.min.js"></script>
-<script defer src="../assets/js/core.js"></script>
-<script defer src="../assets/js/post.js"></script>
-</body>
-</html>

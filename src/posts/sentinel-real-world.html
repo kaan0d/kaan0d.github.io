@@ -1,85 +1,8 @@
-<!doctype html>
-<html lang="en" data-page="post">
-<head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>part 3: sentinel meets real traffic | Kaan Dinç</title>
-<meta name="description" content="the last post ended with the honest top of the limits list: almost everything in Sentinel had been tested on traffic I made myself or on a handful of...">
-<meta name="theme-color" content="#0a0a09">
-<link rel="canonical" href="https://kaandinc.com/posts/sentinel-real-world">
-<meta property="og:type" content="article">
-<meta property="og:title" content="part 3: sentinel meets real traffic | Kaan Dinç">
-<meta property="og:description" content="the last post ended with the honest top of the limits list: almost everything in Sentinel had been tested on traffic I made myself or on a handful of...">
-<meta property="og:url" content="https://kaandinc.com/posts/sentinel-real-world">
-<link rel="icon" href="../assets/favicon.svg" type="image/svg+xml">
-<link rel="preload" href="../assets/fonts/Geist-Variable.woff2" as="font" type="font/woff2" crossorigin>
-<link rel="stylesheet" href="../assets/css/base.css">
-<link rel="stylesheet" href="../assets/css/post.css">
-<script>
-(function (d) {
-  d.classList.add('js');
-  if (matchMedia('(prefers-reduced-motion: reduce)').matches) d.classList.add('reduce');
-  try { if (sessionStorage.getItem('curtain')) d.classList.add('curtain-on'); } catch (e) {}
-  // Safety net: reveal content if the animation scripts never report ready.
-  setTimeout(function () { if (!d.classList.contains('ready')) d.classList.add('no-anim'); }, 4000);
-})(document.documentElement);
-</script>
-
-</head>
-<body>
-<div class="curtain" aria-hidden="true"></div>
-<a class="skip" href="#main">skip to content</a>
-
-<header class="site-header">
-  <a class="site-header__brand" href="../" aria-label="Kaan Dinç, home">Kaan Dinç</a>
-  <nav class="site-nav" aria-label="primary">
-    <a class="roll" href="../#projects"><span class="roll__in" data-text="projects">projects</span></a>
-    <a class="roll" href="../blog"><span class="roll__in" data-text="blog">blog</span></a>
-    <a class="roll" href="https://drive.google.com/file/d/1M5Ri6U8PAwSgwr31EN4JDeT90P7OuCPo/view" target="_blank" rel="noopener"><span class="roll__in" data-text="cv">cv</span></a>
-    <button class="site-nav__menu roll" type="button" aria-expanded="false" aria-controls="menu"><span class="roll__in" data-text="menu">menu</span></button>
-  </nav>
-</header>
-
-<div class="menu" id="menu" hidden>
-  <div class="menu__inner">
-    <ul class="menu__list">
-      <li><a href="../#about"><span>about</span></a></li>
-      <li><a href="../#projects"><span>projects</span></a></li>
-      <li><a href="../#experience"><span>experience</span></a></li>
-      <li><a href="../#skills"><span>skills</span></a></li>
-      <li><a href="../#education"><span>education</span></a></li>
-      <li><a href="../#repos"><span>repos</span></a></li>
-      <li><a href="../#links"><span>links</span></a></li>
-      <li><a href="../blog"><span>blog</span></a></li>
-    </ul>
-    <ul class="menu__ext">
-      <li><a class="roll" href="mailto:kaan.dnc.7505@gmail.com"><span class="roll__in" data-text="email">email</span></a></li>
-      <li><a class="roll" href="https://github.com/kaan0d" target="_blank" rel="noopener"><span class="roll__in" data-text="github">github</span></a></li>
-      <li><a class="roll" href="https://www.linkedin.com/in/kaandinc/" target="_blank" rel="noopener"><span class="roll__in" data-text="linkedin">linkedin</span></a></li>
-      <li><a class="roll" href="https://drive.google.com/file/d/1M5Ri6U8PAwSgwr31EN4JDeT90P7OuCPo/view" target="_blank" rel="noopener"><span class="roll__in" data-text="cv">cv</span></a></li>
-    </ul>
-  </div>
-</div>
-
-<main id="main">
-<div class="progress" aria-hidden="true"><span></span></div>
-<article class="post">
-  <header class="post-head">
-    <a class="post-head__back roll" href="../blog"><span class="roll__in" data-text="&amp;larr; blog">&larr; blog</span></a>
-    <p class="post-head__meta" data-hero><time datetime="2026-09-20">Sep 2026</time> &nbsp;/&nbsp; 8 min read</p>
-    <h1 class="post-head__title" data-split="lines" data-hero>part 3: sentinel meets real traffic</h1>
-  </header>
-  <div class="post-layout has-toc">
-    <aside class="toc" aria-label="on this page">
-      <ol>
-        <li><a href="#finding-real-traffic">finding real traffic</a></li>
-        <li><a href="#do-the-detectors-fire-on-real-attacks">do the detectors fire on real attacks?</a></li>
-        <li><a href="#traffic-that-nobody-labelled">traffic that nobody labelled</a></li>
-        <li><a href="#what-this-does-not-show">what this does not show</a></li>
-        <li><a href="#where-this-goes">where this goes</a></li>
-      </ol>
-    </aside>
-    <div class="post-body">
+---
+title: part 3: sentinel meets real traffic
+date: 2026-09-20
+label: Sep 2026
+---
 <p>the <a href="sentinel-next-level">last post</a> ended with the honest top of the limits list: almost everything in Sentinel had been tested on traffic I made myself or on a handful of small public files, and hardly at all on a busy real network. this post is that test. I took real captures, some of them attacks made by other people and some of them ordinary traffic that nobody has labelled, and ran the detectors over them. I did not change a line of the program. the rules are the ones it ships with.</p>
 
       <p>it is a different kind of stage from the others, because there is nothing to build and the interesting part is what I am allowed to conclude. so most of this post is about that.</p>
@@ -93,7 +16,7 @@
         <div class="stat"><b>0</b><span>lines of the program changed: the 942 tests, 405 breaks and fuzz runs of stage 12 still stand</span></div>
       </div>
 
-      <h2 id="finding-real-traffic">finding real traffic</h2>
+      <h2>finding real traffic</h2>
 
       <p>this took longer than the measuring. what I wanted was labelled data, where someone says which packets are the attack, and the well-known datasets have it. they are also big. CIC-IDS2017 is about 50 GB and asks for a registration form. Kitsune has labels for every packet, including ARP spoofing and SYN floods, and its page lists files of 2 GB, but those are feature tables and not captures; the captures are 147 to 334 MB. the only way to get them is one zip of 19 GB, and the server answers a request for a part of a file with the whole file, so I could not take six files out of it. CTU-13 has captures that hold only the botnet's own traffic. on a slow connection, that was three ways of not getting it.</p>
 
@@ -116,7 +39,7 @@
 
       <p>one file I did not trust. the two cs3 captures come from a course repository that does not say where they come from, so before using them I looked inside with <code>tshark</code>: in the ARP file one MAC address (7c:d1:c3:94:9e:b8) answers for both the gateway and another host, which is what ARP spoofing looks like, and in the other 192.168.0.100 sends SYNs to 1,000 different ports of 192.168.0.101, which is what nmap's default scan looks like. they are what their names say. where they come from is still not known, and this post says so again at the end.</p>
 
-      <h2 id="do-the-detectors-fire-on-real-attacks">do the detectors fire on real attacks?</h2>
+      <h2>do the detectors fire on real attacks?</h2>
 
       <div class="table-wrap"><table class="data">
         <thead><tr><th>capture</th><th>alerts</th><th class="num">time</th></tr></thead>
@@ -142,7 +65,7 @@
 
       <p>in the ARP file the alerts include 7c:d1:c3:94:9e:b8, the address that <code>tshark</code> showed claiming two hosts. the labels of these files are one per file, "this is a SYN flood", so the honest reading is small: on one real example of each attack the detector for it fires. the two StopDDoS files have nothing but attack traffic in them, so they cannot show a false alarm, and one file of each kind says nothing about how many attacks would be missed.</p>
 
-      <h2 id="traffic-that-nobody-labelled">traffic that nobody labelled</h2>
+      <h2>traffic that nobody labelled</h2>
 
       <p>the other two captures are the ones I was afraid of: a week of what reaches a web server on the internet, and 14.6 seconds of a link that carries a gigabit. nobody can say which of their packets are attacks, so I cannot score the alerts as right or wrong. I asked <code>tshark</code> two things that I can check without trusting Sentinel. is what an alert says true: a port-scan alert says a source probed 30 hosts on one port within 10 seconds, so I count the SYNs again from <code>tshark</code>'s own output. and does an independent recount of the same rule find scanners that Sentinel did not report.</p>
 
@@ -174,39 +97,12 @@
 
       <p>50,394 packets a second through the detectors on the backbone slice (35,073 on the week at the web server, 30,618 on the SYN flood), on the same machine as the benchmark of stage 7. the link carried about 148,000 packets a second, so Sentinel ran at a third of real time. pure Python on one core. for a gigabit link that is a limit, and the README says so.</p>
 
-      <h2 id="what-this-does-not-show">what this does not show</h2>
+      <h2>what this does not show</h2>
 
       <p>how many packets of an attack Sentinel got right, and a false alarm rate. the labels are per file, and the two big captures have none, so what I checked is that what the alerts say is true, and not that each one is an attack. it is one slice of one link and one week at one server. the backbone is not symmetric, so "unanswered" cannot be read as "a scan", and a detector that waits for a handshake sees half of it. there is one ARP spoofing file, one iodine capture, and no SYN flood with ordinary traffic in it. where the cs3 files come from is not known.</p>
 
       <p>and I changed nothing. what I found is three limits: a DNS check whose threshold suits one client and not a backbone, a state limit that a backbone reaches in fourteen seconds, and a count in a port-scan alert that stops at four times the threshold. I could turn a number down until this slice looked clean, but that would only tune Sentinel to fourteen seconds of one link. they are in the limits list of the README, where the next person will find them.</p>
 
-      <h2 id="where-this-goes">where this goes</h2>
+      <h2>where this goes</h2>
 
       <p>there is no stage 14 planned. what would make this stronger is data with a label for every packet, so that "fires" can become "gets right, this many times". Kitsune has it, and it is 19 GB behind a server that will not hand over a part. if I find a mirror that does, that is the next measurement.</p>
-
-    </div>
-  </div>
-</article>
-<nav class="post-steps" aria-label="more posts">
-  <span></span>
-  <a class="post-step post-step--older" href="sentinel-next-level">
-      <span class="post-step__dir">older &rarr;</span>
-      <span class="post-step__title">part 2: taking sentinel to the next level</span>
-    </a>
-</nav>
-</main>
-
-<footer class="site-footer">
-  <span>Kaan Dinç</span>
-  <span>Çanakkale, Turkey</span>
-  <button class="roll" type="button" data-top><span class="roll__in" data-text="back to top">back to top</span></button>
-</footer>
-
-<script defer src="../assets/vendor/gsap.min.js"></script>
-<script defer src="../assets/vendor/ScrollTrigger.min.js"></script>
-<script defer src="../assets/vendor/SplitText.min.js"></script>
-<script defer src="../assets/vendor/lenis.min.js"></script>
-<script defer src="../assets/js/core.js"></script>
-<script defer src="../assets/js/post.js"></script>
-</body>
-</html>

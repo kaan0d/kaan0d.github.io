@@ -1,95 +1,8 @@
-<!doctype html>
-<html lang="en" data-page="post">
-<head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>part 1: writing a packet analyzer from scratch | Kaan Dinç</title>
-<meta name="description" content="Sentinel is a packet analyzer and, eventually, a rule-based intrusion detection system, written in Python from scratch. the protocol parsers are...">
-<meta name="theme-color" content="#0a0a09">
-<link rel="canonical" href="https://kaandinc.com/posts/sentinel-packet-analyzer">
-<meta property="og:type" content="article">
-<meta property="og:title" content="part 1: writing a packet analyzer from scratch | Kaan Dinç">
-<meta property="og:description" content="Sentinel is a packet analyzer and, eventually, a rule-based intrusion detection system, written in Python from scratch. the protocol parsers are...">
-<meta property="og:url" content="https://kaandinc.com/posts/sentinel-packet-analyzer">
-<link rel="icon" href="../assets/favicon.svg" type="image/svg+xml">
-<link rel="preload" href="../assets/fonts/Geist-Variable.woff2" as="font" type="font/woff2" crossorigin>
-<link rel="stylesheet" href="../assets/css/base.css">
-<link rel="stylesheet" href="../assets/css/post.css">
-<script>
-(function (d) {
-  d.classList.add('js');
-  if (matchMedia('(prefers-reduced-motion: reduce)').matches) d.classList.add('reduce');
-  try { if (sessionStorage.getItem('curtain')) d.classList.add('curtain-on'); } catch (e) {}
-  // Safety net: reveal content if the animation scripts never report ready.
-  setTimeout(function () { if (!d.classList.contains('ready')) d.classList.add('no-anim'); }, 4000);
-})(document.documentElement);
-</script>
-
-</head>
-<body>
-<div class="curtain" aria-hidden="true"></div>
-<a class="skip" href="#main">skip to content</a>
-
-<header class="site-header">
-  <a class="site-header__brand" href="../" aria-label="Kaan Dinç, home">Kaan Dinç</a>
-  <nav class="site-nav" aria-label="primary">
-    <a class="roll" href="../#projects"><span class="roll__in" data-text="projects">projects</span></a>
-    <a class="roll" href="../blog"><span class="roll__in" data-text="blog">blog</span></a>
-    <a class="roll" href="https://drive.google.com/file/d/1M5Ri6U8PAwSgwr31EN4JDeT90P7OuCPo/view" target="_blank" rel="noopener"><span class="roll__in" data-text="cv">cv</span></a>
-    <button class="site-nav__menu roll" type="button" aria-expanded="false" aria-controls="menu"><span class="roll__in" data-text="menu">menu</span></button>
-  </nav>
-</header>
-
-<div class="menu" id="menu" hidden>
-  <div class="menu__inner">
-    <ul class="menu__list">
-      <li><a href="../#about"><span>about</span></a></li>
-      <li><a href="../#projects"><span>projects</span></a></li>
-      <li><a href="../#experience"><span>experience</span></a></li>
-      <li><a href="../#skills"><span>skills</span></a></li>
-      <li><a href="../#education"><span>education</span></a></li>
-      <li><a href="../#repos"><span>repos</span></a></li>
-      <li><a href="../#links"><span>links</span></a></li>
-      <li><a href="../blog"><span>blog</span></a></li>
-    </ul>
-    <ul class="menu__ext">
-      <li><a class="roll" href="mailto:kaan.dnc.7505@gmail.com"><span class="roll__in" data-text="email">email</span></a></li>
-      <li><a class="roll" href="https://github.com/kaan0d" target="_blank" rel="noopener"><span class="roll__in" data-text="github">github</span></a></li>
-      <li><a class="roll" href="https://www.linkedin.com/in/kaandinc/" target="_blank" rel="noopener"><span class="roll__in" data-text="linkedin">linkedin</span></a></li>
-      <li><a class="roll" href="https://drive.google.com/file/d/1M5Ri6U8PAwSgwr31EN4JDeT90P7OuCPo/view" target="_blank" rel="noopener"><span class="roll__in" data-text="cv">cv</span></a></li>
-    </ul>
-  </div>
-</div>
-
-<main id="main">
-<div class="progress" aria-hidden="true"><span></span></div>
-<article class="post">
-  <header class="post-head">
-    <a class="post-head__back roll" href="../blog"><span class="roll__in" data-text="&amp;larr; blog">&larr; blog</span></a>
-    <p class="post-head__meta" data-hero><time datetime="2026-09-18">Sep 2026</time> &nbsp;/&nbsp; 43 min read</p>
-    <h1 class="post-head__title" data-split="lines" data-hero>part 1: writing a packet analyzer from scratch</h1>
-  </header>
-  <div class="post-layout has-toc">
-    <aside class="toc" aria-label="on this page">
-      <ol>
-        <li><a href="#the-rule-i-set-first">the rule I set first</a></li>
-        <li><a href="#what-it-looks-like">what it looks like</a></li>
-        <li><a href="#anatomy-of-a-packet">anatomy of a packet</a></li>
-        <li><a href="#the-capture-file">the capture file</a></li>
-        <li><a href="#stage-2-what-the-payload-says">stage 2: what the payload says</a></li>
-        <li><a href="#stage-3-from-packets-to-conversations">stage 3: from packets to conversations</a></li>
-        <li><a href="#stage-4-asking-for-the-packets-you-want">stage 4: asking for the packets you want</a></li>
-        <li><a href="#stage-5-raising-the-alarm">stage 5: raising the alarm</a></li>
-        <li><a href="#stage-6-listening-to-a-real-network">stage 6: listening to a real network</a></li>
-        <li><a href="#stage-7-measuring-it">stage 7: measuring it</a></li>
-        <li><a href="#seven-stages">seven stages</a></li>
-        <li><a href="#the-numbers">the numbers</a></li>
-        <li><a href="#how-i-checked-it-s-right">how I checked it's right</a></li>
-        <li><a href="#breaking-it-on-purpose">breaking it on purpose</a></li>
-        <li><a href="#what-it-still-can-t-do">what it still can't do</a></li>
-      </ol>
-    </aside>
-    <div class="post-body">
+---
+title: part 1: writing a packet analyzer from scratch
+date: 2026-09-18
+label: Sep 2026
+---
 <p>Sentinel is a packet analyzer and, eventually, a rule-based intrusion detection system, written in Python from scratch. the protocol parsers are hand-written with <code>struct</code>: no Scapy, no dpkt, no pyshark. it reads pcap capture files and prints one line per packet, tcpdump style. it has no runtime dependencies.</p>
 
       <p>this post covers all seven stages. stage 1 is the pcap reader and writer, and parsers for Ethernet (with VLAN tags), ARP, IPv4, IPv6, TCP, UDP and ICMP. stage 2 is the application layer: DNS, plaintext HTTP and the TLS ClientHello (server name, versions, cipher list). stage 3 is flow tracking and TCP stream reassembly. stage 4 is a filter language. stage 5 is the intrusion detection part: four detectors (port scans, SYN floods, ARP spoofing, DNS tunneling), rules, and JSON alerts. stage 6 is live capture on Linux: the same pipeline, fed from a network interface. stage 7 measures it (packets per second), adds a fuzzer, and sets up CI. the parts that need other machines (Linux, GitHub) could only be tested there, and I say what that showed.</p>
@@ -106,7 +19,7 @@
         <div class="stat"><b>196 of 196</b><span>deliberate one-line breaks caught by the tests</span></div>
       </div>
 
-      <h2 id="the-rule-i-set-first">the rule I set first</h2>
+      <h2>the rule I set first</h2>
 
       <p>a packet analyzer reads bytes that anyone on the network can send. so the first rule is that a parser never raises on bad input: not on a truncated packet, not on a header that lies about its own length, not on random bytes. every parser returns a small dataclass instead, and they all share the same three fields.</p>
 
@@ -168,7 +81,7 @@ Tcp(error=<span class="kw">None</span>,
 
       <p>there is one known false positive I have not solved. captures taken on the sending machine often show bad TCP checksums, because the network card fills them in later (checksum offload). those packets are reported as anomalies, not errors, so a detector can choose to ignore them.</p>
 
-      <h2 id="what-it-looks-like">what it looks like</h2>
+      <h2>what it looks like</h2>
 
       <p><code>tools/gen_pcap.py</code> builds a small pcap with the project's own writer, covering every protocol above. reading it back:</p>
 
@@ -194,7 +107,7 @@ Tcp(error=<span class="kw">None</span>,
 <span class="ts">2023-11-14 22:13:20.018000</span> IP 10.0.0.1.43000 &gt; 10.0.0.2.443: <span class="fl">Flags [P.]</span>, seq 1, ack 1, win 64240, <span class="dim">length 161</span><span class="fl">: TLS ClientHello, sni example.com, versions [TLS 1.3, TLS 1.2], ciphers (15) [TLS_AES_128_GCM_SHA256, TLS_AES_256_GCM_SHA384, TLS_CHACHA20_POLY1305_SHA256, +12 more]</span></pre></div>
       <p class="dim" style="font-size:0.76rem; font-family:var(--font-mono); margin-top:8px;">19 packets: an ARP request and reply, three ICMP messages, a TCP connection from SYN to FIN with an HTTP request in it, DNS over UDP (also inside a VLAN tag and over IPv6) and over TCP, a CNAME answer, an HTTP response and a TLS ClientHello. timestamps are UTC, so the output does not depend on the machine's time zone.</p>
 
-      <h2 id="anatomy-of-a-packet">anatomy of a packet</h2>
+      <h2>anatomy of a packet</h2>
 
       <p>the SYN from that capture is 74 bytes: 14 of Ethernet, 20 of IPv4, 20 of fixed TCP header and 20 bytes of TCP options. each parser reads its own header, checks every length before it reads, and passes the remaining bytes on. <code>decode()</code> returns the layers as a tuple and stops at the first layer that has an error.</p>
 
@@ -215,7 +128,7 @@ Tcp(error=<span class="kw">None</span>,
 
       <p>the options are the part to be careful with. each one is a kind, a length and data, and the length comes from the packet. a length below 2, or one that runs past the end of the options, ends the walk and is reported as an anomaly. it never raises.</p>
 
-      <h2 id="the-capture-file">the capture file</h2>
+      <h2>the capture file</h2>
 
       <p>a classic pcap file starts with a 24-byte global header, and every packet has a 16-byte record header in front of it. the first four bytes, the magic number, say two things at once: the byte order the file was written in, and whether timestamps are in microseconds or nanoseconds. so there are four variants, and the reader and the writer handle all of them.</p>
 
@@ -236,7 +149,7 @@ Tcp(error=<span class="kw">None</span>,
 
       <p>the reader streams from the file instead of loading it. the captured-length field in each record comes from the file, so it is capped at 262,144 bytes (libpcap's own limit) before anything is read, and a corrupt value cannot make it try to read gigabytes. a corrupt or cut-off record raises <code>PcapError</code> only after every earlier packet has been yielded, so the command prints the good packets, then the error, and exits with 1. this is the one place that raises, because a broken file is not a packet.</p>
 
-      <h2 id="stage-2-what-the-payload-says">stage 2: what the payload says</h2>
+      <h2>stage 2: what the payload says</h2>
 
       <p>stage 1 stopped at the transport layer. stage 2 looks at what TCP and UDP carry. the new parsers follow the same rules as the old ones: never raise, put trouble in <code>error</code> or <code>anomalies</code>. <code>decode()</code> now returns up to four layers, for example <code>(Ethernet, IPv4, Udp, Dns)</code>.</p>
 
@@ -315,7 +228,7 @@ host   = "\x07evil"</code></div>
 
       <p>the cost: a literal backslash-x written in the original data looks the same as an escape. for a display and detection string that is fine, and the raw bytes stay available where they matter (the DNS record data).</p>
 
-      <h2 id="stage-3-from-packets-to-conversations">stage 3: from packets to conversations</h2>
+      <h2>stage 3: from packets to conversations</h2>
 
       <p>stages 1 and 2 look at one packet at a time. but a web request is not one packet, and the packets of a TCP connection do not always arrive in order, or once. stage 3 adds a flow table that groups packets into conversations, and a reassembler that puts each direction of a TCP connection back into one byte stream. the new command is <code>python -m sentinel flows</code>.</p>
 
@@ -390,7 +303,7 @@ tcp 10.0.0.1:45000 &gt; 10.0.0.2:8443: established, pkts 4/1, bytes 161/0, 0.004
 
       <p>the HTTP parser reported <code>malformed http header line</code> when a segment ended exactly at a line break, because the empty last line was counted as a header. per-packet reading rarely ends there. reassembly tests cut messages at every position, and they hit it at once. it is fixed, with a test.</p>
 
-      <h2 id="stage-4-asking-for-the-packets-you-want">stage 4: asking for the packets you want</h2>
+      <h2>stage 4: asking for the packets you want</h2>
 
       <p>after stage 3 the tools print everything they see. stage 4 adds a filter language, close to the one tcpdump uses, so you can ask for what you want: <code>--filter "tcp and (port 80 or port 443) and not src host 10.0.0.1"</code>. it works on both commands. it is a small language with its own lexer, parser and evaluator, and no library.</p>
 
@@ -481,7 +394,7 @@ udp 10.0.0.1:53004 &gt; 10.0.0.2:53: pkts 1/1, bytes 33/63, 0.001000s<span class
 
       <p>the evaluator is compared with predicates I wrote by hand, straight from the meaning of each word and without using the filter code: 34 primitives over a corpus of 80 packets (both demo captures, fragments, cut headers, stacked VLAN tags, garbage). then 400 random combinations of <code>and</code>, <code>or</code> and <code>not</code> are compared with Python's own logic over the same predicates. the parser is tested with exact trees, 31 error messages with positions, the print-and-parse round trip, and 25,000 random texts that must never raise.</p>
 
-      <h2 id="stage-5-raising-the-alarm">stage 5: raising the alarm</h2>
+      <h2>stage 5: raising the alarm</h2>
 
       <p>until now the tools describe traffic. stage 5 judges it. the <code>ids</code> command runs four detectors over a capture and prints an alert for each thing it finds, as one JSON object per line. the detectors and their thresholds are read from rule files. there is no library and no machine learning: each detector counts something simple over a sliding window, and says what it counted.</p>
 
@@ -573,7 +486,7 @@ window_seconds = 30</code></div>
 
       <p>the exit code is 0 whenever the capture was read, with or without alerts. it is 1 when the capture is unreadable, after printing the alerts raised before the corrupt record, and 2 for bad rules. I did not make it non-zero when there are alerts, because a script could not tell a finding from a failure.</p>
 
-      <h2 id="stage-6-listening-to-a-real-network">stage 6: listening to a real network</h2>
+      <h2>stage 6: listening to a real network</h2>
 
       <p>until now every command read a file. stage 6 reads a network interface instead. <code>live</code> receives the Ethernet frames of one interface, on Linux, and sends them through the steps that already exist: decode, filter, then print them, run the detectors, or write them to a pcap file. what is new is small. most of this stage is about what a file never shows.</p>
 
@@ -634,7 +547,7 @@ window_seconds = 30</code></div>
 
       <p>two smaller things turned up on the way. the engine kept every alert until the end of the run, which never comes in a live capture, so it now has <code>pop_alerts()</code>: give me what was raised so far, and forget it. and the count in the "packets were not tracked" alert counted a port scan packet twice when the tables were full, because two tables refused it. it is counted once now.</p>
 
-      <h2 id="stage-7-measuring-it">stage 7: measuring it</h2>
+      <h2>stage 7: measuring it</h2>
 
       <p>the last stage adds no feature. it answers three questions about what exists: how fast is it, what does it do with input nobody planned for, and does it still work on a machine that is not mine. the answers are a benchmark tool, a fuzzer, and a CI workflow. the first two ran here. the third could only be tested by pushing it to GitHub, and that took four tries.</p>
 
@@ -706,7 +619,7 @@ window_seconds = 30</code></div>
 
       <p>the runners are not one machine. decoding runs from 56,736 to 115,977 packets per second across them, against 98,710 on mine, and the two Windows columns differ by almost a factor of two: the Windows 3.12 log reports a newer AMD processor (family 26, where the other Windows log says 25). so compare within a column, and across columns only roughly. it also means I cannot say from these numbers whether Python 3.12 or 3.13 is faster. writing with a flush after every packet adds 1.6 to 7.7 microseconds per packet across the four runs, against 2.4 on my machine, so the flush cost I measured earlier is a property of the machine as much as of the program.</p>
 
-      <h2 id="seven-stages">seven stages</h2>
+      <h2>seven stages</h2>
 
       <div class="table-wrap"><table class="data">
         <thead><tr><th>stage</th><th>what it adds</th><th>state</th></tr></thead>
@@ -721,7 +634,7 @@ window_seconds = 30</code></div>
         </tbody>
       </table></div>
 
-      <h2 id="the-numbers">the numbers</h2>
+      <h2>the numbers</h2>
 
       <div class="chart-wrap"><svg class="chart" viewBox="0 0 720 872" role="img" aria-labelledby="c1t c1d"><title id="c1t">Tests per test file</title><desc id="c1d">626 tests in total. test_fuzz: 57; test_ids_detectors: 52; test_filter_parser: 47; test_filter_eval: 44; test_live_capture: 41; test_ids_rules: 36; test_live_cli: 35; test_bench: 31; test_cli: 29; test_flow: 25; test_pcap: 25; test_stream: 18; test_tls: 18; test_http: 17; test_decode: 16; test_dns: 16; test_ids_engine: 15; test_ipv4: 14; test_flow_app: 13; test_tcp: 13; test_udp: 11; test_filter_lexer: 9; test_ethernet: 8; test_ids_window: 8; test_ci: 6; test_ipv6: 6; test_live_linux: 6; test_arp: 5; test_icmp: 5.</desc><line class="grid" x1="170" y1="12" x2="170" y2="832"/><text class="tick" x="170" y="850" text-anchor="middle">0</text><line class="grid" x1="213.333" y1="12" x2="213.333" y2="832"/><text class="tick" x="213.333" y="850" text-anchor="middle">5</text><line class="grid" x1="256.667" y1="12" x2="256.667" y2="832"/><text class="tick" x="256.667" y="850" text-anchor="middle">10</text><line class="grid" x1="300" y1="12" x2="300" y2="832"/><text class="tick" x="300" y="850" text-anchor="middle">15</text><line class="grid" x1="343.333" y1="12" x2="343.333" y2="832"/><text class="tick" x="343.333" y="850" text-anchor="middle">20</text><line class="grid" x1="386.667" y1="12" x2="386.667" y2="832"/><text class="tick" x="386.667" y="850" text-anchor="middle">25</text><line class="grid" x1="430" y1="12" x2="430" y2="832"/><text class="tick" x="430" y="850" text-anchor="middle">30</text><line class="grid" x1="473.333" y1="12" x2="473.333" y2="832"/><text class="tick" x="473.333" y="850" text-anchor="middle">35</text><line class="grid" x1="516.667" y1="12" x2="516.667" y2="832"/><text class="tick" x="516.667" y="850" text-anchor="middle">40</text><line class="grid" x1="560" y1="12" x2="560" y2="832"/><text class="tick" x="560" y="850" text-anchor="middle">45</text><line class="grid" x1="603.333" y1="12" x2="603.333" y2="832"/><text class="tick" x="603.333" y="850" text-anchor="middle">50</text><line class="grid" x1="646.667" y1="12" x2="646.667" y2="832"/><text class="tick" x="646.667" y="850" text-anchor="middle">55</text><line class="grid" x1="690" y1="12" x2="690" y2="832"/><text class="tick" x="690" y="850" text-anchor="middle">60</text><text class="lbl" x="158" y="35" text-anchor="end">test_fuzz</text><rect class="bar-after" x="170" y="24" width="494" height="14"/><text class="val hot" x="672" y="35">57</text><text class="lbl" x="158" y="63" text-anchor="end">test_ids_detectors</text><rect class="bar-after" x="170" y="52" width="450.667" height="14"/><text class="val hot" x="628.667" y="63">52</text><text class="lbl" x="158" y="91" text-anchor="end">test_filter_parser</text><rect class="bar-after" x="170" y="80" width="407.333" height="14"/><text class="val hot" x="585.333" y="91">47</text><text class="lbl" x="158" y="119" text-anchor="end">test_filter_eval</text><rect class="bar-after" x="170" y="108" width="381.333" height="14"/><text class="val hot" x="559.333" y="119">44</text><text class="lbl" x="158" y="147" text-anchor="end">test_live_capture</text><rect class="bar-after" x="170" y="136" width="355.333" height="14"/><text class="val hot" x="533.333" y="147">41</text><text class="lbl" x="158" y="175" text-anchor="end">test_ids_rules</text><rect class="bar-after" x="170" y="164" width="312" height="14"/><text class="val hot" x="490" y="175">36</text><text class="lbl" x="158" y="203" text-anchor="end">test_live_cli</text><rect class="bar-after" x="170" y="192" width="303.333" height="14"/><text class="val hot" x="481.333" y="203">35</text><text class="lbl" x="158" y="231" text-anchor="end">test_bench</text><rect class="bar-after" x="170" y="220" width="268.667" height="14"/><text class="val hot" x="446.667" y="231">31</text><text class="lbl" x="158" y="259" text-anchor="end">test_cli</text><rect class="bar-after" x="170" y="248" width="251.333" height="14"/><text class="val hot" x="429.333" y="259">29</text><text class="lbl" x="158" y="287" text-anchor="end">test_flow</text><rect class="bar-after" x="170" y="276" width="216.667" height="14"/><text class="val hot" x="394.667" y="287">25</text><text class="lbl" x="158" y="315" text-anchor="end">test_pcap</text><rect class="bar-after" x="170" y="304" width="216.667" height="14"/><text class="val hot" x="394.667" y="315">25</text><text class="lbl" x="158" y="343" text-anchor="end">test_stream</text><rect class="bar-after" x="170" y="332" width="156" height="14"/><text class="val hot" x="334" y="343">18</text><text class="lbl" x="158" y="371" text-anchor="end">test_tls</text><rect class="bar-after" x="170" y="360" width="156" height="14"/><text class="val hot" x="334" y="371">18</text><text class="lbl" x="158" y="399" text-anchor="end">test_http</text><rect class="bar-after" x="170" y="388" width="147.333" height="14"/><text class="val hot" x="325.333" y="399">17</text><text class="lbl" x="158" y="427" text-anchor="end">test_decode</text><rect class="bar-after" x="170" y="416" width="138.667" height="14"/><text class="val hot" x="316.667" y="427">16</text><text class="lbl" x="158" y="455" text-anchor="end">test_dns</text><rect class="bar-after" x="170" y="444" width="138.667" height="14"/><text class="val hot" x="316.667" y="455">16</text><text class="lbl" x="158" y="483" text-anchor="end">test_ids_engine</text><rect class="bar-after" x="170" y="472" width="130" height="14"/><text class="val hot" x="308" y="483">15</text><text class="lbl" x="158" y="511" text-anchor="end">test_ipv4</text><rect class="bar-after" x="170" y="500" width="121.333" height="14"/><text class="val hot" x="299.333" y="511">14</text><text class="lbl" x="158" y="539" text-anchor="end">test_flow_app</text><rect class="bar-after" x="170" y="528" width="112.667" height="14"/><text class="val hot" x="290.667" y="539">13</text><text class="lbl" x="158" y="567" text-anchor="end">test_tcp</text><rect class="bar-after" x="170" y="556" width="112.667" height="14"/><text class="val hot" x="290.667" y="567">13</text><text class="lbl" x="158" y="595" text-anchor="end">test_udp</text><rect class="bar-after" x="170" y="584" width="95.3333" height="14"/><text class="val hot" x="273.333" y="595">11</text><text class="lbl" x="158" y="623" text-anchor="end">test_filter_lexer</text><rect class="bar-after" x="170" y="612" width="78" height="14"/><text class="val hot" x="256" y="623">9</text><text class="lbl" x="158" y="651" text-anchor="end">test_ethernet</text><rect class="bar-after" x="170" y="640" width="69.3333" height="14"/><text class="val hot" x="247.333" y="651">8</text><text class="lbl" x="158" y="679" text-anchor="end">test_ids_window</text><rect class="bar-after" x="170" y="668" width="69.3333" height="14"/><text class="val hot" x="247.333" y="679">8</text><text class="lbl" x="158" y="707" text-anchor="end">test_ci</text><rect class="bar-after" x="170" y="696" width="52" height="14"/><text class="val hot" x="230" y="707">6</text><text class="lbl" x="158" y="735" text-anchor="end">test_ipv6</text><rect class="bar-after" x="170" y="724" width="52" height="14"/><text class="val hot" x="230" y="735">6</text><text class="lbl" x="158" y="763" text-anchor="end">test_live_linux</text><rect class="bar-after" x="170" y="752" width="52" height="14"/><text class="val hot" x="230" y="763">6</text><text class="lbl" x="158" y="791" text-anchor="end">test_arp</text><rect class="bar-after" x="170" y="780" width="43.3333" height="14"/><text class="val hot" x="221.333" y="791">5</text><text class="lbl" x="158" y="819" text-anchor="end">test_icmp</text><rect class="bar-after" x="170" y="808" width="43.3333" height="14"/><text class="val hot" x="221.333" y="819">5</text></svg></div>
       <p class="dim" style="font-size:0.8rem; font-family:var(--font-mono);">tests per file. 626 in total, 6 of them run only on Linux as root.</p>
@@ -749,7 +662,7 @@ window_seconds = 30</code></div>
         <p>how to read these numbers: all traffic is synthetic, made by my own generator. that is a rule of the project, no real captures from other networks. so the fuzzing shows the parsers do not raise on bad input, not that they agree with every odd thing a real network does. one machine, Windows 11, Python 3.13. I developed the project with 3.13. CI also ran the tests on 3.12, on Linux and Windows, and they passed, and you can try 3.12 yourself too.</p>
       </div>
 
-      <h2 id="how-i-checked-it-s-right">how I checked it's right</h2>
+      <h2>how I checked it's right</h2>
 
       <p>the test packets come from builders in the generator, and the generator uses the same checksum function as the parsers. a bug in that function would cancel itself out. so wherever I could, the tests compare against something written separately:</p>
 
@@ -784,7 +697,7 @@ window_seconds = 30</code></div>
 
       <p>that already paid off once. I worked out the ICMP checksum of an 8-byte echo request header by hand and got <code>0xf7ff</code>. the test failed, and the parser was right: <code>0x0800 + 0x0001 + 0x0001 = 0x0802</code>, so the checksum is <code>0xf7fd</code>. my arithmetic was the bug.</p>
 
-      <h2 id="breaking-it-on-purpose">breaking it on purpose</h2>
+      <h2>breaking it on purpose</h2>
 
       <p>a test that has never failed hasn't proven much. so I broke the code on purpose, one line at a time, and counted how many tests noticed. stage 7 has 48 breaks, this time in the tools and the workflow (a slowest run kept instead of the fastest, a benchmark that divides the wrong way round, a fuzzer check removed, Python 3.12 dropped from the CI matrix), grouped by the part they hit:</p>
 
@@ -804,7 +717,7 @@ window_seconds = 30</code></div>
 
       <p>110 of the 196 breaks are caught by a single test, so the coverage is not deep. a mutation run like this only proves that the tests can fail. it says nothing about the cases nobody thought of, and nothing about the real socket or the real CI, which none of these breaks touch.</p>
 
-      <h2 id="what-it-still-can-t-do">what it still can't do</h2>
+      <h2>what it still can't do</h2>
 
       <p>IPv6 is the fixed 40-byte header only. extension headers are not walked and ICMPv6 is not parsed, so those packets print as <code>ip-proto-N</code>.</p>
 
@@ -835,33 +748,3 @@ window_seconds = 30</code></div>
       <p>and it has only ever seen traffic I generated. a real capture may show me things the tests do not cover.</p>
 
       <p>that is all seven stages. what is left is what only other machines can tell me: the first CI run, the real socket tests on Linux, and a capture that I did not make myself.</p>
-
-    </div>
-  </div>
-</article>
-<nav class="post-steps" aria-label="more posts">
-  <a class="post-step post-step--newer" href="sentinel-next-level">
-      <span class="post-step__dir">&larr; newer</span>
-      <span class="post-step__title">part 2: taking sentinel to the next level</span>
-    </a>
-  <a class="post-step post-step--older" href="impulse-physics-engine">
-      <span class="post-step__dir">older &rarr;</span>
-      <span class="post-step__title">building a 2d physics engine from scratch</span>
-    </a>
-</nav>
-</main>
-
-<footer class="site-footer">
-  <span>Kaan Dinç</span>
-  <span>Çanakkale, Turkey</span>
-  <button class="roll" type="button" data-top><span class="roll__in" data-text="back to top">back to top</span></button>
-</footer>
-
-<script defer src="../assets/vendor/gsap.min.js"></script>
-<script defer src="../assets/vendor/ScrollTrigger.min.js"></script>
-<script defer src="../assets/vendor/SplitText.min.js"></script>
-<script defer src="../assets/vendor/lenis.min.js"></script>
-<script defer src="../assets/js/core.js"></script>
-<script defer src="../assets/js/post.js"></script>
-</body>
-</html>

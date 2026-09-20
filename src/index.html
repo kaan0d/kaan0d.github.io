@@ -1,67 +1,3 @@
-<!doctype html>
-<html lang="en" data-page="home">
-<head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Kaan Dinç | Computer Engineer, full-stack and desktop developer</title>
-<meta name="description" content="Kaan Dinç, computer engineer interested in the defense industry. Full-stack apps, desktop tools, a packet analyzer and a physics engine, built end to end. See projects and CV.">
-<meta name="theme-color" content="#0a0a09">
-<link rel="canonical" href="https://kaandinc.com/">
-<meta property="og:type" content="website">
-<meta property="og:title" content="Kaan Dinç | Computer Engineer, full-stack and desktop developer">
-<meta property="og:description" content="Kaan Dinç, computer engineer interested in the defense industry. Full-stack apps, desktop tools, a packet analyzer and a physics engine, built end to end. See projects and CV.">
-<meta property="og:url" content="https://kaandinc.com/">
-<link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
-<link rel="preload" href="assets/fonts/Geist-Variable.woff2" as="font" type="font/woff2" crossorigin>
-<link rel="stylesheet" href="assets/css/base.css">
-<link rel="stylesheet" href="assets/css/home.css">
-<script>
-(function (d) {
-  d.classList.add('js');
-  if (matchMedia('(prefers-reduced-motion: reduce)').matches) d.classList.add('reduce');
-  try { if (sessionStorage.getItem('curtain')) d.classList.add('curtain-on'); } catch (e) {}
-  // Safety net: reveal content if the animation scripts never report ready.
-  setTimeout(function () { if (!d.classList.contains('ready')) d.classList.add('no-anim'); }, 4000);
-})(document.documentElement);
-</script>
-<script type="application/ld+json">{"@context":"https://schema.org","@type":"Person","name":"Kaan Dinç","jobTitle":"Computer Engineer","url":"https://kaandinc.com","sameAs":["https://github.com/kaan0d","https://www.linkedin.com/in/kaandinc/"],"alumniOf":{"@type":"CollegeOrUniversity","name":"Gaziosmanpaşa University"}}</script>
-</head>
-<body>
-<div class="curtain" aria-hidden="true"></div>
-<a class="skip" href="#main">skip to content</a>
-
-<header class="site-header">
-  <a class="site-header__brand" href="./" aria-label="Kaan Dinç, home">Kaan Dinç</a>
-  <nav class="site-nav" aria-label="primary">
-    <a class="roll" href="./#projects"><span class="roll__in" data-text="projects">projects</span></a>
-    <a class="roll" href="blog"><span class="roll__in" data-text="blog">blog</span></a>
-    <a class="roll" href="https://drive.google.com/file/d/1M5Ri6U8PAwSgwr31EN4JDeT90P7OuCPo/view" target="_blank" rel="noopener"><span class="roll__in" data-text="cv">cv</span></a>
-    <button class="site-nav__menu roll" type="button" aria-expanded="false" aria-controls="menu"><span class="roll__in" data-text="menu">menu</span></button>
-  </nav>
-</header>
-
-<div class="menu" id="menu" hidden>
-  <div class="menu__inner">
-    <ul class="menu__list">
-      <li><a href="./#about"><span>about</span></a></li>
-      <li><a href="./#projects"><span>projects</span></a></li>
-      <li><a href="./#experience"><span>experience</span></a></li>
-      <li><a href="./#skills"><span>skills</span></a></li>
-      <li><a href="./#education"><span>education</span></a></li>
-      <li><a href="./#repos"><span>repos</span></a></li>
-      <li><a href="./#links"><span>links</span></a></li>
-      <li><a href="blog"><span>blog</span></a></li>
-    </ul>
-    <ul class="menu__ext">
-      <li><a class="roll" href="mailto:kaan.dnc.7505@gmail.com"><span class="roll__in" data-text="email">email</span></a></li>
-      <li><a class="roll" href="https://github.com/kaan0d" target="_blank" rel="noopener"><span class="roll__in" data-text="github">github</span></a></li>
-      <li><a class="roll" href="https://www.linkedin.com/in/kaandinc/" target="_blank" rel="noopener"><span class="roll__in" data-text="linkedin">linkedin</span></a></li>
-      <li><a class="roll" href="https://drive.google.com/file/d/1M5Ri6U8PAwSgwr31EN4JDeT90P7OuCPo/view" target="_blank" rel="noopener"><span class="roll__in" data-text="cv">cv</span></a></li>
-    </ul>
-  </div>
-</div>
-
-<main id="main">
 <section class="hero" id="top">
   <canvas class="hero__gl" aria-hidden="true"></canvas>
   <div class="hero__inner">
@@ -124,7 +60,7 @@
           <p class="stack-card__kind">Packet Analyzer / IDS</p>
           <p class="stack-card__desc">Packet analyzer and rule-based intrusion detection system written from scratch in Python with no runtime dependencies: hand-written parsers (Ethernet/VLAN, ARP, IPv4/IPv6, TCP, UDP, ICMP, DNS, HTTP, TLS ClientHello), PCAP read/write, TCP stream reassembly, a filter language, detectors for port scans, SYN floods, ARP spoofing and DNS tunneling, and live capture on Linux and Windows. It also ran on 2.7 million packets of real traffic, including 14.6 s of a 1 Gbps backbone, where an independent tshark recount found the same 376 scanning sources; the write-up (<a href="posts/sentinel-packet-analyzer">part 1</a>, <a href="posts/sentinel-next-level">part 2</a> and <a href="posts/sentinel-real-world">part 3</a>) is on the blog.</p>
           <ul class="tags"><li>Python</li><li>pytest</li><li>CI</li></ul>
-          <p class="stack-card__links"><a class="roll" href="https://github.com/kaan0d/sentinel" target="_blank" rel="noopener"><span class="roll__in" data-text="source">source</span></a></p>
+          <p class="stack-card__links"><a class="roll" href="https://github.com/kaan0d/sentinel" target="_blank" rel="noopener">${ROLL}source</a></p>
         </div>
         <div class="stack-card__visual proof">
           <div class="proof__row"><span class="proof__num">942</span><span class="proof__label">tests</span></div>
@@ -142,7 +78,7 @@
           <p class="stack-card__kind">2D Physics Engine</p>
           <p class="stack-card__desc">2D rigid body physics engine written from scratch with no libraries: circle, box, and convex polygon collision (SAT), a warm-started sequential-impulse solver with friction and restitution, sleeping, continuous collision, five joint types, and a spatial-hash broadphase about 42× faster than brute force at 4,000 bodies. Tall stacks settle and sleep (10-box towers in about 1 s instead of 7 s). Verified against analytic references with 171 unit tests and 14 browser tests, and shipped as an interactive browser demo.</p>
           <ul class="tags"><li>TypeScript</li><li>Vitest</li><li>Playwright</li></ul>
-          <p class="stack-card__links"><a class="roll" href="posts/impulse-physics-engine"><span class="roll__in" data-text="write-up">write-up</span></a><a class="roll" href="https://github.com/kaan0d/impulse" target="_blank" rel="noopener"><span class="roll__in" data-text="source">source</span></a></p>
+          <p class="stack-card__links"><a class="roll" href="posts/impulse-physics-engine">${ROLL}write-up</a><a class="roll" href="https://github.com/kaan0d/impulse" target="_blank" rel="noopener">${ROLL}source</a></p>
         </div>
         <div class="stack-card__visual media">
           <img src="posts/img/impulse-pyramid.png" width="902" height="602" alt="Impulse demo: a ten-row pyramid of blue boxes resting stable on a grey floor." loading="lazy">
@@ -157,7 +93,7 @@
           <p class="stack-card__kind">Desktop app for a retail business</p>
           <p class="stack-card__desc">Desktop application for a retail business that fills PDF receipt templates, tracks payment status and customer history, and numbers receipts automatically.</p>
           <ul class="tags"><li>Python</li><li>SQLite</li></ul>
-          <p class="stack-card__links"><a class="roll" href="posts/retail-desktop-apps"><span class="roll__in" data-text="write-up">write-up</span></a></p>
+          <p class="stack-card__links"><a class="roll" href="posts/retail-desktop-apps">${ROLL}write-up</a></p>
         </div>
         <div class="stack-card__visual media">
           <img src="posts/img/receipt-new.webp" width="1489" height="830" alt="Invoice app screen for creating a receipt: customer fields, line items, and a save-as-PDF button." loading="lazy">
@@ -364,25 +300,7 @@
   <a class="contact__mail" href="mailto:kaan.dnc.7505@gmail.com" data-magnetic><span>kaan.dnc.7505@gmail.com</span></a>
   <a class="btn btn--primary contact__cv" href="https://drive.google.com/file/d/1M5Ri6U8PAwSgwr31EN4JDeT90P7OuCPo/view" target="_blank" rel="noopener" data-magnetic>view my cv</a>
   <ul class="contact__list">
-    <li><span class="contact__k">github</span><a class="roll" href="https://github.com/kaan0d" target="_blank" rel="noopener"><span class="roll__in" data-text="github.com/kaan0d">github.com/kaan0d</span></a></li>
-    <li><span class="contact__k">linkedin</span><a class="roll" href="https://www.linkedin.com/in/kaandinc/" target="_blank" rel="noopener"><span class="roll__in" data-text="linkedin.com/in/kaandinc">linkedin.com/in/kaandinc</span></a></li>
+    <li><span class="contact__k">github</span><a class="roll" href="https://github.com/kaan0d" target="_blank" rel="noopener">${ROLL}github.com/kaan0d</a></li>
+    <li><span class="contact__k">linkedin</span><a class="roll" href="https://www.linkedin.com/in/kaandinc/" target="_blank" rel="noopener">${ROLL}linkedin.com/in/kaandinc</a></li>
   </ul>
 </section>
-
-</main>
-
-<footer class="site-footer">
-  <span>Kaan Dinç</span>
-  <span>Çanakkale, Turkey</span>
-  <button class="roll" type="button" data-top><span class="roll__in" data-text="back to top">back to top</span></button>
-</footer>
-
-<script defer src="assets/vendor/gsap.min.js"></script>
-<script defer src="assets/vendor/ScrollTrigger.min.js"></script>
-<script defer src="assets/vendor/SplitText.min.js"></script>
-<script defer src="assets/vendor/lenis.min.js"></script>
-<script defer src="assets/js/core.js"></script>
-<script defer src="assets/js/hero-gl.js"></script>
-<script defer src="assets/js/home.js"></script>
-</body>
-</html>

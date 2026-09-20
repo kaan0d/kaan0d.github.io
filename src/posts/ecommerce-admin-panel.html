@@ -1,86 +1,8 @@
-<!doctype html>
-<html lang="en" data-page="post">
-<head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>a shop site that isn't a shop | Kaan Dinç</title>
-<meta name="description" content="this is the website for an electrical and security-equipment shop in Çanakkale: switches, cable, cameras, intercoms, satellite gear. the first decision...">
-<meta name="theme-color" content="#0a0a09">
-<link rel="canonical" href="https://kaandinc.com/posts/ecommerce-admin-panel">
-<meta property="og:type" content="article">
-<meta property="og:title" content="a shop site that isn't a shop | Kaan Dinç">
-<meta property="og:description" content="this is the website for an electrical and security-equipment shop in Çanakkale: switches, cable, cameras, intercoms, satellite gear. the first decision...">
-<meta property="og:url" content="https://kaandinc.com/posts/ecommerce-admin-panel">
-<link rel="icon" href="../assets/favicon.svg" type="image/svg+xml">
-<link rel="preload" href="../assets/fonts/Geist-Variable.woff2" as="font" type="font/woff2" crossorigin>
-<link rel="stylesheet" href="../assets/css/base.css">
-<link rel="stylesheet" href="../assets/css/post.css">
-<script>
-(function (d) {
-  d.classList.add('js');
-  if (matchMedia('(prefers-reduced-motion: reduce)').matches) d.classList.add('reduce');
-  try { if (sessionStorage.getItem('curtain')) d.classList.add('curtain-on'); } catch (e) {}
-  // Safety net: reveal content if the animation scripts never report ready.
-  setTimeout(function () { if (!d.classList.contains('ready')) d.classList.add('no-anim'); }, 4000);
-})(document.documentElement);
-</script>
-
-</head>
-<body>
-<div class="curtain" aria-hidden="true"></div>
-<a class="skip" href="#main">skip to content</a>
-
-<header class="site-header">
-  <a class="site-header__brand" href="../" aria-label="Kaan Dinç, home">Kaan Dinç</a>
-  <nav class="site-nav" aria-label="primary">
-    <a class="roll" href="../#projects"><span class="roll__in" data-text="projects">projects</span></a>
-    <a class="roll" href="../blog"><span class="roll__in" data-text="blog">blog</span></a>
-    <a class="roll" href="https://drive.google.com/file/d/1M5Ri6U8PAwSgwr31EN4JDeT90P7OuCPo/view" target="_blank" rel="noopener"><span class="roll__in" data-text="cv">cv</span></a>
-    <button class="site-nav__menu roll" type="button" aria-expanded="false" aria-controls="menu"><span class="roll__in" data-text="menu">menu</span></button>
-  </nav>
-</header>
-
-<div class="menu" id="menu" hidden>
-  <div class="menu__inner">
-    <ul class="menu__list">
-      <li><a href="../#about"><span>about</span></a></li>
-      <li><a href="../#projects"><span>projects</span></a></li>
-      <li><a href="../#experience"><span>experience</span></a></li>
-      <li><a href="../#skills"><span>skills</span></a></li>
-      <li><a href="../#education"><span>education</span></a></li>
-      <li><a href="../#repos"><span>repos</span></a></li>
-      <li><a href="../#links"><span>links</span></a></li>
-      <li><a href="../blog"><span>blog</span></a></li>
-    </ul>
-    <ul class="menu__ext">
-      <li><a class="roll" href="mailto:kaan.dnc.7505@gmail.com"><span class="roll__in" data-text="email">email</span></a></li>
-      <li><a class="roll" href="https://github.com/kaan0d" target="_blank" rel="noopener"><span class="roll__in" data-text="github">github</span></a></li>
-      <li><a class="roll" href="https://www.linkedin.com/in/kaandinc/" target="_blank" rel="noopener"><span class="roll__in" data-text="linkedin">linkedin</span></a></li>
-      <li><a class="roll" href="https://drive.google.com/file/d/1M5Ri6U8PAwSgwr31EN4JDeT90P7OuCPo/view" target="_blank" rel="noopener"><span class="roll__in" data-text="cv">cv</span></a></li>
-    </ul>
-  </div>
-</div>
-
-<main id="main">
-<div class="progress" aria-hidden="true"><span></span></div>
-<article class="post">
-  <header class="post-head">
-    <a class="post-head__back roll" href="../blog"><span class="roll__in" data-text="&amp;larr; blog">&larr; blog</span></a>
-    <p class="post-head__meta" data-hero><time datetime="2026-04-01">Apr 2026</time> &nbsp;/&nbsp; 4 min read</p>
-    <h1 class="post-head__title" data-split="lines" data-hero>a shop site that isn't a shop</h1>
-  </header>
-  <div class="post-layout has-toc">
-    <aside class="toc" aria-label="on this page">
-      <ol>
-        <li><a href="#counting-without-inflating">counting without inflating</a></li>
-        <li><a href="#discounts-as-an-operation">discounts as an operation</a></li>
-        <li><a href="#photos-that-clean-up-after-themselves">photos that clean up after themselves</a></li>
-        <li><a href="#login-without-an-auth-service">login without an auth service</a></li>
-        <li><a href="#workers-gotchas">workers gotchas</a></li>
-        <li><a href="#small-things">small things</a></li>
-      </ol>
-    </aside>
-    <div class="post-body">
+---
+title: a shop site that isn't a shop
+date: 2026-04-01
+label: Apr 2026
+---
 <p>this is the website for an electrical and security-equipment shop in Çanakkale: switches, cable, cameras, intercoms, satellite gear. the first decision made everything simpler: it isn't a webshop. it's a live price-and-stock catalog, and every product page has a button that opens WhatsApp with the message already written. customers still talk to a person, and the site makes sure they ask about the right thing.</p>
 
       <div class="codeblock"><code><span class="kw">export</span> <span class="kw">function</span> waLink(number: string, message: string) {
@@ -104,7 +26,7 @@
         <figcaption>no server to run and no disk to back up: D1 and R2 hold all the state, and the Worker is redeployed from git.</figcaption>
       </figure>
 
-      <h2 id="counting-without-inflating">counting without inflating</h2>
+      <h2>counting without inflating</h2>
 
       <p>the dashboard shows the most viewed products and the ones people ask about on WhatsApp. counters like that are easy to inflate, so a small table has the primary key (product, kind, visitor fingerprint, day). recording a stat just tries to insert that row, and if the insert fails, this visitor already counted today and nothing else happens. the fingerprint is a truncated SHA-256 of IP and user agent, so no raw IP address ever reaches the database.</p>
 
@@ -119,7 +41,7 @@
 }
 <span class="kw">await</span> db.run(`UPDATE products SET ${column} = ${column} + 1 WHERE id = ?`, [data.productId]);</code></div>
 
-      <h2 id="discounts-as-an-operation">discounts as an operation</h2>
+      <h2>discounts as an operation</h2>
 
       <p>the discount tab applies a percentage (1 to 99) to everything, one category or one brand. the new price is computed from the list price, rounded to kuruş and stored beside it, and the panel keeps a note of what it applied so it can be undone in one click.</p>
 
@@ -131,7 +53,7 @@
   <span class="kw">return</span> p.discount_price != <span class="kw">null</span> &amp;&amp; p.discount_price &gt; 0 &amp;&amp; p.discount_price &lt; p.price;
 }</code></div>
 
-      <h2 id="photos-that-clean-up-after-themselves">photos that clean up after themselves</h2>
+      <h2>photos that clean up after themselves</h2>
 
       <p>uploads are admin-only, capped at 5 MB, and limited to an allowlist of image types. SVG is deliberately not on it: an SVG can carry a script, and opening the file's URL directly would run it, which is stored XSS. files are also served with <code>nosniff</code>.</p>
 
@@ -173,7 +95,7 @@
 
       <p>removing a photo or deleting a product deletes the objects, so nothing is left orphaned. fixed slots replace their previous file, and if the new extension differs, the stale one is removed too. the one exception is the header and footer logos: they can fall back to a shared file, so they are never deleted on clear.</p>
 
-      <h2 id="login-without-an-auth-service">login without an auth service</h2>
+      <h2>login without an auth service</h2>
 
       <p>admin auth is one small file. passwords are hashed with PBKDF2-SHA256 through Web Crypto, which Workers support natively, and sessions are a sealed cookie that expires after seven days. the iteration count is stored inside the hash string, so it can be raised later without breaking old passwords.</p>
 
@@ -182,7 +104,7 @@
 
       <p>there's no sign-up: admins are created by other admins, nobody can revoke their own access, and the very first admin comes from environment variables, only when the users table is empty. secrets live in Wrangler secrets, not in the config. every server function sits behind CSRF middleware, and the admin route is marked noindex.</p>
 
-      <h2 id="workers-gotchas">workers gotchas</h2>
+      <h2>workers gotchas</h2>
 
       <p>three things cost me time. first, route files ship their top-level imports to the browser, so importing the database module at the top of a route pulls <code>cloudflare:workers</code> into the client bundle and breaks it. every server function imports what it needs inside its handler.</p>
 
@@ -200,40 +122,10 @@
   <span class="kw">return</span> payload.unhandled === <span class="kw">true</span> &amp;&amp; payload.message === "HTTPError";
 }</code></div>
 
-      <h2 id="small-things">small things</h2>
+      <h2>small things</h2>
 
       <p>filters and sorting live in the URL (category, brand, price range, in stock, discounted, sort) and are validated by the router, so any filtered view is a link you can send someone on WhatsApp. search lowercases with the Turkish locale so İ and I behave, and slugs transliterate ç ğ ı ö ş ü. the sitemap is generated from the active products, and there's a <code>security.txt</code>.</p>
 
       <div class="callout">
         <p>a shop site is really two products: the one customers see, and the one the owner uses every day. the second one deserves as much design as the first.</p>
       </div>
-
-    </div>
-  </div>
-</article>
-<nav class="post-steps" aria-label="more posts">
-  <a class="post-step post-step--newer" href="volume-extension">
-      <span class="post-step__dir">&larr; newer</span>
-      <span class="post-step__title">a chrome extension for one annoying problem</span>
-    </a>
-  <a class="post-step post-step--older" href="screen-region-detection">
-      <span class="post-step__dir">older &rarr;</span>
-      <span class="post-step__title">reading a rectangle of the screen with opencv</span>
-    </a>
-</nav>
-</main>
-
-<footer class="site-footer">
-  <span>Kaan Dinç</span>
-  <span>Çanakkale, Turkey</span>
-  <button class="roll" type="button" data-top><span class="roll__in" data-text="back to top">back to top</span></button>
-</footer>
-
-<script defer src="../assets/vendor/gsap.min.js"></script>
-<script defer src="../assets/vendor/ScrollTrigger.min.js"></script>
-<script defer src="../assets/vendor/SplitText.min.js"></script>
-<script defer src="../assets/vendor/lenis.min.js"></script>
-<script defer src="../assets/js/core.js"></script>
-<script defer src="../assets/js/post.js"></script>
-</body>
-</html>

@@ -1,84 +1,8 @@
-<!doctype html>
-<html lang="en" data-page="post">
-<head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>two discord bots and the loop they share | Kaan Dinç</title>
-<meta name="description" content="i've written two discord bots that have nothing to do with each other on paper, and they turned out to be the same program. Lespy hands out XP for saying...">
-<meta name="theme-color" content="#0a0a09">
-<link rel="canonical" href="https://kaandinc.com/posts/discord-bots">
-<meta property="og:type" content="article">
-<meta property="og:title" content="two discord bots and the loop they share | Kaan Dinç">
-<meta property="og:description" content="i've written two discord bots that have nothing to do with each other on paper, and they turned out to be the same program. Lespy hands out XP for saying...">
-<meta property="og:url" content="https://kaandinc.com/posts/discord-bots">
-<link rel="icon" href="../assets/favicon.svg" type="image/svg+xml">
-<link rel="preload" href="../assets/fonts/Geist-Variable.woff2" as="font" type="font/woff2" crossorigin>
-<link rel="stylesheet" href="../assets/css/base.css">
-<link rel="stylesheet" href="../assets/css/post.css">
-<script>
-(function (d) {
-  d.classList.add('js');
-  if (matchMedia('(prefers-reduced-motion: reduce)').matches) d.classList.add('reduce');
-  try { if (sessionStorage.getItem('curtain')) d.classList.add('curtain-on'); } catch (e) {}
-  // Safety net: reveal content if the animation scripts never report ready.
-  setTimeout(function () { if (!d.classList.contains('ready')) d.classList.add('no-anim'); }, 4000);
-})(document.documentElement);
-</script>
-
-</head>
-<body>
-<div class="curtain" aria-hidden="true"></div>
-<a class="skip" href="#main">skip to content</a>
-
-<header class="site-header">
-  <a class="site-header__brand" href="../" aria-label="Kaan Dinç, home">Kaan Dinç</a>
-  <nav class="site-nav" aria-label="primary">
-    <a class="roll" href="../#projects"><span class="roll__in" data-text="projects">projects</span></a>
-    <a class="roll" href="../blog"><span class="roll__in" data-text="blog">blog</span></a>
-    <a class="roll" href="https://drive.google.com/file/d/1M5Ri6U8PAwSgwr31EN4JDeT90P7OuCPo/view" target="_blank" rel="noopener"><span class="roll__in" data-text="cv">cv</span></a>
-    <button class="site-nav__menu roll" type="button" aria-expanded="false" aria-controls="menu"><span class="roll__in" data-text="menu">menu</span></button>
-  </nav>
-</header>
-
-<div class="menu" id="menu" hidden>
-  <div class="menu__inner">
-    <ul class="menu__list">
-      <li><a href="../#about"><span>about</span></a></li>
-      <li><a href="../#projects"><span>projects</span></a></li>
-      <li><a href="../#experience"><span>experience</span></a></li>
-      <li><a href="../#skills"><span>skills</span></a></li>
-      <li><a href="../#education"><span>education</span></a></li>
-      <li><a href="../#repos"><span>repos</span></a></li>
-      <li><a href="../#links"><span>links</span></a></li>
-      <li><a href="../blog"><span>blog</span></a></li>
-    </ul>
-    <ul class="menu__ext">
-      <li><a class="roll" href="mailto:kaan.dnc.7505@gmail.com"><span class="roll__in" data-text="email">email</span></a></li>
-      <li><a class="roll" href="https://github.com/kaan0d" target="_blank" rel="noopener"><span class="roll__in" data-text="github">github</span></a></li>
-      <li><a class="roll" href="https://www.linkedin.com/in/kaandinc/" target="_blank" rel="noopener"><span class="roll__in" data-text="linkedin">linkedin</span></a></li>
-      <li><a class="roll" href="https://drive.google.com/file/d/1M5Ri6U8PAwSgwr31EN4JDeT90P7OuCPo/view" target="_blank" rel="noopener"><span class="roll__in" data-text="cv">cv</span></a></li>
-    </ul>
-  </div>
-</div>
-
-<main id="main">
-<div class="progress" aria-hidden="true"><span></span></div>
-<article class="post">
-  <header class="post-head">
-    <a class="post-head__back roll" href="../blog"><span class="roll__in" data-text="&amp;larr; blog">&larr; blog</span></a>
-    <p class="post-head__meta" data-hero><time datetime="2024-06-01">2024</time> &nbsp;/&nbsp; 3 min read</p>
-    <h1 class="post-head__title" data-split="lines" data-hero>two discord bots and the loop they share</h1>
-  </header>
-  <div class="post-layout has-toc">
-    <aside class="toc" aria-label="on this page">
-      <ol>
-        <li><a href="#the-loop">the loop</a></li>
-        <li><a href="#lespy-xp-for-saying-thanks">Lespy: xp for saying thanks</a></li>
-        <li><a href="#rejs-who-s-online">rejs: who's online</a></li>
-        <li><a href="#what-they-share">what they share</a></li>
-      </ol>
-    </aside>
-    <div class="post-body">
+---
+title: two discord bots and the loop they share
+date: 2024-06-01
+label: 2024
+---
 <p>i've written two discord bots that have nothing to do with each other on paper, and they turned out to be the same program. <b>Lespy</b> hands out XP for saying thanks. <b>rejs</b> watches a game server and reports who joins and leaves. both boil down to the same loop: watch something, remember what changed, tell the right channel.</p>
 
       <p class="links">source: <a href="https://github.com/kaan0d/Lespy" target="_blank" rel="noopener">Lespy</a> · <a href="https://github.com/kaan0d/rejs" target="_blank" rel="noopener">rejs</a></p>
@@ -92,14 +16,14 @@
         <div class="stat"><b>3</b><span>permission tiers</span></div>
       </div>
 
-      <h2 id="the-loop">the loop</h2>
+      <h2>the loop</h2>
 
       <figure>
         <div class="diagram-wrap"><svg class="diagram" viewBox="0 0 760 112" role="img" aria-label="poll, diff, store, announce"><defs><marker id="ah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0 L10 5 L0 10 z" class="head"/></marker></defs><rect class="box" x="0" y="20" width="150" height="70" rx="3"/><text class="t" x="75" y="52" text-anchor="middle">poll</text><text class="s" x="75" y="72" text-anchor="middle">endpoint or chat</text><line class="arrow" x1="156" y1="55" x2="195" y2="55" marker-end="url(#ah)"/><rect class="box hot" x="203" y="20" width="150" height="70" rx="3"/><text class="t" x="278" y="52" text-anchor="middle">diff</text><text class="s" x="278" y="72" text-anchor="middle">what changed</text><line class="arrow" x1="359" y1="55" x2="399" y2="55" marker-end="url(#ah)"/><rect class="box" x="407" y="20" width="150" height="70" rx="3"/><text class="t" x="482" y="52" text-anchor="middle">store</text><text class="s" x="482" y="72" text-anchor="middle">SQLite file</text><line class="arrow" x1="563" y1="55" x2="602" y2="55" marker-end="url(#ah)"/><rect class="box" x="610" y="20" width="150" height="70" rx="3"/><text class="t" x="685" y="52" text-anchor="middle">announce</text><text class="s" x="685" y="72" text-anchor="middle">the right channel</text></svg></div>
         <figcaption>the whole design of both bots. the diff step is where each one has its own rules.</figcaption>
       </figure>
 
-      <h2 id="lespy-xp-for-saying-thanks">Lespy: xp for saying thanks</h2>
+      <h2>Lespy: xp for saying thanks</h2>
 
       <p>Lespy is a Python bot on discord.py with SQLite behind it, built for a community server. the rule is small: if a message contains one of a few trigger words ("ty", "thanks", "thank you") and it replies to or mentions someone else, that person gets 1 XP. thanking yourself gets you nothing. the point is to reward whoever actually helped, not whoever talks the most.</p>
 
@@ -138,7 +62,7 @@ required_xp = max(min_level_experience, min(required_xp, max_level_experience)) 
     <span class="kw">await</span> bot.process_commands(message)   <span class="cm"># commands never depend on the xp cooldown</span>
     <span class="kw">await</span> award_thanks_xp(message)        <span class="cm"># xp logic, cooldown included, lives here</span></code></div>
 
-      <h2 id="rejs-who-s-online">rejs: who's online</h2>
+      <h2>rejs: who's online</h2>
 
       <p>rejs is Node with discord.js and SQLite. FiveM game servers expose their player list as JSON, so the bot polls that endpoint once a second and compares it with the players it already has marked as in-game. the diff is two sets:</p>
 
@@ -167,33 +91,6 @@ required_xp = max(min_level_experience, min(required_xp, max_level_experience)) 
 
       <p>the least tidy part is server restarts. the server goes away on a schedule, and a bot that treats every failed fetch as an outage either spams retries or gives up. rejs knows two ten-minute restart windows and backs off differently inside them, but the retry counters are module-level globals and the windows are hard-coded. before adding anything else i'd rebuild that as a small state machine: up, down, restarting.</p>
 
-      <h2 id="what-they-share">what they share</h2>
+      <h2>what they share</h2>
 
       <p>poll, diff, persist, announce. SQLite is enough for both: one file, no server, and the state survives a restart, which is all a bot needs. neither one has to be a Discord bot. chat is just the interface people already keep open, a free notification channel with permissions and history built in.</p>
-
-    </div>
-  </div>
-</article>
-<nav class="post-steps" aria-label="more posts">
-  <a class="post-step post-step--newer" href="retail-desktop-apps">
-      <span class="post-step__dir">&larr; newer</span>
-      <span class="post-step__title">two desktop apps for a retail shop</span>
-    </a>
-  <span></span>
-</nav>
-</main>
-
-<footer class="site-footer">
-  <span>Kaan Dinç</span>
-  <span>Çanakkale, Turkey</span>
-  <button class="roll" type="button" data-top><span class="roll__in" data-text="back to top">back to top</span></button>
-</footer>
-
-<script defer src="../assets/vendor/gsap.min.js"></script>
-<script defer src="../assets/vendor/ScrollTrigger.min.js"></script>
-<script defer src="../assets/vendor/SplitText.min.js"></script>
-<script defer src="../assets/vendor/lenis.min.js"></script>
-<script defer src="../assets/js/core.js"></script>
-<script defer src="../assets/js/post.js"></script>
-</body>
-</html>
