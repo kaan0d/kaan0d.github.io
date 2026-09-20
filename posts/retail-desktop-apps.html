@@ -1,4 +1,4 @@
-<title>unity ar notes</title>
+<title>retail desktop apps</title>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
 <style>
   :root{
@@ -40,6 +40,17 @@
   footer{ font-family:var(--font-mono); font-size:0.76rem; color:var(--text-dim); margin-top:48px; padding-top:16px; border-top:1px solid var(--line); display:flex; justify-content:space-between; gap:10px; flex-wrap:wrap; }
 
   @media (prefers-reduced-motion: reduce){ *{ animation:none !important; transition:none !important; } }
+
+  .post-body h2{ font-family:var(--font-mono); font-size:1.05rem; font-weight:700; margin:48px 0 18px; }
+  .post-body h2 .hash{ color:var(--accent-dim); margin-right:8px; }
+  .post-body code{ font-family:var(--font-mono); font-size:0.88em; color:var(--accent); }
+  .post-body a{ color:var(--accent); text-decoration:underline; text-decoration-color:#6b4a26; text-underline-offset:3px; }
+  .post-body a:hover{ text-decoration-color:var(--accent); }
+  .links{ font-family:var(--font-mono); font-size:0.88rem; }
+  .codeblock{ background:rgba(255,255,255,0.03); border:1px solid var(--line); border-radius:4px; padding:16px 18px; overflow-x:auto; margin:28px 0; }
+  .codeblock code{ font-family:var(--font-mono); font-size:0.85rem; color:var(--text); white-space:pre; line-height:1.6; }
+  .codeblock .cm{ color:var(--text-dim); }
+  .codeblock .kw{ color:var(--accent); }
 </style>
 
 <canvas id="silk-bg" aria-hidden="true"></canvas>
@@ -54,15 +65,39 @@
   </header>
 
   <article>
-    <p class="post-date">Feb 2024 - Jun 2024</p>
-    <h1 class="post-title">an AR app for previewing textiles</h1>
+    <p class="post-date">2025</p>
+    <h1 class="post-title">two desktop apps for a retail shop</h1>
 
     <div class="post-body">
-      <p>From February to June 2024 I was a Unity developer intern at Acrobat Innovation Technology, in Kocaeli. The main project was an AR textile application built in Unity (C#) with Google ARCore: it lets a user preview a product virtually in their own space through a mobile device before buying it. I also designed and built the app's mobile interface with Unity's UI system.</p>
+<p>a small retail business doesn't want a web app it has to keep alive. it wants something it double-clicks that never loses a sale. i built two Python desktop apps for one shop, and they taught me different things. they're client projects, so this is a tour of the decisions, not the code.</p>
 
-      <p>the idea is simple to explain and harder to make convincing. Textiles are hard to judge from a flat photo, so placing them in the room you actually live in makes a real difference to how useful the preview is.</p>
+      <h2><span class="hash">##</span>the ledger: don't lose the data</h2>
 
-      <p>I also prototyped an object and environment recognition system. It generated recommendations from the recognized scene using algorithmic and mathematical calculations, so it was closer to applied math than to a model trained on a dataset.</p>
+      <p>the first app covers the day-to-day of the shop, backed by a local SQL database: inventory and stock, point-of-sale transactions for both cash and credit sales, customer accounts and payment tracking, daily earnings and expense logging, and PDF customer statements you can export.</p>
+
+      <p>with an app like this, the database file is the business, which drove two decisions. the first is a layered architecture that keeps data access, business logic and the UI separate, so changing a screen can't quietly break how a sale gets recorded. the second is an automatic backup every time the app starts. there's no schedule to configure or forget, the app just does it every time it opens. it's a plain desktop app on purpose: for a single shop, a local database and a reliable backup beat anything that needs a server to stay up.</p>
+
+      <h2><span class="hash">##</span>the receipt app: same output every time</h2>
+
+      <p>the second app is narrower. it produces receipts that look official, and it has to produce them the same way every time. you pick or type a customer, add line items (name, quantity, unit, price) and it writes a PDF. the interface is customtkinter, the PDFs are drawn with PyMuPDF, and PyInstaller packages it as a folder with an exe, so the shop installs nothing. there are three screens: new receipt, history, and saved customers.</p>
+
+      <h2><span class="hash">##</span>a pdf that grows to fit</h2>
+
+      <p>every receipt is drawn onto two fixed template halves, the header on top and the totals box at the bottom, with the middle generated. the height of the middle is computed from the items: each row's text is wrapped by measuring its real width in the embedded font instead of counting characters, and the page height is the sum of top, middle and bottom. a three-item receipt and a thirty-item receipt both come out as one continuous page with no cut-off rows.</p>
+
+      <p>Turkish characters need a real TrueType font embedded in the PDF, so the app looks for one in the Windows font folder once, caches the answer, and warns the user instead of quietly printing question marks.</p>
+
+      <h2><span class="hash">##</span>turkish is where the standard library stops helping</h2>
+
+      <p>Python's <code>upper()</code> and <code>lower()</code> turn i into I and I into i, which is wrong in Turkish, where İ and ı are different letters. so the app has its own casing helpers, and the history search folds case the Turkish way. amounts are shown as <code>1.234,56 TL</code> and parsed back from the same format. every receipt also carries its total in words ("yazı ile tutar"), so there's a number-to-words converter for Turkish, from lira down to kuruş. line totals and sums are computed with <code>Decimal</code> and half-up rounding, never floats.</p>
+
+      <h2><span class="hash">##</span>numbering and payments</h2>
+
+      <p>receipt numbers are sequential and kept in a one-row table. the app reads the next number, draws the PDF, and only commits the number after the file was written, so a failed export doesn't burn a number, and editing an old receipt keeps its own. each receipt is paid, partially paid or unpaid, and partial payments store the amount, so the remaining balance is always known. from the history screen you can export a summary PDF for one customer with paid and remaining amounts per receipt, optionally only the unpaid ones.</p>
+
+      <p>two small rules that saved me trouble. timestamps are always stamped in GMT+3, whatever the computer's timezone is set to, so a wrong setting can't shift a receipt's date. and the database is one long-lived SQLite connection in WAL mode, with every write in its own transaction.</p>
+
+      <p>none of it is complicated on its own. the point is the boring guarantees: nothing lost, the same layout, the next number, the right total.</p>
     </div>
   </article>
 

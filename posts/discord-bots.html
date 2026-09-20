@@ -1,4 +1,4 @@
-<title>discord bots notes</title>
+<title>two discord bots</title>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
 <style>
   :root{
@@ -40,6 +40,17 @@
   footer{ font-family:var(--font-mono); font-size:0.76rem; color:var(--text-dim); margin-top:48px; padding-top:16px; border-top:1px solid var(--line); display:flex; justify-content:space-between; gap:10px; flex-wrap:wrap; }
 
   @media (prefers-reduced-motion: reduce){ *{ animation:none !important; transition:none !important; } }
+
+  .post-body h2{ font-family:var(--font-mono); font-size:1.05rem; font-weight:700; margin:48px 0 18px; }
+  .post-body h2 .hash{ color:var(--accent-dim); margin-right:8px; }
+  .post-body code{ font-family:var(--font-mono); font-size:0.88em; color:var(--accent); }
+  .post-body a{ color:var(--accent); text-decoration:underline; text-decoration-color:#6b4a26; text-underline-offset:3px; }
+  .post-body a:hover{ text-decoration-color:var(--accent); }
+  .links{ font-family:var(--font-mono); font-size:0.88rem; }
+  .codeblock{ background:rgba(255,255,255,0.03); border:1px solid var(--line); border-radius:4px; padding:16px 18px; overflow-x:auto; margin:28px 0; }
+  .codeblock code{ font-family:var(--font-mono); font-size:0.85rem; color:var(--text); white-space:pre; line-height:1.6; }
+  .codeblock .cm{ color:var(--text-dim); }
+  .codeblock .kw{ color:var(--accent); }
 </style>
 
 <canvas id="silk-bg" aria-hidden="true"></canvas>
@@ -55,14 +66,34 @@
 
   <article>
     <p class="post-date">2024</p>
-    <h1 class="post-title">why I keep building discord bots</h1>
+    <h1 class="post-title">two discord bots and the loop they share</h1>
 
     <div class="post-body">
-      <p>Lespy started as a leveling bot for a small server and turned into the thing I test every new idea on before it goes anywhere near a real project. SQLite for state, a cooldown system that took longer to get right than I'd like to admit, and just enough admin tooling to not regret it later.</p>
+<p>i've written two discord bots that have nothing to do with each other on paper, and they turned out to be the same program. <b>Lespy</b> hands out XP for saying thanks. <b>rejs</b> watches a game server and reports who joins and leaves. both boil down to the same loop: watch something, remember what changed, tell the right channel.</p>
 
-      <p>rejs came out of the same itch, except this one watches a game server instead of a chat. different problem, same shape: poll something, store what changed, tell the right channel about it.</p>
+      <h2><span class="hash">##</span>Lespy: xp for saying thanks</h2>
 
-      <p>neither one needed to be a Discord bot specifically, that's just the interface I already had lying around: a chat window people check anyway, a place to push a notification without building a UI for it.</p>
+      <p>Lespy is a Python bot on discord.py with SQLite behind it, built for a community server. the rule is small: if a message contains one of a few trigger words ("ty", "thanks", "thank you") and it replies to or mentions someone else, that person gets 1 XP. thanking yourself gets you nothing. the point is to reward whoever actually helped, not whoever talks the most.</p>
+
+      <p>levels get harder as you climb. with the default multiplier, the XP needed for the next level grows by about 2.4 per level, clamped between 10 and 1000, with a cap at level 500. every number (trigger words, multiplier, caps, cooldowns) lives in one config file instead of the code, so tuning the pace of a server doesn't mean touching the bot.</p>
+
+      <p>there are three permission tiers, each in its own file: everyone gets a leaderboard and a progress command, admins (kept in their own SQLite table) can set levels and grant XP, and super admins (Discord IDs in the config) manage the admins and can reset or delete users.</p>
+
+      <p>the part that took longest was the cooldown. without one, two friends can farm each other with "thanks" all day, so a sender gets 60 seconds between XP-giving messages. one thing i'd change now: the cooldown check runs before the message is handed to the command handler, so someone on cooldown can't run commands until it expires. the fix is to process commands first and keep XP as its own concern.</p>
+
+      <h2><span class="hash">##</span>rejs: who's online</h2>
+
+      <p>rejs is Node with discord.js and SQLite. FiveM game servers expose their player list as JSON, so the bot polls that endpoint once a second and compares it with the players it already has marked as in-game. new ids get a green "joined" line in a channel; missing ones get a red "left" line and a leave timestamp. the bot's status shows the live count from a second endpoint, like "64/128 players".</p>
+
+      <p>a few details i like. <code>!setservermonitor</code> doesn't trust its arguments: it fetches the endpoint first and refuses to save unless it returns a JSON array. the player table keeps names plus steam and discord identifiers, so a session traces back to an account and not just a display name. on startup the bot copies the database into a timestamped backup and then clears the table, so every run starts a fresh log without losing history. commands load from a folder, and <code>!reload</code> re-reads them without restarting the bot.</p>
+
+      <p>the least tidy part is server restarts. the server goes away on a schedule, and a bot that treats every failed fetch as an outage either spams retries or gives up. rejs knows two ten-minute restart windows and backs off differently inside them, but the retry counters are module-level globals and the windows are hard-coded. before adding anything else i'd rebuild that as a small state machine: up, down, restarting.</p>
+
+      <h2><span class="hash">##</span>what they share</h2>
+
+      <p>poll, diff, persist, announce. SQLite is enough for both: one file, no server, and the state survives a restart, which is all a bot needs. neither one has to be a Discord bot. chat is just the interface people already keep open, a free notification channel with permissions and history built in.</p>
+
+      <p class="links">source: <a href="https://github.com/kaan0d/Lespy" target="_blank" rel="noopener">Lespy</a> · <a href="https://github.com/kaan0d/rejs" target="_blank" rel="noopener">rejs</a></p>
     </div>
   </article>
 
