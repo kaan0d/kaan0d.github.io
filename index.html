@@ -172,20 +172,21 @@
 
   <section id="about">
     <h2><span class="hash">##</span>about</h2>
-    <p>hi, i'm kaan. computer engineer interested in the defense industry, with a BSc from Gaziosmanpaşa University (GPA 86.4/100) and an Erasmus term at Kielce University of Technology in Poland.</p>
-    <p>i build across full-stack development, desktop applications, and database systems, with Oracle SQL, Python, and JavaScript/TypeScript. React on the frontend, Python desktop tools backed by SQL on the backend. I've also worked hands-on with computer vision and machine learning, and I'm CCNA-certified in networking.</p>
+    <p>hi, i'm kaan. computer engineer interested in the defense industry, with a BSc from Gaziosmanpaşa University (GPA 3.45/4.0, top 10 of the 2024 graduating class) and an Erasmus term at Kielce University of Technology in Poland.</p>
+    <p>i work on a hospital information system with about 3,000 users, where rewritten Oracle SQL queries cut a typical report load from over 30 seconds to 6.5 seconds. outside work i write things from scratch: a packet analyzer and IDS in Python, a 2D physics engine in TypeScript, and full-stack and desktop apps for retail businesses, with React on the frontend and Python desktop tools backed by SQL. i've also completed the three Cisco CCNA courses.</p>
     <p>i like owning a project end to end, from the database up to the interface, rather than one slice of it.</p>
   </section>
 
   <section id="skills">
     <h2><span class="hash">##</span>skills</h2>
     <div class="skillgrid">
-      <div class="skillrow"><span class="k">languages</span><span>Python, JavaScript, TypeScript, C#, Java, Pascal</span></div>
-      <div class="skillrow"><span class="k">web</span><span>React, Tailwind CSS, Zod</span></div>
+      <div class="skillrow"><span class="k">languages</span><span>Python, TypeScript/JavaScript, C#, C++, Java, SQL, Pascal</span></div>
+      <div class="skillrow"><span class="k">web</span><span>React, TanStack Start, Tailwind CSS, Zod, discord.js</span></div>
       <div class="skillrow"><span class="k">data</span><span>Oracle SQL, SQLite</span></div>
-      <div class="skillrow"><span class="k">vision / ml</span><span>OpenCV, TensorFlow, Keras</span></div>
-      <div class="skillrow"><span class="k">games / ar</span><span>Unity, VR gameplay and physics</span></div>
-      <div class="skillrow"><span class="k">networking</span><span>Cisco CCNA: VLANs, STP, OSPF, ACLs/NAT, VPN/IPsec</span></div>
+      <div class="skillrow"><span class="k">vision / ml</span><span>OpenCV, TensorFlow/Keras</span></div>
+      <div class="skillrow"><span class="k">games / vr</span><span>Unity, VR gameplay and physics</span></div>
+      <div class="skillrow"><span class="k">networking</span><span>Cisco IOS, VLANs, STP, OSPF, ACLs/NAT, VPN/IPsec</span></div>
+      <div class="skillrow"><span class="k">tools</span><span>Git, GitHub Actions, pytest, Vitest, Playwright</span></div>
     </div>
   </section>
 
@@ -195,7 +196,7 @@
       <div class="linkrow"><span class="k">email</span><a href="mailto:kaan.dnc.7505@gmail.com">kaan.dnc.7505@gmail.com</a></div>
       <div class="linkrow"><span class="k">github</span><a href="https://github.com/kaan0d" target="_blank" rel="noopener">github.com/kaan0d</a></div>
       <div class="linkrow"><span class="k">linkedin</span><a href="https://www.linkedin.com/in/kaandinc/" target="_blank" rel="noopener">linkedin.com/in/kaandinc</a></div>
-      <div class="linkrow"><span class="k">cv</span><a href="https://drive.google.com/file/d/1BJW-UzyjG0gcaaonEpvGxWW0ewoFH9yQ/view?usp=sharing" target="_blank" rel="noopener">view cv</a></div>
+      <div class="linkrow"><span class="k">cv</span><a href="https://drive.google.com/file/d/1M5Ri6U8PAwSgwr31EN4JDeT90P7OuCPo/view" target="_blank" rel="noopener">view cv</a></div>
     </div>
   </section>
 
@@ -205,13 +206,26 @@
     <article class="job">
       <div class="job-head">
         <span class="job-company">Abisena Information Technologies</span>
-        <span class="job-role">IT</span>
+        <span class="job-role">IT Specialist, Hospital Information System</span>
         <span class="job-meta">Feb 2025 - Present</span>
         <span class="job-loc">Ministry of Health · Çanakkale, Turkey</span>
       </div>
       <ul>
-        <li><b>Technical support</b>: resolved access and data issues for clinical and administrative staff on Abisena's hospital information management system.</li>
-        <li><b>SQL &amp; workflow tools</b>: wrote Oracle SQL queries for extraction and reporting; built custom forms and Pascal-based modules to streamline workflows.</li>
+        <li><b>Query rebuild</b>: rebuilt more than 10 queries from scratch in Oracle SQL, removing unnecessary table joins and making them more compact. loading a typical 15,000-row report dropped from over 30 seconds to 6.5 seconds, more than 4× faster.</li>
+        <li><b>Workflow tools</b>: developed custom forms and Pascal-based document modules inside the system, used about 3,500 times per month.</li>
+        <li><b>Technical support</b>: support about 3,000 clinical and administrative users, resolving access, data and workflow issues.</li>
+      </ul>
+    </article>
+
+    <article class="job">
+      <div class="job-head">
+        <span class="job-company">Freelance Developer</span>
+        <span class="job-meta">2024 - 2025</span>
+        <span class="job-loc">Çanakkale, Turkey</span>
+      </div>
+      <ul>
+        <li><b>Retail business software</b>: built a desktop business management application and an e-commerce website with an admin panel for a retail business (see projects).</li>
+        <li><b>Invoice application</b>: built an invoice desktop application for a retail business that fills PDF receipt templates, tracks payment status and customer history, and numbers receipts automatically.</li>
       </ul>
     </article>
 
@@ -223,8 +237,9 @@
         <span class="job-loc">Gebze, Kocaeli, Turkey</span>
       </div>
       <ul>
-        <li><b>AR textile app</b>: contributed to an application letting users preview products virtually in their own space via mobile devices.</li>
-        <li><b>Recognition system</b>: helped design and prototype an object and environment recognition system generating recommendations through algorithmic and mathematical calculations.</li>
+        <li><b>AR textile app</b>: developed features in Unity (C#) using Google ARCore, letting customers preview products in their own space on a mobile device.</li>
+        <li><b>Mobile interface</b>: designed and built the app's mobile interface with Unity's UI system.</li>
+        <li><b>Recognition system</b>: prototyped an object and environment recognition system that generated product recommendations from algorithmic and mathematical calculations.</li>
       </ul>
     </article>
   </section>
@@ -240,7 +255,8 @@
         <span class="job-loc">Tokat, Turkey</span>
       </div>
       <ul>
-        <li>Graduated with an 86.4/100 GPA, picking up Java, C#, and Python along the way through coursework projects.</li>
+        <li>GPA 3.45/4.0 (86.4/100), top 10 of the 2024 graduating class. Coursework in data structures, computer networks, and database systems, with projects in Java, C#, and Python.</li>
+        <li><b>Graduation project</b>: classified lung MRI images into diagnostic categories for COVID-19 with a CNN (TensorFlow, Keras), using pooling and dropout layers, reaching 94.5% accuracy on the test set.</li>
       </ul>
     </article>
 
@@ -258,8 +274,8 @@
 
     <article class="job">
       <div class="job-head">
-        <span class="job-company">CCNA Certification Track</span>
-        <span class="job-role">Cisco</span>
+        <span class="job-company">CCNA Courses</span>
+        <span class="job-role">Cisco Networking Academy</span>
         <span class="job-meta">Nov 2025 - Mar 2026</span>
       </div>
       <ul>
@@ -276,57 +292,49 @@
     <article class="project">
       <div class="project-head">
         <span class="project-name">Sentinel (Packet Analyzer / IDS)</span>
-        <span class="project-meta">Networking · Python</span>
+        <span class="project-meta">Python · pytest · CI</span>
       </div>
-      <p class="project-desc">Packet analyzer and rule-based intrusion detection system written from scratch in Python with no runtime dependencies: hand-written parsers (Ethernet/VLAN, ARP, IPv4/IPv6, TCP, UDP, ICMP, DNS, HTTP, TLS ClientHello), flow tracking with TCP stream reassembly, a filter language, detectors for port scans, SYN floods, ARP spoofing and DNS tunneling, and live capture on Linux and Windows, backed by 942 tests, a fuzzer, and CI on Linux and Windows.</p>
+      <p class="project-desc">Packet analyzer and rule-based intrusion detection system written from scratch in Python with no runtime dependencies: hand-written parsers (Ethernet/VLAN, ARP, IPv4/IPv6, TCP, UDP, ICMP, DNS, HTTP, TLS ClientHello), PCAP read/write, TCP stream reassembly, a filter language, detectors for port scans, SYN floods, ARP spoofing and DNS tunneling, and live capture on Linux and Windows. Verified with 942 tests, 405 deliberate code mutations (all caught), a fuzzer run over 3 million inputs, and a comparison with Wireshark's tshark on 10 captures (68,756 field values, 0 unexplained differences after 3 bugs were fixed), with CI on Linux and Windows. <a href="posts/sentinel-packet-analyzer">part 1</a> and <a href="posts/sentinel-next-level">part 2</a> of the write-up are on the blog.</p>
     </article>
 
     <article class="project">
       <div class="project-head">
         <span class="project-name">Impulse (2D Physics Engine)</span>
-        <span class="project-meta">Physics · TypeScript</span>
+        <span class="project-meta">TypeScript · Vitest · Playwright</span>
       </div>
-      <p class="project-desc">2D rigid body physics engine written from scratch with no libraries: circle, box, and convex polygon collision, a warm-started impulse solver with friction and restitution, sleeping, joints, continuous collision, and an interactive browser demo, backed by 171 unit tests and 14 browser tests.</p>
+      <p class="project-desc">2D rigid body physics engine written from scratch with no libraries: circle, box, and convex polygon collision (SAT), a warm-started sequential-impulse solver with friction and restitution, sleeping, continuous collision, five joint types, and a spatial-hash broadphase about 42× faster than brute force at 4,000 bodies. Tall stacks settle and sleep (10-box towers in about 1 s instead of 7 s). Verified against analytic references with 171 unit tests and 14 browser tests, and shipped as an interactive browser demo.</p>
     </article>
 
     <article class="project">
       <div class="project-head">
         <span class="project-name">Business Management App</span>
-        <span class="project-meta">Full-stack · Python</span>
+        <span class="project-meta">Python · SQLite</span>
       </div>
-      <p class="project-desc">Desktop retail management tool in Python with a local SQL database: inventory, point-of-sale, customer accounts, daily earnings, and exportable PDF statements, on a layered architecture with automatic backups.</p>
+      <p class="project-desc">Desktop application for a retail business handling inventory, point-of-sale (cash and credit), customer accounts and payments, daily earnings and expenses, and PDF customer statements. Layered architecture separating data, business logic and UI, with automatic backups on startup.</p>
     </article>
 
     <article class="project">
       <div class="project-head">
         <span class="project-name">E-Commerce Website</span>
-        <span class="project-meta">Full-stack · React/TypeScript</span>
+        <span class="project-meta">TypeScript · React · Cloudflare</span>
       </div>
-      <p class="project-desc">Storefront and custom admin panel in React, TypeScript, and Tailwind CSS: product catalog, categories, discounts, and site content, backed by SQL and Zod validation.</p>
+      <p class="project-desc">Full-stack website for a retail business: a public storefront with product catalog, categories and stock status, and a custom admin panel for products, discounts, homepage content and site settings. Built with TanStack Start, Tailwind CSS and Zod validation, on a SQL database (Cloudflare D1).</p>
     </article>
 
     <article class="project">
       <div class="project-head">
         <span class="project-name">Invoice Application</span>
-        <span class="project-meta">Full-stack · Python</span>
+        <span class="project-meta">Python · SQLite</span>
       </div>
-      <p class="project-desc">Desktop app that fills PDF receipt templates, calculates totals, and tracks payment status and customer history in a local database with sequential numbering.</p>
+      <p class="project-desc">Desktop application for a retail business that fills PDF receipt templates, tracks payment status and customer history, and numbers receipts automatically.</p>
     </article>
 
     <article class="project">
       <div class="project-head">
         <span class="project-name">Real-Time CV Automation Tool</span>
-        <span class="project-meta">Vision · Python/OpenCV</span>
+        <span class="project-meta">Python · OpenCV</span>
       </div>
       <p class="project-desc">Built to automate in-game minigames: screen-region object detection with OpenCV using color and contour tracking, a sub-frame-precise pattern-recognition module, and a configurable, persisted region selector.</p>
-    </article>
-
-    <article class="project">
-      <div class="project-head">
-        <span class="project-name">COVID-19 Image Classification</span>
-        <span class="project-meta">Deep learning · TensorFlow/Keras</span>
-      </div>
-      <p class="project-desc">University project classifying lung MRI images with a CNN, tuned with pooling and dropout layers and evaluated on categorical cross-entropy loss and accuracy.</p>
     </article>
 
     <article class="project">
