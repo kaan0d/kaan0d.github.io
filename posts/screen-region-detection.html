@@ -51,6 +51,55 @@
   .codeblock code{ font-family:var(--font-mono); font-size:0.85rem; color:var(--text); white-space:pre; line-height:1.6; }
   .codeblock .cm{ color:var(--text-dim); }
   .codeblock .kw{ color:var(--accent); }
+
+  .post-body h2{ font-family:var(--font-mono); font-size:1.05rem; font-weight:700; margin:48px 0 18px; }
+  .post-body h2 .hash{ color:var(--accent-dim); margin-right:8px; }
+  .post-body h3{ font-family:var(--font-mono); font-size:0.92rem; font-weight:700; margin:32px 0 12px; color:var(--text); }
+  .post-body code{ font-family:var(--font-mono); font-size:0.88em; color:var(--accent); }
+  .post-body a{ color:var(--accent); text-decoration:underline; text-decoration-color:#6b4a26; text-underline-offset:3px; }
+  .post-body a:hover{ text-decoration-color:var(--accent); }
+  .links{ font-family:var(--font-mono); font-size:0.88rem; }
+
+  .stats{ display:grid; grid-template-columns:repeat(3, 1fr); gap:1px; margin:32px 0; background:var(--line); border:1px solid var(--line); }
+  .stat{ background:rgba(6,6,7,0.94); padding:16px 14px; }
+  .stat b{ display:block; font-family:var(--font-mono); font-size:1.45rem; font-weight:700; color:var(--accent); line-height:1.2; }
+  .stat span{ display:block; margin-top:4px; font-size:0.82rem; color:var(--text-dim); line-height:1.4; }
+  @media (max-width:520px){ .stats{ grid-template-columns:repeat(2, 1fr); } }
+
+  figure{ margin:28px 0; }
+  figure img{ display:block; width:100%; height:auto; border:1px solid var(--line); border-radius:2px; background:#060607; }
+  figcaption{ margin-top:8px; font-family:var(--font-mono); font-size:0.76rem; line-height:1.55; color:var(--text-dim); }
+
+  .diagram-wrap{ overflow-x:auto; }
+  .diagram{ display:block; width:100%; min-width:640px; height:auto; }
+  .diagram .box{ fill:rgba(255,255,255,0.03); stroke:#2a2b2e; stroke-width:1; }
+  .diagram .box.hot{ stroke:var(--accent-dim); }
+  .diagram .fill{ fill:rgba(232,150,63,0.16); stroke:var(--accent-dim); stroke-width:1; }
+  .diagram .t{ font-family:var(--font-mono); font-size:13px; fill:var(--text); }
+  .diagram .s{ font-family:var(--font-mono); font-size:11px; fill:var(--text-dim); }
+  .diagram .hotT{ font-family:var(--font-mono); font-size:11px; fill:var(--accent); }
+  .diagram .arrow{ stroke:var(--accent-dim); stroke-width:1.5; fill:none; }
+  .diagram .head{ fill:var(--accent-dim); }
+  .diagram .axis{ stroke:var(--text-dim); stroke-width:1; }
+  .diagram .dash{ stroke:var(--text-dim); stroke-width:1; stroke-dasharray:4 3; }
+  .diagram .hotLine{ stroke:var(--accent); stroke-width:1.5; }
+
+  .table-wrap{ overflow-x:auto; margin:24px 0; }
+  table.data{ width:100%; border-collapse:collapse; font-size:0.86rem; }
+  table.data th{ text-align:left; font-family:var(--font-mono); font-size:0.74rem; font-weight:500; color:var(--text-dim); padding:8px 12px 8px 0; border-bottom:1px solid var(--line); white-space:nowrap; }
+  table.data td{ padding:8px 12px 8px 0; border-bottom:1px solid var(--line); vertical-align:top; line-height:1.5; }
+  table.data td.mono, table.data td.num{ font-family:var(--font-mono); font-size:0.82rem; }
+  table.data .dim, .dim{ color:var(--text-dim); }
+  table.data tr:last-child td{ border-bottom:none; }
+
+  .callout{ margin:28px 0; padding:14px 16px; border-left:2px solid var(--accent-dim); background:rgba(255,255,255,0.03); font-size:0.9rem; color:var(--text-dim); }
+  .callout p{ margin:0 0 10px; font-size:0.9rem; }
+  .callout p:last-child{ margin:0; }
+
+  .codeblock{ background:rgba(255,255,255,0.03); border:1px solid var(--line); border-radius:4px; padding:16px 18px; overflow-x:auto; margin:28px 0; }
+  .codeblock code{ font-family:var(--font-mono); font-size:0.85rem; color:var(--text); white-space:pre; line-height:1.6; }
+  .codeblock .cm{ color:var(--text-dim); }
+  .codeblock .kw{ color:var(--accent); }
 </style>
 
 <canvas id="silk-bg" aria-hidden="true"></canvas>
@@ -71,27 +120,110 @@
     <div class="post-body">
 <p>two small Python tools that look at one rectangle of the screen, work out what's in it, and press keys in response. it's a control loop where a human is just a slow, noisy feedback controller. the interesting part isn't the key press, it's getting a reliable answer out of noisy pixels sixty times a second.</p>
 
+      <div class="stats">
+        <div class="stat"><b>60 fps</b><span>capture target</span></div>
+        <div class="stat"><b>3 frames</b><span>before a target is locked</span></div>
+        <div class="stat"><b>6 frames</b><span>of missed detections bridged</span></div>
+        <div class="stat"><b>7 px / 2 px</b><span>start and release zones</span></div>
+        <div class="stat"><b>64×64</b><span>template size for arrows</span></div>
+        <div class="stat"><b>0.5 s</b><span>config reload interval</span></div>
+      </div>
+
       <h2><span class="hash">##</span>picking the region once</h2>
 
       <p>both tools start from a region selector built in Tkinter. it grabs a screenshot, you draw rectangles on it (zoom with the wheel, pan, undo the last one), and it saves them to a JSON file the trackers load on the next start. it can also sample a color by clicking a pixel, which is how the second tool learns what "green" means on this particular screen. capturing only the selected region with <code>mss</code> keeps every frame small enough to process at 60fps.</p>
 
       <h2><span class="hash">##</span>tool 1: follow a marker</h2>
 
-      <p>the first tracker follows one bright marker sliding along a thin strip and keeps it aligned with a target. detection is a stack of filters. first only near-pure-white pixels survive: a narrow HSV band, every channel above 245, and channels within 8 of each other, so tinted "almost white" is rejected. then morphological opening and closing remove specks and heal holes. the remaining contours are filtered by absolute size, share of the frame, aspect ratio and solidity (area against convex hull), and whatever survives is scored on solidity, fill and squareness. color finds the candidates, shape decides which one is real.</p>
+      <p>the first tracker follows one bright marker sliding along a thin strip and keeps it aligned with a target. detection is a stack of filters. first only near-pure-white pixels survive: a narrow HSV band, every channel above 245, and channels within 8 of each other, so tinted "almost white" is rejected. then morphological opening and closing remove specks and heal holes.</p>
 
-      <p>raw detections flicker, so a small tracker smooths the box with an exponential blend and bridges up to six missed frames before giving up. the target is the marker's position when it first appears, locked only after three stable frames so a single bright speck can't set it, and cleared the moment the marker disappears.</p>
+      <div class="codeblock"><code>hsv_mask    = cv2.inRange(hsv, MARKER_LOWER, MARKER_UPPER)                    <span class="cm"># bright, unsaturated</span>
+bright_mask = (min_ch &gt;= WHITE_MIN_CHANNEL).astype(np.uint8) * 255            <span class="cm"># every channel high</span>
+spread_mask = ((max_ch - min_ch) &lt;= WHITE_MAX_CHANNEL_SPREAD).astype(np.uint8) * 255   <span class="cm"># no tint</span>
 
-      <p>the controller is the piece i'm happiest with, because it uses hysteresis. it starts correcting only when the error leaves an outer tolerance (about 7 pixels, scaled up for bigger markers) and stops only when it's back inside a much tighter inner zone, holding the key instead of tapping it. with a single threshold the output chatters around the target; with two, it settles.</p>
+mask = cv2.bitwise_and(cv2.bitwise_and(hsv_mask, bright_mask), spread_mask)
+mask = cv2.morphologyEx(mask, cv2.MORPH_OPEN,  OPEN_KERNEL,  iterations=1)    <span class="cm"># drop specks</span>
+mask = cv2.morphologyEx(mask, cv2.MORPH_CLOSE, CLOSE_KERNEL, iterations=2)    <span class="cm"># heal holes</span></code></div>
+
+      <figure>
+        <img src="img/screen-marker-pipeline.png" width="1254" height="684" alt="Three stacked panels of a synthetic strip: the frame with a white marker and three distractors, the white mask, and the frame with the accepted contour boxed." loading="lazy">
+        <figcaption>the real detector on a synthetic frame, not a capture. the tiny speck survives the mask but is thrown out by the size filters, the tinted patch never makes the mask, the thin rule is erased by the opening, and the marker is the one contour left.</figcaption>
+      </figure>
+
+      <p>the remaining contours are filtered by absolute size, share of the frame, aspect ratio and solidity (area against convex hull), and whatever survives is scored on solidity, fill and squareness. color finds the candidates, shape decides which one is real.</p>
+
+      <p>raw detections flicker, so a small tracker smooths the box with an exponential blend and bridges up to six missed frames before giving up.</p>
+
+      <div class="codeblock"><code>a = SMOOTHING_ALPHA                                   <span class="cm"># 0.5</span>
+self.smoothed = tuple(a * r + (1 - a) * s <span class="kw">for</span> r, s <span class="kw">in</span> zip(raw_box, self.smoothed))
+...
+self.missed += 1
+<span class="kw">if</span> self.missed &gt; MAX_MISSED_FRAMES:                   <span class="cm"># 6</span>
+    self.smoothed = <span class="kw">None</span></code></div>
+
+      <p>the target is the marker's position when it first appears, locked only after three stable frames so a single bright speck can't set it, and cleared the moment the marker disappears.</p>
+
+      <p>the controller is the piece i'm happiest with, because it uses hysteresis. it starts correcting only when the error leaves an outer tolerance (7 pixels, scaled up for bigger markers) and stops only when it's back inside a much tighter inner zone, holding the key instead of tapping it. with a single threshold the output chatters around the target; with two, it settles.</p>
+
+      <figure>
+        <div class="diagram-wrap"><svg class="diagram" viewBox="0 0 760 170" role="img" aria-label="two zones around the target: start correcting outside 7 pixels, release inside 2 pixels"><defs><marker id="ah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0 L10 5 L0 10 z" class="head"/></marker></defs><rect x="100" y="50" width="560" height="50" class="box"/><rect x="289" y="50" width="182" height="50" class="fill"/><rect x="354" y="50" width="52" height="50" fill="rgba(232,150,63,0.30)"/><line class="hotLine" x1="380" y1="36" x2="380" y2="114"/><text class="t" x="380" y="28" text-anchor="middle">target</text><line class="dash" x1="289" y1="44" x2="289" y2="120"/><line class="dash" x1="471" y1="44" x2="471" y2="120"/><line class="dash" x1="354" y1="44" x2="354" y2="120"/><line class="dash" x1="406" y1="44" x2="406" y2="120"/><text class="hotT" x="380" y="80" text-anchor="middle">release</text><text class="s" x="289" y="138" text-anchor="middle">-7 px</text><text class="s" x="471" y="138" text-anchor="middle">+7 px</text><text class="s" x="354" y="154" text-anchor="middle">-2 px</text><text class="s" x="406" y="154" text-anchor="middle">+2 px</text><text class="s" x="195" y="80" text-anchor="middle">hold key: correct</text><text class="s" x="565" y="80" text-anchor="middle">hold key: correct</text><text class="s" x="322" y="80" text-anchor="middle">as is</text><text class="s" x="438" y="80" text-anchor="middle">as is</text></svg></div>
+        <figcaption>outside 7 px the key goes down and stays down. it only comes up inside 2 px. in between, the controller keeps doing whatever it was already doing.</figcaption>
+      </figure>
+
+      <div class="codeblock"><code><span class="cm"># condensed from the controller (key names changed)</span>
+tolerance = max(TOLERANCE_PX, target_half_width * 0.1)     <span class="cm"># outer zone</span>
+release_zone = 2                                           <span class="cm"># inner zone, in pixels</span>
+
+<span class="kw">if</span> self.held_key <span class="kw">is</span> <span class="kw">None</span> <span class="kw">and</span> abs(diff) &lt;= tolerance:
+    <span class="kw">return</span> <span class="kw">None</span>                          <span class="cm"># close enough, don't start</span>
+<span class="kw">if</span> abs(diff) &lt;= release_zone:
+    self._release_held_key()             <span class="cm"># arrived, let go</span>
+    <span class="kw">return</span> <span class="kw">None</span>
+self._hold_key("left" <span class="kw">if</span> diff &gt; 0 <span class="kw">else</span> "right")</code></div>
 
       <p>every threshold lives in a separate config module that the tracker reloads while it runs, checking the file's modified time twice a second. tuning means editing a number and watching the overlay, not restarting.</p>
 
+      <div class="codeblock"><code><span class="kw">if</span> os.path.getmtime(CONFIG_PATH) &gt; self.last_mtime:
+    apply_config(importlib.reload(self.module_ref))    <span class="cm"># new numbers, same process</span></code></div>
+
       <h2><span class="hash">##</span>tool 2: read arrows and progress lines</h2>
 
-      <p>the second tool reads a row of up to five or eight arrows, each with a progress line. every arrow slot is a small region. the white blob inside it is cropped, resized to 64×64 and compared with four templates (up, down, left, right) that the code draws itself with OpenCV, using cosine similarity. it only accepts an answer when the best match clearly beats the runner-up, so a blurry frame gives "unknown" instead of a wrong direction.</p>
+      <p>the second tool reads a row of up to five or eight arrows, each with a progress line. every arrow slot is a small region. the white blob inside it is cropped, resized to 64×64 and compared with four templates (up, down, left, right) that the code draws itself with OpenCV, using cosine similarity. it only accepts an answer when the best match clearly beats the runner-up.</p>
+
+      <div class="codeblock"><code>normalized = cv2.resize(crop, (64, 64), interpolation=cv2.INTER_NEAREST)
+normalized = cv2.GaussianBlur(normalized, (5, 5), 0).astype(np.float32) / 255.0
+
+scores = {d: np.sum(normalized * t["image"]) / (norm * t["norm"]) <span class="kw">for</span> d, t <span class="kw">in</span> templates.items()}
+(best, best_score), (_, second) = sorted(scores.items(), key=<span class="kw">lambda</span> kv: -kv[1])[:2]
+
+confidence = best_score - second
+<span class="kw">if</span> best_score &lt; 0.18 <span class="kw">or</span> confidence &lt; 0.015:
+    <span class="kw">return</span> <span class="kw">None</span>                          <span class="cm"># too blurry to trust, say "unknown"</span></code></div>
+
+      <figure>
+        <img src="img/screen-arrow-templates.png" width="1024" height="256" alt="A blurry thresholded up arrow next to the four generated templates with their cosine scores: up 0.57, down 0.49, left 0.21, right 0.22." loading="lazy">
+        <figcaption>the real matcher on a synthetic, noisy up arrow. up wins with 0.57 against 0.49 for down. a blurrier crop would shrink that gap below the threshold, and the tool would answer nothing.</figcaption>
+      </figure>
 
       <p>progress lines are trickier because they can be horizontal, vertical or diagonal. the tool picks out the pixels matching the sampled green, fits their principal axis, and measures how far the green stretches along that axis compared with the region's full length. that gives a 0 to 1 progress value without caring about orientation.</p>
 
+      <div class="codeblock"><code>points = np.column_stack(np.where(green_mask &gt; 0))[:, ::-1].astype(np.float32)       <span class="cm"># x, y of green pixels</span>
+eigenvalues, eigenvectors = np.linalg.eigh(np.cov((points - points.mean(axis=0)).T))
+axis = eigenvectors[:, np.argmax(eigenvalues)]        <span class="cm"># the direction the green stretches in</span>
+
+active_span = np.ptp(points @ axis)                   <span class="cm"># how far it reaches along that axis</span>
+total_span  = np.ptp(corners @ axis)                  <span class="cm"># the region's full length on the same axis</span>
+progress = active_span / total_span</code></div>
+
       <p>a stability layer sits on top: a pattern has to be seen in two consecutive frames before it counts, and it survives up to three frames of dropout. the tool evaluates both layouts (five and eight arrows), keeps whichever explains the frame better, and returns nothing if they tie. when a line's progress passes a threshold, it sends the matching key.</p>
+
+      <div class="codeblock"><code><span class="kw">if</span> key == self.pending_key:
+    self.pending_count += 1
+<span class="kw">else</span>:
+    self.pending_key, self.pending_count = key, 1
+
+<span class="kw">if</span> self.pending_count &gt;= TRACK_STABLE_FRAMES:         <span class="cm"># 2 frames in a row</span>
+    self.stable_pattern = (mode_name, list(pattern))</code></div>
 
       <h2><span class="hash">##</span>what i took from it</h2>
 
