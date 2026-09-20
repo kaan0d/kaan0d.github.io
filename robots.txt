@@ -1,0 +1,3 @@
+User-agent: *
+Allow: /
+Sitemap: https://kaandinc.com/sitemap.xml

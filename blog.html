@@ -1,442 +1,157 @@
-<title>kaan0d log</title>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
-<style>
-  :root{
-    --bg:#060607;
-    --panel:rgba(6,6,7,0.86);
-    --line:#1d1e20;
-    --text:#e9e6e0;
-    --text-dim:#8b8983;
-    --accent:#e8963f;
-    --accent-dim:#a5652a;
-    --accent-soft:#6b4a26;
-    --font-mono:'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
-    --font-sans:'IBM Plex Sans', system-ui, -apple-system, sans-serif;
-    --maxw:760px;
-  }
+<!doctype html>
+<html lang="en" data-page="blog">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Blog | Kaan Dinç</title>
+<meta name="description" content="Notes on what I've been building: a packet analyzer, a physics engine, desktop apps and more.">
+<meta name="theme-color" content="#0a0a09">
+<link rel="canonical" href="https://kaandinc.com/blog">
+<meta property="og:type" content="website">
+<meta property="og:title" content="Blog | Kaan Dinç">
+<meta property="og:description" content="Notes on what I've been building: a packet analyzer, a physics engine, desktop apps and more.">
+<meta property="og:url" content="https://kaandinc.com/blog">
+<link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
+<link rel="preload" href="assets/fonts/Geist-Variable.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="stylesheet" href="assets/css/base.css">
+<link rel="stylesheet" href="assets/css/blog.css">
+<script>
+(function (d) {
+  d.classList.add('js');
+  if (matchMedia('(prefers-reduced-motion: reduce)').matches) d.classList.add('reduce');
+  try { if (sessionStorage.getItem('curtain')) d.classList.add('curtain-on'); } catch (e) {}
+  // Safety net: reveal content if the animation scripts never report ready.
+  setTimeout(function () { if (!d.classList.contains('ready')) d.classList.add('no-anim'); }, 4000);
+})(document.documentElement);
+</script>
 
-  *{ box-sizing:border-box; }
+</head>
+<body>
+<div class="curtain" aria-hidden="true"></div>
+<a class="skip" href="#main">skip to content</a>
 
-  html{ scroll-behavior:smooth; }
+<header class="site-header">
+  <a class="site-header__brand" href="./" aria-label="Kaan Dinç, home">Kaan Dinç</a>
+  <nav class="site-nav" aria-label="primary">
+    <a class="roll" href="./#projects"><span class="roll__in" data-text="projects">projects</span></a>
+    <a class="roll" href="blog"><span class="roll__in" data-text="blog">blog</span></a>
+    <a class="roll" href="https://drive.google.com/file/d/1M5Ri6U8PAwSgwr31EN4JDeT90P7OuCPo/view" target="_blank" rel="noopener"><span class="roll__in" data-text="cv">cv</span></a>
+    <button class="site-nav__menu roll" type="button" aria-expanded="false" aria-controls="menu"><span class="roll__in" data-text="menu">menu</span></button>
+  </nav>
+</header>
 
-  body{
-    margin:0;
-    background:var(--bg);
-    color:var(--text);
-    font-family:var(--font-sans);
-    font-size:16px;
-    line-height:1.65;
-    -webkit-font-smoothing:antialiased;
-  }
-
-  a{ color:inherit; }
-  a:focus-visible, button:focus-visible{ outline:1px solid var(--accent); outline-offset:3px; }
-
-  #silk-bg{
-    position:fixed;
-    inset:0;
-    width:100vw;
-    height:100vh;
-    z-index:0;
-    pointer-events:none;
-    background:var(--bg);
-    display:block;
-  }
-
-  .wrap{
-    position:relative;
-    z-index:1;
-    max-width:var(--maxw);
-    margin:0 auto;
-    padding:40px 20px 56px;
-    background:var(--panel);
-    -webkit-backdrop-filter:blur(2px);
-    backdrop-filter:blur(2px);
-  }
-
-  header.topbar{
-    display:flex;
-    flex-wrap:wrap;
-    justify-content:space-between;
-    align-items:baseline;
-    gap:10px 20px;
-    padding-bottom:16px;
-    margin-bottom:28px;
-    border-bottom:1px solid var(--line);
-    font-family:var(--font-mono);
-  }
-
-  .prompt{ font-size:1.05rem; }
-  .prompt .cash{ color:var(--accent); margin-right:8px; }
-  .prompt .name{ font-weight:700; }
-
-  header.topbar nav{ display:flex; gap:16px; flex-wrap:wrap; font-size:0.88rem; }
-  header.topbar nav a{ display:inline-block; user-select:none; text-decoration:none; color:var(--text-dim); }
-  header.topbar nav a:hover, header.topbar nav a:focus-visible{ color:var(--accent); }
-
-  .tagline{
-    font-size:1.02rem;
-    margin:0 0 44px;
-    color:var(--text-dim);
-  }
-
-  section h2{
-    font-family:var(--font-mono);
-    font-size:1.05rem;
-    font-weight:700;
-    margin:0 0 24px;
-  }
-  section h2 .hash{ color:var(--accent-dim); margin-right:8px; }
-
-  .post{ padding-top:18px; border-top:1px solid var(--line); margin-bottom:18px; }
-  .post:first-of-type{ padding-top:0; border-top:none; }
-  .post:last-child{ margin-bottom:0; }
-
-  .post-head{
-    display:flex;
-    justify-content:space-between;
-    align-items:baseline;
-    flex-wrap:wrap;
-    gap:4px 16px;
-  }
-  .post-title{ font-family:var(--font-mono); font-weight:700; font-size:1.1rem; margin:0; }
-  .post-title a{ display:inline-block; user-select:none; color:var(--text); text-decoration:none; }
-  .post-title a:hover, .post-title a:focus-visible{ color:var(--accent); }
-  .post-meta{ font-family:var(--font-mono); font-size:0.78rem; color:var(--text-dim); white-space:nowrap; }
-
-  footer{
-    font-family:var(--font-mono);
-    font-size:0.76rem;
-    color:var(--text-dim);
-    margin-top:48px;
-    padding-top:16px;
-    border-top:1px solid var(--line);
-    display:flex;
-    justify-content:space-between;
-    gap:10px;
-    flex-wrap:wrap;
-  }
-
-  @media (prefers-reduced-motion: reduce){
-    *{ animation:none !important; transition:none !important; }
-  }
-</style>
-
-<canvas id="silk-bg" aria-hidden="true"></canvas>
-
-<div class="wrap">
-  <header class="topbar">
-    <div class="prompt"><span class="cash">$</span><span class="name">Kaan Dinç</span></div>
-    <nav>
-      <a href="./">home</a>
-    </nav>
-  </header>
-
-  <p class="tagline">notes on what i've been building.</p>
-
-  <section id="posts">
-    <h2><span class="hash">##</span>posts</h2>
-
-    <article class="post">
-      <div class="post-head">
-        <h3 class="post-title"><a href="posts/sentinel-real-world">part 3: sentinel meets real traffic</a></h3>
-        <span class="post-meta">Sep 2026</span>
-      </div>
-    </article>
-    <article class="post">
-      <div class="post-head">
-        <h3 class="post-title"><a href="posts/sentinel-next-level">part 2: taking sentinel to the next level</a></h3>
-        <span class="post-meta">Sep 2026</span>
-      </div>
-    </article>
-
-    <article class="post">
-      <div class="post-head">
-        <h3 class="post-title"><a href="posts/sentinel-packet-analyzer">part 1: writing a packet analyzer from scratch</a></h3>
-        <span class="post-meta">Sep 2026</span>
-      </div>
-    </article>
-
-    <article class="post">
-      <div class="post-head">
-        <h3 class="post-title"><a href="posts/impulse-physics-engine">building a 2d physics engine from scratch</a></h3>
-        <span class="post-meta">Sep 2026</span>
-      </div>
-    </article>
-
-    <article class="post">
-      <div class="post-head">
-        <h3 class="post-title"><a href="posts/volume-extension">a chrome extension for one annoying problem</a></h3>
-        <span class="post-meta">Sep 2026</span>
-      </div>
-    </article>
-
-    <article class="post">
-      <div class="post-head">
-        <h3 class="post-title"><a href="posts/ecommerce-admin-panel">a shop site that isn't a shop</a></h3>
-        <span class="post-meta">Apr 2026</span>
-      </div>
-    </article>
-
-    <article class="post">
-      <div class="post-head">
-        <h3 class="post-title"><a href="posts/screen-region-detection">reading a rectangle of the screen with opencv</a></h3>
-        <span class="post-meta">Dec 2025</span>
-      </div>
-    </article>
-
-    <article class="post">
-      <div class="post-head">
-        <h3 class="post-title"><a href="posts/retail-desktop-apps">two desktop apps for a retail shop</a></h3>
-        <span class="post-meta">2025</span>
-      </div>
-    </article>
-
-    <article class="post">
-      <div class="post-head">
-        <h3 class="post-title"><a href="posts/discord-bots">two discord bots and the loop they share</a></h3>
-        <span class="post-meta">2024</span>
-      </div>
-    </article>
-  </section>
-
-  <footer>
-    <span>Kaan Dinç</span>
-    <span>Çanakkale, Turkey</span>
-  </footer>
+<div class="menu" id="menu" hidden>
+  <div class="menu__inner">
+    <ul class="menu__list">
+      <li><a href="./#about"><span>about</span></a></li>
+      <li><a href="./#projects"><span>projects</span></a></li>
+      <li><a href="./#experience"><span>experience</span></a></li>
+      <li><a href="./#skills"><span>skills</span></a></li>
+      <li><a href="./#education"><span>education</span></a></li>
+      <li><a href="./#repos"><span>repos</span></a></li>
+      <li><a href="./#links"><span>links</span></a></li>
+      <li><a href="blog"><span>blog</span></a></li>
+    </ul>
+    <ul class="menu__ext">
+      <li><a class="roll" href="mailto:kaan.dnc.7505@gmail.com"><span class="roll__in" data-text="email">email</span></a></li>
+      <li><a class="roll" href="https://github.com/kaan0d" target="_blank" rel="noopener"><span class="roll__in" data-text="github">github</span></a></li>
+      <li><a class="roll" href="https://www.linkedin.com/in/kaandinc/" target="_blank" rel="noopener"><span class="roll__in" data-text="linkedin">linkedin</span></a></li>
+      <li><a class="roll" href="https://drive.google.com/file/d/1M5Ri6U8PAwSgwr31EN4JDeT90P7OuCPo/view" target="_blank" rel="noopener"><span class="roll__in" data-text="cv">cv</span></a></li>
+    </ul>
+  </div>
 </div>
 
-<script>
-(function(){
-  // Ported from https://reactbits.dev (Silk, JS-CSS variant) to raw WebGL, no three.js needed.
-  var canvas = document.getElementById('silk-bg');
-  var gl = canvas.getContext('webgl') || canvas.getContext('experimental-webgl');
-  var reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-  if (!gl) return;
+<main id="main">
+<section class="blog-hero">
+  <h1 class="blog-hero__title" data-split="lines" data-hero>blog</h1>
+  <p class="blog-hero__lede" data-fade data-hero>notes on what i've been building.</p>
+</section>
+<div class="blog-index">
+    <section class="year" data-fade>
+      <h2 class="year__label">2026</h2>
+      <ul class="post-list">
+        <li><a class="post-row" href="posts/sentinel-real-world">
+          <span class="post-row__date">Sep 2026</span>
+          <span class="post-row__title">part 3: sentinel meets real traffic</span>
+          <span class="post-row__meta">8 min read</span>
+          <span class="post-row__arrow" aria-hidden="true">&rarr;</span>
+        </a></li>
+        <li><a class="post-row" href="posts/sentinel-next-level">
+          <span class="post-row__date">Sep 2026</span>
+          <span class="post-row__title">part 2: taking sentinel to the next level</span>
+          <span class="post-row__meta">33 min read</span>
+          <span class="post-row__arrow" aria-hidden="true">&rarr;</span>
+        </a></li>
+        <li><a class="post-row" href="posts/sentinel-packet-analyzer">
+          <span class="post-row__date">Sep 2026</span>
+          <span class="post-row__title">part 1: writing a packet analyzer from scratch</span>
+          <span class="post-row__meta">43 min read</span>
+          <span class="post-row__arrow" aria-hidden="true">&rarr;</span>
+        </a></li>
+        <li><a class="post-row" href="posts/impulse-physics-engine">
+          <span class="post-row__date">Sep 2026</span>
+          <span class="post-row__title">building a 2d physics engine from scratch</span>
+          <span class="post-row__meta">5 min read</span>
+          <span class="post-row__arrow" aria-hidden="true">&rarr;</span>
+        </a></li>
+        <li><a class="post-row" href="posts/volume-extension">
+          <span class="post-row__date">Sep 2026</span>
+          <span class="post-row__title">a chrome extension for one annoying problem</span>
+          <span class="post-row__meta">1 min read</span>
+          <span class="post-row__arrow" aria-hidden="true">&rarr;</span>
+        </a></li>
+        <li><a class="post-row" href="posts/ecommerce-admin-panel">
+          <span class="post-row__date">Apr 2026</span>
+          <span class="post-row__title">a shop site that isn't a shop</span>
+          <span class="post-row__meta">4 min read</span>
+          <span class="post-row__arrow" aria-hidden="true">&rarr;</span>
+        </a></li>
+      </ul>
+    </section>
 
-  var VERT = 'attribute vec2 aPos;\nvarying vec2 vUv;\nvoid main(){\n  vUv = aPos * 0.5 + 0.5;\n  gl_Position = vec4(aPos, 0.0, 1.0);\n}';
+    <section class="year" data-fade>
+      <h2 class="year__label">2025</h2>
+      <ul class="post-list">
+        <li><a class="post-row" href="posts/screen-region-detection">
+          <span class="post-row__date">Dec 2025</span>
+          <span class="post-row__title">reading a rectangle of the screen with opencv</span>
+          <span class="post-row__meta">3 min read</span>
+          <span class="post-row__arrow" aria-hidden="true">&rarr;</span>
+        </a></li>
+        <li><a class="post-row" href="posts/retail-desktop-apps">
+          <span class="post-row__date">2025</span>
+          <span class="post-row__title">two desktop apps for a retail shop</span>
+          <span class="post-row__meta">3 min read</span>
+          <span class="post-row__arrow" aria-hidden="true">&rarr;</span>
+        </a></li>
+      </ul>
+    </section>
 
-  var FRAG = [
-    '#ifdef GL_ES',
-    'precision mediump float;',
-    '#endif',
-    'varying vec2 vUv;',
-    'uniform float uTime;',
-    'uniform vec3 uColor;',
-    'uniform float uSpeed;',
-    'uniform float uScale;',
-    'uniform float uRotation;',
-    'uniform float uNoiseIntensity;',
-    'uniform float uLightMode;',
-    'const float e = 2.71828182845904523536;',
-    'float noise(vec2 texCoord){',
-    '  float G = e;',
-    '  vec2 r = (G * sin(G * texCoord));',
-    '  return fract(r.x * r.y * (1.0 + texCoord.x));',
-    '}',
-    'vec2 rotateUvs(vec2 uv, float angle){',
-    '  float c = cos(angle);',
-    '  float s = sin(angle);',
-    '  mat2 rot = mat2(c, -s, s, c);',
-    '  return rot * uv;',
-    '}',
-    'void main(){',
-    '  float rnd = noise(gl_FragCoord.xy);',
-    '  vec2 uv = rotateUvs(vUv * uScale, uRotation);',
-    '  vec2 tex = uv * uScale;',
-    '  float tOffset = uSpeed * uTime;',
-    '  tex.y += 0.03 * sin(8.0 * tex.x - tOffset);',
-    '  float pattern = 0.6 + 0.4 * sin(5.0 * (tex.x + tex.y + cos(3.0 * tex.x + 5.0 * tex.y) + 0.02 * tOffset) + sin(20.0 * (tex.x + tex.y - 0.1 * tOffset)));',
-    '  float grain = rnd / 15.0 * uNoiseIntensity;',
-    '  vec3 result = uColor * pattern - vec3(grain);',
-    '  if (uLightMode > 0.5) {',
-    '    float fold = smoothstep(0.28, 0.9, pattern);',
-    '    float specular = smoothstep(0.72, 0.98, pattern);',
-    '    vec3 shadowColor = uColor * 0.72;',
-    '    vec3 bodyColor = min(uColor * 1.18, vec3(1.0));',
-    '    vec3 lightBase = mix(shadowColor, bodyColor, fold);',
-    '    lightBase = mix(lightBase, vec3(1.0), specular * 0.92);',
-    '    float fineNoise = noise(gl_FragCoord.xy * 0.63 + vec2(17.0, 41.0));',
-    '    float grainSignal = (rnd + fineNoise - 1.0);',
-    '    float grainStrength = clamp(uNoiseIntensity * 0.038, 0.0, 0.16);',
-    '    result = lightBase + grainSignal * grainStrength;',
-    '  }',
-    '  gl_FragColor = vec4(clamp(result, 0.0, 1.0), 1.0);',
-    '}'
-  ].join('\n');
+    <section class="year" data-fade>
+      <h2 class="year__label">2024</h2>
+      <ul class="post-list">
+        <li><a class="post-row" href="posts/discord-bots">
+          <span class="post-row__date">2024</span>
+          <span class="post-row__title">two discord bots and the loop they share</span>
+          <span class="post-row__meta">3 min read</span>
+          <span class="post-row__arrow" aria-hidden="true">&rarr;</span>
+        </a></li>
+      </ul>
+    </section>
+</div>
+</main>
 
-  function compile(type, src){
-    var s = gl.createShader(type);
-    gl.shaderSource(s, src);
-    gl.compileShader(s);
-    return s;
-  }
+<footer class="site-footer">
+  <span>Kaan Dinç</span>
+  <span>Çanakkale, Turkey</span>
+  <button class="roll" type="button" data-top><span class="roll__in" data-text="back to top">back to top</span></button>
+</footer>
 
-  var prog = gl.createProgram();
-  gl.attachShader(prog, compile(gl.VERTEX_SHADER, VERT));
-  gl.attachShader(prog, compile(gl.FRAGMENT_SHADER, FRAG));
-  gl.linkProgram(prog);
-  gl.useProgram(prog);
+<script defer src="assets/vendor/gsap.min.js"></script>
+<script defer src="assets/vendor/ScrollTrigger.min.js"></script>
+<script defer src="assets/vendor/SplitText.min.js"></script>
+<script defer src="assets/vendor/lenis.min.js"></script>
+<script defer src="assets/js/core.js"></script>
 
-  var quad = new Float32Array([-1, -1, 3, -1, -1, 3]);
-  var buf = gl.createBuffer();
-  gl.bindBuffer(gl.ARRAY_BUFFER, buf);
-  gl.bufferData(gl.ARRAY_BUFFER, quad, gl.STATIC_DRAW);
-  var aPos = gl.getAttribLocation(prog, 'aPos');
-  gl.enableVertexAttribArray(aPos);
-  gl.vertexAttribPointer(aPos, 2, gl.FLOAT, false, 0, 0);
-
-  var uTime = gl.getUniformLocation(prog, 'uTime');
-  var uColor = gl.getUniformLocation(prog, 'uColor');
-  var uSpeed = gl.getUniformLocation(prog, 'uSpeed');
-  var uScale = gl.getUniformLocation(prog, 'uScale');
-  var uRotation = gl.getUniformLocation(prog, 'uRotation');
-  var uNoiseIntensity = gl.getUniformLocation(prog, 'uNoiseIntensity');
-  var uLightMode = gl.getUniformLocation(prog, 'uLightMode');
-
-  function hexToRgb(hex){
-    hex = hex.replace('#', '');
-    return [
-      parseInt(hex.slice(0, 2), 16) / 255,
-      parseInt(hex.slice(2, 4), 16) / 255,
-      parseInt(hex.slice(4, 6), 16) / 255
-    ];
-  }
-
-  var col = hexToRgb('#7B7481');
-  gl.uniform3f(uColor, col[0], col[1], col[2]);
-  gl.uniform1f(uSpeed, 5);
-  gl.uniform1f(uScale, 0.8);
-  gl.uniform1f(uRotation, 0);
-  gl.uniform1f(uNoiseIntensity, 3.4);
-  gl.uniform1f(uLightMode, 0);
-
-  var time = 0, lastT = 0;
-
-  function resize(){
-    var DPR = Math.min(window.devicePixelRatio || 1, 2);
-    var W = window.innerWidth, H = window.innerHeight;
-    canvas.width = Math.floor(W * DPR);
-    canvas.height = Math.floor(H * DPR);
-    canvas.style.width = W + 'px';
-    canvas.style.height = H + 'px';
-    gl.viewport(0, 0, canvas.width, canvas.height);
-    draw();
-  }
-
-  function draw(){
-    gl.uniform1f(uTime, time);
-    gl.drawArrays(gl.TRIANGLES, 0, 3);
-  }
-
-  function frame(ts){
-    var delta = lastT ? (ts - lastT) / 1000 : 0;
-    lastT = ts;
-    time += 0.1 * delta;
-    draw();
-    requestAnimationFrame(frame);
-  }
-
-  window.addEventListener('resize', resize);
-  resize();
-  if (!reduceMotion) requestAnimationFrame(frame);
-})();
-</script>
-
-<script>
-(function(){
-  // Ported from AsciiGlitchRipple (React Bits style hover component) to vanilla JS.
-  if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
-
-  var CHARS = '.,·-─~+:;=*π""┐┌┘┴┬╗╔╝╚╬╠╣╩╦║░▒▓█▄▀▌▐■!?&#$@0123456789*';
-  var WAVE_THRESH = 3, CHAR_MULT = 3, ANIM_STEP = 40, WAVE_BUF = 5, DUR = 1000;
-
-  function attach(el){
-    var origTxt = el.textContent;
-    var origChars = origTxt.split('');
-    var waves = [];
-    var animId = null, isAnim = false, isHover = false, cursorPos = 0, lockedWidth = null;
-
-    function updateCursorPos(e){
-      var rect = el.getBoundingClientRect();
-      var x = e.clientX - rect.left;
-      var len = origChars.length;
-      var pos = Math.round((x / rect.width) * len);
-      cursorPos = Math.max(0, Math.min(pos, len - 1));
-    }
-
-    function stop(){
-      el.textContent = origTxt;
-      if (lockedWidth !== null){ el.style.width = ''; lockedWidth = null; }
-      isAnim = false;
-      if (animId){ cancelAnimationFrame(animId); animId = null; }
-    }
-
-    function waveAt(charIdx, t){
-      var shouldAnim = false, resultChar = origChars[charIdx];
-      for (var w = 0; w < waves.length; w++){
-        var wave = waves[w];
-        var age = t - wave.startTime;
-        var prog = Math.min(age / DUR, 1);
-        var dist = Math.abs(charIdx - wave.startPos);
-        var maxDist = Math.max(wave.startPos, origChars.length - wave.startPos - 1);
-        var rad = prog * (maxDist + WAVE_BUF);
-        if (dist <= rad){
-          shouldAnim = true;
-          var intens = Math.max(0, rad - dist);
-          if (intens <= WAVE_THRESH && intens > 0){
-            resultChar = CHARS[(dist * CHAR_MULT + Math.floor(age / ANIM_STEP)) % CHARS.length];
-          }
-        }
-      }
-      return { shouldAnim: shouldAnim, ch: resultChar };
-    }
-
-    function scrambledText(t){
-      var out = '';
-      for (var i = 0; i < origChars.length; i++){
-        var ch = origChars[i];
-        if (ch === ' '){ out += ' '; continue; }
-        var res = waveAt(i, t);
-        out += res.shouldAnim ? res.ch : ch;
-      }
-      return out;
-    }
-
-    function animate(){
-      var t = Date.now();
-      waves = waves.filter(function(w){ return t - w.startTime < DUR; });
-      if (waves.length === 0){ stop(); return; }
-      el.textContent = scrambledText(t);
-      animId = requestAnimationFrame(animate);
-    }
-
-    function start(){
-      if (isAnim) return;
-      if (lockedWidth === null){
-        lockedWidth = el.getBoundingClientRect().width;
-        el.style.width = lockedWidth + 'px';
-      }
-      isAnim = true;
-      animId = requestAnimationFrame(animate);
-    }
-
-    function startWave(){
-      waves.push({ startPos: cursorPos, startTime: Date.now() });
-      if (!isAnim) start();
-    }
-
-    el.addEventListener('mouseenter', function(e){ isHover = true; updateCursorPos(e); startWave(); });
-    el.addEventListener('mousemove', function(e){
-      if (!isHover) return;
-      var old = cursorPos;
-      updateCursorPos(e);
-      if (cursorPos !== old) startWave();
-    });
-    el.addEventListener('mouseleave', function(){ isHover = false; });
-  }
-
-  var targets = document.querySelectorAll('header.topbar nav a, .post-title a');
-  for (var i = 0; i < targets.length; i++) attach(targets[i]);
-})();
-</script>
+</body>
+</html>

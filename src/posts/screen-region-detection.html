@@ -1,84 +1,8 @@
-<!doctype html>
-<html lang="en" data-page="post">
-<head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>reading a rectangle of the screen with opencv | Kaan Dinç</title>
-<meta name="description" content="two small Python tools that look at one rectangle of the screen, work out what's in it, and press keys in response. it's a control loop where a human is...">
-<meta name="theme-color" content="#0a0a09">
-<link rel="canonical" href="https://kaandinc.com/posts/screen-region-detection">
-<meta property="og:type" content="article">
-<meta property="og:title" content="reading a rectangle of the screen with opencv | Kaan Dinç">
-<meta property="og:description" content="two small Python tools that look at one rectangle of the screen, work out what's in it, and press keys in response. it's a control loop where a human is...">
-<meta property="og:url" content="https://kaandinc.com/posts/screen-region-detection">
-<link rel="icon" href="../assets/favicon.svg" type="image/svg+xml">
-<link rel="preload" href="../assets/fonts/Geist-Variable.woff2" as="font" type="font/woff2" crossorigin>
-<link rel="stylesheet" href="../assets/css/base.css">
-<link rel="stylesheet" href="../assets/css/post.css">
-<script>
-(function (d) {
-  d.classList.add('js');
-  if (matchMedia('(prefers-reduced-motion: reduce)').matches) d.classList.add('reduce');
-  try { if (sessionStorage.getItem('curtain')) d.classList.add('curtain-on'); } catch (e) {}
-  // Safety net: reveal content if the animation scripts never report ready.
-  setTimeout(function () { if (!d.classList.contains('ready')) d.classList.add('no-anim'); }, 4000);
-})(document.documentElement);
-</script>
-
-</head>
-<body>
-<div class="curtain" aria-hidden="true"></div>
-<a class="skip" href="#main">skip to content</a>
-
-<header class="site-header">
-  <a class="site-header__brand" href="../" aria-label="Kaan Dinç, home">Kaan Dinç</a>
-  <nav class="site-nav" aria-label="primary">
-    <a class="roll" href="../#projects"><span class="roll__in" data-text="projects">projects</span></a>
-    <a class="roll" href="../blog"><span class="roll__in" data-text="blog">blog</span></a>
-    <a class="roll" href="https://drive.google.com/file/d/1M5Ri6U8PAwSgwr31EN4JDeT90P7OuCPo/view" target="_blank" rel="noopener"><span class="roll__in" data-text="cv">cv</span></a>
-    <button class="site-nav__menu roll" type="button" aria-expanded="false" aria-controls="menu"><span class="roll__in" data-text="menu">menu</span></button>
-  </nav>
-</header>
-
-<div class="menu" id="menu" hidden>
-  <div class="menu__inner">
-    <ul class="menu__list">
-      <li><a href="../#about"><span>about</span></a></li>
-      <li><a href="../#projects"><span>projects</span></a></li>
-      <li><a href="../#experience"><span>experience</span></a></li>
-      <li><a href="../#skills"><span>skills</span></a></li>
-      <li><a href="../#education"><span>education</span></a></li>
-      <li><a href="../#repos"><span>repos</span></a></li>
-      <li><a href="../#links"><span>links</span></a></li>
-      <li><a href="../blog"><span>blog</span></a></li>
-    </ul>
-    <ul class="menu__ext">
-      <li><a class="roll" href="mailto:kaan.dnc.7505@gmail.com"><span class="roll__in" data-text="email">email</span></a></li>
-      <li><a class="roll" href="https://github.com/kaan0d" target="_blank" rel="noopener"><span class="roll__in" data-text="github">github</span></a></li>
-      <li><a class="roll" href="https://www.linkedin.com/in/kaandinc/" target="_blank" rel="noopener"><span class="roll__in" data-text="linkedin">linkedin</span></a></li>
-      <li><a class="roll" href="https://drive.google.com/file/d/1M5Ri6U8PAwSgwr31EN4JDeT90P7OuCPo/view" target="_blank" rel="noopener"><span class="roll__in" data-text="cv">cv</span></a></li>
-    </ul>
-  </div>
-</div>
-
-<main id="main">
-<div class="progress" aria-hidden="true"><span></span></div>
-<article class="post">
-  <header class="post-head">
-    <a class="post-head__back roll" href="../blog"><span class="roll__in" data-text="&amp;larr; blog">&larr; blog</span></a>
-    <p class="post-head__meta" data-hero><time datetime="2025-12-01">Dec 2025</time> &nbsp;/&nbsp; 3 min read</p>
-    <h1 class="post-head__title" data-split="lines" data-hero>reading a rectangle of the screen with opencv</h1>
-  </header>
-  <div class="post-layout has-toc">
-    <aside class="toc" aria-label="on this page">
-      <ol>
-        <li><a href="#picking-the-region-once">picking the region once</a></li>
-        <li><a href="#tool-1-follow-a-marker">tool 1: follow a marker</a></li>
-        <li><a href="#tool-2-read-arrows-and-progress-lines">tool 2: read arrows and progress lines</a></li>
-        <li><a href="#what-i-took-from-it">what i took from it</a></li>
-      </ol>
-    </aside>
-    <div class="post-body">
+---
+title: reading a rectangle of the screen with opencv
+date: 2025-12-01
+label: Dec 2025
+---
 <p>two small Python tools that look at one rectangle of the screen, work out what's in it, and press keys in response. it's a control loop where a human is just a slow, noisy feedback controller. the interesting part isn't the key press, it's getting a reliable answer out of noisy pixels sixty times a second.</p>
 
       <div class="stats">
@@ -90,11 +14,11 @@
         <div class="stat"><b>0.5 s</b><span>config reload interval</span></div>
       </div>
 
-      <h2 id="picking-the-region-once">picking the region once</h2>
+      <h2>picking the region once</h2>
 
       <p>both tools start from a region selector built in Tkinter. it grabs a screenshot, you draw rectangles on it (zoom with the wheel, pan, undo the last one), and it saves them to a JSON file the trackers load on the next start. it can also sample a color by clicking a pixel, which is how the second tool learns what "green" means on this particular screen. capturing only the selected region with <code>mss</code> keeps every frame small enough to process at 60fps.</p>
 
-      <h2 id="tool-1-follow-a-marker">tool 1: follow a marker</h2>
+      <h2>tool 1: follow a marker</h2>
 
       <p>the first tracker follows one bright marker sliding along a thin strip and keeps it aligned with a target. detection is a stack of filters. first only near-pure-white pixels survive: a narrow HSV band, every channel above 245, and channels within 8 of each other, so tinted "almost white" is rejected. then morphological opening and closing remove specks and heal holes.</p>
 
@@ -147,7 +71,7 @@ self._hold_key("left" <span class="kw">if</span> diff &gt; 0 <span class="kw">el
       <div class="codeblock"><code><span class="kw">if</span> os.path.getmtime(CONFIG_PATH) &gt; self.last_mtime:
     apply_config(importlib.reload(self.module_ref))    <span class="cm"># new numbers, same process</span></code></div>
 
-      <h2 id="tool-2-read-arrows-and-progress-lines">tool 2: read arrows and progress lines</h2>
+      <h2>tool 2: read arrows and progress lines</h2>
 
       <p>the second tool reads a row of up to five or eight arrows, each with a progress line. every arrow slot is a small region. the white blob inside it is cropped, resized to 64×64 and compared with four templates (up, down, left, right) that the code draws itself with OpenCV, using cosine similarity. it only accepts an answer when the best match clearly beats the runner-up.</p>
 
@@ -186,36 +110,6 @@ progress = active_span / total_span</code></div>
 <span class="kw">if</span> self.pending_count &gt;= TRACK_STABLE_FRAMES:         <span class="cm"># 2 frames in a row</span>
     self.stable_pattern = (mode_name, list(pattern))</code></div>
 
-      <h2 id="what-i-took-from-it">what i took from it</h2>
+      <h2>what i took from it</h2>
 
       <p>color alone matches far too much, and the shape filters do the real work. a decision from one frame is noise, so require agreement over a few frames and tolerate short gaps. anything that drives an output needs hysteresis. thresholds should be tunable while the thing runs. and generating templates in code means there's nothing to re-capture when the display changes.</p>
-
-    </div>
-  </div>
-</article>
-<nav class="post-steps" aria-label="more posts">
-  <a class="post-step post-step--newer" href="ecommerce-admin-panel">
-      <span class="post-step__dir">&larr; newer</span>
-      <span class="post-step__title">a shop site that isn't a shop</span>
-    </a>
-  <a class="post-step post-step--older" href="retail-desktop-apps">
-      <span class="post-step__dir">older &rarr;</span>
-      <span class="post-step__title">two desktop apps for a retail shop</span>
-    </a>
-</nav>
-</main>
-
-<footer class="site-footer">
-  <span>Kaan Dinç</span>
-  <span>Çanakkale, Turkey</span>
-  <button class="roll" type="button" data-top><span class="roll__in" data-text="back to top">back to top</span></button>
-</footer>
-
-<script defer src="../assets/vendor/gsap.min.js"></script>
-<script defer src="../assets/vendor/ScrollTrigger.min.js"></script>
-<script defer src="../assets/vendor/SplitText.min.js"></script>
-<script defer src="../assets/vendor/lenis.min.js"></script>
-<script defer src="../assets/js/core.js"></script>
-<script defer src="../assets/js/post.js"></script>
-</body>
-</html>

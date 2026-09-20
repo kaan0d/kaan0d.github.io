@@ -1,86 +1,8 @@
-<!doctype html>
-<html lang="en" data-page="post">
-<head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>part 2: taking sentinel to the next level | Kaan Dinç</title>
-<meta name="description" content="the first post ended with seven finished stages and a list called &quot;what it still can't do&quot;. Sentinel worked, but it had only ever seen traffic I generated...">
-<meta name="theme-color" content="#0a0a09">
-<link rel="canonical" href="https://kaandinc.com/posts/sentinel-next-level">
-<meta property="og:type" content="article">
-<meta property="og:title" content="part 2: taking sentinel to the next level | Kaan Dinç">
-<meta property="og:description" content="the first post ended with seven finished stages and a list called &quot;what it still can't do&quot;. Sentinel worked, but it had only ever seen traffic I generated...">
-<meta property="og:url" content="https://kaandinc.com/posts/sentinel-next-level">
-<link rel="icon" href="../assets/favicon.svg" type="image/svg+xml">
-<link rel="preload" href="../assets/fonts/Geist-Variable.woff2" as="font" type="font/woff2" crossorigin>
-<link rel="stylesheet" href="../assets/css/base.css">
-<link rel="stylesheet" href="../assets/css/post.css">
-<script>
-(function (d) {
-  d.classList.add('js');
-  if (matchMedia('(prefers-reduced-motion: reduce)').matches) d.classList.add('reduce');
-  try { if (sessionStorage.getItem('curtain')) d.classList.add('curtain-on'); } catch (e) {}
-  // Safety net: reveal content if the animation scripts never report ready.
-  setTimeout(function () { if (!d.classList.contains('ready')) d.classList.add('no-anim'); }, 4000);
-})(document.documentElement);
-</script>
-
-</head>
-<body>
-<div class="curtain" aria-hidden="true"></div>
-<a class="skip" href="#main">skip to content</a>
-
-<header class="site-header">
-  <a class="site-header__brand" href="../" aria-label="Kaan Dinç, home">Kaan Dinç</a>
-  <nav class="site-nav" aria-label="primary">
-    <a class="roll" href="../#projects"><span class="roll__in" data-text="projects">projects</span></a>
-    <a class="roll" href="../blog"><span class="roll__in" data-text="blog">blog</span></a>
-    <a class="roll" href="https://drive.google.com/file/d/1M5Ri6U8PAwSgwr31EN4JDeT90P7OuCPo/view" target="_blank" rel="noopener"><span class="roll__in" data-text="cv">cv</span></a>
-    <button class="site-nav__menu roll" type="button" aria-expanded="false" aria-controls="menu"><span class="roll__in" data-text="menu">menu</span></button>
-  </nav>
-</header>
-
-<div class="menu" id="menu" hidden>
-  <div class="menu__inner">
-    <ul class="menu__list">
-      <li><a href="../#about"><span>about</span></a></li>
-      <li><a href="../#projects"><span>projects</span></a></li>
-      <li><a href="../#experience"><span>experience</span></a></li>
-      <li><a href="../#skills"><span>skills</span></a></li>
-      <li><a href="../#education"><span>education</span></a></li>
-      <li><a href="../#repos"><span>repos</span></a></li>
-      <li><a href="../#links"><span>links</span></a></li>
-      <li><a href="../blog"><span>blog</span></a></li>
-    </ul>
-    <ul class="menu__ext">
-      <li><a class="roll" href="mailto:kaan.dnc.7505@gmail.com"><span class="roll__in" data-text="email">email</span></a></li>
-      <li><a class="roll" href="https://github.com/kaan0d" target="_blank" rel="noopener"><span class="roll__in" data-text="github">github</span></a></li>
-      <li><a class="roll" href="https://www.linkedin.com/in/kaandinc/" target="_blank" rel="noopener"><span class="roll__in" data-text="linkedin">linkedin</span></a></li>
-      <li><a class="roll" href="https://drive.google.com/file/d/1M5Ri6U8PAwSgwr31EN4JDeT90P7OuCPo/view" target="_blank" rel="noopener"><span class="roll__in" data-text="cv">cv</span></a></li>
-    </ul>
-  </div>
-</div>
-
-<main id="main">
-<div class="progress" aria-hidden="true"><span></span></div>
-<article class="post">
-  <header class="post-head">
-    <a class="post-head__back roll" href="../blog"><span class="roll__in" data-text="&amp;larr; blog">&larr; blog</span></a>
-    <p class="post-head__meta" data-hero><time datetime="2026-09-19">Sep 2026</time> &nbsp;/&nbsp; 33 min read</p>
-    <h1 class="post-head__title" data-split="lines" data-hero>part 2: taking sentinel to the next level</h1>
-  </header>
-  <div class="post-layout has-toc">
-    <aside class="toc" aria-label="on this page">
-      <ol>
-        <li><a href="#stage-8-the-file-people-actually-have">stage 8: the file people actually have</a></li>
-        <li><a href="#stage-9-comparing-with-tshark">stage 9: comparing with tshark</a></li>
-        <li><a href="#stage-10-two-more-detectors">stage 10: two more detectors</a></li>
-        <li><a href="#stage-11-telling-clients-apart-by-how-they-say-hello">stage 11: telling clients apart by how they say hello</a></li>
-        <li><a href="#stage-12-capture-on-windows-if-it-can-be-trusted">stage 12: capture on Windows, if it can be trusted</a></li>
-        <li><a href="#where-this-goes">where this goes</a></li>
-      </ol>
-    </aside>
-    <div class="post-body">
+---
+title: part 2: taking sentinel to the next level
+date: 2026-09-19
+label: Sep 2026
+---
 <p>the <a href="sentinel-packet-analyzer">first post</a> ended with seven finished stages and a list called "what it still can't do". Sentinel worked, but it had only ever seen traffic I generated myself, and it could not open the files people actually have. so I am taking it to the next level: this post is the sequel, and each stage in it goes after one item of that list, the one that matters most first.</p>
 
       <p>the rules are the same as before. one stage at a time, tests and ruff and strict mypy clean before the next one, a sabotage run, and a plain note about what I could not check. this post grows a section per stage. it has five so far.</p>
@@ -94,7 +16,7 @@
         <div class="stat"><b>3</b><span>bugs in Sentinel found by other people's captures, and fixed</span></div>
       </div>
 
-      <h2 id="stage-8-the-file-people-actually-have">stage 8: the file people actually have</h2>
+      <h2>stage 8: the file people actually have</h2>
 
       <p>the first thing anyone does with a packet analyzer is open a capture from Wireshark. Wireshark has saved pcapng by default for years, and the reader I wrote in stage 1 knew only classic pcap. this is what it said to a pcapng file:</p>
 
@@ -236,7 +158,7 @@ ts_ns += interface.offset_ns
 
       <p>and, at the end of this stage, I had not read a file that Wireshark wrote. the reader agreed with the format description, with my hand-built files and with another library. that is a lot, and it is not the same thing. stage 9 fixes it.</p>
 
-      <h2 id="stage-9-comparing-with-tshark">stage 9: comparing with tshark</h2>
+      <h2>stage 9: comparing with tshark</h2>
 
       <p>everything so far was tested against traffic that I generated and against my own reading of the protocols, so a misreading of mine could sit in both. <code>tshark</code>, the command line of Wireshark, was written by other people and has read far more traffic than my generator will ever make. so this stage puts the two side by side, and fixes what differs. the rule from the plan was: fix every difference. what that came to is below.</p>
 
@@ -374,7 +296,7 @@ ts_ns += interface.offset_ns
 
       <p>one more thing it does not show is a capture of my own machine. everything public in it was recorded by someone else on some other network, which is why they are the right test for the parser and the wrong thing to keep in the repository.</p>
 
-      <h2 id="stage-10-two-more-detectors">stage 10: two more detectors</h2>
+      <h2>stage 10: two more detectors</h2>
 
       <p>the first four detectors see scans, floods, spoofed ARP and odd DNS. two things they cannot see: someone guessing SSH passwords, and data hidden in pings. this stage adds a detector for each, built the way the first four were: typed parameters with ranges, a rule in <code>rules/default.toml</code>, bounded state, one alert per attack and window, and the numbers behind the alert in the evidence.</p>
 
@@ -450,7 +372,7 @@ ts_ns += interface.offset_ns
 
       <p>it does not show that the thresholds are right for any network I do not have. backups and configuration tools open many SSH connections, and a run of large pings for an MTU test looks like the first signal, so both detectors will alert on things that are fine, and a rule can raise a threshold or add a filter. and it does not show that a real tunnel is caught: <code>ptunnel</code> and similar tools were not run, only my own idea of what they send.</p>
 
-      <h2 id="stage-11-telling-clients-apart-by-how-they-say-hello">stage 11: telling clients apart by how they say hello</h2>
+      <h2>stage 11: telling clients apart by how they say hello</h2>
 
       <p>the ClientHello of stage 2 already gives the name a client asks for. that says who it talks to. it does not say what is talking, and that is a different question: the TLS library inside a program decides which cipher suites it offers, which extensions it sends and in which order, so one program says hello the same way whatever server it calls. a fingerprint of that is called JA3, and it is an MD5 of a few numbers from the hello. this stage adds it to <code>read</code> and <code>flows</code>, and a filter to search for it.</p>
 
@@ -519,7 +441,7 @@ ts_ns += interface.offset_ns
 
       <p>only the client side. JA3S, the same idea for the server hello, is not done, and neither is JA4, the newer form. JA3 depends on the order of the extensions, and some clients now shuffle it on every connection, so their JA3 changes each time. and a fingerprint tells software apart, it does not name a program or a person: two different tools that use the same library share one.</p>
 
-      <h2 id="stage-12-capture-on-windows-if-it-can-be-trusted">stage 12: capture on Windows, if it can be trusted</h2>
+      <h2>stage 12: capture on Windows, if it can be trusted</h2>
 
       <p>the plan for this stage said "if it turns out to be reliable", so the first job was to find out. I develop on Windows, but the live capture of stage 6 needs Linux's <code>AF_PACKET</code>, and I only ever saw it work in CI. Windows has no such socket. the choices are a driver (Npcap, the one Wireshark installs), which is a dependency in a project that has none, or a raw socket switched to receive everything (<code>SIO_RCVALL</code>), which needs an Administrator prompt and nothing installed but sees less. I tried the raw socket first, and before writing any code I opened one on this machine and sent a few things through it.</p>
 
@@ -583,7 +505,7 @@ ts_ns += interface.offset_ns
 
       <p>IPv6, Ethernet addresses, a drop count, promiscuous mode, Wi-Fi monitor mode, and an interface named by anything but its address. that needs a driver, and it would be a different project. one machine, one Windows version and one network were tried, and the run was five seconds on a quiet link, so this says the raw socket is good enough to use, not that it is good.</p>
 
-      <h2 id="where-this-goes">where this goes</h2>
+      <h2>where this goes</h2>
 
       <p>the list was my plan, in the order I thought it should go. it is finished.</p>
 
@@ -599,33 +521,3 @@ ts_ns += interface.offset_ns
       </table></div>
 
       <p>there was no stage 13 planned when I wrote this. what was left was the "limits" list of the README, and the honest top of it was that almost everything here was tested on traffic I made or on a handful of public files, and hardly at all on a busy real network. that became <a href="sentinel-real-world">part 3</a>.</p>
-
-    </div>
-  </div>
-</article>
-<nav class="post-steps" aria-label="more posts">
-  <a class="post-step post-step--newer" href="sentinel-real-world">
-      <span class="post-step__dir">&larr; newer</span>
-      <span class="post-step__title">part 3: sentinel meets real traffic</span>
-    </a>
-  <a class="post-step post-step--older" href="sentinel-packet-analyzer">
-      <span class="post-step__dir">older &rarr;</span>
-      <span class="post-step__title">part 1: writing a packet analyzer from scratch</span>
-    </a>
-</nav>
-</main>
-
-<footer class="site-footer">
-  <span>Kaan Dinç</span>
-  <span>Çanakkale, Turkey</span>
-  <button class="roll" type="button" data-top><span class="roll__in" data-text="back to top">back to top</span></button>
-</footer>
-
-<script defer src="../assets/vendor/gsap.min.js"></script>
-<script defer src="../assets/vendor/ScrollTrigger.min.js"></script>
-<script defer src="../assets/vendor/SplitText.min.js"></script>
-<script defer src="../assets/vendor/lenis.min.js"></script>
-<script defer src="../assets/js/core.js"></script>
-<script defer src="../assets/js/post.js"></script>
-</body>
-</html>

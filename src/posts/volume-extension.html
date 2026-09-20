@@ -1,0 +1,43 @@
+---
+title: a chrome extension for one annoying problem
+date: 2026-09-16
+label: Sep 2026
+---
+<p>every site handles volume differently, and half of them fight you if you try to fix it from the OS mixer. some clamp it, some remember nothing between visits, some route audio through a custom player that ignores the system slider entirely.</p>
+
+      <p>simple-volume-saver sits on top of that: pick a level per site, it remembers, and you can reset it without digging through five different players' settings. the core is a background service worker that injects a small function into the page, and a bit of <code>chrome.storage</code>, nothing that needed a framework. saved levels are kept per site in <code>chrome.storage.sync</code>, so they follow you across signed-in devices, and a live audio-reactive visualizer, fed by <code>chrome.tabCapture</code>, shows the tab's real audio output rather than a decorative animation.</p>
+
+      <figure>
+        <img src="img/volume-extension.webp" width="1586" height="992" alt="The Volume Saver popup on github.com: a glowing fader over a volume readout at 100%, Reset and Save site buttons, and Volume and Saved Sites tabs, on a dark blue background." loading="lazy">
+        <figcaption>the popup on github.com. drag the fader to set the level, then save the site or reset it.</figcaption>
+      </figure>
+
+      <p>the popup is intentionally small: a slider, a site name, a reset button. most of the actual work happens in the service worker: when a tab finishes loading or starts playing audio, it looks up the saved level for that site's origin and injects a function that applies it to every media element on the page.</p>
+
+      <div class="codeblock"><code><span class="cm">// background.js (protocol checks and error handling left out)</span>
+<span class="kw">function</span> handleTabAudio(tabId, tab) {
+  <span class="kw">const</span> url = <span class="kw">new</span> URL(tab.url);
+  chrome.storage.sync.get(['siteList'], (data) =&gt; {
+    <span class="kw">const</span> volume = (data.siteList || {})[url.origin];
+    <span class="kw">if</span> (volume === undefined) <span class="kw">return</span>;
+    chrome.scripting.executeScript({
+      target: { tabId },
+      func: applyVolumeToPage,
+      args: [volume]
+    });
+  });
+}
+
+<span class="cm">// injected into the page</span>
+<span class="kw">function</span> applyVolumeToPage(volumePercent) {
+  window.__svsVolume = volumePercent / 100;
+  <span class="kw">const</span> applyToAll = () =&gt; {
+    document.querySelectorAll(<span class="cm">'video, audio'</span>).forEach((media) =&gt; {
+      media.volume = window.__svsVolume;
+    });
+  };
+  applyToAll();
+  <span class="cm">// ...then a MutationObserver re-applies it to media added later</span>
+}</code></div>
+
+      <p>nothing fancy under the hood, but it's the kind of tool I actually reach for every day, which is more than I can say for most of what I've shipped.</p>

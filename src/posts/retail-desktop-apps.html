@@ -1,85 +1,8 @@
-<!doctype html>
-<html lang="en" data-page="post">
-<head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>two desktop apps for a retail shop | Kaan Dinç</title>
-<meta name="description" content="a small retail business doesn't want a web app it has to keep alive. it wants something it double-clicks that never loses a sale. i built two Python...">
-<meta name="theme-color" content="#0a0a09">
-<link rel="canonical" href="https://kaandinc.com/posts/retail-desktop-apps">
-<meta property="og:type" content="article">
-<meta property="og:title" content="two desktop apps for a retail shop | Kaan Dinç">
-<meta property="og:description" content="a small retail business doesn't want a web app it has to keep alive. it wants something it double-clicks that never loses a sale. i built two Python...">
-<meta property="og:url" content="https://kaandinc.com/posts/retail-desktop-apps">
-<link rel="icon" href="../assets/favicon.svg" type="image/svg+xml">
-<link rel="preload" href="../assets/fonts/Geist-Variable.woff2" as="font" type="font/woff2" crossorigin>
-<link rel="stylesheet" href="../assets/css/base.css">
-<link rel="stylesheet" href="../assets/css/post.css">
-<script>
-(function (d) {
-  d.classList.add('js');
-  if (matchMedia('(prefers-reduced-motion: reduce)').matches) d.classList.add('reduce');
-  try { if (sessionStorage.getItem('curtain')) d.classList.add('curtain-on'); } catch (e) {}
-  // Safety net: reveal content if the animation scripts never report ready.
-  setTimeout(function () { if (!d.classList.contains('ready')) d.classList.add('no-anim'); }, 4000);
-})(document.documentElement);
-</script>
-
-</head>
-<body>
-<div class="curtain" aria-hidden="true"></div>
-<a class="skip" href="#main">skip to content</a>
-
-<header class="site-header">
-  <a class="site-header__brand" href="../" aria-label="Kaan Dinç, home">Kaan Dinç</a>
-  <nav class="site-nav" aria-label="primary">
-    <a class="roll" href="../#projects"><span class="roll__in" data-text="projects">projects</span></a>
-    <a class="roll" href="../blog"><span class="roll__in" data-text="blog">blog</span></a>
-    <a class="roll" href="https://drive.google.com/file/d/1M5Ri6U8PAwSgwr31EN4JDeT90P7OuCPo/view" target="_blank" rel="noopener"><span class="roll__in" data-text="cv">cv</span></a>
-    <button class="site-nav__menu roll" type="button" aria-expanded="false" aria-controls="menu"><span class="roll__in" data-text="menu">menu</span></button>
-  </nav>
-</header>
-
-<div class="menu" id="menu" hidden>
-  <div class="menu__inner">
-    <ul class="menu__list">
-      <li><a href="../#about"><span>about</span></a></li>
-      <li><a href="../#projects"><span>projects</span></a></li>
-      <li><a href="../#experience"><span>experience</span></a></li>
-      <li><a href="../#skills"><span>skills</span></a></li>
-      <li><a href="../#education"><span>education</span></a></li>
-      <li><a href="../#repos"><span>repos</span></a></li>
-      <li><a href="../#links"><span>links</span></a></li>
-      <li><a href="../blog"><span>blog</span></a></li>
-    </ul>
-    <ul class="menu__ext">
-      <li><a class="roll" href="mailto:kaan.dnc.7505@gmail.com"><span class="roll__in" data-text="email">email</span></a></li>
-      <li><a class="roll" href="https://github.com/kaan0d" target="_blank" rel="noopener"><span class="roll__in" data-text="github">github</span></a></li>
-      <li><a class="roll" href="https://www.linkedin.com/in/kaandinc/" target="_blank" rel="noopener"><span class="roll__in" data-text="linkedin">linkedin</span></a></li>
-      <li><a class="roll" href="https://drive.google.com/file/d/1M5Ri6U8PAwSgwr31EN4JDeT90P7OuCPo/view" target="_blank" rel="noopener"><span class="roll__in" data-text="cv">cv</span></a></li>
-    </ul>
-  </div>
-</div>
-
-<main id="main">
-<div class="progress" aria-hidden="true"><span></span></div>
-<article class="post">
-  <header class="post-head">
-    <a class="post-head__back roll" href="../blog"><span class="roll__in" data-text="&amp;larr; blog">&larr; blog</span></a>
-    <p class="post-head__meta" data-hero><time datetime="2025-06-01">2025</time> &nbsp;/&nbsp; 3 min read</p>
-    <h1 class="post-head__title" data-split="lines" data-hero>two desktop apps for a retail shop</h1>
-  </header>
-  <div class="post-layout has-toc">
-    <aside class="toc" aria-label="on this page">
-      <ol>
-        <li><a href="#the-ledger-don-t-lose-the-data">the ledger: don't lose the data</a></li>
-        <li><a href="#the-receipt-app-same-output-every-time">the receipt app: same output every time</a></li>
-        <li><a href="#a-pdf-that-grows-to-fit">a pdf that grows to fit</a></li>
-        <li><a href="#turkish-is-where-the-standard-library-stops-helping">turkish is where the standard library stops helping</a></li>
-        <li><a href="#numbering-and-payments">numbering and payments</a></li>
-      </ol>
-    </aside>
-    <div class="post-body">
+---
+title: two desktop apps for a retail shop
+date: 2025-06-01
+label: 2025
+---
 <p>a small retail business doesn't want a web app it has to keep alive. it wants something it double-clicks that never loses a sale. i built two Python desktop apps for one shop, and they taught me different things. they're client projects, so this is a tour of the decisions, not the code.</p>
 
       <div class="stats">
@@ -91,7 +14,7 @@
         <div class="stat"><b>1</b><span>SQLite connection, WAL mode</span></div>
       </div>
 
-      <h2 id="the-ledger-don-t-lose-the-data">the ledger: don't lose the data</h2>
+      <h2>the ledger: don't lose the data</h2>
 
       <p>the first app covers the day-to-day of the shop, backed by a local SQL database: inventory and stock, point-of-sale transactions for both cash and credit sales, customer accounts and payment tracking, daily earnings and expense logging, and PDF customer statements you can export.</p>
 
@@ -104,7 +27,7 @@
 
       <p>it's a plain desktop app on purpose: for a single shop, a local database and a reliable backup beat anything that needs a server to stay up.</p>
 
-      <h2 id="the-receipt-app-same-output-every-time">the receipt app: same output every time</h2>
+      <h2>the receipt app: same output every time</h2>
 
       <p>the second app is narrower. it produces receipts that look official, and it has to produce them the same way every time. you pick or type a customer, add line items (name, quantity, unit, price) and it writes a PDF. the interface is customtkinter, the PDFs are drawn with PyMuPDF, and PyInstaller packages it as a folder with an exe, so the shop installs nothing. there are three screens: new receipt, history, and saved customers.</p>
 
@@ -123,7 +46,7 @@
         <figcaption>saved customers. a saved customer fills the new-receipt form in one click. every row is blurred.</figcaption>
       </figure>
 
-      <h2 id="a-pdf-that-grows-to-fit">a pdf that grows to fit</h2>
+      <h2>a pdf that grows to fit</h2>
 
       <p>every receipt is drawn onto two fixed template halves, the header on top and the totals box at the bottom, with the middle generated. the height of the middle is computed from the items, and the page is simply the three parts stacked.</p>
 
@@ -146,7 +69,7 @@ total_height  = top_height + middle_height + bottom_height</code></div>
 
       <p>Turkish characters need a real TrueType font embedded in the PDF, so the app looks for one in the Windows font folder once, caches the answer, and warns the user instead of quietly printing question marks.</p>
 
-      <h2 id="turkish-is-where-the-standard-library-stops-helping">turkish is where the standard library stops helping</h2>
+      <h2>turkish is where the standard library stops helping</h2>
 
       <p>Python's <code>upper()</code> and <code>lower()</code> turn i into I and I into i, which is wrong in Turkish, where İ and ı are different letters. the app has its own casing helpers, and the history search folds case the Turkish way.</p>
 
@@ -172,7 +95,7 @@ text = text.replace(",", "§").replace(".", ",").replace("§", ".")        <span
 
       <p>every receipt also carries its total in words ("yazı ile tutar"), so there's a number-to-words converter for Turkish, from lira down to kuruş. 1234.50 becomes "Bin İki Yüz Otuz Dört Türk Lirası Elli Kuruş". line totals and sums are computed with <code>Decimal</code> and half-up rounding, never floats.</p>
 
-      <h2 id="numbering-and-payments">numbering and payments</h2>
+      <h2>numbering and payments</h2>
 
       <p>receipt numbers are sequential and kept in a one-row table. the app reads the next number, draws the PDF, and only commits the number after the file was written, so a failed export doesn't burn a number, and editing an old receipt keeps its own.</p>
 
@@ -186,33 +109,3 @@ ok = render_receipt_pdf(...)                 <span class="cm"># draw and save th
       <p>two small rules that saved me trouble. timestamps are always stamped in GMT+3, whatever the computer's timezone is set to, so a wrong setting can't shift a receipt's date. and the database is one long-lived SQLite connection in WAL mode, with every write in its own transaction.</p>
 
       <p>none of it is complicated on its own. the point is the boring guarantees: nothing lost, the same layout, the next number, the right total.</p>
-
-    </div>
-  </div>
-</article>
-<nav class="post-steps" aria-label="more posts">
-  <a class="post-step post-step--newer" href="screen-region-detection">
-      <span class="post-step__dir">&larr; newer</span>
-      <span class="post-step__title">reading a rectangle of the screen with opencv</span>
-    </a>
-  <a class="post-step post-step--older" href="discord-bots">
-      <span class="post-step__dir">older &rarr;</span>
-      <span class="post-step__title">two discord bots and the loop they share</span>
-    </a>
-</nav>
-</main>
-
-<footer class="site-footer">
-  <span>Kaan Dinç</span>
-  <span>Çanakkale, Turkey</span>
-  <button class="roll" type="button" data-top><span class="roll__in" data-text="back to top">back to top</span></button>
-</footer>
-
-<script defer src="../assets/vendor/gsap.min.js"></script>
-<script defer src="../assets/vendor/ScrollTrigger.min.js"></script>
-<script defer src="../assets/vendor/SplitText.min.js"></script>
-<script defer src="../assets/vendor/lenis.min.js"></script>
-<script defer src="../assets/js/core.js"></script>
-<script defer src="../assets/js/post.js"></script>
-</body>
-</html>
