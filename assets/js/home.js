@@ -19,10 +19,10 @@
     ScrollTrigger.refresh();
   });
 
-  // Marks the rail link of the section crossing the middle of the screen.
+  // Marks the header link of the section crossing the middle of the screen.
   function scrollSpy() {
-    const links = $$('.rail a[data-spy]');
-    const sections = links.map((a) => document.getElementById(a.dataset.spy)).filter(Boolean);
+    const links = $$('.site-nav a[data-spy]');
+    const sections = [...links.map((a) => a.dataset.spy), 'links'].map((id) => document.getElementById(id)).filter(Boolean);
     const update = () => {
       const middle = window.innerHeight * 0.45;
       let current = null;

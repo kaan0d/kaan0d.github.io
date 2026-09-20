@@ -71,14 +71,10 @@ function loadPosts() {
 
 // ---------- page shell ----------
 
-const SECTION_LINKS = ['about', 'projects', 'experience', 'skills', 'education', 'repos', 'links'];
 const CV_URL = 'https://drive.google.com/file/d/1M5Ri6U8PAwSgwr31EN4JDeT90P7OuCPo/view';
-const EXTERNAL_LINKS = [
-  ['email', 'mailto:kaan.dnc.7505@gmail.com'],
-  ['github', 'https://github.com/kaan0d'],
-  ['linkedin', 'https://www.linkedin.com/in/kaandinc/'],
-  ['cv', CV_URL],
-];
+
+// Header links in reading order. 'top' is the hero, so "home" lights up while it is on screen.
+const SECTIONS = ['about', 'projects', 'experience', 'skills', 'education', 'repos'];
 
 const PERSON_LD = `<script type="application/ld+json">${JSON.stringify({
   '@context': 'https://schema.org',
@@ -133,33 +129,16 @@ ${kind === 'home' ? PERSON_LD : ''}
 <a class="skip" href="#main">skip to content</a>
 
 <header class="site-header">
-  <a class="site-header__brand" href="${home}" aria-label="${NAME}, home">${NAME}</a>
+  <div class="site-header__left">
+    <a class="site-header__brand" href="${home}" aria-label="${NAME}, home"><img src="${base}assets/favicon.svg" width="32" height="32" alt=""><span>${NAME}</span></a>
+    <a class="btn btn--cv btn--sm" href="${CV_URL}" target="_blank" rel="noopener"><span>view my cv</span><span class="btn__arrow" aria-hidden="true">&nearr;</span></a>
+  </div>
   <nav class="site-nav" aria-label="primary">
-    <a class="roll" href="${home}#projects">${roll('projects')}</a>
-    <a class="roll" href="${base}blog">${roll('blog')}</a>
-    <a class="roll" href="${CV_URL}" target="_blank" rel="noopener">${roll('cv')}</a>
-    <button class="site-nav__menu roll" type="button" aria-expanded="false" aria-controls="menu">${roll('menu')}</button>
+    <a class="roll" href="${home}" data-spy="top">${roll('home')}</a>
+${SECTIONS.map((s) => `    <a class="roll" href="${home}#${s}" data-spy="${s}">${roll(s)}</a>`).join('\n')}
+    <a class="roll${kind === 'home' ? '' : ' is-active'}" href="${base}blog"${kind === 'home' ? '' : ' aria-current="page"'}>${roll('blog')}</a>
   </nav>
 </header>
-
-<nav class="rail" aria-label="sections">
-  <ul>
-${SECTION_LINKS.map((s) => `    <li><a href="${home}#${s}" data-spy="${s}">${s}</a></li>`).join('\n')}
-    <li class="rail__gap"><a href="${base}blog"${kind === 'home' ? '' : ' class="is-active" aria-current="true"'}>blog</a></li>
-  </ul>
-</nav>
-
-<div class="menu" id="menu" hidden>
-  <div class="menu__inner">
-    <ul class="menu__list">
-${SECTION_LINKS.map((s) => `      <li><a href="${home}#${s}"><span>${s}</span></a></li>`).join('\n')}
-      <li><a href="${base}blog"><span>blog</span></a></li>
-    </ul>
-    <ul class="menu__ext">
-${EXTERNAL_LINKS.map(([k, href]) => `      <li><a class="roll" href="${href}"${k === 'email' ? '' : ' target="_blank" rel="noopener"'}>${roll(k)}</a></li>`).join('\n')}
-    </ul>
-  </div>
-</div>
 
 <main id="main">
 ${main}
