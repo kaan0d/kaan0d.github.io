@@ -200,15 +200,15 @@
       <p>what I used instead is small, and I wrote each file down with its source before I fetched it:</p>
 
       <div class="table-wrap"><table class="data">
-        <thead><tr><th>capture</th><th>what it is</th><th class="num">packets</th><th>from</th></tr></thead>
+        <thead><tr><th>capture</th><th>what it is</th><th>source</th><th class="num">packets</th></tr></thead>
         <tbody>
-<tr><td><code>pkt.TCP.synflood.spoofed</code></td><td>a spoofed SYN flood: only SYNs, from 37,623 different addresses, in 23.7 s</td><td class="num">37,841</td><td><a href="https://github.com/StopDDoS/packet-captures">StopDDoS</a></td></tr>
-<tr><td><code>pkt.TCP.DOMINATE.syn.ecn.cwr</code></td><td>a SYN flood with the ECN and CWR flags set</td><td class="num">9,878</td><td>StopDDoS</td></tr>
-<tr><td><code>arpspoofing</code></td><td>ARP spoofing on a small LAN</td><td class="num">1,887</td><td><a href="https://github.com/vivekseth/cs3">cs3</a> (a course repository)</td></tr>
-<tr><td><code>portscan</code></td><td>one host sends 1,365 SYNs to 1,000 ports of another</td><td class="num">2,401</td><td>cs3</td></tr>
-<tr><td><code>dns-tunnel-iodine</code></td><td>a DNS tunnel made by iodine</td><td class="num">438</td><td><a href="https://github.com/elastic/examples">Elastic examples</a></td></tr>
-<tr><td><code>2026-08-07</code></td><td>seven days of scans and probes at a web server</td><td class="num">500,923</td><td><a href="https://www.malware-traffic-analysis.net/2026/08/07/index.html">malware-traffic-analysis.net</a></td></tr>
-<tr><td><code>MAWI 2025-01-01 14:00</code></td><td>the first 14.6 s of a 1 Gbps backbone link, packets cut to 96 bytes</td><td class="num">2,163,268</td><td><a href="https://mawi.wide.ad.jp/mawi/">MAWI (WIDE project)</a></td></tr>
+<tr><td><code>pkt.TCP.synflood.spoofed</code></td><td>a spoofed SYN flood: only SYNs, from 37,623 different addresses, in 23.7 s</td><td><a href="https://github.com/StopDDoS/packet-captures">StopDDoS</a></td><td class="num">37,841</td></tr>
+<tr><td><code>pkt.TCP.DOMINATE.syn.ecn.cwr</code></td><td>a SYN flood with the ECN and CWR flags set</td><td>StopDDoS</td><td class="num">9,878</td></tr>
+<tr><td><code>arpspoofing</code></td><td>ARP spoofing on a small LAN</td><td><a href="https://github.com/vivekseth/cs3">cs3</a> (a course repository)</td><td class="num">1,887</td></tr>
+<tr><td><code>portscan</code></td><td>one host sends 1,365 SYNs to 1,000 ports of another</td><td>cs3</td><td class="num">2,401</td></tr>
+<tr><td><code>dns-tunnel-iodine</code></td><td>a DNS tunnel made by iodine</td><td><a href="https://github.com/elastic/examples">Elastic examples</a></td><td class="num">438</td></tr>
+<tr><td><code>2026-08-07</code></td><td>seven days of scans and probes at a web server</td><td><a href="https://www.malware-traffic-analysis.net/2026/08/07/index.html">malware-traffic-analysis.net</a></td><td class="num">500,923</td></tr>
+<tr><td><code>MAWI 2025-01-01 14:00</code></td><td>the first 14.6 s of a 1 Gbps backbone link, packets cut to 96 bytes</td><td><a href="https://mawi.wide.ad.jp/mawi/">MAWI (WIDE project)</a></td><td class="num">2,163,268</td></tr>
         </tbody>
       </table></div>
 
