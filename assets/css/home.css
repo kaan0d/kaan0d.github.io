@@ -258,3 +258,6 @@
 }
 
 .contact__cv { display: flex; width: fit-content; margin-top: clamp(28px, 4vw, 48px); }
+
+.hero .obj { top: clamp(96px, 14vh, 160px); right: max(var(--gutter), calc((100% - var(--maxw)) / 2 + var(--gutter))); width: clamp(260px, 32vw, 520px); }
+.about__cols .obj { position: relative; grid-column: 1 / span 4; grid-row: 1 / span 2; width: 100%; max-width: 340px; }
