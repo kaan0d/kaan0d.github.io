@@ -182,14 +182,14 @@
     <div class="post-body">
       <p>the <a href="sentinel-packet-analyzer">first post</a> ended with seven finished stages and a list called "what it still can't do". Sentinel worked, but it had only ever seen traffic I generated myself, and it could not open the files people actually have. so I am taking it to the next level: this post is the sequel, and each stage in it goes after one item of that list, the one that matters most first.</p>
 
-      <p>the rules are the same as before. one stage at a time, tests and ruff and strict mypy clean before the next one, a sabotage run, and a plain note about what I could not check. this post grows a section per stage. it has four so far.</p>
+      <p>the rules are the same as before. one stage at a time, tests and ruff and strict mypy clean before the next one, a sabotage run, and a plain note about what I could not check. this post grows a section per stage. it has five so far.</p>
 
       <div class="stats">
         <div class="stat"><b>6</b><span>detectors, two of them new in this post (SSH brute force, ICMP tunneling); and 2 capture file formats read</span></div>
-        <div class="stat"><b>895</b><span>tests, 275 of them new in this post (6 more need Linux and root), ruff and strict mypy clean</span></div>
-        <div class="stat"><b>185 of 185</b><span>new deliberate one-line breaks caught by the tests (381 of 381 in all)</span></div>
+        <div class="stat"><b>942</b><span>tests, 322 of them new in this post (6 more need Linux and root, 5 more Windows and Administrator rights), ruff and strict mypy clean</span></div>
+        <div class="stat"><b>209 of 209</b><span>new deliberate one-line breaks caught by the tests (405 of 405 in all)</span></div>
         <div class="stat"><b>68,756</b><span>field values compared with Wireshark's tshark on 10 captures, 6 of them public: no difference left unexplained</span></div>
-        <div class="stat"><b>12,000,000</b><span>damaged packets and capture files through the fuzzer in four runs, half of the files pcapng, 0 failures</span></div>
+        <div class="stat"><b>15,000,000</b><span>damaged packets and capture files through the fuzzer in five runs, half of the files pcapng, 0 failures</span></div>
         <div class="stat"><b>3</b><span>bugs in Sentinel found by other people's captures, and fixed</span></div>
       </div>
 
@@ -618,9 +618,73 @@ ts_ns += interface.offset_ns
 
       <p>only the client side. JA3S, the same idea for the server hello, is not done, and neither is JA4, the newer form. JA3 depends on the order of the extensions, and some clients now shuffle it on every connection, so their JA3 changes each time. and a fingerprint tells software apart, it does not name a program or a person: two different tools that use the same library share one.</p>
 
+      <h2><span class="hash">##</span>stage 12: capture on Windows, if it can be trusted</h2>
+
+      <p>the plan for this stage said "if it turns out to be reliable", so the first job was to find out. I develop on Windows, but the live capture of stage 6 needs Linux's <code>AF_PACKET</code>, and I only ever saw it work in CI. Windows has no such socket. the choices are a driver (Npcap, the one Wireshark installs), which is a dependency in a project that has none, or a raw socket switched to receive everything (<code>SIO_RCVALL</code>), which needs an Administrator prompt and nothing installed but sees less. I tried the raw socket first, and before writing any code I opened one on this machine and sent a few things through it.</p>
+
+      <h3 class="sub">asking the socket what it sees</h3>
+
+      <div class="table-wrap"><table class="data">
+        <thead><tr><th>what I sent</th><th>what the socket gave</th></tr></thead>
+        <tbody>
+          <tr><td>a datagram to this machine, and one to the router</td><td>each once</td></tr>
+          <tr><td>a ping to the router</td><td>the request once, the reply once</td></tr>
+          <tr><td>a TCP connection to the router</td><td>4 packets out and 3 in, each once</td></tr>
+          <tr><td>a datagram to <code>127.0.0.1</code>, on a socket bound to it</td><td>once (Linux gives two copies on loopback)</td></tr>
+          <tr><td>a datagram of 4000 bytes</td><td>in pieces: the first fragment, 1,500 bytes with the more-fragments bit, was seen for two datagrams</td></tr>
+          <tr><td>a ping and a datagram to <code>::1</code>, on an IPv6 socket</td><td>nothing</td></tr>
+        </tbody>
+      </table></div>
+
+      <p>the packets are whole IP packets, with no Ethernet header, and the length in the header was the length received for all 66 packets of the first try. the TCP checksums of the packets this machine sent were the unfinished sum that the network card completes (stage 9 already recognises those), and of the ones that came in, right. IPv6 gave nothing in that one test, so it is IPv4 only. Windows also reports no dropped packets, so a run that is too slow loses some and says nothing.</p>
+
+      <h3 class="sub">the ACK before the SYN-ACK</h3>
+
+      <p>one thing was wrong, and I only saw it because I recorded the direction of each packet. in every TCP connection I looked at, seven of them, the ACK that completes the handshake was delivered before the SYN-ACK it answers. this is the start of a real run, three lines of 87:</p>
+
+      <div class="term"><pre><span class="pr">$ python -m sentinel live 192.168.1.136 --write out.pcap --duration 5
+</span><span class="ts">2026-09-20 02:55:55.363998</span> IP 192.168.1.136.51293 &gt; 192.168.1.1.80: <span class="fl">Flags [S]</span>, seq 944683354, win 65535, options [mss 1460,nop,wscale 8,nop,nop,sackOK], <span class="dim">length 0</span>
+<span class="ts">2026-09-20 02:55:55.364504</span> IP 192.168.1.136.51293 &gt; 192.168.1.1.80: <span class="fl">Flags [.]</span>, seq 944683355, ack 2354516038, win 255, <span class="dim">length 0</span>
+<span class="ts">2026-09-20 02:55:55.364588</span> IP 192.168.1.1.80 &gt; 192.168.1.136.51293: <span class="fl">Flags [S.]</span>, seq 2354516037, ack 944683355, win 42340, options [mss 1460,nop,nop,sackOK,nop,wscale 2], <span class="dim">length 0</span>
+<span class="dim">...</span></pre></div>
+
+      <p>the ACK, second line, acknowledges a sequence number that the third line has not shown yet. inside one direction the order is right. between the two directions, a packet that comes in is handed to the socket after the machine has answered it. I measured this on seven connections (one in the first probe, four in the third, two in a real run of Sentinel), and I did not find out why. the times are the moment of reading, so they show the same order and cannot be used to sort it out (the ACK is 84 microseconds ahead here). there is nothing honest to repair it with, so it stays, and it is in the README.</p>
+
+      <p>what it does to the rest: <code>flows</code> on the saved capture still says the connection is closed, 4 packets one way and 3 the other, and the detectors that follow a handshake read the ACK of the client, which comes after the client's own SYN either way. a test feeds 150 handshakes in this order to the default rules and gets no SYN-flood alert, and the same 150 SYNs without their ACK do raise one. but anyone who reads the lines will see it.</p>
+
+      <h3 class="sub">what changed in the program</h3>
+
+      <p>very little. <code>Capture</code> only ever needed <code>recvfrom</code>, <code>settimeout</code>, <code>getsockopt</code> and <code>close</code>, so Windows is one more socket. <code>IpSocket</code> wraps it and puts a 14-byte Ethernet header in front of each IP packet: both addresses zero, because an invented MAC address would look like data, and the ethertype taken from the version nibble. anything that is not IPv4 or IPv6 goes on to the IPv4 parser, which refuses it with a message, so nothing is dropped and nothing raises. the wrapper costs 0.274 microseconds a packet. a file saved with <code>--write</code> has those zero addresses in it.</p>
+
+      <p>an interface is named by its IPv4 address, <code>live 192.168.1.136</code>, because <code>bind</code> needs one and Windows has no <code>/sys/class/net</code>; <code>127.0.0.1</code> is the loopback. <code>open_capture</code> picks the Linux socket if the system has <code>AF_PACKET</code>, the Windows one if it has <code>SIO_RCVALL</code>, and says so if it has neither. a name that is not an address, and a missing Administrator token, each have a message that says what to do.</p>
+
+      <p>I ran it for real once: <code>live 192.168.1.136 --write out.pcap --duration 5</code> from an elevated prompt while the machine opened two connections to the router and sent a datagram and a ping. it captured 87 packets (the rest was the machine's other traffic), <code>read</code> on the file printed the same 87 lines, none of them has a bad checksum, <code>flows</code> counted the two connections as closed and <code>ids</code> said nothing.</p>
+
+      <h3 class="sub">the tests</h3>
+
+      <p>45 tests run everywhere, with a stand-in for the socket: the header and the ethertype for each version nibble, an empty read, 2,000 random reads that must decode without raising, every IP packet of the four generated captures coming back the same above Ethernet and printing the same <code>read</code> line, the opening of the socket with each error and its message (and the socket closed after it), the names that are accepted and refused, and the handshakes above. 5 more run only on Windows as Administrator, on the real socket, on the loopback address: a datagram captured, decoded and seen exactly once, a TCP conversation with its payload once in each direction, and the command line saving a datagram. that file passed eight times in a row here. CI has a sixth job that runs it as Administrator and fails if the tests were skipped, and its first run on a GitHub runner passed four of the five Administrator tests. the fifth failed, and it was the machine and not the code: on the runner the IPv4 header checksum of a loopback packet is 0, left to the network card, so Sentinel calls it bad, as it does for any wrong checksum. on my machine the checksum is filled in, so my probes never showed it. I left the decoder alone and made the test accept that one anomaly, only when the checksum is exactly 0. the same test failed in the two Windows jobs of the main matrix too (Python 3.12 and 3.13), since the runner is an Administrator there as well. with that fix all six jobs passed: on the Windows runners the real socket captured a datagram, a TCP conversation and a command line, all five Administrator tests, in the Administrator job and in the two matrix jobs, and the Linux ones stayed green. this is what the job is for: one machine had told me everything was fine.</p>
+
+      <h3 class="sub">breaking it on purpose</h3>
+
+      <p>24 new breaks for this stage: the ethertype always IPv4, the wrong nibble read as the version, a header one byte short, a drop count asked of Windows, a socket never switched to receive everything, every string accepted as an address, and so on. all 24 are caught on the first run. but one of the old ones was not: a stage 7 break that takes Windows out of the CI matrix survived. its test only looked for the word <code>windows-latest</code> in the workflow, and the new job of this stage has that word, so the test could not tell a matrix without Windows from one with it. now it checks the matrix line itself, and with that all 405 of 405 are caught, the 381 from the stages before and the 24 new. three of the old ones from stage 6 had to be rewritten because the code they broke had moved. 10 of the 24 new ones are caught by a single test.</p>
+
+      <div class="table-wrap"><table class="data">
+        <thead><tr><th>part</th><th class="num">breaks</th><th class="num">tests that noticed</th></tr></thead>
+        <tbody>
+          <tr><td>ip frames</td><td class="num">12</td><td class="num">1 to 16</td></tr>
+          <tr><td>windows interface</td><td class="num">12</td><td class="num">1 to 15</td></tr>
+        </tbody>
+      </table></div>
+
+      <p>the fuzzer ran again: 3,000,000 inputs (seed 12), 0 failures. the tests of this stage: 47 new, 942 in all.</p>
+
+      <h3 class="sub">what this stage does not show</h3>
+
+      <p>IPv6, Ethernet addresses, a drop count, promiscuous mode, Wi-Fi monitor mode, and an interface named by anything but its address. that needs a driver, and it would be a different project. one machine, one Windows version and one network were tried, and the run was five seconds on a quiet link, so this says the raw socket is good enough to use, not that it is good.</p>
+
       <h2><span class="hash">##</span>where this goes</h2>
 
-      <p>the list is my plan, in the order I think it should go, and it can change when a stage teaches me something.</p>
+      <p>the list was my plan, in the order I thought it should go. it is finished.</p>
 
       <div class="table-wrap"><table class="data">
         <thead><tr><th>stage</th><th>what it adds</th><th>state</th></tr></thead>
@@ -628,12 +692,12 @@ ts_ns += interface.offset_ns
           <tr><td>8</td><td>a pcapng reader, so Wireshark's default files open</td><td class="dim">done</td></tr>
           <tr><td>9</td><td>compare against <code>tshark</code> on public sample captures, and fix every difference</td><td class="dim">done</td></tr>
           <tr><td>10</td><td>two more detectors: SSH brute force and ICMP tunneling</td><td class="dim">done</td></tr>
-          <tr><td>11</td><td>a TLS fingerprint (JA3) from the ClientHello</td><td class="dim">done, this post</td></tr>
-          <tr><td>12</td><td>live capture on Windows, IP level only, if it turns out to be reliable</td><td class="dim">maybe</td></tr>
+          <tr><td>11</td><td>a TLS fingerprint (JA3) from the ClientHello</td><td class="dim">done</td></tr>
+          <tr><td>12</td><td>live capture on Windows, IPv4 only, no driver</td><td class="dim">done, this post</td></tr>
         </tbody>
       </table></div>
 
-      <p>stage 12 is the one I am least sure of: live capture on Windows, where there is no <code>AF_PACKET</code> and the choices are raw sockets at the IP level, which see less, or a driver that has to be installed. I will only do it if it can be made reliable, and otherwise I will say so and leave it out.</p>
+      <p>there is no stage 13 planned. what is left is in the "limits" list of the README, and the honest top of it is that almost everything here was tested on traffic I made or on a handful of public files, and hardly at all on a busy real network.</p>
 
     </div>
   </article>
