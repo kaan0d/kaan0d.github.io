@@ -1,4 +1,4 @@
-<title>ecommerce site notes</title>
+<title>shop site notes</title>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
 <style>
   :root{
@@ -40,6 +40,17 @@
   footer{ font-family:var(--font-mono); font-size:0.76rem; color:var(--text-dim); margin-top:48px; padding-top:16px; border-top:1px solid var(--line); display:flex; justify-content:space-between; gap:10px; flex-wrap:wrap; }
 
   @media (prefers-reduced-motion: reduce){ *{ animation:none !important; transition:none !important; } }
+
+  .post-body h2{ font-family:var(--font-mono); font-size:1.05rem; font-weight:700; margin:48px 0 18px; }
+  .post-body h2 .hash{ color:var(--accent-dim); margin-right:8px; }
+  .post-body code{ font-family:var(--font-mono); font-size:0.88em; color:var(--accent); }
+  .post-body a{ color:var(--accent); text-decoration:underline; text-decoration-color:#6b4a26; text-underline-offset:3px; }
+  .post-body a:hover{ text-decoration-color:var(--accent); }
+  .links{ font-family:var(--font-mono); font-size:0.88rem; }
+  .codeblock{ background:rgba(255,255,255,0.03); border:1px solid var(--line); border-radius:4px; padding:16px 18px; overflow-x:auto; margin:28px 0; }
+  .codeblock code{ font-family:var(--font-mono); font-size:0.85rem; color:var(--text); white-space:pre; line-height:1.6; }
+  .codeblock .cm{ color:var(--text-dim); }
+  .codeblock .kw{ color:var(--accent); }
 </style>
 
 <canvas id="silk-bg" aria-hidden="true"></canvas>
@@ -55,16 +66,49 @@
 
   <article>
     <p class="post-date">Apr 2026</p>
-    <h1 class="post-title">a storefront the owner can run alone</h1>
+    <h1 class="post-title">a shop site that isn't a shop</h1>
 
     <div class="post-body">
-      <p>I built a full-stack website for a retail business with React (TanStack Start), TypeScript and Tailwind CSS. The public side is a storefront: a product catalog, categories, and stock status so visitors can see what's actually available.</p>
+<p>this is the website for an electrical and security-equipment shop in Çanakkale: switches, cable, cameras, intercoms, satellite gear. the first decision made everything simpler: it isn't a webshop. it's a live price-and-stock catalog, and every product page has a button that opens WhatsApp with the message already written ("hi, i'd like the price and stock for this product"). customers still talk to a person, and the site makes sure they ask about the right thing.</p>
 
-      <p>the part I care more about is the admin panel. It's a custom one, built so the owner can manage products, categories, discounts, homepage content and site settings without asking a developer to change anything. If the site needs code changes every time a price moves, it isn't finished.</p>
+      <p>the stack is TanStack Start (React 19), Tailwind v4 and Zod, deployed as a Cloudflare Worker with D1 (SQLite) for the data and R2 for the photos. GitHub Actions deploys on every push to main. there's a custom admin panel, so the owner never has to ask me to change a price.</p>
 
-      <p>data lives in a SQL database on Cloudflare D1, and Zod validates what goes in: anything that arrives from a form is checked against a schema before it reaches the database.</p>
+      <h2><span class="hash">##</span>counting without inflating</h2>
 
-      <p>a shop site is really two products: the one customers see, and the one the owner uses every day. The second one deserves as much design as the first.</p>
+      <p>the dashboard shows the most viewed products and the ones people ask about on WhatsApp. counters like that are easy to inflate, so a small table has the primary key (product, kind, visitor fingerprint, day). recording a stat just tries to insert that row, and if the insert fails, this visitor already counted today and nothing else happens. the fingerprint is a truncated SHA-256 of IP and user agent, so no raw IP address ever reaches the database.</p>
+
+      <div class="codeblock"><code><span class="cm">// primary key = (product, kind, fingerprint, day)</span>
+<span class="kw">try</span> {
+  <span class="kw">await</span> db.run(
+    <span class="cm">"INSERT INTO product_stat_hits (product_id, kind, fingerprint) VALUES (?, ?, ?)"</span>,
+    [productId, kind, <span class="kw">await</span> clientFingerprint()],
+  );
+} <span class="kw">catch</span> {
+  <span class="kw">return</span> { counted: <span class="kw">false</span> }; <span class="cm">// already counted today</span>
+}
+<span class="kw">await</span> db.run(<span class="cm">`UPDATE products SET ${column} = ${column} + 1 WHERE id = ?`</span>, [productId]);</code></div>
+
+      <h2><span class="hash">##</span>discounts as an operation</h2>
+
+      <p>the discount tab applies a percentage (1 to 99) to everything, one category or one brand. the new price is computed from the list price, rounded to kuruş and stored beside it, and the panel keeps a note of what it applied so it can be undone in one click. the storefront only shows a discount when the discounted price is really lower than the list price, so a bad value can't show up as a sale. the <code>price_updated_at</code> date moves only when a price field changes, not on every edit, and product cards show it, so a shopper can judge how fresh a price is.</p>
+
+      <h2><span class="hash">##</span>photos that clean up after themselves</h2>
+
+      <p>uploads are admin-only, capped at 5 MB, and limited to an allowlist of image types. SVG is deliberately not on it: an SVG can carry a script, and opening the file's URL directly would run it, which is stored XSS. files are also served with <code>nosniff</code>. each product gets its own folder in R2, named by slug, and new photos are numbered from what's already in the bucket (slug, slug_2, slug_3), so an old file is never overwritten. removing a photo or deleting a product deletes the objects, so nothing is left orphaned. fixed slots like the favicon and hero images replace their previous file, and if the new extension differs, the stale one is removed too. the one exception is the header and footer logos: they can fall back to a shared file, so they are never deleted on clear.</p>
+
+      <h2><span class="hash">##</span>login without an auth service</h2>
+
+      <p>admin auth is one small file. passwords are hashed with PBKDF2-SHA256 through Web Crypto, which Workers support natively, and sessions are a sealed cookie that expires after seven days. there's no sign-up: admins are created by other admins, nobody can revoke their own access, and the very first admin comes from environment variables, only when the users table is empty. secrets live in Wrangler secrets, not in the config. every server function sits behind CSRF middleware, and the admin route is marked noindex.</p>
+
+      <h2><span class="hash">##</span>workers gotchas</h2>
+
+      <p>three things cost me time. first, route files ship their top-level imports to the browser, so importing the database module at the top of a route pulls <code>cloudflare:workers</code> into the client bundle and breaks it. every server function imports what it needs inside its handler. second, D1's <code>exec()</code> splits statements on newlines, which breaks multi-line <code>CREATE TABLE</code>, so the schema is applied one statement at a time with <code>prepare().run()</code>. third, when a server function throws, the framework swallows it into a generic 500 JSON body with no stack trace. a small wrapper around <code>console.error</code> remembers the real error, and the server entry recognizes that swallowed body, logs the full cause chain and serves a friendly HTML error page instead of raw JSON.</p>
+
+      <h2><span class="hash">##</span>small things</h2>
+
+      <p>filters and sorting live in the URL (category, brand, price range, in stock, discounted, sort) and are validated by the router, so any filtered view is a link you can send someone on WhatsApp. search lowercases with the Turkish locale so İ and I behave, and slugs transliterate ç ğ ı ö ş ü. the sitemap is generated from the active products, and there's a <code>security.txt</code>.</p>
+
+      <p>a shop site is really two products: the one customers see, and the one the owner uses every day. the second one deserves as much design as the first.</p>
     </div>
   </article>
 
