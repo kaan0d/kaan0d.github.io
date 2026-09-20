@@ -6,6 +6,7 @@
   ready.then(() => {
     const glCanvas = window.site.heroGL?.canvas;
     if (glCanvas) gsap.to(glCanvas, { opacity: 1, duration: reduce ? 0 : 2.4, ease: 'power2.out' });
+    scrollSpy();
     if (reduce) return;
 
     hero();
@@ -17,6 +18,26 @@
     repoPan();
     ScrollTrigger.refresh();
   });
+
+  // Marks the rail link of the section crossing the middle of the screen.
+  function scrollSpy() {
+    const links = $$('.rail a[data-spy]');
+    const sections = links.map((a) => document.getElementById(a.dataset.spy)).filter(Boolean);
+    const update = () => {
+      const middle = window.innerHeight * 0.45;
+      let current = null;
+      for (const section of sections) {
+        if (section.getBoundingClientRect().top <= middle) current = section.id;
+      }
+      if (window.scrollY >= ScrollTrigger.maxScroll(window) - 4) current = sections[sections.length - 1].id;
+      for (const a of links) {
+        const on = a.dataset.spy === current;
+        a.classList.toggle('is-active', on);
+        if (on) a.setAttribute('aria-current', 'true'); else a.removeAttribute('aria-current');
+      }
+    };
+    ScrollTrigger.create({ start: 0, end: 'max', onUpdate: update, onRefresh: update });
+  }
 
   // Content drifts up and dims as the hero leaves the screen.
   function hero() {

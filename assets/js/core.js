@@ -14,6 +14,7 @@
   const curtain = $('.curtain');
   const menu = $('#menu');
   const menuToggle = $('.site-nav__menu');
+  const cue = $('.scroll-cue');
   let menuOpen = false;
 
   // ---------- smooth scroll ----------
@@ -28,18 +29,26 @@
 
   site.scrollTo = (target, immediate = false) => {
     if (lenis) return lenis.scrollTo(target, { duration: 1.4, immediate });
-    return target === 0 ? window.scrollTo(0, 0) : target.scrollIntoView();
+    return typeof target === 'number' ? window.scrollTo({ top: target }) : target.scrollIntoView();
   };
 
   // ---------- header: hides while reading down, returns on scroll up ----------
 
-  ScrollTrigger.create({
-    start: 0,
-    end: 'max',
-    onUpdate: (self) => {
-      header.classList.toggle('is-scrolled', self.scroll() > 24);
-      header.classList.toggle('is-hidden', !reduce && !menuOpen && self.direction === 1 && self.scroll() > 240);
-    },
+  const NEAR_BOTTOM = 120;
+  let cueReady = false;
+
+  const updateCue = () => cue.classList.toggle('is-hidden', !cueReady || menuOpen || window.scrollY > ScrollTrigger.maxScroll(window) - NEAR_BOTTOM);
+
+  function onScroll(self) {
+    header.classList.toggle('is-scrolled', self.scroll() > 24);
+    header.classList.toggle('is-hidden', !reduce && !menuOpen && self.direction === 1 && self.scroll() > 240);
+    updateCue();
+  }
+
+  ScrollTrigger.create({ start: 0, end: 'max', onUpdate: onScroll, onRefresh: onScroll });
+
+  cue.addEventListener('click', () => {
+    site.scrollTo(Math.min(window.scrollY + window.innerHeight * 0.85, ScrollTrigger.maxScroll(window)));
   });
 
   // ---------- menu ----------
@@ -61,6 +70,7 @@
     $('main').inert = open;
     $('.site-footer').inert = open;
     header.classList.remove('is-hidden');
+    updateCue();
 
     if (open) {
       menu.hidden = false;
@@ -183,6 +193,7 @@
       await new Promise((r) => setTimeout(r, 600));
     }
     root.classList.add('ready');
+    setTimeout(() => { cueReady = true; updateCue(); }, reduce ? 0 : 1500);
     if (!reduce) {
       initReveals();
       intro();

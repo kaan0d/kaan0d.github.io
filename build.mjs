@@ -142,6 +142,13 @@ ${kind === 'home' ? PERSON_LD : ''}
   </nav>
 </header>
 
+<nav class="rail" aria-label="sections">
+  <ul>
+${SECTION_LINKS.map((s) => `    <li><a href="${home}#${s}" data-spy="${s}">${s}</a></li>`).join('\n')}
+    <li class="rail__gap"><a href="${base}blog"${kind === 'home' ? '' : ' class="is-active" aria-current="true"'}>blog</a></li>
+  </ul>
+</nav>
+
 <div class="menu" id="menu" hidden>
   <div class="menu__inner">
     <ul class="menu__list">
@@ -163,6 +170,8 @@ ${main}
   <span>Çanakkale, Turkey</span>
   <button class="roll" type="button" data-top>${roll('back to top')}</button>
 </footer>
+
+<button class="scroll-cue is-hidden" type="button" aria-label="scroll down"><span></span></button>
 
 ${scripts}
 <script defer src="${base}assets/js/core.js"></script>
