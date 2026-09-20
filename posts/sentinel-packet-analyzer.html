@@ -1,7 +1,7 @@
 <!doctype html>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>sentinel packet analyzer notes</title>
+<title>sentinel packet analyzer notes (part 1)</title>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
 <style>
   :root{
@@ -48,6 +48,9 @@
   .post-body a{ color:var(--accent); text-decoration:underline; text-decoration-color:var(--accent-soft, #6b4a26); text-underline-offset:3px; }
   .post-body a:hover{ text-decoration-color:var(--accent); }
   .links{ font-family:var(--font-mono); font-size:0.88rem; }
+  .series{ font-family:var(--font-mono); font-size:0.8rem; color:var(--text-dim); margin:0 0 18px; }
+  .series a{ color:var(--accent); text-decoration:none; }
+  .series a:hover{ text-decoration:underline; text-underline-offset:3px; }
 
   .stats{ display:grid; grid-template-columns:repeat(3, 1fr); gap:1px; margin:32px 0; background:var(--line); border:1px solid var(--line); }
   .stat{ background:rgba(6,6,7,0.94); padding:16px 14px; }
@@ -172,8 +175,9 @@
   </header>
 
 <article>
+    <p class="series">sentinel series: part 1 (this post) · <a href="sentinel-next-level">part 2: taking sentinel to the next level</a></p>
     <p class="post-date">Sep 2026</p>
-    <h1 class="post-title">writing a packet analyzer from scratch</h1>
+    <h1 class="post-title">part 1: writing a packet analyzer from scratch</h1>
 
     <div class="post-body">
       <p>Sentinel is a packet analyzer and, eventually, a rule-based intrusion detection system, written in Python from scratch. the protocol parsers are hand-written with <code>struct</code>: no Scapy, no dpkt, no pyshark. it reads pcap capture files and prints one line per packet, tcpdump style. it has no runtime dependencies.</p>
