@@ -272,3 +272,49 @@ html:not(.js) .site-nav__menu { display: none; }
 .objects-canvas { position: fixed; inset: 0; z-index: 50; width: 100%; height: 100%; pointer-events: none; }
 .reduce .obj, .reduce .objects-canvas { display: none; }
 @media (max-width: 999px) { .obj { display: none; } }
+
+/* ---------- scroll cue: shown while there is more page below ---------- */
+
+.scroll-cue {
+  position: fixed;
+  left: 50%;
+  bottom: max(20px, env(safe-area-inset-bottom));
+  z-index: 55;
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  margin-left: -22px;
+  border: 1px solid var(--line-strong);
+  border-radius: 999px;
+  background: rgba(10, 10, 9, 0.6);
+  -webkit-backdrop-filter: blur(8px);
+  backdrop-filter: blur(8px);
+  transition: opacity 0.6s var(--ease), transform 0.6s var(--ease), border-color 0.3s;
+}
+.scroll-cue:hover, .scroll-cue:focus-visible { border-color: var(--accent); }
+.scroll-cue.is-hidden { opacity: 0; transform: translateY(14px); pointer-events: none; }
+.scroll-cue span { position: relative; width: 1px; height: 16px; background: var(--text); animation: cue-bob 2.2s var(--ease) infinite; }
+.scroll-cue span::after { content: ''; position: absolute; left: -3px; top: 8px; width: 7px; height: 7px; border: solid var(--text); border-width: 0 1px 1px 0; transform: rotate(45deg); }
+.scroll-cue:hover span, .scroll-cue:hover span::after { background-color: var(--accent); border-color: var(--accent); }
+.scroll-cue:hover span::after { background-color: transparent; }
+@keyframes cue-bob { 0%, 100% { transform: translateY(-2px); } 50% { transform: translateY(3px); } }
+html:not(.js) .scroll-cue { display: none; }
+
+/* ---------- section rail: fixed left index on wide screens ---------- */
+
+.rail { display: none; }
+
+@media (min-width: 1100px) {
+  /* Wider side margins keep content clear of the rail. */
+  :root { --gutter: max(clamp(20px, 4.2vw, 64px), 116px); }
+
+  .rail { position: fixed; left: clamp(24px, 2.2vw, 32px); top: 50%; z-index: 55; display: block; transform: translateY(-50%); }
+  .rail ul { display: grid; gap: 10px; }
+  .rail__gap { margin-top: 8px; }
+  .rail a { position: relative; display: block; font-size: 0.78rem; font-weight: 300; letter-spacing: 0.01em; line-height: 1.4; color: var(--text-dim); transition: color 0.3s; }
+  .rail a::before { content: ''; position: absolute; left: -14px; top: 50%; width: 8px; height: 1px; background: var(--accent); transform: scaleX(0); transform-origin: right; transition: transform 0.5s var(--ease); }
+  .rail a:hover { color: var(--text); }
+  .rail a.is-active { color: var(--accent); }
+  .rail a.is-active::before { transform: scaleX(1); }
+}

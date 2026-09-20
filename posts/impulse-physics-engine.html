@@ -40,6 +40,19 @@
   </nav>
 </header>
 
+<nav class="rail" aria-label="sections">
+  <ul>
+    <li><a href="../#about" data-spy="about">about</a></li>
+    <li><a href="../#projects" data-spy="projects">projects</a></li>
+    <li><a href="../#experience" data-spy="experience">experience</a></li>
+    <li><a href="../#skills" data-spy="skills">skills</a></li>
+    <li><a href="../#education" data-spy="education">education</a></li>
+    <li><a href="../#repos" data-spy="repos">repos</a></li>
+    <li><a href="../#links" data-spy="links">links</a></li>
+    <li class="rail__gap"><a href="../blog" class="is-active" aria-current="true">blog</a></li>
+  </ul>
+</nav>
+
 <div class="menu" id="menu" hidden>
   <div class="menu__inner">
     <ul class="menu__list">
@@ -301,6 +314,8 @@ advance(frameSeconds: <span class="kw">number</span>): <span class="kw">number</
   <span>Çanakkale, Turkey</span>
   <button class="roll" type="button" data-top><span class="roll__in" data-text="back to top">back to top</span></button>
 </footer>
+
+<button class="scroll-cue is-hidden" type="button" aria-label="scroll down"><span></span></button>
 
 <script defer src="../assets/vendor/gsap.min.js"></script>
 <script defer src="../assets/vendor/ScrollTrigger.min.js"></script>
