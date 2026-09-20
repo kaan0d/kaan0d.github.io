@@ -1,4 +1,4 @@
-// Shared behavior for every page: smooth scroll, header, page transitions, reveals.
+// Shared behavior for every page: smooth scroll, header, anchors, reveals.
 (() => {
   const scriptBase = document.currentScript.src.replace(/core.js.*$/, '');
   const root = document.documentElement;
@@ -11,7 +11,6 @@
   gsap.registerPlugin(ScrollTrigger, SplitText);
 
   const header = $('.site-header');
-  const curtain = $('.curtain');
   const cue = $('.scroll-cue');
 
   // ---------- smooth scroll ----------
@@ -78,39 +77,9 @@
     site.scrollTo(Math.min(window.scrollY + window.innerHeight * 0.85, ScrollTrigger.maxScroll(window)));
   });
 
-  // ---------- links: same-page anchors scroll, other pages get the curtain ----------
+  // ---------- links: same-page anchors scroll smoothly, everything else navigates normally ----------
 
   const cleanPath = (p) => p.replace(/index\.html$/, '').replace(/\.html$/, '').replace(/\/$/, '');
-
-  function leave(href) {
-    try { sessionStorage.setItem('curtain', '1'); } catch (e) { /* private mode: navigate without curtain */ }
-    gsap.fromTo(curtain, { yPercent: 100, visibility: 'visible' }, { yPercent: 0, duration: 0.8, ease: 'expo.inOut', onComplete: () => { location.href = href; } });
-  }
-
-  // Far targets: cover the screen, jump while hidden, uncover. Scrolling through
-  // the pinned sections in between would only show them flying past.
-  let jumping = false;
-  function jump(target) {
-    jumping = true;
-    gsap.timeline({ onComplete: () => { jumping = false; } })
-      .set(curtain, { yPercent: 100, visibility: 'visible' })
-      .to(curtain, { yPercent: 0, duration: 0.6, ease: 'expo.inOut' })
-      .add(() => {
-        site.scrollTo(target || 0, true);
-        ScrollTrigger.update();
-      })
-      .to(curtain, { yPercent: -100, duration: 0.7, ease: 'expo.inOut', delay: 0.1 })
-      .set(curtain, { visibility: 'hidden', yPercent: 100 });
-  }
-
-  const FAR_SCREENS = 2.5;
-
-  function goTo(target) {
-    if (jumping) return;
-    const distance = target ? Math.abs(target.getBoundingClientRect().top) : window.scrollY;
-    if (!reduce && distance > window.innerHeight * FAR_SCREENS) { jump(target); return; }
-    site.scrollTo(target || 0);
-  }
 
   document.addEventListener('click', (e) => {
     const a = e.target.closest('a[href]');
@@ -119,24 +88,14 @@
     const url = new URL(a.href, location.href);
     if (url.origin !== location.origin) return;
 
-    e.preventDefault();
-    const samePage = cleanPath(url.pathname) === cleanPath(location.pathname);
-    if (!samePage) {
-      if (reduce) { location.href = url.href; return; }
-      leave(url.href);
-      return;
-    }
+    if (cleanPath(url.pathname) !== cleanPath(location.pathname)) return;
 
-    goTo(url.hash ? document.getElementById(url.hash.slice(1)) : null);
+    e.preventDefault();
+    site.scrollTo(url.hash ? document.getElementById(url.hash.slice(1)) || 0 : 0);
     if (url.hash) history.replaceState(null, '', url.hash);
   });
 
-  $$('[data-top]').forEach((btn) => btn.addEventListener('click', () => goTo(null)));
-
-  // Restoring from the back/forward cache must not leave the curtain covering the page.
-  addEventListener('pageshow', (e) => {
-    if (e.persisted) gsap.set(curtain, { yPercent: 100, visibility: 'hidden' });
-  });
+  $$('[data-top]').forEach((btn) => btn.addEventListener('click', () => site.scrollTo(0)));
 
   // ---------- reveals ----------
 
@@ -194,14 +153,6 @@
 
   site.ready = (async () => {
     await document.fonts.ready;
-    const entering = root.classList.contains('curtain-on');
-    if (entering) {
-      try { sessionStorage.removeItem('curtain'); } catch (e) { /* ignore */ }
-      gsap.set(curtain, { yPercent: 0, visibility: 'visible' });
-      root.classList.remove('curtain-on');
-      gsap.to(curtain, { yPercent: -100, duration: 1, ease: 'expo.inOut', delay: 0.1, onComplete: () => gsap.set(curtain, { visibility: 'hidden', yPercent: 100 }) });
-      await new Promise((r) => setTimeout(r, 600));
-    }
     root.classList.add('ready');
     updateNavFade();
     if (root.dataset.page !== 'home') site.syncNav(false);

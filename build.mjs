@@ -127,7 +127,6 @@ function shell({ file, kind, title, description, main }) {
 (function (d) {
   d.classList.add('js');
   if (matchMedia('(prefers-reduced-motion: reduce)').matches) d.classList.add('reduce');
-  try { if (sessionStorage.getItem('curtain')) d.classList.add('curtain-on'); } catch (e) {}
   // Safety net: reveal content if the animation scripts never report ready.
   setTimeout(function () { if (!d.classList.contains('ready')) d.classList.add('no-anim'); }, 4000);
 })(document.documentElement);
@@ -135,7 +134,6 @@ function shell({ file, kind, title, description, main }) {
 ${kind === 'home' ? PERSON_LD : ''}
 </head>
 <body>
-<div class="curtain" aria-hidden="true"></div>
 <a class="skip" href="#main">skip to content</a>
 
 <header class="site-header">
