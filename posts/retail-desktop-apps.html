@@ -43,17 +43,6 @@
 
   .post-body h2{ font-family:var(--font-mono); font-size:1.05rem; font-weight:700; margin:48px 0 18px; }
   .post-body h2 .hash{ color:var(--accent-dim); margin-right:8px; }
-  .post-body code{ font-family:var(--font-mono); font-size:0.88em; color:var(--accent); }
-  .post-body a{ color:var(--accent); text-decoration:underline; text-decoration-color:#6b4a26; text-underline-offset:3px; }
-  .post-body a:hover{ text-decoration-color:var(--accent); }
-  .links{ font-family:var(--font-mono); font-size:0.88rem; }
-  .codeblock{ background:rgba(255,255,255,0.03); border:1px solid var(--line); border-radius:4px; padding:16px 18px; overflow-x:auto; margin:28px 0; }
-  .codeblock code{ font-family:var(--font-mono); font-size:0.85rem; color:var(--text); white-space:pre; line-height:1.6; }
-  .codeblock .cm{ color:var(--text-dim); }
-  .codeblock .kw{ color:var(--accent); }
-
-  .post-body h2{ font-family:var(--font-mono); font-size:1.05rem; font-weight:700; margin:48px 0 18px; }
-  .post-body h2 .hash{ color:var(--accent-dim); margin-right:8px; }
   .post-body h3{ font-family:var(--font-mono); font-size:0.92rem; font-weight:700; margin:32px 0 12px; color:var(--text); }
   .post-body code{ font-family:var(--font-mono); font-size:0.88em; color:var(--accent); }
   .post-body a{ color:var(--accent); text-decoration:underline; text-decoration-color:#6b4a26; text-underline-offset:3px; }
@@ -145,6 +134,21 @@
       <h2><span class="hash">##</span>the receipt app: same output every time</h2>
 
       <p>the second app is narrower. it produces receipts that look official, and it has to produce them the same way every time. you pick or type a customer, add line items (name, quantity, unit, price) and it writes a PDF. the interface is customtkinter, the PDFs are drawn with PyMuPDF, and PyInstaller packages it as a folder with an exe, so the shop installs nothing. there are three screens: new receipt, history, and saved customers.</p>
+
+      <figure>
+        <img src="img/receipt-new.webp" width="1489" height="830" alt="The new receipt screen in the receipt app: a navy sidebar, customer fields, one line item row with quantity, unit and price, a green Save as PDF button and a total of 1,000.00 TL." loading="lazy">
+        <figcaption>new receipt, filled with test data. the next number sits top right and is only spent once the PDF is saved. the total updates as you type.</figcaption>
+      </figure>
+
+      <figure>
+        <img src="img/receipt-history.webp" width="1491" height="835" alt="The history screen: three summary cards (60 receipts, paid and pending totals), a search box and a table of receipts with customer columns blurred." loading="lazy">
+        <figcaption>history. three cards on top (receipts, paid, pending), a search that folds Turkish case, and one row per receipt with its status. customer names, buildings and addresses are blurred.</figcaption>
+      </figure>
+
+      <figure>
+        <img src="img/receipt-customers.webp" width="1493" height="831" alt="The saved customers screen: a search box and a table with every row blurred, and buttons to load or delete the selected record." loading="lazy">
+        <figcaption>saved customers. a saved customer fills the new-receipt form in one click. every row is blurred.</figcaption>
+      </figure>
 
       <h2><span class="hash">##</span>a pdf that grows to fit</h2>
 
