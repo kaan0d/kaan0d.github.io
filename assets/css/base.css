@@ -1,4 +1,4 @@
-/* Shared foundation: tokens, type, header, menu, buttons, footer, motion states. */
+/* Shared foundation: tokens, type, header, buttons, footer, motion states. */
 
 @font-face { font-family: 'Geist'; src: url('../fonts/Geist-Variable.woff2') format('woff2'); font-weight: 100 900; font-display: swap; }
 @font-face { font-family: 'Geist Mono'; src: url('../fonts/GeistMono-Variable.woff2') format('woff2'); font-weight: 100 900; font-display: swap; }
@@ -27,7 +27,6 @@
 
   --z-grain: 80;
   --z-header: 70;
-  --z-menu: 60;
   --z-curtain: 100;
 }
 
@@ -92,7 +91,7 @@ body::after {
 .roll__in::after { content: attr(data-text); position: absolute; left: 0; top: 110%; white-space: nowrap; color: var(--accent); }
 .roll:hover .roll__in, .roll:focus-visible .roll__in { transform: translateY(-110%); }
 
-/* ---------- header ---------- */
+/* ---------- header: always visible, brand and CV left, page links right ---------- */
 
 .site-header {
   position: fixed;
@@ -101,62 +100,24 @@ body::after {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  height: 72px;
+  gap: 16px 32px;
+  min-height: 72px;
   padding: 0 var(--gutter);
   border-bottom: 1px solid transparent;
-  transition: transform 0.6s var(--ease), background-color 0.4s, border-color 0.4s;
+  transition: background-color 0.4s, border-color 0.4s;
 }
 .site-header.is-scrolled {
-  background: rgba(10, 10, 9, 0.72);
+  background: rgba(10, 10, 9, 0.78);
   border-bottom-color: var(--line);
   -webkit-backdrop-filter: blur(14px);
   backdrop-filter: blur(14px);
 }
-.site-header.is-hidden { transform: translateY(-100%); }
-.site-header__brand { font-weight: 600; letter-spacing: -0.02em; }
-.site-nav { display: flex; align-items: center; gap: clamp(20px, 3vw, 36px); font-size: 0.92rem; }
-.site-nav__menu { color: var(--text); }
-.site-nav a, .site-nav button { color: var(--text); }
-.js .site-nav__menu { display: inline-block; }
-html:not(.js) .site-nav__menu { display: none; }
-
-/* ---------- full-screen menu ---------- */
-
-.menu {
-  position: fixed;
-  inset: 0;
-  z-index: var(--z-menu);
-  display: flex;
-  align-items: flex-end;
-  padding: 96px var(--gutter) clamp(28px, 5vw, 56px);
-  background: var(--bg-2);
-}
-.menu[hidden] { display: none; }
-.menu__inner {
-  width: 100%;
-  max-width: var(--maxw);
-  margin: 0 auto;
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: space-between;
-  align-items: flex-end;
-  gap: 40px;
-}
-.menu__list { display: flex; flex-direction: column; }
-.menu__list li { overflow: hidden; }
-.menu__list a {
-  display: inline-block;
-  font-size: clamp(2.3rem, 7.2vh, 5.2rem);
-  font-weight: 500;
-  letter-spacing: -0.045em;
-  line-height: 1.08;
-  transition: color 0.3s, transform 0.5s var(--ease);
-}
-.menu__list span { display: inline-block; }
-.menu__list:hover a { color: var(--text-dim); }
-.menu__list a:hover, .menu__list a:focus-visible { color: var(--accent); transform: translateX(14px); }
-.menu__ext { display: flex; flex-direction: column; gap: 6px; font-family: var(--font-mono); font-size: 0.95rem; }
-.menu__ext li { overflow: hidden; }
+.site-header__left { display: flex; align-items: center; gap: clamp(14px, 1.6vw, 24px); }
+.site-header__brand { display: flex; align-items: center; gap: 12px; font-size: 1.3rem; font-weight: 600; letter-spacing: -0.03em; white-space: nowrap; }
+.site-header__brand img { width: 32px; height: 32px; border-radius: 8px; }
+.site-nav { display: flex; align-items: center; gap: clamp(14px, 1.7vw, 26px); font-size: 0.9rem; white-space: nowrap; }
+.site-nav a { flex: none; color: var(--text); transition: color 0.3s; }
+.site-nav a.is-active { color: var(--accent); }
 
 /* ---------- buttons ---------- */
 
@@ -189,6 +150,27 @@ html:not(.js) .site-nav__menu { display: none; }
 .btn:hover::before, .btn:focus-visible::before { transform: translateY(0); border-radius: 0; }
 .btn:active { transform: scale(0.97); }
 .btn--primary { background: var(--accent); border-color: var(--accent); color: var(--on-accent); }
+.btn--sm { padding: 0.55em 1.15em; font-size: 0.85rem; }
+.btn__arrow { display: inline-block; margin-left: 0.5em; transition: transform 0.5s var(--ease); }
+
+/* The CV button: filled amber with a light sweep on hover. */
+.btn--cv {
+  border-color: transparent;
+  background: linear-gradient(135deg, #f3a652 0%, #e8963f 50%, #d8822f 100%);
+  color: var(--on-accent);
+  font-weight: 600;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.3), 0 10px 28px -12px rgba(232, 150, 63, 0.6);
+  transition: box-shadow 0.5s var(--ease), color 0.4s var(--ease);
+}
+.btn--cv::before {
+  background: linear-gradient(105deg, transparent 25%, rgba(255, 255, 255, 0.6) 50%, transparent 75%);
+  border-radius: 0;
+  transform: translateX(-120%);
+  transition: transform 0.9s var(--ease);
+}
+.btn--cv:hover, .btn--cv:focus-visible { border-color: transparent; color: var(--on-accent); box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.35), 0 14px 34px -10px rgba(232, 150, 63, 0.75); }
+.btn--cv:hover::before, .btn--cv:focus-visible::before { transform: translateX(120%); border-radius: 0; }
+.btn--cv:hover .btn__arrow, .btn--cv:focus-visible .btn__arrow { transform: translate(3px, -3px); }
 
 /* ---------- page transition curtain ---------- */
 
@@ -260,10 +242,6 @@ html:not(.js) .site-nav__menu { display: none; }
   *, *::before, *::after { animation: none !important; transition-duration: 0.001ms !important; }
 }
 
-@media (max-width: 640px) {
-  .site-nav { gap: 18px; }
-  .site-nav a[href$='#projects'] { display: none; }
-}
 
 /* ---------- 3D slots: empty boxes the solids in objects.js follow ---------- */
 
@@ -301,20 +279,14 @@ html:not(.js) .site-nav__menu { display: none; }
 @keyframes cue-bob { 0%, 100% { transform: translateY(-2px); } 50% { transform: translateY(3px); } }
 html:not(.js) .scroll-cue { display: none; }
 
-/* ---------- section rail: fixed left index on wide screens ---------- */
 
-.rail { display: none; }
-
-@media (min-width: 1100px) {
-  /* Wider side margins keep content clear of the rail. */
-  :root { --gutter: max(clamp(20px, 4.2vw, 64px), 116px); }
-
-  .rail { position: fixed; left: clamp(24px, 2.2vw, 32px); top: 50%; z-index: 55; display: block; transform: translateY(-50%); }
-  .rail ul { display: grid; gap: 10px; }
-  .rail__gap { margin-top: 8px; }
-  .rail a { position: relative; display: block; font-size: 0.78rem; font-weight: 300; letter-spacing: 0.01em; line-height: 1.4; color: var(--text-dim); transition: color 0.3s; }
-  .rail a::before { content: ''; position: absolute; left: -14px; top: 50%; width: 8px; height: 1px; background: var(--accent); transform: scaleX(0); transform-origin: right; transition: transform 0.5s var(--ease); }
-  .rail a:hover { color: var(--text); }
-  .rail a.is-active { color: var(--accent); }
-  .rail a.is-active::before { transform: scaleX(1); }
+@media (max-width: 1099px) {
+  .site-header { flex-wrap: wrap; padding-block: 10px; row-gap: 6px; }
+  .site-nav { order: 3; width: 100%; padding-bottom: 4px; overflow-x: auto; gap: 22px; scrollbar-width: none; }
+  .site-nav::-webkit-scrollbar { display: none; }
 }
+
+/* In the header the CV button is just amber text and an arrow. */
+.site-header .btn--cv { padding-inline: 0.3em; background: none; box-shadow: none; border: 0; color: var(--accent); }
+.site-header .btn--cv::before { display: none; }
+.site-header .btn--cv:hover, .site-header .btn--cv:focus-visible { background: none; box-shadow: none; border: 0; color: #f6b56a; }

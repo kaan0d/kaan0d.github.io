@@ -1,4 +1,4 @@
-// Shared behavior for every page: smooth scroll, header, menu, page transitions, reveals.
+// Shared behavior for every page: smooth scroll, header, page transitions, reveals.
 (() => {
   const scriptBase = document.currentScript.src.replace(/core.js.*$/, '');
   const root = document.documentElement;
@@ -12,10 +12,7 @@
 
   const header = $('.site-header');
   const curtain = $('.curtain');
-  const menu = $('#menu');
-  const menuToggle = $('.site-nav__menu');
   const cue = $('.scroll-cue');
-  let menuOpen = false;
 
   // ---------- smooth scroll ----------
 
@@ -27,21 +24,30 @@
   }
   site.lenis = lenis;
 
+  // Ease in and out so long jumps do not lurch off the start line.
+  const easeInOut = (t) => (t < 0.5 ? 4 * t ** 3 : 1 - (-2 * t + 2) ** 3 / 2);
+
   site.scrollTo = (target, immediate = false) => {
-    if (lenis) return lenis.scrollTo(target, { duration: 1.4, immediate });
+    if (lenis) {
+      lenis.resize(); // pin spacers added after init would otherwise clamp the target
+      const to = typeof target === 'number' ? target : target.getBoundingClientRect().top + window.scrollY;
+      const distance = Math.abs(to - window.scrollY);
+      // Longer trips take longer, capped so the far end of the page stays reachable.
+      const duration = Math.min(3.4, 0.9 + distance / 3500);
+      return lenis.scrollTo(target, { duration, easing: easeInOut, immediate });
+    }
     return typeof target === 'number' ? window.scrollTo({ top: target }) : target.scrollIntoView();
   };
 
-  // ---------- header: hides while reading down, returns on scroll up ----------
+  // ---------- header stays put; it only gains a backdrop once the page moves ----------
 
   const NEAR_BOTTOM = 120;
   let cueReady = false;
 
-  const updateCue = () => cue.classList.toggle('is-hidden', !cueReady || menuOpen || window.scrollY > ScrollTrigger.maxScroll(window) - NEAR_BOTTOM);
+  const updateCue = () => cue.classList.toggle('is-hidden', !cueReady || window.scrollY > ScrollTrigger.maxScroll(window) - NEAR_BOTTOM);
 
   function onScroll(self) {
     header.classList.toggle('is-scrolled', self.scroll() > 24);
-    header.classList.toggle('is-hidden', !reduce && !menuOpen && self.direction === 1 && self.scroll() > 240);
     updateCue();
   }
 
@@ -51,45 +57,6 @@
     site.scrollTo(Math.min(window.scrollY + window.innerHeight * 0.85, ScrollTrigger.maxScroll(window)));
   });
 
-  // ---------- menu ----------
-
-  const menuLinks = $$('.menu__list a > span');
-  const menuExt = $$('.menu__ext li');
-
-  function setMenuLabel(text) {
-    const label = $('.roll__in', menuToggle);
-    label.textContent = text;
-    label.dataset.text = text;
-  }
-
-  function setMenu(open) {
-    if (open === menuOpen) return;
-    menuOpen = open;
-    menuToggle.setAttribute('aria-expanded', open);
-    setMenuLabel(open ? 'close' : 'menu');
-    $('main').inert = open;
-    $('.site-footer').inert = open;
-    header.classList.remove('is-hidden');
-    updateCue();
-
-    if (open) {
-      menu.hidden = false;
-      lenis?.stop();
-      if (reduce) return;
-      gsap.fromTo(menu, { clipPath: 'inset(0 0 100% 0)' }, { clipPath: 'inset(0 0 0% 0)', duration: 0.9, ease: 'expo.inOut' });
-      gsap.fromTo(menuLinks, { yPercent: 110 }, { yPercent: 0, duration: 1.1, stagger: 0.05, delay: 0.3, ease: 'expo.out' });
-      gsap.fromTo(menuExt, { opacity: 0, y: 12 }, { opacity: 1, y: 0, duration: 0.8, stagger: 0.06, delay: 0.55, ease: 'expo.out' });
-      return;
-    }
-
-    lenis?.start();
-    if (reduce) { menu.hidden = true; return; }
-    gsap.to(menu, { clipPath: 'inset(0 0 100% 0)', duration: 0.7, ease: 'expo.inOut', onComplete: () => { menu.hidden = true; } });
-  }
-
-  menuToggle.addEventListener('click', () => setMenu(!menuOpen));
-  document.addEventListener('keydown', (e) => { if (e.key === 'Escape') setMenu(false); });
-
   // ---------- links: same-page anchors scroll, other pages get the curtain ----------
 
   const cleanPath = (p) => p.replace(/index\.html$/, '').replace(/\.html$/, '').replace(/\/$/, '');
@@ -97,6 +64,31 @@
   function leave(href) {
     try { sessionStorage.setItem('curtain', '1'); } catch (e) { /* private mode: navigate without curtain */ }
     gsap.fromTo(curtain, { yPercent: 100, visibility: 'visible' }, { yPercent: 0, duration: 0.8, ease: 'expo.inOut', onComplete: () => { location.href = href; } });
+  }
+
+  // Far targets: cover the screen, jump while hidden, uncover. Scrolling through
+  // the pinned sections in between would only show them flying past.
+  let jumping = false;
+  function jump(target) {
+    jumping = true;
+    gsap.timeline({ onComplete: () => { jumping = false; } })
+      .set(curtain, { yPercent: 100, visibility: 'visible' })
+      .to(curtain, { yPercent: 0, duration: 0.6, ease: 'expo.inOut' })
+      .add(() => {
+        site.scrollTo(target || 0, true);
+        ScrollTrigger.update();
+      })
+      .to(curtain, { yPercent: -100, duration: 0.7, ease: 'expo.inOut', delay: 0.1 })
+      .set(curtain, { visibility: 'hidden', yPercent: 100 });
+  }
+
+  const FAR_SCREENS = 2.5;
+
+  function goTo(target) {
+    if (jumping) return;
+    const distance = target ? Math.abs(target.getBoundingClientRect().top) : window.scrollY;
+    if (!reduce && distance > window.innerHeight * FAR_SCREENS) { jump(target); return; }
+    site.scrollTo(target || 0);
   }
 
   document.addEventListener('click', (e) => {
@@ -114,14 +106,11 @@
       return;
     }
 
-    const target = url.hash ? document.getElementById(url.hash.slice(1)) : null;
-    const wasOpen = menuOpen;
-    setMenu(false);
-    setTimeout(() => site.scrollTo(target || 0), wasOpen ? 450 : 0);
+    goTo(url.hash ? document.getElementById(url.hash.slice(1)) : null);
     if (url.hash) history.replaceState(null, '', url.hash);
   });
 
-  $$('[data-top]').forEach((btn) => btn.addEventListener('click', () => site.scrollTo(0)));
+  $$('[data-top]').forEach((btn) => btn.addEventListener('click', () => goTo(null)));
 
   // Restoring from the back/forward cache must not leave the curtain covering the page.
   addEventListener('pageshow', (e) => {
@@ -204,7 +193,7 @@
     }
     if (location.hash) {
       const target = document.getElementById(location.hash.slice(1));
-      if (target) setTimeout(() => site.scrollTo(target, true), 50);
+      if (target) setTimeout(() => site.scrollTo(target, true), 150);
     }
   })();
 
