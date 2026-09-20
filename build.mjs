@@ -190,7 +190,7 @@ ${posts.filter((p) => p.date.startsWith(year)).map((p) => `        <li><a class=
     </section>`).join('\n');
 
   return `<section class="blog-hero">
-  <div class="obj" data-obj="torus" aria-hidden="true"></div>
+  <div class="obj" data-obj="tetra" aria-hidden="true"></div>
   <h1 class="blog-hero__title" data-split="lines" data-hero>blog</h1>
   <p class="blog-hero__lede" data-fade data-hero>notes on what i've been building.</p>
 </section>

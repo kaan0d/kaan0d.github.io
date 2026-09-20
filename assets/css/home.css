@@ -81,16 +81,18 @@
 
 /* ---------- skills ---------- */
 
+.skills { padding-block: clamp(64px, 7vw, 104px); }
 .skills__grid {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
-  gap: clamp(36px, 5vw, 64px) clamp(32px, 6vw, 96px);
-  margin-top: clamp(40px, 6vw, 88px);
+  gap: clamp(28px, 3.4vw, 50px) clamp(32px, 6vw, 96px);
+  margin-top: clamp(24px, 3vw, 40px);
 }
 .skill-group { padding-top: 20px; border-top: 1px solid var(--line); }
-.skill-group h3 { margin-bottom: 18px; font-family: var(--font-mono); font-size: 0.82rem; font-weight: 400; color: var(--text-dim); }
-.skill-group .tags li { padding: 0.45em 1em; font-family: var(--font-sans); font-size: 0.95rem; color: var(--text); }
+.skill-group h3 { margin-bottom: 14px; font-family: var(--font-mono); font-size: 0.82rem; font-weight: 400; color: var(--text-dim); }
+.skill-group .tags li { padding: 0.4em 0.95em; font-family: var(--font-sans); font-size: 0.95rem; color: var(--text); }
 .skill-group .tags li:hover { border-color: var(--accent); color: var(--accent); }
+.skills .obj--title { top: clamp(24px, 3vw, 44px); width: clamp(150px, 13vw, 200px); }
 
 /* ---------- experience ---------- */
 
@@ -141,6 +143,7 @@
 .stack { margin-top: clamp(40px, 6vw, 88px); }
 .stack-card { position: relative; z-index: var(--i); padding-block: 0 16px; }
 .stack-card__inner {
+  position: relative;
   display: grid;
   grid-template-columns: 1.05fr 1fr;
   gap: clamp(24px, 4vw, 64px);
@@ -150,6 +153,8 @@
   border: 1px solid var(--line);
   border-radius: var(--radius);
 }
+/* Receding cards stay opaque and darken through this overlay, so cards beneath never show through. */
+.stack-card__inner::after { content: ''; position: absolute; inset: 0; border-radius: inherit; background: var(--bg); opacity: var(--dim, 0); pointer-events: none; }
 .stack-card__title { font-size: clamp(2.4rem, 5vw, 4.6rem); font-weight: 500; letter-spacing: -0.05em; line-height: 1; }
 .stack-card__kind { margin-top: 10px; font-family: var(--font-mono); font-size: 0.85rem; color: var(--accent); }
 .stack-card__desc { max-width: 56ch; margin: 24px 0; font-size: 0.98rem; color: var(--text-dim); }
@@ -250,6 +255,7 @@
   .stat:nth-child(n + 3) { border-top: 1px solid var(--line); }
   .about__cols p { grid-column: 1 / -1; }
   .skills__grid { grid-template-columns: 1fr; }
+  .skills__spacer { display: none; }
   .entry { grid-template-columns: 1fr; gap: 8px; }
   .entry__when { padding-top: 0; }
   .acc summary { grid-template-columns: 1fr 20px; }
@@ -259,5 +265,9 @@
 
 .contact__cv { display: flex; width: fit-content; margin-top: clamp(28px, 4vw, 48px); }
 
-.hero .obj { top: clamp(96px, 14vh, 160px); right: max(var(--gutter), calc((100% - var(--maxw)) / 2 + var(--gutter))); width: clamp(260px, 32vw, 520px); }
 .about__cols .obj { position: relative; grid-column: 1 / span 4; grid-row: 1 / span 2; width: 100%; max-width: 340px; }
+
+/* The education list starts lower so its solid has room. */
+@media (min-width: 1000px) {
+  .education .acc-list { margin-top: clamp(96px, 11vw, 168px); }
+}
