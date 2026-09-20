@@ -23,6 +23,7 @@
   function scrollSpy() {
     const links = $$('.site-nav a[data-spy]');
     const sections = [...links.map((a) => a.dataset.spy), 'links'].map((id) => document.getElementById(id)).filter(Boolean);
+    let last = null;
     const update = () => {
       const middle = window.innerHeight * 0.45;
       let current = null;
@@ -34,6 +35,10 @@
         const on = a.dataset.spy === current;
         a.classList.toggle('is-active', on);
         if (on) a.setAttribute('aria-current', 'true'); else a.removeAttribute('aria-current');
+      }
+      if (current !== last) {
+        last = current;
+        window.site.syncNav?.();
       }
     };
     ScrollTrigger.create({ start: 0, end: 'max', onUpdate: update, onRefresh: update });

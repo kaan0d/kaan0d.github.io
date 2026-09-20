@@ -5,6 +5,7 @@ import { buildSync } from 'esbuild';
 
 const SITE = 'https://kaandinc.com';
 const NAME = 'Kaan Dinç';
+const COPYRIGHT_YEAR = 2026;
 const VENDOR = {
   'node_modules/gsap/dist/gsap.min.js': 'assets/vendor/gsap.min.js',
   'node_modules/gsap/dist/ScrollTrigger.min.js': 'assets/vendor/ScrollTrigger.min.js',
@@ -145,7 +146,7 @@ ${main}
 </main>
 
 <footer class="site-footer">
-  <span>${NAME}</span>
+  <span>&copy; ${COPYRIGHT_YEAR} ${NAME}. All rights reserved.</span>
   <span>Çanakkale, Turkey</span>
   <button class="roll" type="button" data-top>${roll('back to top')}</button>
 </footer>

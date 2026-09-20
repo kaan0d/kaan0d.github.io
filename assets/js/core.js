@@ -53,6 +53,27 @@
 
   ScrollTrigger.create({ start: 0, end: 'max', onUpdate: onScroll, onRefresh: onScroll });
 
+  // ---------- header links: on small screens they scroll sideways ----------
+
+  const nav = $('.site-nav');
+
+  // Edge fades show which side still has links.
+  const updateNavFade = () => {
+    nav.classList.toggle('fade-left', nav.scrollLeft > 4);
+    nav.classList.toggle('fade-right', nav.scrollLeft + nav.clientWidth < nav.scrollWidth - 4);
+  };
+  nav.addEventListener('scroll', updateNavFade, { passive: true });
+  addEventListener('resize', updateNavFade);
+  updateNavFade();
+
+  // Keeps the highlighted link centered in the scrolling row.
+  site.syncNav = (smooth = true) => {
+    const active = $('.is-active', nav);
+    if (!active || nav.scrollWidth <= nav.clientWidth) return;
+    const offset = active.getBoundingClientRect().left - nav.getBoundingClientRect().left + nav.scrollLeft;
+    nav.scrollTo({ left: offset - (nav.clientWidth - active.offsetWidth) / 2, behavior: smooth && !reduce ? 'smooth' : 'auto' });
+  };
+
   cue.addEventListener('click', () => {
     site.scrollTo(Math.min(window.scrollY + window.innerHeight * 0.85, ScrollTrigger.maxScroll(window)));
   });
@@ -182,6 +203,16 @@
       await new Promise((r) => setTimeout(r, 600));
     }
     root.classList.add('ready');
+    updateNavFade();
+    if (root.dataset.page !== 'home') site.syncNav(false);
+    else if (!reduce && nav.scrollWidth > nav.clientWidth) {
+      // One small nudge tells first-time visitors the row scrolls.
+      setTimeout(() => {
+        if (nav.scrollLeft > 0) return;
+        nav.scrollTo({ left: 56, behavior: 'smooth' });
+        setTimeout(() => nav.scrollTo({ left: 0, behavior: 'smooth' }), 650);
+      }, 2000);
+    }
     setTimeout(() => { cueReady = true; updateCue(); }, reduce ? 0 : 1500);
     if (!reduce) {
       initReveals();
