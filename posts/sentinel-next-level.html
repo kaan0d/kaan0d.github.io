@@ -178,14 +178,14 @@
     <div class="post-body">
       <p>the <a href="sentinel-packet-analyzer">first post</a> ended with seven finished stages and a list called "what it still can't do". Sentinel worked, but it had only ever seen traffic I generated myself, and it could not open the files people actually have. so I am taking it to the next level: this post is the sequel, and each stage in it goes after one item of that list, the one that matters most first.</p>
 
-      <p>the rules are the same as before. one stage at a time, tests and ruff and strict mypy clean before the next one, a sabotage run, and a plain note about what I could not check. this post grows a section per stage. it has two so far.</p>
+      <p>the rules are the same as before. one stage at a time, tests and ruff and strict mypy clean before the next one, a sabotage run, and a plain note about what I could not check. this post grows a section per stage. it has four so far.</p>
 
       <div class="stats">
-        <div class="stat"><b>2</b><span>capture file formats read: classic pcap and pcapng, picked by the first four bytes</span></div>
-        <div class="stat"><b>796</b><span>tests, 176 of them new in this post (6 more need Linux and root), ruff and strict mypy clean</span></div>
-        <div class="stat"><b>103 of 103</b><span>new deliberate one-line breaks caught by the tests (299 of 299 in all)</span></div>
+        <div class="stat"><b>6</b><span>detectors, two of them new in this post (SSH brute force, ICMP tunneling); and 2 capture file formats read</span></div>
+        <div class="stat"><b>895</b><span>tests, 275 of them new in this post (6 more need Linux and root), ruff and strict mypy clean</span></div>
+        <div class="stat"><b>185 of 185</b><span>new deliberate one-line breaks caught by the tests (381 of 381 in all)</span></div>
         <div class="stat"><b>68,756</b><span>field values compared with Wireshark's tshark on 10 captures, 6 of them public: no difference left unexplained</span></div>
-        <div class="stat"><b>6,000,000</b><span>damaged packets and capture files through the fuzzer in two runs, half of the files pcapng, 0 failures</span></div>
+        <div class="stat"><b>12,000,000</b><span>damaged packets and capture files through the fuzzer in four runs, half of the files pcapng, 0 failures</span></div>
         <div class="stat"><b>3</b><span>bugs in Sentinel found by other people's captures, and fixed</span></div>
       </div>
 
@@ -311,7 +311,7 @@ ts_ns += interface.offset_ns
           <tr><td>pcapng options</td><td class="num">2</td><td class="num">1 to 4</td></tr>
           <tr><td>pcapng packets</td><td class="num">12</td><td class="num">1 to 30</td></tr>
           <tr><td>pcapng simple packets</td><td class="num">6</td><td class="num">1 to 4</td></tr>
-          <tr><td>capture file detection</td><td class="num">4</td><td class="num">1 to 57</td></tr>
+          <tr><td>capture file detection</td><td class="num">4</td><td class="num">1 to 58</td></tr>
           <tr><td>pcapng generator</td><td class="num">5</td><td class="num">1 to 46</td></tr>
           <tr><td>fuzz run</td><td class="num">3</td><td class="num">1 to 1</td></tr>
         </tbody>
@@ -445,17 +445,17 @@ ts_ns += interface.offset_ns
       <div class="table-wrap"><table class="data">
         <thead><tr><th>part</th><th class="num">breaks</th><th class="num">tests that noticed</th></tr></thead>
         <tbody>
-          <tr><td>checksum offload</td><td class="num">7</td><td class="num">1 to 24</td></tr>
+          <tr><td>checksum offload</td><td class="num">7</td><td class="num">1 to 26</td></tr>
           <tr><td>ip fragments</td><td class="num">4</td><td class="num">1 to 5</td></tr>
           <tr><td>802.3 frames</td><td class="num">4</td><td class="num">1 to 3</td></tr>
-          <tr><td>tshark values</td><td class="num">7</td><td class="num">1 to 12</td></tr>
-          <tr><td>sentinel values</td><td class="num">4</td><td class="num">1 to 8</td></tr>
+          <tr><td>tshark values</td><td class="num">7</td><td class="num">1 to 13</td></tr>
+          <tr><td>sentinel values</td><td class="num">4</td><td class="num">1 to 9</td></tr>
           <tr><td>explained differences</td><td class="num">9</td><td class="num">1 to 8</td></tr>
           <tr><td>comparing a file</td><td class="num">2</td><td class="num">1 to 1</td></tr>
           <tr><td>comparing flows</td><td class="num">4</td><td class="num">1 to 1</td></tr>
           <tr><td>the report</td><td class="num">1</td><td class="num">1 to 1</td></tr>
           <tr><td>the command</td><td class="num">1</td><td class="num">1 to 1</td></tr>
-          <tr><td>running tshark</td><td class="num">3</td><td class="num">1 to 7</td></tr>
+          <tr><td>running tshark</td><td class="num">3</td><td class="num">1 to 8</td></tr>
         </tbody>
       </table></div>
 
@@ -469,6 +469,151 @@ ts_ns += interface.offset_ns
 
       <p>one more thing it does not show is a capture of my own machine. everything public in it was recorded by someone else on some other network, which is why they are the right test for the parser and the wrong thing to keep in the repository.</p>
 
+      <h2><span class="hash">##</span>stage 10: two more detectors</h2>
+
+      <p>the first four detectors see scans, floods, spoofed ARP and odd DNS. two things they cannot see: someone guessing SSH passwords, and data hidden in pings. this stage adds a detector for each, built the way the first four were: typed parameters with ranges, a rule in <code>rules/default.toml</code>, bounded state, one alert per attack and window, and the numbers behind the alert in the evidence.</p>
+
+      <div class="table-wrap"><table class="data">
+        <thead><tr><th>detector</th><th>looks for</th><th>default</th></tr></thead>
+        <tbody>
+          <tr><td><code>ssh_brute_force</code></td><td>one client completing many TCP connections to the SSH port of one server</td><td>10 completed connections in 60 s</td></tr>
+          <tr><td><code>icmp_tunnel</code></td><td>echo requests of 512 bytes or more, and echo replies that do not repeat the data of their request (IPv4 only)</td><td>10 large requests, or 5 changed replies, in 60 s</td></tr>
+        </tbody>
+      </table></div>
+
+      <div class="term"><pre><span class="pr">$ python -m sentinel ids attacks.pcap --format text   # the last three of 16
+</span><span class="ts">2023-11-14T22:14:00.902000Z</span> [medium] ssh-brute-force: 10.9.9.6 made 10 connections to the SSH port of 10.0.0.31 in 0.9s
+<span class="ts">2023-11-14T22:14:05.850000Z</span> [medium] icmp-tunnel: 10.0.8.8 got 5 echo replies from 10.0.0.40 that do not repeat the data it sent, in 0.8s
+<span class="ts">2023-11-14T22:14:06.800000Z</span> [medium] icmp-tunnel: 10.0.8.8 sent 10 echo requests of 512 bytes or more to 10.0.0.40 in 1.8s</pre></div>
+
+      <h3 class="sub">what can be seen of a password guesser</h3>
+
+      <p>SSH is encrypted, so a failed login cannot be seen. what can be seen is how often a client connects. a tool that opens a new connection for every few guesses shows that rate, and a person who logs in shows much less of it. so the detector counts connections per pair of client and server, and alerts at ten within a minute.</p>
+
+      <p>only connections that complete the handshake count, and that choice is the one I thought about most. a SYN with no answer is a scan, and a refused one is a scan too. those already have detectors, and a scan of port 22 should not also be reported as a guesser. so the detector remembers each SYN to the port, and counts a connection when it sees the ACK that ends its handshake. a retransmitted SYN is still one connection, and the ACKs that follow on the same connection do not count again, or every packet of an ordinary login would count as one more connection.</p>
+
+      <h3 class="sub">what can be seen of a tunnel in pings</h3>
+
+      <p>a real ping is answered with exactly the data it sent, and it sends a few dozen bytes: 56 on Linux, 32 on Windows. a tunnel that hides data in echo messages sends a lot more, and what comes back is not what went out. so there are two signals: requests of 512 bytes or more (ten in a minute), and replies whose data differs from their request's (five in a minute).</p>
+
+      <p>the second one needs memory: to compare a reply with its request, the detector must keep what the request carried. it keeps an 8-byte digest of the data, not the data, because a hundred thousand requests of 64 kilobytes would be six gigabytes. it matches a reply to a request by the two addresses, the identifier and the sequence number, and a reply that matches nothing is ignored. a message that was cut short by a small snap length is ignored too: a cut request would look small and a cut reply would look changed, and both would be my mistake, not the network's. ICMPv6 is not decoded here, so a tunnel over IPv6 is not seen.</p>
+
+      <h3 class="sub">the thresholds are guesses</h3>
+
+      <p>like those of stage 5, and I want to say so plainly: I had no capture of real SSH guessing or of a tunnel. what I can say is where my two generated captures sit. the harmless one has an admin who opens 9 SSH connections in 8 seconds, 9 pings of 1400 bytes (an MTU test) that are answered with the same data, and 4 replies that a device rewrote. the attack one has a guesser who makes 30 connections in 3 seconds, and a tunnel of 20 pings of 800 random bytes answered with 800 other random bytes. measured by asking the detectors with a higher and higher threshold, this is the most that one window holds:</p>
+
+      <div class="chart-wrap"><svg class="chart" viewBox="0 0 720 268" role="img" aria-labelledby="c10t c10d"><title id="c10t">The most one window holds, against the threshold</title><desc id="c10d">ssh connections: benign 9, attack 30, threshold 10; large echo requests: benign 9, attack 20, threshold 10; changed echo replies: benign 4, attack 20, threshold 5.</desc><line class="grid" x1="210" y1="8" x2="210" y2="242"/><text class="tick" x="210" y="258" text-anchor="middle">0</text><line class="grid" x1="315" y1="8" x2="315" y2="242"/><text class="tick" x="315" y="258" text-anchor="middle">10</text><line class="grid" x1="420" y1="8" x2="420" y2="242"/><text class="tick" x="420" y="258" text-anchor="middle">20</text><line class="grid" x1="525" y1="8" x2="525" y2="242"/><text class="tick" x="525" y="258" text-anchor="middle">30</text><line class="grid" x1="630" y1="8" x2="630" y2="242"/><text class="tick" x="630" y="258" text-anchor="middle">40</text><text class="lbl" x="198" y="33" text-anchor="end">ssh connections</text><rect class="bar-before" x="210" y="20" width="94.5" height="14"/><text class="val " x="323" y="31">9 (benign capture)</text><rect class="bar-after" x="210" y="46" width="315" height="14"/><text class="val hot" x="533" y="57">30 (attack capture)</text><line x1="315" y1="16" x2="315" y2="68" style="stroke:var(--text);stroke-width:2;stroke-dasharray:4 3"/><text class="tick" x="315" y="14" text-anchor="middle">threshold 10</text><text class="lbl" x="198" y="107" text-anchor="end">large echo requests</text><rect class="bar-before" x="210" y="94" width="94.5" height="14"/><text class="val " x="323" y="105">9 (benign capture)</text><rect class="bar-after" x="210" y="120" width="210" height="14"/><text class="val hot" x="428" y="131">20 (attack capture)</text><line x1="315" y1="90" x2="315" y2="142" style="stroke:var(--text);stroke-width:2;stroke-dasharray:4 3"/><text class="tick" x="315" y="88" text-anchor="middle">threshold 10</text><text class="lbl" x="198" y="181" text-anchor="end">changed echo replies</text><rect class="bar-before" x="210" y="168" width="42" height="14"/><text class="val " x="270.5" y="179">4 (benign capture)</text><rect class="bar-after" x="210" y="194" width="210" height="14"/><text class="val hot" x="428" y="205">20 (attack capture)</text><line x1="262.5" y1="164" x2="262.5" y2="216" style="stroke:var(--text);stroke-width:2;stroke-dasharray:4 3"/><text class="tick" x="262.5" y="162" text-anchor="middle">threshold 5</text></svg></div>
+
+      <p>the harmless capture sits one below the threshold in all three, on purpose, and the tests lower each threshold by one and check that the harmless capture then does raise exactly one alert, so it really is at the edge and not somewhere comfortable. the attack capture is far above. neither of them says where a real network sits.</p>
+
+      <h3 class="sub">real traffic, and one thing it showed</h3>
+
+      <p>I ran the default rules over the six public captures of stage 9 (1,245 packets). neither new detector raised anything, which is a small test: none of them has SSH or large pings in it. but the run showed a false positive of an older detector. <code>dns.cap</code> raised one <code>dns-tunnel</code> alert, a lookup that looks like this:</p>
+
+      <div class="codeblock"><code>_ldap._tcp.05b5292b-34b8-4fb7-85a3-8beef5fd2069.domains._msdcs.utelsystems.local</code></div>
+
+      <p>that is an Active Directory client looking for a domain controller, and the label in the middle is a GUID. the entropy test reads a GUID as random, which it is, and calls it a tunnel. stage 5 tuned that threshold on names I generated, and this is the first real DNS traffic it met. I did not fix it in this stage, which is about two new detectors, and it is in the limits of the README. the fix is not a threshold: GUIDs have a recognisable shape, and the detector should know it.</p>
+
+      <h3 class="sub">a limit I had to pin in a test</h3>
+
+      <p>every window in these detectors holds at most the threshold plus one event, so that a flood cannot use unbounded memory. the effect I had not thought about: when an attack goes on, the second alert, after the alert window has passed, says 11 connections and not 20, because the window never held more than 11. the count in an alert is the count the window could keep. I left it as it is, since the alert does what it should, and wrote the number down in a test so the next change does not move it by accident.</p>
+
+      <h3 class="sub">breaking it on purpose</h3>
+
+      <p>the sabotage run has 50 new breaks for this stage: in the SSH detector (the source port watched instead of the destination port, a reset counted as the end of a handshake, the half-open table left to grow), in the ICMP detector (a size one byte short counted as large, a reply matched with its request by identifier only), in the packet view, in the rules file (each threshold moved by one) and in the generators (the harmless capture made to cross a threshold). they were grouped by the part they hit:</p>
+
+      <div class="table-wrap"><table class="data">
+        <thead><tr><th>part</th><th class="num">breaks</th><th class="num">tests that noticed</th></tr></thead>
+        <tbody>
+          <tr><td>ssh detector</td><td class="num">15</td><td class="num">1 to 20</td></tr>
+          <tr><td>icmp detector</td><td class="num">22</td><td class="num">1 to 24</td></tr>
+          <tr><td>packet view</td><td class="num">1</td><td class="num">23 to 23</td></tr>
+          <tr><td>default rules</td><td class="num">5</td><td class="num">2 to 2</td></tr>
+          <tr><td>ping generator</td><td class="num">2</td><td class="num">2 to 25</td></tr>
+          <tr><td>benign capture</td><td class="num">3</td><td class="num">3 to 3</td></tr>
+          <tr><td>attack capture</td><td class="num">2</td><td class="num">8 to 8</td></tr>
+        </tbody>
+      </table></div>
+
+      <p>all 50 are caught, and so are the 299 before them: 349 of 349. one survived the first run: a break that made the SSH message say the threshold instead of the count. it lived because the first alert of a burst always has exactly as many connections as the threshold, so the message read the same either way. the test for a later alert checked the count in the evidence and the time in the message, but not the count in the message. now it does. 16 of the 50 are caught by a single test.</p>
+
+      <p>two sabotage entries of stage 5 broke in this stage, and not because of a bug: they matched two places in <code>detectors.py</code> instead of one, since I had copied the half-open bookkeeping of the SYN flood detector into the SSH one. each got the line that only the old detector has next to it. that is what copying costs. a shared helper would be cleaner, and I did not write it here.</p>
+
+      <p>the fuzzer ran again with the new detectors: 3,000,000 inputs (seed 10), 0 failures. the tests of this stage: 55 new, 851 in all.</p>
+
+      <h3 class="sub">what this stage does not show</h3>
+
+      <p>it does not show that the thresholds are right for any network I do not have. backups and configuration tools open many SSH connections, and a run of large pings for an MTU test looks like the first signal, so both detectors will alert on things that are fine, and a rule can raise a threshold or add a filter. and it does not show that a real tunnel is caught: <code>ptunnel</code> and similar tools were not run, only my own idea of what they send.</p>
+
+      <h2><span class="hash">##</span>stage 11: telling clients apart by how they say hello</h2>
+
+      <p>the ClientHello of stage 2 already gives the name a client asks for. that says who it talks to. it does not say what is talking, and that is a different question: the TLS library inside a program decides which cipher suites it offers, which extensions it sends and in which order, so one program says hello the same way whatever server it calls. a fingerprint of that is called JA3, and it is an MD5 of a few numbers from the hello. this stage adds it to <code>read</code> and <code>flows</code>, and a filter to search for it.</p>
+
+      <div class="term"><pre><span class="pr">$ python -m sentinel read sample.pcap --filter "ja3 61279becc80ab0e3aca57f5913c3e1a0"
+</span><span class="ts">2023-11-14 22:13:20.018000</span> IP 10.0.0.1.43000 &gt; 10.0.0.2.443: <span class="fl">Flags [P.]</span>, seq 1, ack 1, win 64240, <span class="dim">length 161</span><span class="fl">: TLS ClientHello, sni example.com, versions [TLS 1.3, TLS 1.2], ciphers (15) [TLS_AES_128_GCM_SHA256, TLS_AES_256_GCM_SHA384, TLS_CHACHA20_POLY1305_SHA256, +12 more], ja3 61279becc80ab0e3aca57f5913c3e1a0</span></pre></div>
+
+      <h3 class="sub">what goes into it</h3>
+
+      <p>five fields, written in decimal, each list in the order the client sent it and joined with dashes, the five joined with commas. for the hello above:</p>
+
+      <div class="table-wrap"><table class="data">
+        <thead><tr><th>field</th><th>in the hello</th><th>in the string</th></tr></thead>
+        <tbody>
+          <tr><td>version</td><td>771 (TLS 1.2 in the hello)</td><td><code>771</code></td></tr>
+          <tr><td>cipher suites</td><td>16, one of them GREASE</td><td><code>4865-4866-4867-49195-49199-49196-49200-52393-52392-49171-49172-156-157-47-53</code></td></tr>
+          <tr><td>extension types</td><td>4, one of them GREASE</td><td><code>0-10-43</code></td></tr>
+          <tr><td>elliptic curves (extension 10)</td><td>3</td><td><code>29-23-24</code></td></tr>
+          <tr><td>point formats (extension 11)</td><td>none sent</td><td><code>(empty)</code></td></tr>
+        </tbody>
+      </table></div>
+
+      <p>so the string is <code>771,4865-4866-4867-49195-49199-49196-49200-52393-52392-49171-49172-156-157-47-53,0-10-43,29-23-24,</code> and its MD5 is <code>61279becc80ab0e3aca57f5913c3e1a0</code>. the server name is not in it, and neither are the random bytes or the session id, and that is the point: the same program reaching two names has one fingerprint. I checked that with two hellos that differ in those three things, and checked that the same ciphers in another order give a different one (3c4d2ba2… against aac0f218…).</p>
+
+      <p>one detail decides whether the fingerprint is usable at all: GREASE. clients add made-up values (<code>0x0a0a</code>, <code>0x1a1a</code>, up to <code>0xfafa</code>) to their lists at random, to keep servers from breaking on values they do not know. they change on every connection, so a fingerprint that kept them would change with them. JA3 leaves them out of every list. the hello above has one in the ciphers and one in the extensions (the <code>6682</code> in its list is <code>0x1a1a</code>), and a test draws GREASE twice and gets the same hash. values that only look like it, such as <code>0x0a1a</code>, are real and stay.</p>
+
+      <h3 class="sub">a fingerprint of half a hello is worse than none</h3>
+
+      <p>the parser of stage 2 was built to keep what it could read from a damaged hello: a hello cut off in the middle still gave its server name and the ciphers before the cut. that is right for a summary line and wrong for a hash, because the hash of a partial list is a valid-looking hash that belongs to no client. so <code>TlsClientHello</code> now says whether it is <code>complete</code>: nothing was cut, the extensions block is as long as it says, no extension is cut off, and both lists that JA3 needs were well formed. <code>ja3</code> is empty otherwise. a test cuts a good hello at every possible position and checks that every proper prefix has no fingerprint.</p>
+
+      <p>this has a visible effect. the demo capture has a hello that arrives in two pieces on the wire. <code>read</code> sees one piece at a time, so its line ends with <code>[truncated client hello: 81 of 152 handshake bytes]</code> and has no <code>ja3</code>. <code>flows</code> puts the stream together first, and prints it:</p>
+
+      <div class="term"><pre><span class="pr">$ python -m sentinel flows streams.pcap   # the same hello, in two pieces on the wire
+</span><span class="ts">tcp 10.0.0.1:45000</span> &gt; 10.0.0.2:8443: established, pkts 4/1, bytes 161/0, 0.004000s [1 out-of-order client segment] | -&gt; TLS ClientHello, sni example.com, versions [TLS 1.3, TLS 1.2], ciphers (15) [TLS_AES_128_GCM_SHA256, TLS_AES_256_GCM_SHA384, TLS_CHACHA20_POLY1305_SHA256, +12 more], ja3 61279becc80ab0e3aca57f5913c3e1a0</pre></div>
+
+      <h3 class="sub">finding one</h3>
+
+      <p><code>--filter "ja3 HASH"</code> works in <code>read</code>, <code>flows</code>, <code>live</code> and in the <code>filter</code> of a rule of <code>ids</code>. the hash is 32 hex digits in any case, and it prints back in lower case. a hash of another length, a word that is not hex, or no hash at all is an error that points at the place, like every other error of the filter language. a cut hello, another protocol or a packet with no hello does not match, so <code>not ja3 X</code> matches all of them.</p>
+
+      <h3 class="sub">checked against two things</h3>
+
+      <p>the JA3 specification gives one example: a hello whose string is <code>769,47-53-5-10-49161-49162-49171-49172-50-56-19-4,0-10-11,23-24-25,0</code> must give <code>ada70206e40642a3e4461f35503241d5</code>, and it does. and <code>tshark</code> computes JA3 as well, so the comparison tool of stage 9 now compares it for every hello it sees, with the two lists. the demo capture and 6 hellos that a test builds byte by byte (GREASE in every list, no extensions, an empty extensions block, repeated values, values that only look like GREASE) agree: 203 field values, no difference. I had no capture of a real browser saying hello, so every hello here is one of mine and none is Firefox or Chrome. what a fingerprint of a real browser looks like, I have not seen.</p>
+
+      <h3 class="sub">breaking it on purpose</h3>
+
+      <p>the sabotage run has 32 new breaks for this stage: GREASE kept in the lists, the record version used in place of the hello version, a space after each comma, the ciphers sorted, the last two fields swapped, SHA-1 in place of MD5, the hash written in capitals, each way a hello could be taken for whole when it is not, each malformed list let through, and in the filter each length and hex rule. grouped by the part they hit:</p>
+
+      <div class="table-wrap"><table class="data">
+        <thead><tr><th>part</th><th class="num">breaks</th><th class="num">tests that noticed</th></tr></thead>
+        <tbody>
+          <tr><td>ja3 fingerprint</td><td class="num">9</td><td class="num">4 to 29</td></tr>
+          <tr><td>client hello</td><td class="num">5</td><td class="num">1 to 14</td></tr>
+          <tr><td>supported groups</td><td class="num">3</td><td class="num">1 to 32</td></tr>
+          <tr><td>point formats</td><td class="num">2</td><td class="num">2 to 11</td></tr>
+          <tr><td>summary</td><td class="num">2</td><td class="num">10 to 10</td></tr>
+          <tr><td>ja3 filter</td><td class="num">8</td><td class="num">1 to 8</td></tr>
+          <tr><td>tshark values</td><td class="num">1</td><td class="num">3 to 3</td></tr>
+          <tr><td>sentinel values</td><td class="num">2</td><td class="num">4 to 4</td></tr>
+        </tbody>
+      </table></div>
+
+      <p>all 32 are caught, and so are the 349 before them: 381 of 381. but this run had survivors too: four of 383. two of them were not tests I was missing but code I did not need. the two breaks read a groups or a point formats extension that is too short to hold its own length as an empty list, and they lived because the line after it (<code>2 + n &gt; len(body)</code>) rejects that case anyway, so the two branches were the same. I deleted the dead branch and the two breaks with it. the other two were real: a hello whose extensions block claims more bytes than it holds, and one whose last extension does, were taken for whole when every outer length was right. cutting a hello only gives those two when the lengths are made to lie, and my cut-at-every-position test cannot make them. two tests were added, and I ran the whole set again, 381 of 381. 9 of the 32 are caught by a single test.</p>
+
+      <p>the fuzzer ran again, with the new fields: 3,000,000 inputs (seed 11), 0 failures. the tests of this stage: 44 new, 895 in all. the cost is small: reading a hello takes 8.27 microseconds, computing its fingerprint 4.56, and it is only computed when something asks for it.</p>
+
+      <h3 class="sub">what this stage does not show</h3>
+
+      <p>only the client side. JA3S, the same idea for the server hello, is not done, and neither is JA4, the newer form. JA3 depends on the order of the extensions, and some clients now shuffle it on every connection, so their JA3 changes each time. and a fingerprint tells software apart, it does not name a program or a person: two different tools that use the same library share one.</p>
+
       <h2><span class="hash">##</span>where this goes</h2>
 
       <p>the list is my plan, in the order I think it should go, and it can change when a stage teaches me something.</p>
@@ -477,14 +622,14 @@ ts_ns += interface.offset_ns
         <thead><tr><th>stage</th><th>what it adds</th><th>state</th></tr></thead>
         <tbody>
           <tr><td>8</td><td>a pcapng reader, so Wireshark's default files open</td><td class="dim">done</td></tr>
-          <tr><td>9</td><td>compare against <code>tshark</code> on public sample captures, and fix every difference</td><td class="dim">done, this post</td></tr>
-          <tr><td>10</td><td>two more detectors: SSH brute force and ICMP tunneling</td><td class="dim">next</td></tr>
-          <tr><td>11</td><td>a TLS fingerprint (JA3) from the ClientHello</td><td class="dim">planned</td></tr>
+          <tr><td>9</td><td>compare against <code>tshark</code> on public sample captures, and fix every difference</td><td class="dim">done</td></tr>
+          <tr><td>10</td><td>two more detectors: SSH brute force and ICMP tunneling</td><td class="dim">done</td></tr>
+          <tr><td>11</td><td>a TLS fingerprint (JA3) from the ClientHello</td><td class="dim">done, this post</td></tr>
           <tr><td>12</td><td>live capture on Windows, IP level only, if it turns out to be reliable</td><td class="dim">maybe</td></tr>
         </tbody>
       </table></div>
 
-      <p>stage 10 goes back to the intrusion detection side: two more detectors, tested the way the first four were, with a harmless capture built to sit just below every threshold and an attack capture with exactly the alerts I expect.</p>
+      <p>stage 12 is the one I am least sure of: live capture on Windows, where there is no <code>AF_PACKET</code> and the choices are raw sockets at the IP level, which see less, or a driver that has to be installed. I will only do it if it can be made reliable, and otherwise I will say so and leave it out.</p>
 
     </div>
   </article>
