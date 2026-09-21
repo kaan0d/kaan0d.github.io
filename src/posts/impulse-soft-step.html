@@ -1,0 +1,112 @@
+---
+title: impulse, round two: a soft-step solver and a box that would not sleep
+date: 2026-09-21
+label: Sep 2026
+---
+<p>the first Impulse post ended with a list of things that did not work. a ball came back 3.5% too high. a pile of 500 bodies never fell asleep. fast bodies could only be stopped by static walls. round two is me going through that list, and a few things I found on the way. this post grows with every stage, so it is a work log more than a summary.</p>
+
+      <p class="links">try it: <a href="https://kaandinc.com/impulse/" target="_blank" rel="noopener">live demo</a> · <a href="https://github.com/kaan0d/impulse" target="_blank" rel="noopener">source</a> · previous post: <a href="impulse-physics-engine">building a 2d physics engine from scratch</a></p>
+
+      <div class="stats">
+        <div class="stat"><b>4</b><span>new stages, 13 to 16</span></div>
+        <div class="stat"><b>190 + 14</b><span>unit tests and browser tests, all green</span></div>
+        <div class="stat"><b>0.9985</b><span>rebound height of a bouncing ball, was about 1.035</span></div>
+        <div class="stat"><b>7.5 s</b><span>for a 500-body pile to fall asleep, it never did before</span></div>
+      </div>
+
+      <h2>four stages</h2>
+
+      <div class="table-wrap"><table class="data">
+        <thead><tr><th>stage</th><th>what it added</th><th>how it was proven</th></tr></thead>
+        <tbody>
+          <tr><td class="num">13</td><td>restitution reads the speed before gravity</td><td class="dim">a bouncing ball returns to within 2% of its drop height</td></tr>
+          <tr><td class="num">14</td><td>raycast, box overlap query, category, mask and group filters</td><td class="dim">ray hits and normals match the analytic answer; filters hold for contacts and for continuous collision</td></tr>
+          <tr><td class="num">15</td><td>a soft-step solver: substeps, soft contacts, a relax pass</td><td class="dim">every earlier test still passes, towers of 20 boxes still stand and sleep</td></tr>
+          <tr><td class="num">16</td><td>damping, rolling resistance, and a fix to how spinning circles touch</td><td class="dim">a rolling ball slows at the textbook rate; a 500-body pile sleeps</td></tr>
+        </tbody>
+      </table></div>
+
+      <h2>the ball that gained 3.5%</h2>
+
+      <p>the old step added gravity to every velocity, and then solved the contacts. restitution reads the approach speed when the contact is set up, so the ball hitting the ground was already 9.81 × 1/60 = 0.16 m/s faster than it had been on the last step, and it bounced with that extra speed. over a drop of 4.5 m that is a rebound 3.5% too high.</p>
+
+      <p>the fix is an order change, not new math: set up the contacts first, so restitution sees the speed before gravity, and add gravity after. the ball now comes back to 0.9985 of its drop height, and I tightened the test bounds from 0.95 to 1.06 down to 0.98 to 1.02. it was one of the smallest changes of the whole round and it needed the most thinking, because the solver had no place to put "after prepare, before solve", so I split it in two.</p>
+
+      <h2>asking the world questions</h2>
+
+      <p>until now the only way to find a body was a point test for the mouse. stage 14 added <code>world.raycast(x0, y0, x1, y1, mask)</code>, which returns the closest body, the hit point and the surface normal, and <code>world.boundsOverlapping(box)</code>. I did not write a new ray-shape routine. the continuous collision code already sweeps a point against every shape (that is what stops a bullet at a wall), so a ray is that sweep with a radius of zero, plus the normal of the plane it entered through. the test compares circles against the analytic distance, checks a box turned 45 degrees, and a hexagon whose flat side sits at cos 30° from its center.</p>
+
+      <p>the same stage added collision filtering with the Box2D rules: a body has a category, a mask and a group. two bodies meet only if each mask contains the other's category, and a shared non-zero group overrides that, positive always colliding and negative never. the check sits in one place for contacts and once more in the continuous collision sweep, and a test covers the second one, because a filtered wall that still stops fast bullets would be an odd bug to meet later.</p>
+
+      <h2>swapping the solver</h2>
+
+      <p>the old solver ran 10 iterations of sequential impulses over the contacts, with a 2-point block solver for stability, and pushed overlapping bodies apart after the solve. stage 15 replaced all of that with the idea from Box2D v3 (Erin Catto's soft step): split each step into 4 substeps, and in each substep add gravity, warm start, solve with a soft contact constraint that treats overlap like a stiff, heavily damped spring, move the bodies, then <em>relax</em>: solve again with the bias switched off, so the push-out speed does not turn into energy. restitution is applied once at the end, using the speed measured before the step. that deleted the block solver and the position projection completely.</p>
+
+      <div class="codeblock"><code><span class="cm">// one substep, four per step</span>
+<span class="kw">for</span> (<span class="kw">const</span> joint <span class="kw">of</span> joints) joint.prepare(1 / substep);
+<span class="kw">for</span> (<span class="kw">const</span> body <span class="kw">of</span> bodies) <span class="kw">if</span> (body.isSimulated) body.integrateVelocity(gravity, substep);
+<span class="cm">// warm start, then solve with bias</span>
+<span class="kw">this</span>.iterate(joints, <span class="kw">true</span>);
+<span class="kw">for</span> (<span class="kw">const</span> body <span class="kw">of</span> bodies) <span class="kw">if</span> (body.isSimulated) body.advance(substep);
+<span class="cm">// relax: same constraints, no bias</span>
+<span class="kw">this</span>.iterate(joints, <span class="kw">false</span>);</code></div>
+
+      <p>the surprise was how little of the test suite noticed. on the first run of the new solver 178 of 184 tests passed. four of the six failures were about things that had changed on purpose: free fall now sums over 4 substeps per step, resting impulses are stored per substep (the test now expects <code>m g dt / 4</code>), a test called "block solver" now says "two-point contacts", and a two-point elastic bounce came back at 1.76 m/s instead of 2 after one restitution sweep, so I run six. the other two were real: bullets flew through the wall. the continuous collision sweep started from the body's position minus its step motion, which is off by a rounding error, and a bullet that had been stopped exactly on the wall's surface was suddenly counted as starting inside it. storing the exact start position fixed both. the towers, the joints, the pendulum periods and the sleeping tests passed untouched.</p>
+
+      <p>the one number I had to choose is the contact stiffness. I ran the same towers and pyramids at several values and let the test suite vote:</p>
+
+      <div class="table-wrap"><table class="data">
+        <thead><tr><th>contact stiffness</th><th>20-box tower, top box height (ideal 19.5)</th><th>tower asleep</th><th>pyramid of 210 asleep</th><th>test suite</th></tr></thead>
+        <tbody>
+          <tr><td class="num">30 Hz</td><td class="num">19.369</td><td class="num">1.33 s</td><td class="num">0.85 s</td><td class="dim">all pass</td></tr>
+          <tr><td class="num">40 Hz</td><td class="num">19.426</td><td class="num">1.03 s</td><td class="num">0.82 s</td><td class="dim">all pass, chosen</td></tr>
+          <tr><td class="num">45 Hz</td><td class="dim">not measured</td><td class="dim">not measured</td><td class="dim">not measured</td><td class="dim">2 sleep tests fail</td></tr>
+          <tr><td class="num">60 Hz</td><td class="num">19.467</td><td class="num">2.22 s</td><td class="num">1.45 s</td><td class="dim">5 tests fail</td></tr>
+          <tr><td class="num">90 Hz</td><td class="dim">tower flies apart</td><td class="dim">not asleep at 10 s</td><td class="dim">not asleep at 10 s</td><td class="dim">not run</td></tr>
+        </tbody>
+      </table></div>
+
+      <p>stiffer contacts sag less but jitter, and jitter keeps bodies awake longer. 40 Hz is the point where the old tests still hold, not a value from a paper. the 30 Hz and 60 Hz rows were measured with the solver as it stood at that moment; they use boxes only, so the circle fix below cannot have changed them.</p>
+
+      <h2>the box that would not sleep</h2>
+
+      <p>the first post admitted that a pile of 500 mixed bodies never fell asleep in 8 seconds. I assumed the solver was too loose. with the new solver it still did not sleep, so I looked at which bodies were actually moving. after 30 seconds every body but one was standing still (0.000 m/s) and that one moved at 0.020 m/s with a spin of 0.063 rad/s. sleeping is per island, and a pile is one island, so one body kept all 500 awake.</p>
+
+      <p>that body was a box with a single contact point, rocking back and forth every few seconds, the way a box balanced on a ball would. a real one would lose energy to friction and to the ball sinking into the ground. so I added the missing physics: <strong>rolling resistance</strong>, a torque limited by the normal force that resists relative spin, and linear and angular damping. the first version made things worse: 495 bodies were now moving, at up to 0.02 m/s. the rolling impulse was starting from zero every step, so the constraint acted like noise. once it was stored in the contact and warm started like the other impulses, the pile fell asleep at 4.4 to 7.5 s.</p>
+
+      <p>the test for it is a ball rolling without slipping. rolling resistance <em>r</em> slows it at (2/3) r g / ball radius, and my first run of the test missed by a factor of 1.7. the ball hovered about a millimetre inside the ground with a downward speed of 8 cm/s, and its normal impulse read exactly zero at the end of every step I printed. the solver measures how far a contact has opened by moving the contact anchor with the body, including its rotation. for a box that is right. for a ball, the contact point stays under the center as the ball spins, but the anchor rotated away from the ground, so a spinning ball looked like it was leaving the surface by about 1 mm per step. the solver then thought there was a gap and let it fall into the ground again.</p>
+
+      <p>circles now keep their anchor fixed for the separation test. the rolling test passes at the theoretical rate, and here is the part I did not expect: <strong>the 500-body pile now falls asleep at 7.5 s even with no rolling resistance at all</strong>. the rocking box was mostly this bug, not missing physics. rolling resistance still helps (5.2 s at 0.03 m), and I kept it because the rolling test would have caught the anchor problem earlier if it had existed when the solver was written. I checked that by putting the bug back: the rolling test and the pile test both fail.</p>
+
+      <figure>
+        <img src="img/impulse-soft-pile.png" width="902" height="602" alt="A pile of circles, boxes and polygons with amber outlines resting in a walled container on a dark grid." loading="lazy">
+        <figcaption>the demo, restyled to match this site: dark metal faces with amber edges, like the solids on the home page. the faint lines from the center to each corner are only decoration.</figcaption>
+      </figure>
+
+      <h2>the numbers</h2>
+
+      <p>same machine and browser as the first post (headless Chrome 153 through Playwright, Ryzen 7 5800X, timer resolution 0.1 ms), production build. average time per step:</p>
+
+      <div class="table-wrap"><table class="data">
+        <thead><tr><th>scene</th><th>before (ms)</th><th>after (ms)</th><th>asleep at the end</th></tr></thead>
+        <tbody>
+          <tr><td>pyramid, 210 boxes</td><td class="num">0.86</td><td class="num">0.92</td><td class="dim">no (kept awake on purpose)</td></tr>
+          <tr><td>pyramid, 210 boxes, sleeping on</td><td class="num">0.29</td><td class="num">0.15</td><td class="dim">all 210</td></tr>
+          <tr><td>pile, 500 bodies</td><td class="num">1.47</td><td class="num">1.33</td><td class="dim">no (kept awake on purpose)</td></tr>
+          <tr><td>pile, 500 bodies, sleeping on</td><td class="num">1.39</td><td class="num">1.11</td><td class="dim">before: 0 of 500, after: all 500</td></tr>
+          <tr><td>pile, 500 bodies, sleeping on, rolling resistance</td><td class="dim">new</td><td class="num">0.60</td><td class="dim">all 500, over 10 s</td></tr>
+          <tr><td>pile, 1000 bodies</td><td class="num">2.59</td><td class="num">2.18</td><td class="dim">no (kept awake on purpose)</td></tr>
+        </tbody>
+      </table></div>
+
+      <p>4 substeps with a relax pass cost about the same as 10 iterations. the pyramid got 7% slower when awake, and everything else got faster. two runs of the same scene differ by up to about 12%, so I would not read anything into the small differences.</p>
+
+      <h2>what is still not solved</h2>
+
+      <p>a 20-box tower still compresses by about 7 cm at 40 Hz. soft contacts trade stiffness for stability, and I have not found a better place on that trade.</p>
+
+      <p>contacts only exist for bodies that overlap. continuous collision stops a fast body exactly at a wall, where nothing overlaps, so whether the solver sees a contact on the next step depends on floating point rounding. speculative contacts are the next stage.</p>
+
+      <p>two fast dynamic bodies can still pass through each other.</p>
+
+      <p>the code, tests and benchmark are in <a href="https://github.com/kaan0d/impulse" target="_blank" rel="noopener">the repository</a>. every number in this post comes from a run I did while writing it: the test suite, the benchmark page in headless Chrome, or a measurement script kept out of the repository.</p>
