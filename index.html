@@ -77,7 +77,7 @@
       <p class="stat__label">lines of code written across my projects</p>
     </div>
     <div class="stat" data-fade>
-      <p class="stat__num"><span data-count="11">11</span></p>
+      <p class="stat__num"><span data-count="12">12</span></p>
       <p class="stat__label">projects built, from a packet analyzer to a physics engine to retail software</p>
     </div>
     <div class="stat" data-fade>
@@ -146,6 +146,21 @@
     </article>
 
     <article class="stack-card" style="--i:3">
+      <div class="stack-card__inner">
+        <div class="stack-card__text">
+          <h3 class="stack-card__title">Environment-Aware Pathfinding</h3>
+          <p class="stack-card__kind">Game AI / Pathfinding</p>
+          <p class="stack-card__desc">Pathfinding that treats walls as a decision input, written from scratch in TypeScript. A time-cost planner prices every wall in seconds and picks the target and route by total time; groups of units share one plan and are limited by the attack positions around a wall; an event-based rollout scores each candidate plan. A deterministic simulation runs a classic AI and the new algorithm side by side in a PixiJS demo with an editor, nine maps and a debug view. Checked against the real simulation on 200 random maps: the pick is within 5% of the best plan on 199, and the time estimate is off by 1.2% on average.</p>
+          <ul class="tags"><li>TypeScript</li><li>PixiJS</li><li>Vitest</li></ul>
+          <p class="stack-card__links"><a class="roll" href="posts/pathfinding-part-1"><span class="roll__in" data-text="part 1">part 1</span></a><a class="roll" href="posts/pathfinding-part-2"><span class="roll__in" data-text="part 2">part 2</span></a><a class="roll" href="https://kaandinc.com/environment-aware-pathfinding/" target="_blank" rel="noopener"><span class="roll__in" data-text="live demo">live demo</span></a><a class="roll" href="https://github.com/kaan0d/environment-aware-pathfinding" target="_blank" rel="noopener"><span class="roll__in" data-text="source">source</span></a></p>
+        </div>
+        <div class="stack-card__visual media">
+          <img src="posts/img/pathfinding-castle.png" width="1400" height="800" alt="Two panels of the pathfinding demo on a castle map: the right panel has broken a weak gate in the wall ring and its units are inside, the left panel is still hitting a strong wall." loading="lazy">
+        </div>
+      </div>
+    </article>
+
+    <article class="stack-card" style="--i:4">
       <div class="stack-card__inner">
         <div class="stack-card__text">
           <h3 class="stack-card__title">Invoice Application</h3>
@@ -332,6 +347,11 @@
       <a class="repo-card" href="https://github.com/kaan0d/impulse" target="_blank" rel="noopener">
         <h3 class="repo-card__name">impulse</h3>
         <p class="repo-card__desc">2D rigid body physics engine written from scratch in TypeScript with no physics libraries. SAT collision, a sequential impulse solver, sleeping, continuous collision, and joints, fully deterministic.</p>
+        <p class="repo-card__meta">TypeScript</p>
+      </a>
+      <a class="repo-card" href="https://github.com/kaan0d/environment-aware-pathfinding" target="_blank" rel="noopener">
+        <h3 class="repo-card__name">environment-aware-pathfinding</h3>
+        <p class="repo-card__desc">Pathfinding that prices walls in seconds and lets groups of units share a plan, in TypeScript with PixiJS. A deterministic simulation, a time-cost planner, squads with attack slots, a rollout, and a two-panel demo with an editor, nine maps and a debug view.</p>
         <p class="repo-card__meta">TypeScript</p>
       </a>
       <a class="repo-card" href="https://github.com/kaan0d/simple-volume-saver" target="_blank" rel="noopener">
