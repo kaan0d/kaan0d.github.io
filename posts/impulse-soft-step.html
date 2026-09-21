@@ -59,17 +59,18 @@
 <article class="post">
   <header class="post-head">
     <a class="post-head__back roll" href="../blog"><span class="roll__in" data-text="&amp;larr; blog">&larr; blog</span></a>
-    <p class="post-head__meta" data-hero><time datetime="2026-09-21">Sep 2026</time> &nbsp;/&nbsp; 7 min read</p>
+    <p class="post-head__meta" data-hero><time datetime="2026-09-21">Sep 2026</time> &nbsp;/&nbsp; 9 min read</p>
     <h1 class="post-head__title" data-split="lines" data-hero>impulse part 2: the ball that cheated and the box that wouldn't sleep</h1>
   </header>
   <div class="post-layout has-toc">
     <aside class="toc" aria-label="on this page">
       <ol>
-        <li><a href="#four-stages">four stages</a></li>
+        <li><a href="#five-stages">five stages</a></li>
         <li><a href="#the-ball-that-gained-3-5">the ball that gained 3.5%</a></li>
         <li><a href="#asking-the-world-questions">asking the world questions</a></li>
         <li><a href="#swapping-the-solver">swapping the solver</a></li>
         <li><a href="#the-box-that-would-not-sleep">the box that would not sleep</a></li>
+        <li><a href="#contacts-before-they-touch">contacts before they touch</a></li>
         <li><a href="#the-numbers">the numbers</a></li>
         <li><a href="#what-is-still-not-solved">what is still not solved</a></li>
       </ol>
@@ -80,13 +81,13 @@
       <p class="links">try it: <a href="https://kaandinc.com/impulse/" target="_blank" rel="noopener">live demo</a> · <a href="https://github.com/kaan0d/impulse" target="_blank" rel="noopener">source</a> · previous post: <a href="impulse-physics-engine">impulse part 1: 2d physics with no library to blame</a></p>
 
       <div class="stats">
-        <div class="stat"><b>4</b><span>new stages, 13 to 16</span></div>
-        <div class="stat"><b>190 + 14</b><span>unit tests and browser tests, all green</span></div>
+        <div class="stat"><b>5</b><span>new stages, 13 to 17</span></div>
+        <div class="stat"><b>211 + 14</b><span>unit tests and browser tests, all green</span></div>
         <div class="stat"><b>0.9985</b><span>rebound height of a bouncing ball, was about 1.035</span></div>
-        <div class="stat"><b>7.5 s</b><span>for a 500-body pile to fall asleep, it never did before</span></div>
+        <div class="stat"><b>6.7 s</b><span>for a 500-body pile to fall asleep, it never did before</span></div>
       </div>
 
-      <h2 id="four-stages">four stages</h2>
+      <h2 id="five-stages">five stages</h2>
 
       <div class="table-wrap"><table class="data">
         <thead><tr><th>stage</th><th>what it added</th><th>how it was proven</th></tr></thead>
@@ -95,6 +96,7 @@
           <tr><td class="num">14</td><td>raycast, box overlap query, category, mask and group filters</td><td class="dim">ray hits and normals match the analytic answer; filters hold for contacts and for continuous collision</td></tr>
           <tr><td class="num">15</td><td>a soft-step solver: substeps, soft contacts, a relax pass</td><td class="dim">every earlier test still passes, towers of 20 boxes still stand and sleep</td></tr>
           <tr><td class="num">16</td><td>damping, rolling resistance, and a fix to how spinning circles touch</td><td class="dim">a rolling ball slows at the textbook rate; a 500-body pile sleeps</td></tr>
+          <tr><td class="num">17</td><td>contacts up to 2 cm before bodies touch, for every shape pair</td><td class="dim">eleven of the new tests fail with the margin set to zero; a bullet stops instead of staying pinned</td></tr>
         </tbody>
       </table></div>
 
@@ -155,29 +157,39 @@
         <figcaption>the demo, restyled to match this site: dark metal faces with amber edges, like the solids on the home page. the faint lines from the center to each corner are only decoration.</figcaption>
       </figure>
 
+      <h2 id="contacts-before-they-touch">contacts before they touch</h2>
+
+      <p>the engine only knew about bodies that overlapped. continuous collision stops a fast body exactly at a wall's surface, where nothing overlaps, so the solver saw no contact on the next step, or did see one depending on a rounding error in the stop position. that is the same thing that made the bullets fly through walls earlier in this round. stage 17 removes the cause: every shape pair now makes contacts up to 2 cm before touching, with a negative depth for the gap, and the broadphase grows every body's box by 1 cm per side so those pairs are found. the solver already had the other half: a contact with a gap lets the bodies close it during the substep but not cross it.</p>
+
+      <p>nine shape pairs (circle, box and polygon in every order that the code treats differently) each give a contact with depth −1.5 cm at a 1.5 cm gap and none at 3 cm. a ball closing on a wall at 20 m/s from 1.5 cm away stops at the surface, where unchecked it would travel 0.33 m in one step. a ball sliding past the wall keeps its speed to nine digits. a 250 m/s bullet ends up stopped, not pinned. with the margin set to zero, eleven of these tests fail.</p>
+
+      <p>one character mattered more than I expected. the solver treats a positive gap as speculative and anything else as a soft contact. I first wrote "gap of zero or more" as speculative, which felt right for two bodies that exactly touch, and the 500-body pile stopped falling asleep: after 20 seconds a circle and a box were still moving at 0.03 m/s and 0.1 rad/s. with the strict "greater than zero" (what Box2D uses) the same pile fell asleep at 6.7 s. I do not have a mechanism for that. what I can say is that in the version that failed, rolling resistance of 0.01, 0.03 or 0.06 made the pile fall asleep at 6.0, 6.2 and 5.9 s, and in the final version 0.03 gives 4.7 s. so my claim in the last section was too strong: the rocking box was partly the anchor bug, but whether a big pile ever falls asleep without rolling resistance depends on details that I cannot control one by one. rolling resistance is the part that made it robust.</p>
+
+      <p>the price is more contacts. boxes that sit 2 cm apart, like the columns of my pyramid, now touch speculatively: the peak went from 401 to 546 contacts, and the awake pyramid from 0.92 ms (stage 16) to 1.18 ms.</p>
+
       <h2 id="the-numbers">the numbers</h2>
 
-      <p>same machine and browser as the first post (headless Chrome 153 through Playwright, Ryzen 7 5800X, timer resolution 0.1 ms), production build. average time per step:</p>
+      <p>same machine and browser as the first post (headless Chrome 153 through Playwright, Ryzen 7 5800X, timer resolution 0.1 ms), production build, measured after stage 17. average time per step:</p>
 
       <div class="table-wrap"><table class="data">
         <thead><tr><th>scene</th><th>before (ms)</th><th>after (ms)</th><th>asleep at the end</th></tr></thead>
         <tbody>
-          <tr><td>pyramid, 210 boxes</td><td class="num">0.86</td><td class="num">0.92</td><td class="dim">no (kept awake on purpose)</td></tr>
-          <tr><td>pyramid, 210 boxes, sleeping on</td><td class="num">0.29</td><td class="num">0.15</td><td class="dim">all 210</td></tr>
-          <tr><td>pile, 500 bodies</td><td class="num">1.47</td><td class="num">1.33</td><td class="dim">no (kept awake on purpose)</td></tr>
-          <tr><td>pile, 500 bodies, sleeping on</td><td class="num">1.39</td><td class="num">1.11</td><td class="dim">before: 0 of 500, after: all 500</td></tr>
-          <tr><td>pile, 500 bodies, sleeping on, rolling resistance</td><td class="dim">new</td><td class="num">0.60</td><td class="dim">all 500, over 10 s</td></tr>
-          <tr><td>pile, 1000 bodies</td><td class="num">2.59</td><td class="num">2.18</td><td class="dim">no (kept awake on purpose)</td></tr>
+          <tr><td>pyramid, 210 boxes</td><td class="num">0.86</td><td class="num">1.18</td><td class="dim">no (kept awake on purpose)</td></tr>
+          <tr><td>pyramid, 210 boxes, sleeping on</td><td class="num">0.29</td><td class="num">0.20</td><td class="dim">all 210</td></tr>
+          <tr><td>pile, 500 bodies</td><td class="num">1.47</td><td class="num">1.44</td><td class="dim">no (kept awake on purpose)</td></tr>
+          <tr><td>pile, 500 bodies, sleeping on</td><td class="num">1.39</td><td class="num">1.03</td><td class="dim">before: 0 of 500, after: all 500</td></tr>
+          <tr><td>pile, 500 bodies, sleeping on, rolling resistance</td><td class="dim">new</td><td class="num">0.67</td><td class="dim">all 500, over 10 s</td></tr>
+          <tr><td>pile, 1000 bodies</td><td class="num">2.59</td><td class="num">2.47</td><td class="dim">no (kept awake on purpose)</td></tr>
         </tbody>
       </table></div>
 
-      <p>4 substeps with a relax pass cost about the same as 10 iterations. the pyramid got 7% slower when awake, and everything else got faster. two runs of the same scene differ by up to about 12%, so I would not read anything into the small differences.</p>
+      <p>4 substeps with a relax pass cost about the same as 10 iterations. the awake pyramid got 37% slower (0.86 to 1.18 ms) because of the extra speculative contacts, and every other row got faster. two runs of the same scene differ by up to about 12%, so I would not read anything into the small differences.</p>
 
       <h2 id="what-is-still-not-solved">what is still not solved</h2>
 
       <p>a 20-box tower still compresses by about 7 cm at 40 Hz. soft contacts trade stiffness for stability, and I have not found a better place on that trade.</p>
 
-      <p>contacts only exist for bodies that overlap. continuous collision stops a fast body exactly at a wall, where nothing overlaps, so whether the solver sees a contact on the next step depends on floating point rounding. speculative contacts are the next stage.</p>
+      <p>the 2 cm margin is a constant. a body that starts a step farther than that from a surface and moves farther than that in one step (over 1.2 m/s at 60 Hz) is not seen by contacts, so thin static walls still depend on continuous collision.</p>
 
       <p>two fast dynamic bodies can still pass through each other.</p>
 
