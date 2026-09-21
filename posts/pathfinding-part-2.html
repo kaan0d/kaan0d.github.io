@@ -59,7 +59,7 @@
 <article class="post">
   <header class="post-head">
     <a class="post-head__back roll" href="../blog"><span class="roll__in" data-text="&amp;larr; blog">&larr; blog</span></a>
-    <p class="post-head__meta" data-hero><time datetime="2026-09-22">Sep 2026</time> &nbsp;/&nbsp; 11 min read</p>
+    <p class="post-head__meta" data-hero><time datetime="2026-09-22">Sep 2026</time> &nbsp;/&nbsp; 14 min read</p>
     <h1 class="post-head__title" data-split="lines" data-hero>pathfinding part 2: a demo you can break, with an editor, nine maps and a debug view</h1>
   </header>
   <div class="post-layout has-toc">
@@ -67,6 +67,7 @@
       <ol>
         <li><a href="#stage-4-making-it-visible">stage 4: making it visible</a></li>
         <li><a href="#stage-5-an-editor-and-nine-maps">stage 5: an editor and nine maps</a></li>
+        <li><a href="#a-switch-attackers-inside-each-other">a switch: attackers inside each other</a></li>
         <li><a href="#stage-6-cartoon-style-and-a-debug-view">stage 6: cartoon style and a debug view</a></li>
         <li><a href="#speed-of-the-picture-and-what-i-could-not-measure">speed of the picture, and what I could not measure</a></li>
         <li><a href="#publishing-and-what-i-did-not-do">publishing, and what I did not do</a></li>
@@ -82,7 +83,7 @@
       <div class="stats">
         <div class="stat"><b>6 of 6</b><span>stages done; this part covers stages 4 to 6</span></div>
         <div class="stat"><b>9 + 1</b><span>ready-made maps and a blank one, each with a description</span></div>
-        <div class="stat"><b>105</b><span>tests, all green, plus a strict type check and a production build</span></div>
+        <div class="stat"><b>123</b><span>tests, all green, plus a strict type check and a production build</span></div>
       </div>
 
       <h2 id="stage-4-making-it-visible">stage 4: making it visible</h2>
@@ -189,7 +190,7 @@ deployAt(cells: { x: number; y: number }[], troopType: string): <span class="kw"
   }
 }</code></div>
 
-      <p>nine ready-made maps, each with a short description in the demo. these are the times to destroy every building, classic against the new algorithm, straight from the smoke test that runs every map under both:</p>
+      <p>nine ready-made maps, each with a short description in the demo. these are the times to destroy every building, classic against the new algorithm, straight from the smoke test that runs every map under both. they use the rule of part 1, one attacker per attack position. the section after this one adds a switch that lets units stand inside each other (now the default) and gives the numbers for it:</p>
 
       <div class="table-wrap"><table class="data roomy">
         <thead><tr><th>map</th><th class="num">classic</th><th class="num">new</th><th>what it shows</th></tr></thead>
@@ -257,6 +258,70 @@ deployAt(cells: { x: number; y: number }[], troopType: string): <span class="kw"
 
       <p>after it both algorithms finish in 38.10 s. every other map kept its exact time, and the 105 tests still passed with one exception that I decided not to hide: the oracle went from 200 of 200 picks within 5% to 199 of 200 (the worst pick is 1.052 instead of 1.021), and on the two fresh sets of maps it stayed at 199 and 199. I relaxed the oracle's bound from "worst pick within 5%" to "at least 198 of 200 within 5% and none more than 10% behind", which is what the measured numbers support. I would rather have a correct rule and an honest bound than a tighter number that only held because the bug was there.</p>
 
+
+      <h2 id="a-switch-attackers-inside-each-other">a switch: attackers inside each other</h2>
+
+      <p>after part 1 I was told something that should have been obvious: in most games of this kind units do not queue for a spot. they stand inside each other and all of them hit the wall. the rule that only one attacker fits on a cell was in my plan from stage 1, and it shaped everything since: the attack positions, the slot search, the waiting, the queues behind a barrier. it is a choice, not a law, so it is now a switch. <strong>attackers can share a cell</strong> is on by default. with it off you get the rule of part 1.</p>
+
+      <p>in the simulation it is one flag on the world (it comes from the scenario, so the editor and the reset button carry it). when it is on, a troop that has reached its target just starts hitting, from wherever it stands. nothing is reserved, nobody walks to another position, nobody waits:</p>
+
+      <div class="codeblock"><code><span class="cm">// One attacker per cell: a troop on a taken cell walks to a free attack position of the same target, or waits when none is left.</span>
+<span class="kw">private</span> tryStartAttack(troop: Troop, mayRelocate = <span class="kw">false</span>): <span class="kw">void</span> {
+  <span class="kw">if</span> (<span class="kw">this</span>.stackAttackers) {
+    troop.state = 'attacking'<span class="cm"> // no position is reserved, everyone hits from where they stand</span>
+    <span class="kw">return</span>
+  }
+  <span class="kw">const</span> cell = <span class="kw">this</span>.grid.cellOfPoint(troop.x, troop.y)
+  <span class="kw">const</span> holder = <span class="kw">this</span>.slotHolder[cell]
+  <span class="kw">if</span> (holder === -1 || holder === troop.id) {
+    <span class="kw">this</span>.slotHolder[cell] = troop.id
+    troop.attackCell = cell
+    troop.state = 'attacking'
+  } <span class="kw">else</span> <span class="kw">if</span> (mayRelocate) <span class="kw">this</span>.relocate(troop, cell)
+}</code></div>
+
+      <p>the planner needed two small changes. the rollout no longer hands out positions: every unit that arrives adds its damage from that moment, so the break time is the same integral as before with all the units counted. and the first price of a wall counts the whole squad's damage instead of the strongest units up to the number of free cells:</p>
+
+      <div class="codeblock"><code><span class="kw">if</span> (world.stackAttackers) {
+ <span class="cm"> // Everyone hits from the cell they arrive at: no positions to share out, nobody walks to another cell.</span>
+  <span class="kw">this</span>.lastSlots = members.length
+  <span class="kw">return</span> breakTime(stage.hp, order.map((i) =&gt; arrivals[i]), order.map((i) =&gt; members[i].<span class="kw">type</span>.dps), members.length)
+}</code></div>
+
+      <p>what changes in the numbers is large for maps where a crowd meets a wall. a wall in a one-cell corridor fell in 22.03 s for 8 troops with the rule and falls in 4.53 s without it. here are the nine maps again, with attackers sharing cells (the default), next to the times from the table above:</p>
+
+      <div class="chart-wrap"><svg class="chart" viewBox="0 0 760 488" role="img" aria-labelledby="p2c4t p2c4d"><title id="p2c4t">Time to destroy every building on the nine ready-made maps, attackers sharing cells</title><desc id="p2c4d">With shared cells: 21.07 and 13.33, 42.90 and 33.37, 28.67 and 21.13, 31.43 and 26.43, 17.60 and 16.50, 47.13 and 17.80, 21.07 and 21.07, 16.17 and 10.83, 13.40 and 13.40 seconds.</desc><rect class="key-before" x="240" y="8" width="12" height="12"/><text class="lbl" x="258" y="18">classic</text><rect class="key-after" x="240" y="28" width="12" height="12"/><text class="lbl" x="258" y="38">new algorithm</text><line class="grid" x1="240" y1="46" x2="240" y2="458"/><text class="tick" x="240" y="476" text-anchor="middle">0 s</text><line class="grid" x1="355" y1="46" x2="355" y2="458"/><text class="tick" x="355" y="476" text-anchor="middle">12.5 s</text><line class="grid" x1="470" y1="46" x2="470" y2="458"/><text class="tick" x="470" y="476" text-anchor="middle">25 s</text><line class="grid" x1="585" y1="46" x2="585" y2="458"/><text class="tick" x="585" y="476" text-anchor="middle">37.5 s</text><line class="grid" x1="700" y1="46" x2="700" y2="458"/><text class="tick" x="700" y="476" text-anchor="middle">50 s</text><text class="lbl" x="228" y="74" text-anchor="end">1. L corner</text><rect class="bar-before" x="240" y="56" width="193.84" height="14"/><text class="val" x="439.84" y="67">21.07 s</text><rect class="bar-after" x="240" y="74" width="122.64" height="14"/><text class="val hot" x="368.64" y="85">13.33 s</text><text class="lbl" x="228" y="118" text-anchor="end">2. Castle</text><rect class="bar-before" x="240" y="100" width="394.68" height="14"/><text class="val" x="640.68" y="111">42.9 s</text><rect class="bar-after" x="240" y="118" width="307" height="14"/><text class="val hot" x="553" y="129">33.37 s</text><text class="lbl" x="228" y="162" text-anchor="end">3. Double layer</text><rect class="bar-before" x="240" y="144" width="263.76" height="14"/><text class="val" x="509.76" y="155">28.67 s</text><rect class="bar-after" x="240" y="162" width="194.4" height="14"/><text class="val hot" x="440.4" y="173">21.13 s</text><text class="lbl" x="228" y="206" text-anchor="end">4. Mixed levels</text><rect class="bar-before" x="240" y="188" width="289.16" height="14"/><text class="val" x="535.16" y="199">31.43 s</text><rect class="bar-after" x="240" y="206" width="243.16" height="14"/><text class="val hot" x="489.16" y="217">26.43 s</text><text class="lbl" x="228" y="250" text-anchor="end">5. No way in</text><rect class="bar-before" x="240" y="232" width="161.92" height="14"/><text class="val" x="407.92" y="243">17.6 s</text><rect class="bar-after" x="240" y="250" width="151.8" height="14"/><text class="val hot" x="397.8" y="261">16.5 s</text><text class="lbl" x="228" y="294" text-anchor="end">6. Maze</text><rect class="bar-before" x="240" y="276" width="433.6" height="14"/><text class="val" x="679.6" y="287">47.13 s</text><rect class="bar-after" x="240" y="294" width="163.76" height="14"/><text class="val hot" x="409.76" y="305">17.8 s</text><text class="lbl" x="228" y="338" text-anchor="end">7. Crowd effect (1 unit)</text><rect class="bar-before" x="240" y="320" width="193.84" height="14"/><text class="val" x="439.84" y="331">21.07 s</text><rect class="bar-after" x="240" y="338" width="193.84" height="14"/><text class="val hot" x="439.84" y="349">21.07 s</text><text class="lbl" x="228" y="382" text-anchor="end">8. Reinforcements</text><rect class="bar-before" x="240" y="364" width="148.76" height="14"/><text class="val" x="394.76" y="375">16.17 s</text><rect class="bar-after" x="240" y="382" width="99.64" height="14"/><text class="val hot" x="345.64" y="393">10.83 s</text><text class="lbl" x="228" y="426" text-anchor="end">9. Narrow passage</text><rect class="bar-before" x="240" y="408" width="123.28" height="14"/><text class="val" x="369.28" y="419">13.4 s</text><rect class="bar-after" x="240" y="426" width="123.28" height="14"/><text class="val hot" x="369.28" y="437">13.4 s</text></svg></div>
+
+      <div class="table-wrap"><table class="data roomy">
+        <thead><tr><th>map</th><th class="num">classic</th><th class="num">new</th><th class="num">difference</th><th class="num">with one attacker per position</th></tr></thead>
+        <tbody>
+          <tr><td>1. L corner</td><td class="num">21.07 s</td><td class="num">13.33 s</td><td class="num">37%</td><td class="num dim">21.07 / 13.33</td></tr>
+          <tr><td>2. Castle</td><td class="num">42.90 s</td><td class="num">33.37 s</td><td class="num">22%</td><td class="num dim">43.30 / 34.50</td></tr>
+          <tr><td>3. Double layer</td><td class="num">28.67 s</td><td class="num">21.13 s</td><td class="num">26%</td><td class="num dim">63.60 / 30.47</td></tr>
+          <tr><td>4. Mixed levels</td><td class="num">31.43 s</td><td class="num">26.43 s</td><td class="num">16%</td><td class="num dim">46.90 / 29.17</td></tr>
+          <tr><td>5. No way in</td><td class="num">17.60 s</td><td class="num">16.50 s</td><td class="num">6%</td><td class="num dim">20.37 / 19.73</td></tr>
+          <tr><td>6. Maze</td><td class="num">47.13 s</td><td class="num">17.80 s</td><td class="num">62%</td><td class="num dim">47.33 / 20.13</td></tr>
+          <tr><td>7. Crowd effect (1 unit)</td><td class="num">21.07 s</td><td class="num">21.07 s</td><td class="num">same</td><td class="num dim">21.07 / 21.07</td></tr>
+          <tr><td>8. Reinforcements</td><td class="num">16.17 s</td><td class="num">10.83 s</td><td class="num">33%</td><td class="num dim">17.00 / 14.63</td></tr>
+          <tr><td>9. Narrow passage</td><td class="num">13.40 s</td><td class="num">13.40 s</td><td class="num">same</td><td class="num dim">38.10 / 38.10</td></tr>
+        </tbody>
+      </table></div>
+
+      <p>three things stand out. the new algorithm still wins or ties on every map, so the result of part 1 does not depend on the rule. its lead changes with it: on the double layer it falls from 52% to 26% because the classic algorithm's slow break through the strong inner ring is much less slow when the whole crowd hits it, and on the reinforcements map it grows from 14% to 33% because the late arrivals now add their damage the moment they arrive. and the narrow passage is a tie in both settings, which is right, since both algorithms have to break the same barrier; without the rule it just takes 13.40 s instead of 38.10 s.</p>
+
+      <p>the planner is more accurate with the rule off than with it on, which I did not expect but makes sense: without positions there is nothing to guess about who stands where. I ran the same oracle as in part 1 (200 random maps, every candidate plan forced through the real simulation) in both settings:</p>
+
+      <div class="table-wrap"><table class="data roomy">
+        <thead><tr><th>setting</th><th class="num">maps within 5% of the best plan</th><th class="num">worst pick</th><th class="num">mean estimate error</th></tr></thead>
+        <tbody>
+          <tr><td>one attacker per position, test maps</td><td class="num">199 of 200</td><td class="num">1.052</td><td class="num">1.2%</td></tr>
+          <tr><td>one attacker per position, two fresh sets</td><td class="num">199 and 199</td><td class="num">1.146, 1.107</td><td class="num">1.2%, 1.1%</td></tr>
+          <tr><td>cells shared, test maps</td><td class="num">200 of 200</td><td class="num">1.000</td><td class="num">0.8%</td></tr>
+          <tr><td>cells shared, two fresh sets</td><td class="num">200 and 200</td><td class="num">1.000, 1.004</td><td class="num">0.8%, 0.8%</td></tr>
+        </tbody>
+      </table></div>
+
+      <p>the tests now check both settings: the slot rule tests of parts 1 and 2 switch the rule off explicitly, and new tests check that the flag is on by default, that eight troops break a corridor wall together (4.53 s against 22.03 s), that nobody waits or reserves a cell, that the run is deterministic, and that the switch in the demo rebuilds both worlds with the new rule. the suite is 123 tests. in the demo the switch is in the Algorithm section of the side panel, and the narrow passage map is the one to try it on.</p>
 
       <h2 id="stage-6-cartoon-style-and-a-debug-view">stage 6: cartoon style and a debug view</h2>
 
@@ -377,7 +442,7 @@ jobs:
 
       <h2 id="the-whole-thing-in-one-paragraph">the whole thing in one paragraph</h2>
 
-      <p>the classic rule loses wherever a wall is cheap to break and the way around is long, or where a strong wall stands next to a weak one, and by amounts between 14% and 57% on the maps built for it. it ties where there is nothing to decide, or where both have to do the same thing (the narrow passage). in my first versions of two maps it lost by up to 4.7% because of the order of the buildings, and on the narrow passage it lost by 23% until I fixed a planning bug that the maps found and the earlier tests had not. the new algorithm predicts its own time to within about 1% on a single unit and 1.2% on average over random groups, and it does that in about 2.4 ms per group, which is 8 times slower than I wanted for a full round of ten groups. every number in this post is from a run I did, and the ones I could not measure (a real graphics card, the published page) are listed as such.</p>
+      <p>the classic rule loses wherever a wall is cheap to break and the way around is long, or where a strong wall stands next to a weak one, and by amounts between 14% and 57% on the maps built for it (6% to 62% when attackers may share a cell). it ties where there is nothing to decide, or where both have to do the same thing (the narrow passage). in my first versions of two maps it lost by up to 4.7% because of the order of the buildings, and on the narrow passage it lost by 23% until I fixed a planning bug that the maps found and the earlier tests had not. the new algorithm predicts its own time to within about 1% on a single unit and 1.2% on average over random groups, and it does that in about 2.4 ms per group, which is 8 times slower than I wanted for a full round of ten groups. every number in this post is from a run I did, and the ones I could not measure (a real graphics card, the published page) are listed as such.</p>
 
       <div class="chart-wrap"><svg class="chart" viewBox="0 0 760 168" role="img" aria-labelledby="p2c3t p2c3d"><title id="p2c3t">Tests added in each stage</title><desc id="p2c3d">Tests added: 15 in stage 1, 16 in stage 2, 21 in stage 3 and 53 in stages 4 to 6, 105 in total.</desc><line class="grid" x1="240" y1="18" x2="240" y2="138"/><text class="tick" x="240" y="156" text-anchor="middle">0 </text><line class="grid" x1="355" y1="18" x2="355" y2="138"/><text class="tick" x="355" y="156" text-anchor="middle">15 </text><line class="grid" x1="470" y1="18" x2="470" y2="138"/><text class="tick" x="470" y="156" text-anchor="middle">30 </text><line class="grid" x1="585" y1="18" x2="585" y2="138"/><text class="tick" x="585" y="156" text-anchor="middle">45 </text><line class="grid" x1="700" y1="18" x2="700" y2="138"/><text class="tick" x="700" y="156" text-anchor="middle">60 </text><text class="lbl" x="228" y="41" text-anchor="end">stage 1: simulation core</text><rect class="bar-after" x="240" y="28" width="115" height="14"/><text class="val hot" x="361" y="39">15 </text><text class="lbl" x="228" y="67" text-anchor="end">stage 2: time-cost planner</text><rect class="bar-after" x="240" y="54" width="122.67" height="14"/><text class="val hot" x="368.67" y="65">16 </text><text class="lbl" x="228" y="93" text-anchor="end">stage 3: squads, oracle</text><rect class="bar-after" x="240" y="80" width="161" height="14"/><text class="val hot" x="407" y="91">21 </text><text class="lbl" x="228" y="119" text-anchor="end">stages 4-6: demo, editor</text><rect class="bar-after" x="240" y="106" width="406.33" height="14"/><text class="val hot" x="652.33" y="117">53 </text></svg></div>
 

@@ -407,6 +407,8 @@
 
       <p>fifty units are as slow as three, and the time spent hitting (the total minus the 2 s walk) is 20.03 s against 7.00 s, a ratio of 2.86 for 3 positions against 1. there is no infinite speed-up.</p>
 
+      <p class="callout">a note added after part 2 was written: the one-attacker-per-position rule is now a switch in the demo, and it is off in every number of this part. many games let units stand inside each other so that all of them hit at once, and the demo does that by default. part 2 explains the switch and gives the numbers for both settings.</p>
+
       <p>the search behind this is small. it walks outwards from the troop, never farther than 3 cells from the target and never through a wall or across a corner, and it returns the free positions nearest first. the simulation uses it to move a troop, and the planner uses the same function to count positions:</p>
 
       <div class="codeblock"><code><span class="cm">// Breadth-first walk from `from`; returns how many free attack positions were found. isTaken marks positions in use.</span>
