@@ -89,7 +89,7 @@
 
       <h2 id="five-stages">five stages</h2>
 
-      <div class="table-wrap"><table class="data">
+      <div class="table-wrap"><table class="data roomy">
         <thead><tr><th>stage</th><th>what it added</th><th>how it was proven</th></tr></thead>
         <tbody>
           <tr><td class="num">13</td><td>restitution reads the speed before gravity</td><td class="dim">a bouncing ball returns to within 2% of its drop height</td></tr>
@@ -129,14 +129,14 @@
 
       <p>the one number I had to choose is the contact stiffness. I ran the same towers and pyramids at several values and let the test suite vote:</p>
 
-      <div class="table-wrap"><table class="data">
-        <thead><tr><th>contact stiffness</th><th>20-box tower, top box height (ideal 19.5)</th><th>tower asleep</th><th>pyramid of 210 asleep</th><th>test suite</th></tr></thead>
+      <div class="table-wrap"><table class="data roomy">
+        <thead><tr><th class="num">stiffness</th><th class="num">tower top height, ideal 19.5</th><th class="num">tower asleep</th><th class="num">pyramid asleep</th><th>test suite</th></tr></thead>
         <tbody>
           <tr><td class="num">30 Hz</td><td class="num">19.369</td><td class="num">1.33 s</td><td class="num">0.85 s</td><td class="dim">all pass</td></tr>
           <tr><td class="num">40 Hz</td><td class="num">19.426</td><td class="num">1.03 s</td><td class="num">0.82 s</td><td class="dim">all pass, chosen</td></tr>
-          <tr><td class="num">45 Hz</td><td class="dim">not measured</td><td class="dim">not measured</td><td class="dim">not measured</td><td class="dim">2 sleep tests fail</td></tr>
+          <tr><td class="num">45 Hz</td><td class="num dim">not measured</td><td class="num dim">not measured</td><td class="num dim">not measured</td><td class="dim">2 sleep tests fail</td></tr>
           <tr><td class="num">60 Hz</td><td class="num">19.467</td><td class="num">2.22 s</td><td class="num">1.45 s</td><td class="dim">5 tests fail</td></tr>
-          <tr><td class="num">90 Hz</td><td class="dim">tower flies apart</td><td class="dim">not asleep at 10 s</td><td class="dim">not asleep at 10 s</td><td class="dim">not run</td></tr>
+          <tr><td class="num">90 Hz</td><td class="num dim">tower flies apart</td><td class="num dim">not asleep at 10 s</td><td class="num dim">not asleep at 10 s</td><td class="dim">not run</td></tr>
         </tbody>
       </table></div>
 
@@ -171,14 +171,14 @@
 
       <p>same machine and browser as the first post (headless Chrome 153 through Playwright, Ryzen 7 5800X, timer resolution 0.1 ms), production build, measured after stage 17. average time per step:</p>
 
-      <div class="table-wrap"><table class="data">
-        <thead><tr><th>scene</th><th>before (ms)</th><th>after (ms)</th><th>asleep at the end</th></tr></thead>
+      <div class="table-wrap"><table class="data roomy">
+        <thead><tr><th>scene</th><th class="num">before (ms)</th><th class="num">after (ms)</th><th>asleep at the end</th></tr></thead>
         <tbody>
           <tr><td>pyramid, 210 boxes</td><td class="num">0.86</td><td class="num">1.18</td><td class="dim">no (kept awake on purpose)</td></tr>
           <tr><td>pyramid, 210 boxes, sleeping on</td><td class="num">0.29</td><td class="num">0.20</td><td class="dim">all 210</td></tr>
           <tr><td>pile, 500 bodies</td><td class="num">1.47</td><td class="num">1.44</td><td class="dim">no (kept awake on purpose)</td></tr>
           <tr><td>pile, 500 bodies, sleeping on</td><td class="num">1.39</td><td class="num">1.03</td><td class="dim">before: 0 of 500, after: all 500</td></tr>
-          <tr><td>pile, 500 bodies, sleeping on, rolling resistance</td><td class="dim">new</td><td class="num">0.67</td><td class="dim">all 500, over 10 s</td></tr>
+          <tr><td>pile, 500 bodies, sleeping on, rolling resistance</td><td class="num dim">new</td><td class="num">0.67</td><td class="dim">all 500, over 10 s</td></tr>
           <tr><td>pile, 1000 bodies</td><td class="num">2.59</td><td class="num">2.47</td><td class="dim">no (kept awake on purpose)</td></tr>
         </tbody>
       </table></div>

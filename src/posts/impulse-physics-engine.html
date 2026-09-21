@@ -40,7 +40,7 @@ advance(frameSeconds: <span class="kw">number</span>): <span class="kw">number</
 
       <p>I built it in stages and did not start the next one until the current one had green tests and a working demo:</p>
 
-      <div class="table-wrap"><table class="data">
+      <div class="table-wrap"><table class="data roomy">
         <thead><tr><th>stage</th><th>what it added</th><th>how it was proven</th></tr></thead>
         <tbody>
           <tr><td class="num">1</td><td>circles and boxes, semi-implicit Euler, fixed timestep, canvas renderer, drag-and-drop spawning</td><td class="dim">free fall matches the analytic result; frame rate never changes the outcome</td></tr>
@@ -99,7 +99,7 @@ advance(frameSeconds: <span class="kw">number</span>): <span class="kw">number</
 
       <p>the block solver is also much less sensitive to the iteration count. time until sleep, by iterations:</p>
 
-      <div class="table-wrap"><table class="data">
+      <div class="table-wrap"><table class="data roomy">
         <thead><tr><th>iterations</th><th class="num">10-box tower</th><th class="num">20-box tower</th></tr></thead>
         <tbody>
           <tr><td>6</td><td class="num">1.1 s</td><td class="num">collapsed</td></tr>
@@ -117,7 +117,7 @@ advance(frameSeconds: <span class="kw">number</span>): <span class="kw">number</
 
       <div class="chart-wrap"><svg class="chart" viewBox="0 0 720 224" role="img" aria-labelledby="c2t c2d"><title id="c2t">Average step time per scene against the 16.7 ms frame budget</title><desc id="c2d">Pyramid, 210 boxes: 0.86 ms. Pyramid, 210 boxes, sleeping on: 0.29 ms. Pile, 500 bodies: 1.47 ms. Pile, 500 bodies, sleeping on: 1.39 ms. Pile, 1000 bodies: 2.59 ms. Budget 16.7 ms.</desc><line class="grid" x1="244" y1="28" x2="244" y2="194"/><text class="tick" x="244" y="212" text-anchor="middle">0 ms</text><line class="grid" x1="348.94117647058823" y1="28" x2="348.94117647058823" y2="194"/><text class="tick" x="348.94117647058823" y="212" text-anchor="middle">4 ms</text><line class="grid" x1="453.88235294117646" y1="28" x2="453.88235294117646" y2="194"/><text class="tick" x="453.88235294117646" y="212" text-anchor="middle">8 ms</text><line class="grid" x1="558.8235294117648" y1="28" x2="558.8235294117648" y2="194"/><text class="tick" x="558.8235294117648" y="212" text-anchor="middle">12 ms</text><line class="grid" x1="663.7647058823529" y1="28" x2="663.7647058823529" y2="194"/><text class="tick" x="663.7647058823529" y="212" text-anchor="middle">16 ms</text><line class="budget" x1="682.1294117647059" y1="24" x2="682.1294117647059" y2="194"/><text class="lbl" x="682.1294117647059" y="18" text-anchor="end">16.7 ms = one frame at 60 fps</text><text class="lbl" x="232" y="53" text-anchor="end">Pyramid, 210 boxes</text><rect class="bar-after" x="244" y="40" width="22.56235294117647" height="16"/><text class="val hot" x="272.56235294117647" y="53">0.86 ms</text><text class="lbl" x="232" y="85" text-anchor="end">Pyramid, 210 boxes, sleeping on</text><rect class="bar-after" x="244" y="72" width="7.608235294117634" height="16"/><text class="val hot" x="257.60823529411766" y="85">0.29 ms</text><text class="lbl" x="232" y="117" text-anchor="end">Pile, 500 bodies</text><rect class="bar-after" x="244" y="104" width="38.56588235294117" height="16"/><text class="val hot" x="288.5658823529412" y="117">1.47 ms</text><text class="lbl" x="232" y="149" text-anchor="end">Pile, 500 bodies, sleeping on</text><rect class="bar-after" x="244" y="136" width="36.467058823529385" height="16"/><text class="val hot" x="286.4670588235294" y="149">1.39 ms</text><text class="lbl" x="232" y="181" text-anchor="end">Pile, 1000 bodies</text><rect class="bar-after" x="244" y="168" width="67.94941176470587" height="16"/><text class="val hot" x="317.94941176470587" y="181">2.59 ms</text></svg></div>
 
-      <div class="table-wrap"><table class="data">
+      <div class="table-wrap"><table class="data roomy">
         <thead><tr><th>scene</th><th class="num">bodies</th><th class="num">avg ms</th><th class="num">p95 ms</th><th class="num">max ms</th><th class="num">peak contacts</th><th class="num">awake at end</th></tr></thead>
         <tbody>
           <tr><td>Pyramid, 210 boxes</td><td class="num">210</td><td class="num">0.86</td><td class="num">1.10</td><td class="num">1.50</td><td class="num">403</td><td class="num">210</td></tr>
@@ -134,7 +134,7 @@ advance(frameSeconds: <span class="kw">number</span>): <span class="kw">number</
 
       <div class="chart-wrap"><svg class="chart" viewBox="0 0 720 320" role="img" aria-labelledby="c3t c3d"><title id="c3t">Broadphase time against body count, spatial hash versus brute force, log scale</title><desc id="c3d">250 bodies: hash 0.03 ms, brute force 0.12 ms. 500 bodies: hash 0.05 ms, brute force 0.38 ms. 1000 bodies: hash 0.1 ms, brute force 1.48 ms. 2000 bodies: hash 0.27 ms, brute force 6.05 ms. 4000 bodies: hash 0.6 ms, brute force 25.7 ms.</desc><line class="grid" x1="64" y1="276" x2="680" y2="276"/><text class="tick" x="56" y="280" text-anchor="end">0.01 ms</text><line class="grid" x1="64" y1="218.5" x2="680" y2="218.5"/><text class="tick" x="56" y="222.5" text-anchor="end">0.1 ms</text><line class="grid" x1="64" y1="161" x2="680" y2="161"/><text class="tick" x="56" y="165" text-anchor="end">1 ms</text><line class="grid" x1="64" y1="103.5" x2="680" y2="103.5"/><text class="tick" x="56" y="107.5" text-anchor="end">10 ms</text><line class="grid" x1="64" y1="46" x2="680" y2="46"/><text class="tick" x="56" y="50" text-anchor="end">100 ms</text><text class="tick" x="64" y="296" text-anchor="middle">250</text><text class="tick" x="218" y="296" text-anchor="middle">500</text><text class="tick" x="372" y="296" text-anchor="middle">1,000</text><text class="tick" x="526" y="296" text-anchor="middle">2,000</text><text class="tick" x="680" y="296" text-anchor="middle">4,000</text><text class="tick" x="372" y="314" text-anchor="middle">bodies</text><line class="key-line-brute" x1="64" y1="16" x2="86" y2="16"/><text class="lbl" x="92" y="20">brute force, every pair</text><line class="key-line-hash" x1="294" y1="16" x2="316" y2="16"/><text class="lbl" x="322" y="20">spatial hash</text><path class="line-brute" d="M64.0 213.9 L218.0 185.2 L372.0 151.2 L526.0 116.0 L680.0 79.9"/><path class="line-hash" d="M64.0 248.6 L218.0 235.8 L372.0 218.5 L526.0 193.7 L680.0 173.8"/><circle class="dot-brute" cx="64" cy="213.9470783522616" r="4"/><circle class="dot-hash" cx="64" cy="248.56552785361941" r="4"/><circle class="dot-brute" cx="218" cy="185.1624431945334" r="4"/><circle class="dot-hash" cx="218" cy="235.80922475067894" r="4"/><circle class="dot-brute" cx="372" cy="151.20995136478996" r="4"/><circle class="dot-hash" cx="372" cy="218.5" r="4"/><circle class="dot-brute" cx="526" cy="116.04906595748304" r="4"/><circle class="dot-hash" cx="526" cy="193.69658356085824" r="4"/><circle class="dot-brute" cx="680" cy="79.92884540845057" r="4"/><circle class="dot-hash" cx="680" cy="173.75630310294048" r="4"/><text class="val" x="672" y="69.92884540845057" text-anchor="end">25.7 ms</text><text class="val hot" x="672" y="163.75630310294048" text-anchor="end">0.6 ms</text></svg></div>
 
-      <div class="table-wrap"><table class="data">
+      <div class="table-wrap"><table class="data roomy">
         <thead><tr><th>bodies</th><th class="num">overlapping pairs</th><th class="num">spatial hash</th><th class="num">brute force</th><th class="num">speedup</th></tr></thead>
         <tbody>
           <tr><td>250</td><td class="num">123</td><td class="num">0.03 ms</td><td class="num">0.12 ms</td><td class="num">4.4×</td></tr>
@@ -156,7 +156,7 @@ advance(frameSeconds: <span class="kw">number</span>): <span class="kw">number</
 
       <p>a physics engine can look right and be wrong, so most tests compare against something independent of the code they test:</p>
 
-      <div class="table-wrap"><table class="data">
+      <div class="table-wrap"><table class="data roomy">
         <thead><tr><th>claim</th><th>what it is checked against</th></tr></thead>
         <tbody>
           <tr><td>free fall</td><td>the analytic formula, the exact semi-implicit Euler sum, and the first-order error bound between them</td></tr>
@@ -172,7 +172,7 @@ advance(frameSeconds: <span class="kw">number</span>): <span class="kw">number</
 
       <p>then I sabotaged the code on purpose and checked that the tests noticed. a test that has never failed hasn't proven anything.</p>
 
-      <div class="table-wrap"><table class="data">
+      <div class="table-wrap"><table class="data roomy">
         <thead><tr><th>part</th><th>what I broke</th><th class="num">tests that failed</th></tr></thead>
         <tbody>
           <tr><td>polygon clipping</td><td>picked the wrong incident edge</td><td class="num">10 of 24</td></tr>
