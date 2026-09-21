@@ -1,0 +1,98 @@
+---
+title: environment-aware pathfinding: the unit that walked around a wall it could have broken
+date: 2026-09-21
+label: Sep 2026
+---
+<p>in games where a crowd of units attacks a base, there is a familiar mistake: a wall stands between a unit and its target, a long way around exists, and the unit takes it, even though breaking one cell of the wall would have been much faster. I am building a browser demo that shows this mistake and fixes it. the fix is to treat the environment as something the planner can weigh in seconds, not as a fixed map of obstacles. this post grows with every stage, so it is a work log more than a summary. stage 1 is only the baseline: the mistake, reproduced on purpose.</p>
+
+      <div class="stats">
+        <div class="stat"><b>1 of 6</b><span>stages done: the simulation core and the classic AI</span></div>
+        <div class="stat"><b>19.57 s → 9.70 s</b><span>time to destroy a depot: walking around versus breaking one wall cell</span></div>
+        <div class="stat"><b>15</b><span>tests, all green, plus a clean strict type check and build</span></div>
+      </div>
+
+      <h2>the plan</h2>
+
+      <p>the demo runs two algorithms side by side on the same map, with the same units and the same deploy events. the left one is the classic behavior: pick the building that is closest in a straight line, treat walls as impassable, walk around if a path exists, and hit the nearest wall only when there is none. the right one, built in the next stages, picks its target and route by total time. an empty cell costs its length divided by the unit's speed. a wall cell costs that plus its hit points divided by the unit's damage per second. one number, seconds, so a strong unit and a weak one can reach different decisions on the same wall.</p>
+
+      <p>the classic AI here is my model of that behavior, not a claim about how any particular game is coded. what matters for the demo is that it is a reasonable, simple rule with a visible failure.</p>
+
+      <p>the project is TypeScript with Vite and Vitest, and the simulation is separate from any drawing: <code>src/sim</code> has no DOM and no rendering library, runs on a fixed step of 1/30 s, and has no randomness in it, so the same scenario always gives the same result. the browser layer comes in stage 4.</p>
+
+      <h2>what stage 1 builds</h2>
+
+      <ul>
+        <li>a grid with walls of five levels (100 to 2,000 hit points), and buildings of 1×1, 2×2 and 3×3 cells that are obstacles for routing but can be attacked.</li>
+        <li>units with a speed, damage per second and hit points, and a small state machine: not spawned, moving, waiting, attacking, done.</li>
+        <li>melee combat with one rule that shapes everything else: a cell can hold at most one attacker, and attackers stay in place until the target dies. units may overlap while walking, but they cannot share an attack position.</li>
+        <li>an event log (deploy, wall destroyed, building destroyed, unit finished) and statistics, so two runs can be compared exactly.</li>
+        <li>the classic AI, and a way to push a plan into a unit from outside, which the tests use to show what the better decision would have been.</li>
+      </ul>
+
+      <h2>the mistake, measured</h2>
+
+      <p>the test map is 15 by 20 cells. a vertical wall of 18 cells (level 1, 100 hit points) splits it, with a gap only at the bottom. a depot (300 hit points) sits behind the wall, and one balanced unit (2.5 cells per second, 50 damage per second) starts on the other side, 3 cells from the wall.</p>
+
+      <div class="diagram-wrap"><svg class="diagram" viewBox="0 0 760 400" role="img" aria-label="L-corner map: the classic route runs down and around the wall, the direct route breaks one wall cell"><rect class="box" x="70" y="20" width="240" height="320"/><rect class="fill" x="198" y="20" width="16" height="16"/><rect class="fill" x="198" y="36" width="16" height="16"/><rect class="fill" x="198" y="52" width="16" height="16"/><rect class="fill" x="198" y="68" width="16" height="16"/><rect class="fill" x="198" y="84" width="16" height="16"/><rect class="fill" x="198" y="100" width="16" height="16"/><rect class="fill" x="198" y="116" width="16" height="16"/><rect class="fill" x="198" y="132" width="16" height="16"/><rect class="fill" x="198" y="148" width="16" height="16"/><rect class="fill" x="198" y="164" width="16" height="16"/><rect class="fill" x="198" y="180" width="16" height="16"/><rect class="fill" x="198" y="196" width="16" height="16"/><rect class="fill" x="198" y="212" width="16" height="16"/><rect class="fill" x="198" y="228" width="16" height="16"/><rect class="fill" x="198" y="244" width="16" height="16"/><rect class="fill" x="198" y="260" width="16" height="16"/><rect class="fill" x="198" y="276" width="16" height="16"/><rect class="fill" x="198" y="292" width="16" height="16"/><rect class="box hot" x="230" y="52" width="16" height="16"/><polyline class="hotLine" fill="none" points="158,60 158,76 158,92 158,108 158,124 158,140 158,156 158,172 158,188 158,204 158,220 158,236 158,252 158,268 158,284 174,300 190,316 206,316 222,316 222,300 222,284 222,268 222,252 222,236 222,220 222,204 222,188 222,172 222,156 222,140 222,124 222,108 222,92 222,76"/><circle cx="158" cy="60" r="4" fill="var(--text)"/><rect class="box" x="450" y="20" width="240" height="320"/><rect class="fill" x="578" y="20" width="16" height="16"/><rect class="fill" x="578" y="36" width="16" height="16"/><rect class="box hot" x="578" y="52" width="16" height="16" fill-opacity="0.2"/><rect class="fill" x="578" y="68" width="16" height="16"/><rect class="fill" x="578" y="84" width="16" height="16"/><rect class="fill" x="578" y="100" width="16" height="16"/><rect class="fill" x="578" y="116" width="16" height="16"/><rect class="fill" x="578" y="132" width="16" height="16"/><rect class="fill" x="578" y="148" width="16" height="16"/><rect class="fill" x="578" y="164" width="16" height="16"/><rect class="fill" x="578" y="180" width="16" height="16"/><rect class="fill" x="578" y="196" width="16" height="16"/><rect class="fill" x="578" y="212" width="16" height="16"/><rect class="fill" x="578" y="228" width="16" height="16"/><rect class="fill" x="578" y="244" width="16" height="16"/><rect class="fill" x="578" y="260" width="16" height="16"/><rect class="fill" x="578" y="276" width="16" height="16"/><rect class="fill" x="578" y="292" width="16" height="16"/><rect class="box hot" x="610" y="52" width="16" height="16"/><polyline class="hotLine" fill="none" points="538,60 554,60 570,60 586,60 602,60"/><circle cx="538" cy="60" r="4" fill="var(--text)"/><text class="t" x="190" y="12" text-anchor="middle">classic</text><text class="s" x="190" y="362" text-anchor="middle">walks around: 19.57 s</text><text class="t" x="570" y="12" text-anchor="middle">direct wall hit</text><text class="hotT" x="570" y="362" text-anchor="middle">breaks one cell: 9.70 s</text></svg></div>
+      <p class="dim" style="font-size:0.8rem; font-family:var(--font-mono);">filled cells are wall, the outlined cell on the right of each wall is the depot, the dot is where the unit starts. in the right panel the wall cell that gets broken is drawn as an outline. both routes come from the simulation, not from a drawing tool.</p>
+
+      <div class="table-wrap"><table class="data roomy">
+        <thead><tr><th>plan</th><th class="num">cells walked</th><th class="num">walls broken</th><th class="num">wall down at</th><th class="num">depot down at</th></tr></thead>
+        <tbody>
+          <tr><td>classic: walks around</td><td class="num">33.83</td><td class="num">0</td><td class="num dim">never hit</td><td class="num">19.57 s</td></tr>
+          <tr><td>direct: breaks one cell</td><td class="num">4.00</td><td class="num">1</td><td class="num">2.87 s</td><td class="num">9.70 s</td></tr>
+        </tbody>
+      </table></div>
+
+      <p>the depot itself takes 6 s in both runs (300 hit points at 50 damage per second), so the whole difference is the trip: 13.6 s of walking around the wall against 3.7 s of walking and hitting one wall cell. the direct plan is about half the time.</p>
+
+      <p>one honest caveat. the "direct" run is not a smarter algorithm. it is a route I wrote by hand and pushed into the unit with <code>forcePlan</code>, to prove that a faster plan exists on this map and that the simulation can execute a plan that goes through a wall. deciding that automatically is stage 2. and the answer is not always "break it": a level 5 wall has 2,000 hit points, which is 40 s of hitting for this unit, longer than the whole detour. the same map with a stronger wall should make the classic AI right. I have not run that yet, it is what the time-cost planner has to get right in both directions.</p>
+
+      <h2>how the classic AI decides</h2>
+
+      <p>it picks the building whose center is closest in a straight line, then searches for the cheapest route over empty cells to any free cell next to that building. if a route exists, it walks it. if it does not, because the building is sealed in, it looks at the cells the unit can reach, finds the walls touching that region, and hits the one closest to the target building. when the wall falls it plans again, and the route now exists. when a building falls, it moves on to the next nearest one.</p>
+
+      <p>the route search is a plain uniform-cost search, not A*. the stage plan asked for A*, and I left the heuristic out on purpose: the search has to compute the distance to every cell anyway, because that same table tells the AI which cells are reachable when there is no path, and on a 40 by 28 grid it costs nothing. the comment in the code names the ceiling (about 100 by 100) and the upgrade.</p>
+
+      <p>units also spread out. if five units all chose the nearest attack position of a building, four would queue on one cell while others stayed free. so when the classic AI picks a position it skips cells that another unit is attacking from or heading to, and only falls back to a shared one when every position is taken. a unit that ends up waiting resumes as soon as its target dies. a test with three units and a depot that has exactly one free position checks that there is never more than one attacker on it, that someone does wait, and that all three finish.</p>
+
+      <h2>rules that are easy to get wrong</h2>
+
+      <p>movement is 8-directional, and a unit may not cut a corner: a diagonal step is allowed only if both cells next to it are free. otherwise routes would slip between two diagonal walls and the wall would leak. a 3 by 3 test puts a wall at one cell and checks that the diagonal past it is refused in both directions.</p>
+
+      <p>an attack position is any free cell among the 8 neighbors of the target's footprint, diagonals included. the plan said only "neighbor", so this is my choice. it is one function in <code>grid.ts</code>, and it changes how many units can hit a 1×1 wall at once (8, or 4 if diagonals do not count).</p>
+
+      <p>the other rule is about where knowledge lives. the walls, buildings and empty ground are not compared by name anywhere in the simulation except one file, which holds a small table of what each kind does:</p>
+
+      <div class="codeblock"><code><span class="kw">export const</span> CellKind = { empty: 0, wall: 1, building: 2 } <span class="kw">as const</span>
+
+<span class="kw">const</span> REGISTRY: <span class="kw">readonly</span> EnvironmentKind[] = [
+  { traversal: 'passable', moveCost: 1, targetable: <span class="kw">false</span> }, <span class="cm">// empty</span>
+  { traversal: 'breakable', moveCost: 1, targetable: <span class="kw">true</span> }, <span class="cm">// wall</span>
+  { traversal: 'blocked', moveCost: 1, targetable: <span class="kw">true</span> }, <span class="cm">// building</span>
+]</code></div>
+
+      <p>the planner and the movement code ask "is this cell passable, breakable or blocked" and never "is this a wall". the point is that a new kind of terrain, say mud that costs double, can be added in one place. stage 2 tests exactly that. a test scans the source of <code>src/sim</code> and fails if any other file compares against a cell kind.</p>
+
+      <h2>how I checked it</h2>
+
+      <div class="table-wrap"><table class="data roomy">
+        <thead><tr><th>claim</th><th>what it is checked against</th></tr></thead>
+        <tbody>
+          <tr><td>same input gives the same result</td><td class="dim">two runs of a three-unit scenario, event log and statistics compared as text</td></tr>
+          <tr><td>no corner cutting</td><td class="dim">3 by 3 grid with one wall, diagonal step refused from both sides, allowed with no wall</td></tr>
+          <tr><td>one attacker per position</td><td class="dim">checked after every step of a run with three units and one free position</td></tr>
+          <tr><td>the mistake exists</td><td class="dim">classic 19.57 s against a hand-written direct plan at 9.70 s, printed by the test</td></tr>
+          <tr><td>no path: break in, then finish</td><td class="dim">depot ringed by 8 walls; the first wall broken is a direct neighbor of the depot</td></tr>
+          <tr><td>a multi-cell building frees its cells</td><td class="dim">a wall beside a 2×2 tower has 6 attack positions, 8 once the tower is destroyed</td></tr>
+          <tr><td>the simulation stays clean</td><td class="dim">a scan of the sources for kind comparisons, DOM and rendering imports</td></tr>
+        </tbody>
+      </table></div>
+
+      <p>a test that cannot fail proves nothing, so I tried to make the source scan fail: I added one line to <code>grid.ts</code> that compares against a cell kind, saw the test go red, and removed the line. the full suite then went back to 15 of 15. I did not do this for the other tests.</p>
+
+      <h2>what is not solved</h2>
+
+      <p>there is exactly one AI, and it replans only when its own target is destroyed. units do not yet react to a wall that someone else broke. a unit walks at its own speed whatever the ground is, because every kind of cell costs 1 for now. the direct plan in the table is handwritten, not computed. the tests cover three small maps, not a full 40 by 28 base, and nothing has run in a browser yet.</p>
+
+      <p>stage 2 is the time-cost planner for one unit: a search that starts from all the buildings at once, prices walls in seconds, and picks the target and route with the smallest total time. its first test is this same map.</p>

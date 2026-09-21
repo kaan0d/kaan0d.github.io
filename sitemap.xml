@@ -2,6 +2,7 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   <url><loc>https://kaandinc.com/</loc></url>
   <url><loc>https://kaandinc.com/blog</loc></url>
+  <url><loc>https://kaandinc.com/posts/environment-aware-pathfinding</loc></url>
   <url><loc>https://kaandinc.com/posts/impulse-soft-step</loc></url>
   <url><loc>https://kaandinc.com/posts/sentinel-real-world</loc></url>
   <url><loc>https://kaandinc.com/posts/sentinel-next-level</loc></url>
