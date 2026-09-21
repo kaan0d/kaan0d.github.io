@@ -59,7 +59,7 @@
 <article class="post">
   <header class="post-head">
     <a class="post-head__back roll" href="../blog"><span class="roll__in" data-text="&amp;larr; blog">&larr; blog</span></a>
-    <p class="post-head__meta" data-hero><time datetime="2026-09-21">Sep 2026</time> &nbsp;/&nbsp; 16 min read</p>
+    <p class="post-head__meta" data-hero><time datetime="2026-09-21">Sep 2026</time> &nbsp;/&nbsp; 23 min read</p>
     <h1 class="post-head__title" data-split="lines" data-hero>environment-aware pathfinding: the unit that walked around a wall it could have broken</h1>
   </header>
   <div class="post-layout has-toc">
@@ -83,15 +83,24 @@
         <li><a href="#speed">speed</a></li>
         <li><a href="#what-stage-2-added-to-the-checks">what stage 2 added to the checks</a></li>
         <li><a href="#where-the-new-planner-loses">where the new planner loses</a></li>
+        <li><a href="#stage-3-a-crowd-is-not-a-bigger-unit">stage 3: a crowd is not a bigger unit</a></li>
+        <li><a href="#attack-positions-become-a-rule-of-the-simulation">attack positions become a rule of the simulation</a></li>
+        <li><a href="#how-long-a-wall-lasts-under-a-crowd">how long a wall lasts under a crowd</a></li>
+        <li><a href="#groups-and-a-plan-with-six-candidates">groups, and a plan with six candidates</a></li>
+        <li><a href="#the-crowd-threshold">the crowd threshold</a></li>
+        <li><a href="#checking-it-against-the-real-simulation">checking it against the real simulation</a></li>
+        <li><a href="#what-else-stage-3-changed-and-what-it-checks">what else stage 3 changed, and what it checks</a></li>
+        <li><a href="#speed-where-i-missed">speed, where I missed</a></li>
+        <li><a href="#what-is-still-open">what is still open</a></li>
       </ol>
     </aside>
     <div class="post-body">
-<p>in games where a crowd of units attacks a base, there is a familiar mistake: a wall stands between a unit and its target, a long way around exists, and the unit takes it, even though breaking one cell of the wall would have been much faster. I am building a browser demo that shows this mistake and fixes it. the fix is to treat the environment as something the planner can weigh in seconds, not as a fixed map of obstacles. this post grows with every stage, so it is a work log more than a summary. stage 1 built the baseline: the mistake, reproduced on purpose. stage 2 builds the planner that decides by time, for one unit at a time.</p>
+<p>in games where a crowd of units attacks a base, there is a familiar mistake: a wall stands between a unit and its target, a long way around exists, and the unit takes it, even though breaking one cell of the wall would have been much faster. I am building a browser demo that shows this mistake and fixes it. the fix is to treat the environment as something the planner can weigh in seconds, not as a fixed map of obstacles. this post grows with every stage, so it is a work log more than a summary. stage 1 built the baseline: the mistake, reproduced on purpose. stage 2 built the planner that decides by time, for one unit at a time. stage 3 makes it work for a crowd: units that stand together share one plan, and the number of places around a wall decides how many of them can hit it.</p>
 
       <div class="stats">
-        <div class="stat"><b>2 of 6</b><span>stages done: the simulation core and classic AI, then the time-cost planner</span></div>
+        <div class="stat"><b>3 of 6</b><span>stages done: simulation core and classic AI, the time-cost planner, then squads</span></div>
         <div class="stat"><b>19.57 s → 9.70 s</b><span>time to destroy the depot behind a cheap wall: the classic detour versus the planner's own choice</span></div>
-        <div class="stat"><b>31</b><span>tests, all green, plus a clean strict type check and build</span></div>
+        <div class="stat"><b>52</b><span>tests, all green, plus a clean strict type check and build</span></div>
       </div>
 
       <h2 id="the-plan">the plan</h2>
@@ -325,11 +334,148 @@
 
       <h2 id="where-the-new-planner-loses">where the new planner loses</h2>
 
-      <p>the depot behind thick walls shows a real weakness. the planner picks, for each unit, the building with the least time left. on that map it destroys the open depot after 12.87 s, where classic reaches its first depot at 49.63 s. but to finish both, the classic AI needs 65.83 s and the time-cost planner 68.20 s. going for the cheap building first was right for the first building and slightly worse for the total, because the unit walks farther overall: to the far depot and then back across the map, instead of the short trip to the near one and then across. choosing the order of buildings is not something this per-building table does. stage 3 scores each plan by the time the last building falls, so it may catch this, and I will measure it there.</p>
+      <p>the depot behind thick walls shows a real weakness. the planner picks, for each unit, the building with the least time left. on that map it destroys the open depot after 12.87 s, where classic reaches its first depot at 49.63 s. but to finish both, the classic AI needs 65.83 s and the time-cost planner 68.20 s. going for the cheap building first was right for the first building and slightly worse for the total, because the unit walks farther overall: to the far depot and then back across the map, instead of the short trip to the near one and then across. choosing the order of buildings is not something this per-building table does. I hoped stage 3 might catch it, but it scores each candidate by when its own target falls, so it has the same limit: on this map the squad planner also finishes in 68.20 s.</p>
 
       <p>the other limits: it is one unit's point of view, so two units hitting the same wall do not help each other yet and the number of free positions around a wall does not cap them. the field is recomputed for every unit at every event, which is fine at 40 by 28 and will need a cache before crowds of 50. the 10% threshold is untuned, and the whole thing has still not run in a browser.</p>
 
-      <p>stage 3 is the core of the project: units that are close together share one plan, damage adds up but only as many units as there are free positions around a wall can hit it, and the planner must predict the total time in each case, then check that against the real simulation on 200 random maps.</p>
+      <h2 id="stage-3-a-crowd-is-not-a-bigger-unit">stage 3: a crowd is not a bigger unit</h2>
+
+      <p>the stage 2 planner treats every unit as alone. deploy six of them at the same spot and each one makes its own decision, and on the L-corner map with a level 3 wall (500 hit points) the six of them broke two different wall cells between them. that took 8.53 s. one shared decision, everyone hits the same wall cell, takes 6.97 s. the goal of stage 3 is that decision: units that stand close together share one plan, their damage adds up, and the planner predicts the time of each option before it picks.</p>
+
+      <p>two things make this harder than multiplying the damage by the number of units. a wall can only be hit from the free cells next to it, and one unit per cell, so 100 units do not break a wall 100 times faster. and units do not arrive together: a fast unit is at the wall when a heavy one is still walking.</p>
+
+      <h2 id="attack-positions-become-a-rule-of-the-simulation">attack positions become a rule of the simulation</h2>
+
+      <p>stage 1 already said a cell holds at most one attacker, but in practice a unit whose cell was taken just waited there. now it looks for the nearest free attack position of the same target that it can walk to, reserves it, and walks there. only when none is left does it wait. the search is a small breadth-first walk around the target that respects the corner rule, and the planner uses the exact same function to count positions, so the simulation and its own forecast cannot disagree about what a position is.</p>
+
+      <p>the number of positions depends on the side you come from: a wall in a long row has 3 free cells on the near side, not 6. a test puts one wall cell in a corridor one cell wide (1 position) and another in a wall across the whole map (3 positions), sends 3, 8 and then 50 units through it on a fixed route, and reads the time the wall falls:</p>
+
+      <div class="table-wrap"><table class="data roomy">
+        <thead><tr><th>wall</th><th class="num">3 units</th><th class="num">8 units</th><th class="num">50 units</th></tr></thead>
+        <tbody>
+          <tr><td>corridor, 1 position</td><td class="num">22.03 s</td><td class="num">22.03 s</td><td class="num">22.03 s</td></tr>
+          <tr><td>wall across the map, 3 positions</td><td class="num">9.00 s</td><td class="num">9.00 s</td><td class="num">9.00 s</td></tr>
+        </tbody>
+      </table></div>
+
+      <p>fifty units are as slow as three, and the time spent hitting (the total minus the 2 s walk) is 20.03 s against 7.00 s, a ratio of 2.86 for 3 positions against 1. there is no infinite speed-up.</p>
+
+      <h2 id="how-long-a-wall-lasts-under-a-crowd">how long a wall lasts under a crowd</h2>
+
+      <p>the function that turns this into a number is short. units start hitting when they arrive, only the first ones that get a position count, and damage is added up piece by piece between arrivals until the hit points are gone.</p>
+
+      <div class="codeblock"><code><span class="kw">export function</span> breakTime(hp: number, arrivals: ArrayLike&lt;number&gt;, dps: ArrayLike&lt;number&gt;, slots: number): number {
+  <span class="kw">const</span> hitters = Math.min(slots, arrivals.length)
+  <span class="kw">let</span> remaining = hp
+  <span class="kw">let</span> rate = 0
+  <span class="kw">for</span> (<span class="kw">let</span> i = 0; i &lt; hitters; i++) {
+    <span class="kw">if</span> (arrivals[i] === Infinity) <span class="kw">break</span>
+    rate += dps[i]
+    <span class="kw">const</span> nextArrival = i + 1 &lt; hitters ? arrivals[i + 1] : Infinity
+    <span class="kw">const</span> damageUntilNext = rate * (nextArrival - arrivals[i])
+    <span class="kw">if</span> (damageUntilNext &gt;= remaining) <span class="kw">return</span> arrivals[i] + remaining / rate
+    remaining -= damageUntilNext
+  }
+  <span class="kw">return</span> Infinity
+}</code></div>
+
+      <p>units that arrive with no free position add nothing, and a wall nobody can reach never falls. the same function is used for buildings. the planner finds what can be broken through the registry (the cell is "breakable"), not by asking whether it is a wall.</p>
+
+      <h2 id="groups-and-a-plan-with-six-candidates">groups, and a plan with six candidates</h2>
+
+      <p>units within 5 cells of each other, directly or through a chain of others, form a squad. the squads are re-formed at most five times a second, and a unit that joins or leaves makes its squad decide again. a squad decides like this:</p>
+
+      <ol>
+        <li>a flow field prices each wall by the damage the squad brings to it: its strongest units, as many as the wall has free positions. from the leader's cell it gives the best free route.</li>
+        <li>from that field the planner builds up to 6 different candidates: the best route, the full detour with no wall broken, the best route to each of the two next nearest buildings, and the best route again with each wall of the first one banned in turn.</li>
+        <li>a rollout scores every candidate without running the simulation. it computes when each unit reaches the first wall, gives the first arrivals the positions, gets the time the wall falls, then does the same for the next wall and the building, with arrival times that start after the previous wall is gone.</li>
+        <li>the lowest estimate wins, and the squad keeps what it has unless the winner is at least 10% faster. if a unit of the squad has already started hitting something, the squad keeps its plans until that falls.</li>
+      </ol>
+
+      <p>every unit follows the same field, which may only break the walls of the chosen candidate and ends on the same cell as the leader's route. the first two versions of that did not. I will come back to why.</p>
+
+      <h2 id="the-crowd-threshold">the crowd threshold</h2>
+
+      <p>level 4 wall (1,000 hit points), balanced units deployed together, time until the depot falls:</p>
+
+      <div class="table-wrap"><table class="data roomy">
+        <thead><tr><th class="num">units</th><th class="num">classic</th><th class="num">squad planner</th><th>the squad</th></tr></thead>
+        <tbody>
+          <tr><td class="num">1</td><td class="num">19.57 s</td><td class="num">19.57 s</td><td class="dim">walks around</td></tr>
+          <tr><td class="num">2</td><td class="num">16.63 s</td><td class="num">15.13 s</td><td>breaks the wall</td></tr>
+          <tr><td class="num">3</td><td class="num">15.73 s</td><td class="num">10.97 s</td><td>breaks the wall</td></tr>
+          <tr><td class="num">4</td><td class="num">15.27 s</td><td class="num">10.57 s</td><td>breaks the wall</td></tr>
+          <tr><td class="num">8</td><td class="num">14.90 s</td><td class="num">10.17 s</td><td>breaks the wall</td></tr>
+        </tbody>
+      </table></div>
+
+      <p>one unit walks around, two break the wall. the test finds that switch on its own and prints it. after 3 units, more help very little (10.97 s to 10.17 s at 8) because the wall has 3 positions. the classic AI walks around every time, so it gets a small benefit from the crowd only at the depot.</p>
+
+      <p>two more checks of the same idea. the first is the "units still walking" case: one unit stands next to the wall and ten more are 4 cells behind. one unit alone would walk around. with the ten counted at their arrival time the squad breaks the wall, and the rollout says 10.65 s where the real run took 10.63 s. the second is a wall in two layers, thin outside and thick inside, with the depot in the middle. the outer wall has three positions, but once it is gone the inner wall and the depot only have the one cell the squad stands in, and the rollout predicts 3.77 / 14.17 / 20.57 s for the outer wall, the inner wall and the depot where the run gave 3.80 / 14.20 / 20.63 s. the same planner, given that depot and a far open one, picks the open one (12.49 s against 20.53 s).</p>
+
+      <h2 id="checking-it-against-the-real-simulation">checking it against the real simulation</h2>
+
+      <p>the test I trust most is an oracle. 200 random 15 by 15 maps, with walls of random level, one to three buildings and a group of one to nine units of mixed types on one cell. for each map the planner lists its candidates and estimates. then each candidate is run in the real simulation with every unit forced onto that candidate's plan and nothing allowed to change it, and the real time until its target falls is measured. two questions: is the planner's pick within 5% of the best real time of the candidates, and how far off is the estimate?</p>
+
+      <p>the first run was not good, and the list of what was wrong is the most useful thing in this stage. these are the results after each fix, on the same 200 maps:</p>
+
+      <div class="table-wrap"><table class="data roomy">
+        <thead><tr><th>what I fixed</th><th class="num">picks within 5%</th><th class="num">mean estimate error</th></tr></thead>
+        <tbody>
+          <tr><td>first version</td><td class="num">168</td><td class="num dim">infinite in some maps</td></tr>
+          <tr><td>score before the units move (the test itself was scoring after the first step, when a unit already held a position)</td><td class="num">179</td><td class="num">14.0%</td></tr>
+          <tr><td>the units that arrive together share the nearest positions, so the later ones walk farther</td><td class="num">192</td><td class="num">5.0%</td></tr>
+          <tr><td>count the positions of a wall cell that will be gone, not of its neighbors on the far side</td><td class="num">195</td><td class="num">3.8%</td></tr>
+          <tr><td>count the positions of later walls with the earlier ones already broken</td><td class="num">197</td><td class="num">3.8%</td></tr>
+          <tr><td>only the units that get a position count as hitters (the others were sorted in front of the ones that walk far)</td><td class="num">199</td><td class="num">1.3%</td></tr>
+          <tr><td>every member ends on the leader's final cell</td><td class="num">200</td><td class="num">1.2%</td></tr>
+        </tbody>
+      </table></div>
+
+      <p>two of those were real bugs in the plans, not in the estimate, and I only saw them because the estimate was so far off. in the first version each unit of a squad followed its own path down the field, and on a wall across the map that meant the units spread over different wall cells side by side, each cell with full hit points, instead of hitting one cell together: 11.4 s where the plan said 7.7 s. the fix is that a candidate fixes the walls, and a unit may only break those. the other was that units were planned one by one as they deployed, so the first one, alone, chose the detour before the others existed. now everything that deploys in a step is placed first and planned afterwards.</p>
+
+      <p>the honest caveat is that I fixed these by looking at failures among the same 200 maps, so 200 of 200 (worst pick 1.021) is not a fair number. I then ran two fresh sets of 200 maps that I had not looked at: 199 and 198 picks within 5%, worst 1.146 and 1.107, mean estimate error 1.2% both times. on the worst one, a candidate with one wall was estimated at 9.77 s and took 12.33 s, and I did not find out why. the test compares the candidates of the planner with each other, not with every possible plan, and all groups start on one cell.</p>
+
+      <h2 id="what-else-stage-3-changed-and-what-it-checks">what else stage 3 changed, and what it checks</h2>
+
+      <div class="table-wrap"><table class="data roomy">
+        <thead><tr><th>claim</th><th>what it is checked against</th></tr></thead>
+        <tbody>
+          <tr><td>break time</td><td class="dim">unit tests: one hitter, late arrivals, not enough positions, units that never arrive</td></tr>
+          <tr><td>squads</td><td class="dim">a chain joins units, distant ones stay apart, radius 0 gives one unit each</td></tr>
+          <tr><td>attack positions</td><td class="dim">reachable side of a wall only, taken positions skipped, a walkable path to the next free one</td></tr>
+          <tr><td>no infinite speed-up</td><td class="dim">3, 8 and 50 units, 1 and 3 positions, times equal within 0.6 s, ratio 2.86</td></tr>
+          <tr><td>crowd threshold</td><td class="dim">1 unit walks around, 2 break, and from there on all break</td></tr>
+          <tr><td>walking support</td><td class="dim">estimate 10.65 s against real 10.63 s</td></tr>
+          <tr><td>two layers</td><td class="dim">three stage times within 10%, far depot chosen</td></tr>
+          <tr><td>oracle</td><td class="dim">200 maps, and 2 x 200 fresh maps by hand</td></tr>
+          <tr><td>group off</td><td class="dim">same events and stats as the single-unit planner on five maps</td></tr>
+          <tr><td>squad against single unit</td><td class="dim">never more than 2% slower on five maps, most plan changes for one unit: 1 (the test allows 4)</td></tr>
+          <tr><td>same input, same result</td><td class="dim">five maps, events and stats as text</td></tr>
+        </tbody>
+      </table></div>
+
+      <p>that is 21 new tests, 52 in total, and all 31 from before pass with identical numbers, including 19.57 s and 9.70 s from stage 1. I broke three things on purpose to see the right tests fail: the position cap in the break time, the walk to a free position in the simulation (seven tests failed), and the counting of earlier walls as gone in the rollout (only the oracle failed). the last one shows why the oracle is worth having: nothing else noticed.</p>
+
+      <p>two other results from the comparison run. on the map with a group of 6 the squad planner beats the single-unit planner by 6.97 s to 8.53 s. on the crowded wall it is 9.00 s against 8.83 s, 2% slower, which is inside the limit I set for that test and worth watching. on the walled depot and the sealed depot they are equal.</p>
+
+      <h2 id="speed-where-i-missed">speed, where I missed</h2>
+
+      <p>the stage plan asked for a full plan for 10 squads and 50 units on a 40 by 28 map in under 3 ms. the benchmark uses 20% random walls, six buildings, and ten groups of five spread far enough apart to stay separate, and times a full round: every squad decides again, which is what one destroyed wall costs.</p>
+
+      <div class="table-wrap"><table class="data roomy">
+        <thead><tr><th>version</th><th class="num">one full round</th><th class="num">per squad</th></tr></thead>
+        <tbody>
+          <tr><td>first version</td><td class="num">56.7 ms</td><td class="num">5.0 ms</td></tr>
+          <tr><td>searches stop once the cells they were asked about are final</td><td class="num">25.0 ms</td><td class="num">2.4 ms</td></tr>
+        </tbody>
+      </table></div>
+
+      <p>so I am about 8 times over the target for a full round. the field alone still takes 0.57 ms on 40 by 28 and 6.0 ms on 100 by 100. one squad needs up to seven fields (six candidates and the final one) and six rollouts, and each rollout has its own search. a round is 25 ms only in the worst case where every squad asks again; a real destroyed wall would matter to only some of them, but I have not built the check that skips the others, and a cache of the fields would come first. the numbers are one machine and one map, 200 rounds each, one run per version, so read them as an order of magnitude.</p>
+
+      <h2 id="what-is-still-open">what is still open</h2>
+
+      <p>the order of buildings is still greedy. the planner is exact about a squad and one building, and it has no idea that two buildings in a different order would finish sooner. the count of positions for walls in a row treats the earlier walls as gone but cannot know what other squads will occupy. squads are re-formed five times a second, so a group that splits between two ticks keeps its old plan a moment longer. and everything is still numbers: there is no picture of any of it. stage 4 is the first thing you can look at, two panels running the same map side by side.</p>
 
     </div>
   </div>
