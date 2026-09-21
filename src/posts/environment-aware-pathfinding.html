@@ -5,6 +5,8 @@ label: Sep 2026
 ---
 <p>in games where a crowd of units attacks a base, there is a familiar mistake: a wall stands between a unit and its target, a long way around exists, and the unit takes it, even though breaking one cell of the wall would have been much faster. I am building a browser demo that shows this mistake and fixes it. the fix is to treat the environment as something the planner can weigh in seconds, not as a fixed map of obstacles. this post grows with every stage, so it is a work log more than a summary. stage 1 built the baseline: the mistake, reproduced on purpose. stage 2 built the planner that decides by time, for one unit at a time. stage 3 made it work for a crowd: units that stand together share one plan, and the number of places around a wall decides how many of them can hit it. stages 4 to 6 turn all of that into a demo you can open: two panels, an editor, nine maps, a debug view.</p>
 
+      <p class="links">try it: <a href="https://kaandinc.com/environment-aware-pathfinding/" target="_blank" rel="noopener">live demo</a> · <a href="https://github.com/kaan0d/environment-aware-pathfinding" target="_blank" rel="noopener">source</a></p>
+
       <div class="stats">
         <div class="stat"><b>6 of 6</b><span>stages done: simulation, time-cost planner, squads, then the demo with editor and debug view</span></div>
         <div class="stat"><b>19.57 s → 9.70 s</b><span>time to destroy the depot behind a cheap wall: the classic detour versus the planner's own choice</span></div>
