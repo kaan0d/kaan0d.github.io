@@ -3,12 +3,12 @@ title: environment-aware pathfinding: the unit that walked around a wall it coul
 date: 2026-09-21
 label: Sep 2026
 ---
-<p>in games where a crowd of units attacks a base, there is a familiar mistake: a wall stands between a unit and its target, a long way around exists, and the unit takes it, even though breaking one cell of the wall would have been much faster. I am building a browser demo that shows this mistake and fixes it. the fix is to treat the environment as something the planner can weigh in seconds, not as a fixed map of obstacles. this post grows with every stage, so it is a work log more than a summary. stage 1 built the baseline: the mistake, reproduced on purpose. stage 2 built the planner that decides by time, for one unit at a time. stage 3 makes it work for a crowd: units that stand together share one plan, and the number of places around a wall decides how many of them can hit it.</p>
+<p>in games where a crowd of units attacks a base, there is a familiar mistake: a wall stands between a unit and its target, a long way around exists, and the unit takes it, even though breaking one cell of the wall would have been much faster. I am building a browser demo that shows this mistake and fixes it. the fix is to treat the environment as something the planner can weigh in seconds, not as a fixed map of obstacles. this post grows with every stage, so it is a work log more than a summary. stage 1 built the baseline: the mistake, reproduced on purpose. stage 2 built the planner that decides by time, for one unit at a time. stage 3 made it work for a crowd: units that stand together share one plan, and the number of places around a wall decides how many of them can hit it. stages 4 to 6 turn all of that into a demo you can open: two panels, an editor, nine maps, a debug view.</p>
 
       <div class="stats">
-        <div class="stat"><b>3 of 6</b><span>stages done: simulation core and classic AI, the time-cost planner, then squads</span></div>
+        <div class="stat"><b>6 of 6</b><span>stages done: simulation, time-cost planner, squads, then the demo with editor and debug view</span></div>
         <div class="stat"><b>19.57 s → 9.70 s</b><span>time to destroy the depot behind a cheap wall: the classic detour versus the planner's own choice</span></div>
-        <div class="stat"><b>52</b><span>tests, all green, plus a clean strict type check and build</span></div>
+        <div class="stat"><b>105</b><span>tests, all green, plus a clean strict type check and build</span></div>
       </div>
 
       <h2>the plan</h2>
@@ -381,6 +381,91 @@ label: Sep 2026
 
       <p>so I am about 8 times over the target for a full round. the field alone still takes 0.57 ms on 40 by 28 and 6.0 ms on 100 by 100. one squad needs up to seven fields (six candidates and the final one) and six rollouts, and each rollout has its own search. a round is 25 ms only in the worst case where every squad asks again; a real destroyed wall would matter to only some of them, but I have not built the check that skips the others, and a cache of the fields would come first. the numbers are one machine and one map, 200 rounds each, one run per version, so read them as an order of magnitude.</p>
 
+      <h2>stage 4: making it visible</h2>
+
+      <p>everything so far was numbers in a terminal. stage 4 draws the simulation with PixiJS: one canvas, two panels, the classic algorithm on the left and the new one on the right, on the same map with the same units and the same deploy events. the drawing code only reads the worlds. it never writes to them, and <code>src/sim</code> still imports nothing from Pixi.</p>
+
+      <p>the loop is the part that has to be right. the simulation runs on a fixed step of 1/30 s. the browser gives me a frame time that changes, so an accumulator turns real time into a whole number of steps, a speed control (0.5x to 4x) scales it, and one long frame (a background tab) is cut to 0.25 s so it cannot turn into a burst of steps. between two steps the view blends each unit's previous and current position, so movement is smooth at any frame rate, and the turning of a unit towards its target is smoothed in the drawing only.</p>
+
+      <p>the acceptance test for this is not a picture. the same scenario runs once with frames of exactly 1/60 s and once with a mix of 0.2, 0.013, 0.1 and 0.05 s, and every event and statistic of both worlds has to be the same text. it also has to be the same after Reset. both pass. I checked the picture too, in headless Chrome: on the L-corner map the left panel walks around, the right one breaks the wall and finishes first, and a banner says "the new algorithm is 7.73 s (37%) faster". that is a different map from the 15 by 20 test map (a 40 by 28 grid, wall 22 cells long), so the numbers differ: 21.07 s and 13.33 s.</p>
+
+      <h2>stage 5: an editor and nine maps</h2>
+
+      <p>a demo where you can only watch one map is a video. stage 5 adds an editor. the map is one <code>Scenario</code> object, both worlds are built from it, and every editing action is a small pure function on that object (paint a wall of level 1 to 5, erase, place a 1x1, 2x2 or 3x3 building only where the whole footprint is free, add a spawn point, change the hit points of one selected wall or building), with unit tests. any edit resets both worlds. there are also sliders for the speed, damage and hit points of a unit type, the squad radius, the number of candidate plans, the wall hit point multiplier, and a switch that turns group behavior off so the new algorithm plans per unit.</p>
+
+      <p>dropping units is the interesting part. a click on either panel puts the same units on the same cell at the same simulated time in both worlds, and the event is written into the scenario's deploy list so that Reset plays it again. the replay test caught a bug here that I would not have seen by eye: I stamped the event with the time of the steps already run, but a world only lands a unit in the next step, so the live run and the replay differed by one step (0.2667 s against 0.2333 s for the same click). the fix is to stamp the time of the next step.</p>
+
+      <p>nine ready-made maps, each with a short description in the demo. these are the times to destroy every building, classic against the new algorithm, straight from the smoke test that runs every map under both:</p>
+
+      <div class="table-wrap"><table class="data roomy">
+        <thead><tr><th>map</th><th class="num">classic</th><th class="num">new</th><th>what it shows</th></tr></thead>
+        <tbody>
+          <tr><td>1. L corner</td><td class="num">21.07 s</td><td class="num">13.33 s</td><td class="dim">a thin wall against a long walk</td></tr>
+          <tr><td>2. Castle</td><td class="num">43.30 s</td><td class="num">34.50 s</td><td class="dim">a level 5 ring with one weak gate</td></tr>
+          <tr><td>3. Double layer</td><td class="num">63.60 s</td><td class="num">30.47 s</td><td class="dim">strong inner ring with a weak far door, plus an open depot</td></tr>
+          <tr><td>4. Mixed levels</td><td class="num">46.90 s</td><td class="num">29.17 s</td><td class="dim">a weak stretch off the straight line</td></tr>
+          <tr><td>5. No way in</td><td class="num">20.37 s</td><td class="num">19.73 s</td><td class="dim">closed by level 3 walls, both must break in</td></tr>
+          <tr><td>6. Maze</td><td class="num">47.33 s</td><td class="num">20.13 s</td><td class="dim">a serpentine with thin spots in every barrier</td></tr>
+          <tr><td>7. Crowd effect</td><td class="num">21.07 s</td><td class="num">21.07 s</td><td class="dim">one unit; from 3 units the new algorithm breaks the wall</td></tr>
+          <tr><td>8. Reinforcements</td><td class="num">17.00 s</td><td class="num">14.63 s</td><td class="dim">3 units at the wall, 10 more 2.5 s later</td></tr>
+          <tr><td>9. Narrow passage</td><td class="num">14.10 s</td><td class="num">14.17 s</td><td class="dim">20 units, one-cell corridor, slots limit the crowd</td></tr>
+        </tbody>
+      </table></div>
+
+      <p>I have to be straight about how the castle and the double layer got their numbers, because they were not first tries. my first castle was a level 2 ring around three buildings, and the new algorithm finished 4.7% behind classic (21.60 s against 20.63 s). both broke almost the same wall at almost the same time. the whole gap was the order of the buildings inside: the same greedy limit as before, a second and a half of extra walking. the first double layer was 1.7% behind for the same reason. so I changed both maps so that the algorithms have a real choice to make: a strong ring with one weak gate, a strong inner ring with one weak door on the far side. that is a fair thing to show, since it is exactly what the algorithm is for, but it is also me building a map where it wins, and the reader should know. the maps where it does not win are in the table too: 5 is a near tie, 7 is a tie by design (one unit), and 9 is a tie because a one-cell corridor leaves no room for either idea (the new algorithm is 0.5% slower, and I left it that way).</p>
+
+      <p>the crowd map also showed a difference from the test map: here the switch from walking around to breaking happens at 3 units, not 2, because the map is bigger and the walk around is shorter relative to the wall. a test checks that 1 and 2 units walk around and 3, 4 and 6 break the wall.</p>
+
+      <figure>
+        <img src="img/pathfinding-castle.png" width="1400" height="800" alt="Two panels of a castle: a ring of dark purple walls around a red keep, a blue tower and a crate. In the right panel the ring has a gap at the upper left and three green units stand inside." loading="lazy">
+        <figcaption>the castle map, seconds into a run. the right panel walked to the weak gate at the upper left and broke it; the left one is hitting a strong wall.</figcaption>
+      </figure>
+
+      <h2>stage 6: cartoon style and a debug view</h2>
+
+      <p>the pictures so far were plain shapes. stage 6 draws everything in code, with no image files: grass with tufts, wall posts that join their neighbors so a line of walls reads as one thing, a different look for each of the five levels (wood, stone, iron, gold, obsidian), cracks that appear at 75%, 50% and 25% of a wall's hit points, a crate, a tower and a keep with a waving flag, and three round characters that hop while they walk, squash and stretch, look where they go and lunge when they hit. hits throw sparks, and a falling wall or building throws dust and chunks, and a building shakes the panel. the particles live in a pool with a hard cap of 360 that has its own random generator, so the decoration cannot touch the simulation.</p>
+
+      <p>the debug view is the part I built for myself. a Debug button turns it on, and a click on a unit shows what it decided and why:</p>
+
+      <ul>
+        <li>a heat map of the flow field for that unit type, greener is faster to finish, with a legend in seconds.</li>
+        <li>its route: blue where it walks, green where it breaks a wall, and an X on the wall.</li>
+        <li>colored rings around units that share a plan.</li>
+        <li>the candidate list of its squad: goal, estimated time, number of walls, attack positions counted at each stage, and a mark on the one it follows now.</li>
+        <li>the best walk-around time against the best break-through time, the time per building, and the estimate of the plan it has now against how long the last building really took.</li>
+        <li>the planning time of the latest decision.</li>
+      </ul>
+
+      <figure>
+        <img src="img/pathfinding-debug-maze.png" width="1400" height="800" alt="The maze map with the debug view: the right panel is colored from red on the left to green near the tower, a blue line runs straight through four barriers with white crosses on the thin wall pieces, and a panel on the right lists candidate plans." loading="lazy">
+        <figcaption>the maze with debug on. walking all the way around would take 36.0 s, breaking through the three thin spots 15.3 s. the table lists the candidates with their walls and slots.</figcaption>
+      </figure>
+
+      <p>two things went wrong on the way. the first version of the candidate list showed a plan with time "never" and no free attack positions for a group that had already started hitting. it is the same effect as in the oracle: asking the planner while units hold the positions gives an answer that is not about the decision. now a group that has started hitting shows a note saying it keeps its plan, and the candidates come back after the target falls. the second was slower: I repainted the heat map (a thousand squares) every frame, and it only changes when the field does. it is now painted when the field is recomputed, twice a second at most.</p>
+
+      <h2>speed of the picture, and what I could not measure</h2>
+
+      <p>the goal was close to 60 frames per second with 30 units in two panels. I measured in headless Chrome, which uses software WebGL, on a 1400 by 800 window, with 30 units in both panels at normal speed, one run each:</p>
+
+      <div class="table-wrap"><table class="data roomy">
+        <thead><tr><th>version</th><th class="num">time per frame</th><th class="num">frames per second</th><th class="num">JavaScript in the frame</th></tr></thead>
+        <tbody>
+          <tr><td>stage 4, plain shapes</td><td class="num">21.3 ms</td><td class="num">47</td><td class="num dim">not measured</td></tr>
+          <tr><td>stage 6, cartoon style, debug off</td><td class="num">19.5 ms</td><td class="num">51</td><td class="num">0.6 ms</td></tr>
+          <tr><td>stage 6, debug on</td><td class="num">26.1 ms</td><td class="num">38</td><td class="num">0.9 ms</td></tr>
+        </tbody>
+      </table></div>
+
+      <p>the JavaScript number covers my simulation steps and drawing calls, not the work Pixi does afterwards to render, so nearly all of the frame is the software rasterizer filling pixels. a real graphics card should do much better, but I did not measure one, so I cannot say the goal of 60 was reached. what I can say is that it is not limited by the simulation. the walls are redrawn only when one falls, damage cracks only for hurt walls, and the heat map only when its data changes.</p>
+
+      <h2>publishing, and what I did not do</h2>
+
+      <p>the build uses relative asset paths so it works from any sub-path, and there is a GitHub Actions workflow that installs, runs the tests, builds and publishes to GitHub Pages on every push to <code>main</code>. I wrote it but did not run it: nothing was pushed, and Pages has to be switched on in the repository settings. so I have not seen the published page. what I did check is the production build served locally, in Chrome, including a 700 pixel wide window, where nothing overflows sideways (the readout above each map does sit close to the top of the map there).</p>
+
+      <h2>the whole thing in one paragraph</h2>
+
+      <p>the classic rule loses wherever a wall is cheap to break and the way around is long, or where a strong wall stands next to a weak one, and by amounts between 14% and 57% on the maps built for it. it ties where there is nothing to decide, it lost by half a percent on the narrow passage, and in my first versions of two maps it lost by up to 4.7% because of the order of the buildings. the new algorithm predicts its own time to within about 1% on a single unit and 1.2% on average over random groups, and it does that in about 2.4 ms per group, which is 8 times slower than I wanted for a full round of ten groups. every number in this post is from a run I did, and the ones I could not measure (a real graphics card, the published page) are listed as such.</p>
+
       <h2>what is still open</h2>
 
-      <p>the order of buildings is still greedy. the planner is exact about a squad and one building, and it has no idea that two buildings in a different order would finish sooner. the count of positions for walls in a row treats the earlier walls as gone but cannot know what other squads will occupy. squads are re-formed five times a second, so a group that splits between two ticks keeps its old plan a moment longer. and everything is still numbers: there is no picture of any of it. stage 4 is the first thing you can look at, two panels running the same map side by side.</p>
+      <p>the order of buildings is still greedy, and the full planning round for ten groups takes 25 ms against a goal of 3 ms. the count of positions for walls in a row treats earlier walls as gone and cannot know what other groups will occupy. the demo only breaks walls: no gates, traps or defenses, by design. the published page and a real graphics card are unchecked. I wrote the ideas I would try next into a list (a third opponent that breaks walls when the way around is longer than a fixed number of cells, faster planning, saving and sharing maps) and I will go through it before I start another stage.</p>
