@@ -1,0 +1,222 @@
+---
+title: pathfinding part 3: the follow-up list, a real bug the oracle explains, and what real use broke in the editor
+date: 2026-09-22
+label: Sep 2026
+---
+<p>part 2 ended with a list of things I knew were wrong or unmeasured: a planner that missed its own speed target by 8x, a greedy building order, a slot count that ignores other squads, unmeasured GPU numbers, a page never pushed. I wrote that list down as <code>development/stage-7-future-ideas.md</code>, thirty-five items in seven groups, each with a rough size and what to check first, before touching any of it. this part is what happened when I worked through the first group: three real fixes, two items I looked at and declined because they were the same shape of risk as a bug I'd already been burned by once, and then a run of smaller reports from actually using the editor that turned into one UI reversal and two real bugs.</p>
+
+      <p class="links">try it: <a href="https://kaandinc.com/environment-aware-pathfinding/" target="_blank" rel="noopener">live demo</a> · <a href="https://github.com/kaan0d/environment-aware-pathfinding" target="_blank" rel="noopener">source</a> · part 1: <a href="pathfinding-part-1">the unit that walked around a wall</a> · part 2: <a href="pathfinding-part-2">a demo you can break</a></p>
+
+      <div class="stats">
+        <div class="stat"><b>3 of 7</b><span>follow-up items tackled; two declined as the same risk as a bug from part 2, two blocked on hardware or a push</span></div>
+        <div class="stat"><b>24% → 4%</b><span>estimate error on the map that found this part's planner bug</span></div>
+        <div class="stat"><b>123</b><span>tests, all green, plus a strict type check and a production build, after every change</span></div>
+      </div>
+
+      <h2>the follow-up list, and what I did not touch</h2>
+
+      <p>a finished stage still leaves things unfixed, so I wrote them all down instead of carrying them in my head: planning speed, building order, slot accounting across squads, why the oracle's worst picks miss, mixed-speed squads, real GPU numbers, whether the published page actually works, plus six other groups (a fairer classic opponent, more environment, editor features, art, engineering, writing) that are not this part's subject. the first group, "close the known gaps of v1", is seven items:</p>
+
+      <div class="table-wrap"><table class="data roomy">
+        <thead><tr><th>#</th><th>item</th><th>size</th><th>outcome</th></tr></thead>
+        <tbody>
+          <tr><td>1</td><td>planning speed, 25 ms against a 3 ms target</td><td class="dim">M</td><td>fixed, partly</td></tr>
+          <tr><td>2</td><td>building order is greedy per target</td><td class="dim">M</td><td class="dim">declined</td></tr>
+          <tr><td>3</td><td>slot count ignores other squads and later hit times</td><td class="dim">M</td><td class="dim">declined</td></tr>
+          <tr><td>4</td><td>explain the oracle's worst misses</td><td class="dim">S</td><td>fixed</td></tr>
+          <tr><td>5</td><td>mixed-speed squads use the mean speed</td><td class="dim">S</td><td>fixed</td></tr>
+          <tr><td>6</td><td>real GPU frame numbers</td><td class="dim">S</td><td class="dim">blocked, needs a real machine</td></tr>
+          <tr><td>7</td><td>check the published page</td><td class="dim">S</td><td class="dim">blocked, nothing pushed yet</td></tr>
+        </tbody>
+      </table></div>
+
+      <p>items 2 and 3 are declined, not skipped, and it is worth saying why. both are scoring changes to the squad planner: item 2 wants a candidate scored by the time to finish every building, not just its own target, and item 3 wants the slot count to account for other squads heading to the same wall and the real hit time of walls broken earlier in the same route. part 2 already told the story of what that kind of change costs: the narrow-passage bug took roughly seven rounds of "run the oracle, look at the worst seed, adjust, run it again" before the bound I could write down honestly was 198 of 200 within 5%, not the 200 of 200 I first hoped for. items 2 and 3 are that shape of work again, and the list itself does not put them in its suggested first three. so I asked instead of guessing, and left them for a session that can afford the tuning.</p>
+
+      <h2>the half of every decision nobody was reading</h2>
+
+      <p>item 1's own file said where to look first: profile which of the fields a squad computes actually get used. a squad's decision runs <code>candidates()</code>, which tries up to six routes and computes a flow field for each one just to see where it leads, then <code>evaluate()</code> scores every one of those candidates with a rollout, sorts them, and used to call <code>plansFor()</code> - another full field, per candidate - to build the actual per-member walking plan for <em>all</em> of them. only the winner is ever handed to a troop. the debug view, which lists every candidate's time and wall count in a table, never even reads the plans field; it only reads <code>total</code> and <code>stageSlots</code>. so roughly half of the fields a squad computed on every decision were computed for a candidate nobody was going to look at.</p>
+
+      <p>the fix is not a cache or a worker, it is making the unread half not happen: <code>plans</code> becomes a getter, computed once someone actually reads it, with the winner forced eagerly right after the sort so a caller that reads it a while later (a test that runs the world forward, for one) still gets the field as it stood at decision time, not a stale one:</p>
+
+      <div class="codeblock"><code><span class="cm">// Scores every candidate for the given troops (the leader is the first) and returns them best first. Each entry's</span>
+<span class="cm">// plans are a full flow field, so they are computed lazily on first read: decide() only ever reads the winner's,</span>
+<span class="cm">// the debug view never reads any, only the oracle test wants every candidate's.</span>
+evaluate(world: World, members: <span class="kw">readonly</span> Troop[]): Evaluated[] {
+  <span class="kw">const</span> strength = <span class="kw">this</span>.strengthOf(members, world.stackAttackers)
+  <span class="kw">const</span> scored = <span class="kw">this</span>.candidates(members[0], strength).map((candidate) =&gt; {
+    <span class="kw">const</span> { total, stageTimes, stageSlots } = <span class="kw">this</span>.rollout.run(world, members, candidate.route, candidate.target)
+    <span class="kw">let</span> plans: Map&lt;number, Plan | <span class="kw">null</span>&gt; | undefined
+    <span class="kw">const</span> entry = { candidate, total, stageTimes, stageSlots }
+    <span class="kw">return</span> Object.defineProperty(entry, 'plans', {
+      enumerable: <span class="kw">true</span>,
+      get: () =&gt; (plans ??= <span class="kw">this</span>.plansFor(entry, members, strength)),
+    }) as Evaluated
+  })
+  scored.sort((a, b) =&gt; a.total - b.total)
+  <span class="kw">void</span> scored[0]?.plans<span class="cm"> // eager for the winner: caller may read it after the world (and these troops) moved on</span>
+  <span class="kw">return</span> scored
+}</code></div>
+
+      <div class="chart-wrap"><svg class="chart" viewBox="0 0 760 136" role="img" aria-labelledby="p3c1t p3c1d"><title id="p3c1t">Full squad-planning round, 40x28 map, 10 squads, 50 troops</title><desc id="p3c1d">Mean time per round: 23.8 ms before skipping unused candidate fields, 21.0 ms after.</desc><rect class="key-before" x="240" y="8" width="12" height="12"/><text class="lbl" x="258" y="18">before (every candidate priced)</text><rect class="key-after" x="240" y="28" width="12" height="12"/><text class="lbl" x="258" y="38">after (winner priced eagerly, rest lazy)</text><line class="grid" x1="240" y1="46" x2="240" y2="106"/><text class="tick" x="240" y="124" text-anchor="middle">0 ms</text><line class="grid" x1="355" y1="46" x2="355" y2="106"/><text class="tick" x="355" y="124" text-anchor="middle">6.5 ms</text><line class="grid" x1="470" y1="46" x2="470" y2="106"/><text class="tick" x="470" y="124" text-anchor="middle">13 ms</text><line class="grid" x1="585" y1="46" x2="585" y2="106"/><text class="tick" x="585" y="124" text-anchor="middle">19.5 ms</text><line class="grid" x1="700" y1="46" x2="700" y2="106"/><text class="tick" x="700" y="124" text-anchor="middle">26 ms</text><text class="lbl" x="228" y="74" text-anchor="end">squad round</text><rect class="bar-before" x="240" y="56" width="421.08" height="14"/><text class="val" x="667.08" y="67">23.8 ms</text><rect class="bar-after" x="240" y="74" width="371.54" height="14"/><text class="val hot" x="617.54" y="85">21.0 ms</text></svg></div>
+
+      <p>21.0 ms against the old 23.8 ms, for the same benchmark part 2 used (10 squads, 50 troops, a 40x28 map). that is real and I would keep it, but it is not close to the 3 ms target, and I want to be honest about the gap: this only removes work that was already wasted, it does not touch the actual expensive parts (a field recomputed per squad per event with no cache, a squad's candidates searched fresh every time). the ideas that would close the rest of the gap - a field cache keyed by squad strength and map version, asking only the squads a change can affect, a worker - are still on the list, not done here.</p>
+
+      <h2>a bug the oracle had been reporting since part 1</h2>
+
+      <p>part 1's oracle runs every candidate plan of two hundred random maps through the real simulation and compares the planner's estimate to what actually happened. it has caught two bugs already (a missing slot rule, the narrow-passage wall pricing). item 4 asked me to go back to one seed it still could not explain: number 10069, one wall candidate, estimated 9.77 s, real 12.33 s, 24% off - inside the oracle's tolerance, so the test still passed, but a 24% miss on a single, simple candidate is not explained by noise.</p>
+
+      <p>I reproduced it directly rather than guess: built the same random scenario, ran the planner, then stepped the real simulation one tick at a time and logged every troop's state change. four balanced troops, one wall, one tower behind it. the wall died almost exactly on time (2.20 s real against 2.17 s estimated). the building did not: troop 0 reached it at 5.40 s as predicted, troop 1 a little after, but troops 2 and 3 - whom the estimate had arriving around 5.4-6.2 s along with the others - did not actually reach the building until 10.20 s and 10.43 s.</p>
+
+      <div class="chart-wrap"><svg class="chart" viewBox="0 0 760 168" role="img" aria-labelledby="p3c2t p3c2d"><title id="p3c2t">Seed 10069: estimate against the real simulation, before and after the arrival fix</title><desc id="p3c2d">Before: wall-break candidate estimated 9.77 s, real 12.33 s, 24% off, and the planner picked it. After: walk-around estimated 10.73 s against real 10.77 s, wall-break 11.87 s against real 12.33 s, both under 4%, and the planner now picks the walk-around route.</desc><line class="grid" x1="240" y1="18" x2="240" y2="138"/><text class="tick" x="240" y="156" text-anchor="middle">0 s</text><line class="grid" x1="355" y1="18" x2="355" y2="138"/><text class="tick" x="355" y="156" text-anchor="middle">3.25 s</text><line class="grid" x1="470" y1="18" x2="470" y2="138"/><text class="tick" x="470" y="156" text-anchor="middle">6.5 s</text><line class="grid" x1="585" y1="18" x2="585" y2="138"/><text class="tick" x="585" y="156" text-anchor="middle">9.75 s</text><line class="grid" x1="700" y1="18" x2="700" y2="138"/><text class="tick" x="700" y="156" text-anchor="middle">13 s</text><text class="lbl" x="228" y="41" text-anchor="end">before: estimate</text><rect class="bar-after" x="240" y="28" width="345.71" height="14"/><text class="val hot" x="591.71" y="39">9.77 s</text><text class="lbl" x="228" y="67" text-anchor="end">before: real</text><rect class="bar-after" x="240" y="54" width="436.29" height="14"/><text class="val hot" x="682.29" y="65">12.33 s (24% off)</text><text class="lbl" x="228" y="93" text-anchor="end">after: estimate</text><rect class="bar-after" x="240" y="80" width="379.68" height="14"/><text class="val hot" x="625.68" y="91">10.73 s</text><text class="lbl" x="228" y="119" text-anchor="end">after: real</text><rect class="bar-after" x="240" y="106" width="381.09" height="14"/><text class="val hot" x="627.09" y="117">10.77 s (0.4% off)</text></svg></div>
+
+      <p>the reason was in how the rollout carries a squad from one stage to the next. within a stage it already modeled this correctly: a troop that loses the race for the nearest attack position gets bumped to a farther one, and the estimate adds the extra walking time for that - that machinery existed and was right. the bug was that this adjusted, later arrival was only used to compute that one stage's break time and then thrown away. the next stage's walk always started from the troop's original, un-relocated arrival at the current stage, as if the two troops that got bumped to farther wall positions had teleported back onto the fast path the moment the wall died. they had not; they were still walking to where the field had actually sent them.</p>
+
+      <div class="codeblock"><code>        <span class="kw">const</span> result = <span class="kw">this</span>.stageTime(world, members, arrivals, route, stage)
+        times[s] = result.time
+        arrivals = result.ready
+        slotCounts[s] = <span class="kw">this</span>.lastSlots</code></div>
+
+      <p>the fix carries the real per-member time forward instead of recomputing it from scratch. <code>stageTime()</code> now returns the break time and a <code>ready</code> array, keyed by each member's original index, not its arrival rank - the rank-adjusted arrival for anyone who got bumped, the untouched arrival for anyone who did not:</p>
+
+      <div class="codeblock"><code><span class="cm">// Returns the break time and, per member (by its original index, not arrival rank), the time it is free to</span>
+<span class="cm">// leave this stage: a member bumped to a farther attack position is not done until it actually walks there,</span>
+<span class="cm">// which the next stage's walk has to start from - not the time it would have arrived with no one in its way.</span>
+<span class="kw">private</span> stageTime(world: World, members: <span class="kw">readonly</span> Troop[], arrivals: number[], route: Int32Array, stage: Stage): { time: number; ready: number[] } {
+  <span class="kw">const</span> approach = route[stage.approachIdx]
+  <span class="kw">const</span> byArrival = (a: number, b: number) =&gt; arrivals[a] - arrivals[b] || members[a].id - members[b].id
+  <span class="kw">const</span> order = members.map((_, i) =&gt; i).sort(byArrival)
+  <span class="kw">if</span> (world.stackAttackers) {
+   <span class="cm"> // Everyone hits from the cell they arrive at: no positions to share out, nobody walks to another cell.</span>
+    <span class="kw">this</span>.lastSlots = members.length
+    <span class="kw">return</span> { time: breakTime(stage.hp, order.map((i) =&gt; arrivals[i]), order.map((i) =&gt; members[i].<span class="kw">type</span>.dps), members.length), ready: arrivals }
+  }
+  <span class="kw">const</span> slots = <span class="kw">this</span>.freeSlots(world, stage, approach)<span class="cm"> // an approach cell that is a wall counts as free: it will be gone</span>
+  <span class="kw">this</span>.lastSlots = slots
+ <span class="cm"> // The r-th troop to arrive takes the r-th nearest free position, which costs it a few more steps.</span>
+  <span class="kw">const</span> ready = arrivals.slice()
+  <span class="kw">const</span> hitters = order
+    .slice(0, slots)
+    .map((i, rank) =&gt; {
+      <span class="kw">const</span> arrival = arrivals[i] + <span class="kw">this</span>.slots.foundDepth[rank] / members[i].<span class="kw">type</span>.speed
+      ready[i] = arrival
+      <span class="kw">return</span> { arrival, dps: members[i].<span class="kw">type</span>.dps }
+    })
+    .sort((a, b) =&gt; a.arrival - b.arrival)
+  <span class="kw">const</span> time = breakTime(
+    stage.hp,
+    hitters.map((h) =&gt; h.arrival),
+    hitters.map((h) =&gt; h.dps),
+    hitters.length,
+  )
+  <span class="kw">return</span> { time, ready }
+}</code></div>
+
+      <p>after the fix, seed 10069's own two candidates come out at 10.73 s and 11.87 s against a real 10.77 s and 12.33 s, both under 4% instead of 24%, and the planner now correctly prefers the walk-around route for that seed, which it had been picking wrong before on a bad estimate. run against the same two hundred maps plus two fresh sets that had not been looked at while writing the fix:</p>
+
+      <div class="table-wrap"><table class="data roomy">
+        <thead><tr><th>setting</th><th class="num">within 5%</th><th class="num">worst pick</th><th class="num">mean estimate error</th></tr></thead>
+        <tbody>
+          <tr><td>one attacker per position, before</td><td class="num">199 of 200</td><td class="num">1.052</td><td class="num">1.2%</td></tr>
+          <tr><td>one attacker per position, after the arrival fix</td><td class="num">199 of 200</td><td class="num">1.052</td><td class="num">1.0%</td></tr>
+          <tr><td>attackers may stack, before</td><td class="num">200 of 200</td><td class="num">1.000</td><td class="num">0.8%</td></tr>
+          <tr><td>attackers may stack, after the arrival fix</td><td class="num">200 of 200</td><td class="num">1.000</td><td class="num">0.7%</td></tr>
+        </tbody>
+      </table></div>
+
+      <p>the mean error over every candidate improved in both settings; the count within 5% and the single worst pick did not move yet - that took a second, unrelated fix, below. this is a case worth naming honestly: the bug had been sitting inside the oracle's own tolerance the whole time. nothing failed. finding it took someone asking "explain the miss", not a red test.</p>
+
+      <h2>the slowest one sets the pace</h2>
+
+      <p>item 5 was a one-line change the list suggested trying first: the field a squad uses to pick its route was costed with the squad's mean speed, and the file asked me to try the slowest member's speed instead and rerun the oracle. mean speed is an optimistic number - it prices a route as if the whole squad moves like its fastest members, when a mixed group actually moves like its slowest one:</p>
+
+      <div class="codeblock"><code><span class="kw">const</span> speed = Math.min(...members.map((t) =&gt; t.<span class="kw">type</span>.speed))</code></div>
+
+      <p>positions mode went from 199 of 200 picks within 5% to 200 of 200, and the single worst pick dropped from a ratio of 1.052 to 1.021. stacking mode, where units rarely relocate, did not change. all nine named scenarios gave the exact same numbers as before, because none of them happen to mix troop speeds inside one squad - which is itself worth knowing, since it means the scenario suite was not exercising this path at all, only the random-map oracle was.</p>
+
+      <h2>a right-click menu, and the one thing it broke</h2>
+
+      <p>the rest of this part is not from the follow-up list. it is what came back once someone actually used the editor for a while, which finds a different kind of bug than a list written in one sitting does.</p>
+
+      <p>the first report was that picking a wall level, a building type or a unit type meant a trip to the side panel before every click, and asked for something closer to how a file manager's right-click menu works: click the map, get asked what to put there. the editor's four tools collapsed into one - <strong>Place</strong> - plus Spawn point, Erase and Select as before. a click with Place active opens a small popup at the cursor with three columns, and picking an entry places it on that cell and closes the menu:</p>
+
+      <figure>
+        <img src="img/pathfinding-place-menu.png" width="1400" height="800" alt="The demo with a small popup menu open over the map: three columns, Wall with levels 1 to 5, Building with Depot, Tower and Headquarters, Unit with the three troop types, and a Draw wall tool with a level selector still in the toolbar above it." loading="lazy">
+        <figcaption>the click-menu, mid-way through this part: Building and Unit are still here, Wall moved back out to its own tool (next paragraph) once dragging a run of wall stopped working.</figcaption>
+      </figure>
+
+      <p>it worked, and it broke something nobody had asked to change: painting a run of wall by dragging across cells. a wall was one of the three menu entries at first, and a menu that asks a question on every click cannot also support a drag, so laying a long wall meant clicking, choosing a level, clicking the next cell, choosing the level again, cell after cell. the report came back within one message of shipping it: "i cant place bulk wall." the fix was not to make the menu smarter, it was to admit that walls are a different interaction from buildings and units - painted in a stroke, not placed one at a time - and give them back their own tool, with a level <code>&lt;select&gt;</code> sitting right next to the button in the same toolbar row, so picking a level and dragging across cells works exactly like it did before the menu existed. buildings and units, which are placed one at a time anyway, stayed on the menu.</p>
+
+      <div class="codeblock"><code><span class="cm">// The map-editing tool buttons, in their own row in the top bar below play/reset/speed. 'Place' opens the</span>
+<span class="cm">// context menu (src/ui/placeMenu.ts) on the next map click; 'Draw wall' paints on click and drag at the level</span>
+<span class="cm">// picked next to it - buildings and units are one-offs from the menu, but a run of wall is common enough to</span>
+<span class="cm">// want dragging, which a per-click menu can't give.</span>
+<span class="kw">export</span> <span class="kw">function</span> buildToolbar(container: HTMLElement, editor: Editor): <span class="kw">void</span> {
+  <span class="kw">const</span> buttons = <span class="kw">new</span> Map&lt;Tool, HTMLButtonElement&gt;()
+  <span class="kw">const</span> refresh = () =&gt; {
+    <span class="kw">for</span> (<span class="kw">const</span> [tool, button] <span class="kw">of</span> buttons) button.classList.toggle('on', tool === editor.tool)
+  }
+  <span class="kw">for</span> (<span class="kw">const</span> [tool, label] <span class="kw">of</span> TOOLS) {
+    <span class="kw">const</span> button = document.createElement('button')
+    button.textContent = label
+    button.addEventListener('click', () =&gt; {
+      editor.tool = tool
+      refresh()
+    })
+    buttons.set(tool, button)
+    container.append(button)
+    <span class="kw">if</span> (tool === 'wall') container.append(wallLevelSelect(editor))
+  }
+  refresh()
+}</code></div>
+
+      <p>the same request moved the whole toolbar out of the side panel and into the top bar, on its own row below play, reset and speed, so the tool you are using and the transport controls are not competing for the same strip of the sidebar. it is a small layout change, but it is the kind of thing that is invisible until someone is actually clicking through it session after session.</p>
+
+      <h2>two more things only real use found</h2>
+
+      <p>the editor's "drop units" section had a plain dropdown showing just "Balanced" with no label, a button called "Drop at spawns" and another called "Clear units" - clear to me, because I built it, opaque to anyone reading it cold. the fix is unglamorous: a label above the dropdown ("Unit type to add"), the button renamed to "Add at spawn points" with a line under it explaining it drops at every spawn point and pointing at the Place tool's Unit entry for a single chosen cell, and a small "Will spawn:" list that actually shows what is queued, grouped by type, instead of asking you to remember what you clicked.</p>
+
+      <p>the next report sounded like the same feature was broken in the opposite direction: "added units doesnt spawn at start of run... added units always spawn at start." it took two rounds to land on what was actually meant. my first read was that timing was wrong; I reproduced it live, checked the recorded deploy time and the replay after a reset directly, and both were correct - a unit added mid-run got timestamped at the moment it was added, and a reset correctly replayed it at that same later moment. so the real complaint was the button's location, not its behavior, which the labeling fix above covers. then the second message clarified that no, the timing itself was the actual ask: added units should always be part of the run's opening batch, not a mid-run event that a reset faithfully reproduces at its original moment. that is a real change to what "add a unit" means, not a bug in the old sense - the old behavior was correct for what it was building, it just was not what either of us wanted once asked plainly:</p>
+
+      <div class="codeblock"><code><span class="cm">// Drops one troop on each cell in both worlds, timestamped at the start of the run: it appears on the very next</span>
+<span class="cm">// step right now, and a reset (or replay) spawns it at t=0 with the rest, not wherever it was added mid-run.</span>
+deployAt(cells: { x: number; y: number }[], troopType: string): <span class="kw">void</span> {
+  <span class="kw">for</span> (<span class="kw">const</span> { x, y } <span class="kw">of</span> cells) {
+    <span class="kw">const</span> event = { t: 0, troopType, x, y }
+    <span class="kw">this</span>.scenario.deployments.push(event)
+    <span class="kw">this</span>.classic.addDeployment(event)
+    <span class="kw">this</span>.fresh.addDeployment(event)
+  }
+}</code></div>
+
+      <p>the effect: a unit added five seconds into a run still appears right where you clicked, immediately, because a spawn time of zero is already in the past by the time the world checks it - but a reset now starts it alongside everything else instead of replaying the five-second wait. one existing test had encoded the old behavior as the thing being verified (compare a live mid-run session to its own replay and expect them to match); that assumption is exactly what changed, so I rewrote it to check the new one directly - a mid-run add gets <code>spawnTime === 0</code>, and a reset still replays deterministically at any frame rate, which is the part that still has to hold.</p>
+
+      <p>the last report was about the debug view's heat map, which part 2 described as showing seconds-to-finish colored across the map for the followed unit's type. it only ever drew on the panel the selection happened to be on - if you were following a unit in the "New" panel, the "Classic" panel next to it stayed plain green, even though both panels are running the same map with the same unit types and would benefit from the same picture. the two panels already have their own drawing layer each; the fix was to stop gating the heat map behind "is this the selected panel" and instead look up the same troop id in each panel's own world - both worlds are built from the same deployments in the same order, so the id lines up - and draw that unit's field against that panel's own walls. the route line and the white squad-radius ring stayed tied to the one panel actually being followed, since drawing a route for a differently-behaving copy of the same unit on the other panel would be showing something that is not true of it.</p>
+
+      <div class="codeblock"><code>update(world: World, debug: Debug, seconds: number): <span class="kw">void</span> {
+  <span class="kw">const</span> { heat, halos, routes, wallInfo, labels } = <span class="kw">this</span>.view
+  <span class="kw">if</span> (!debug.enabled) {
+    labels.visible = <span class="kw">false</span>
+    <span class="kw">return</span> <span class="kw">void</span> <span class="kw">this</span>.clear([heat, halos, routes, wallInfo])
+  }
+  labels.visible = <span class="kw">true</span>
+  <span class="kw">this</span>.drawHalos(world, halos)
+  <span class="kw">const</span> followed = debug.panel === <span class="kw">this</span>.panel &amp;&amp; debug.troopId !== <span class="kw">null</span> ? world.troops[debug.troopId] : undefined
+  <span class="kw">this</span>.drawWallInfo(world, followed?.isActive() ? followed : undefined)
+ <span class="cm"> // Heat map: both worlds are built from the same deployments, so debug.troopId is the same unit in either one.</span>
+ <span class="cm"> // Shown on both panels (against each panel's own grid), not only the one the selection happens to be on.</span>
+  <span class="kw">const</span> heatTroop = debug.troopId === <span class="kw">null</span> ? undefined : world.troops[debug.troopId]
+  <span class="kw">if</span> (heatTroop?.isActive()) <span class="kw">this</span>.drawHeat(world, heatTroop.<span class="kw">type</span>.speed, heatTroop.<span class="kw">type</span>.dps, heatTroop.<span class="kw">type</span>.id, seconds, heat)
+  <span class="kw">else</span> <span class="kw">this</span>.clear([heat])
+  <span class="kw">if</span> (followed === undefined || !followed.isActive()) <span class="kw">return</span> <span class="kw">void</span> <span class="kw">this</span>.clear([routes])
+  <span class="kw">this</span>.drawRadius(world, followed, halos)
+  <span class="kw">this</span>.drawRoute(world, followed.id, routes)
+}</code></div>
+
+      <figure>
+        <img src="img/pathfinding-heat-both-panels.png" width="1400" height="800" alt="The demo with debug on: both panels are tinted from red to green across the whole map, the right panel additionally has a white radius ring and a route line to the wall for the followed unit, and the side panel lists candidate plans." loading="lazy">
+        <figcaption>the heat map on both panels now, for the same followed unit's type against each panel's own walls. only the right panel, where the selection actually is, gets the ring and the route.</figcaption>
+      </figure>
+
+      <h2>the whole thing in one paragraph</h2>
+
+      <p>a follow-up list written after shipping is not the same list you would write while still building: two of its seven items turned out to be the same shape of costly tuning as a bug from the previous part, so I declined them rather than guess at a smaller version. the three I did take on were a wasted half of every planning decision (fixed, though the real speed target is still 8x away), a 24% estimate miss that had been sitting inside the oracle's own passing tolerance until someone asked to explain it (fixed, root cause in one function that dropped a value it had already computed correctly), and a one-line change to which speed a mixed squad plans around (fixed, and it moved the worst pick from 1.052 to 1.021). none of that is what someone using the editor actually noticed first - what they noticed was a menu that made bulk wall-painting impossible, two unlabeled buttons, a spawn timestamp that meant something different than expected, and a heat map that only ever showed on one side. every one of those came from watching the thing get used, not from a list written in one sitting, and that is probably the more honest source of the next one.</p>
