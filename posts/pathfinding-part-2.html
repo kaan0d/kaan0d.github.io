@@ -351,12 +351,13 @@ deployAt(cells: { x: number; y: number }[], troopType: string): <span class="kw"
   <span class="kw">if</span> (health &lt; 0.25) crack([x + 0.14, y + 0.7, x + 0.4, y + 0.6, x + 0.55, y + 0.78, x + 0.86, y + 0.66])
 }</code></div>
 
-      <p>the debug view is the part I built for myself. a Debug button turns it on, and a click on a unit shows what it decided and why:</p>
+      <p>the debug view is the part I built for myself. a Debug button turns it on, and it shows everything at once, with no clicking. it follows the first active unit by itself (a click on another unit follows that one), and shows what the unit decided and why:</p>
 
       <ul>
         <li>a heat map of the flow field for that unit type, greener is faster to finish, with a legend in seconds.</li>
         <li>its route: blue where it walks, green where it breaks a wall, and an X on the wall.</li>
-        <li>colored rings around units that share a plan.</li>
+        <li>colored rings around units that share a plan, and a white ring with the squad radius around the followed unit.</li>
+        <li>a hit point bar under every wall, with the number on walls that are on the route, being hit or damaged, and a table of walls per level in the side panel.</li>
         <li>the candidate list of its squad: goal, estimated time, number of walls, attack positions counted at each stage, and a mark on the one it follows now.</li>
         <li>the best walk-around time against the best break-through time, the time per building, and the estimate of the plan it has now against how long the last building really took.</li>
         <li>the planning time of the latest decision.</li>
