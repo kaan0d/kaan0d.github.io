@@ -1,36 +1,17 @@
 ---
-title: pathfinding part 3: the follow-up list, a real bug the oracle explains, and what real use broke in the editor
+title: pathfinding part 3: a planner bug the oracle explains, and what real use broke in the editor
 date: 2026-09-22T18:00
 label: Sep 2026
 ---
-<p>part 2 ended with a list of things I knew were wrong or unmeasured: a planner that missed its own speed target by 8x, a greedy building order, a slot count that ignores other squads, unmeasured GPU numbers, a page never pushed. I wrote that list down as <code>development/stage-7-future-ideas.md</code>, thirty-five items in seven groups, each with a rough size and what to check first, before touching any of it. this part is what happened when I worked through the first group: three real fixes, two items I looked at and declined because they were the same shape of risk as a bug I'd already been burned by once, and then a run of smaller reports from actually using the editor that turned into one UI reversal and two real bugs.</p>
+<p>part 2 ended with a planner that missed its own speed target by 8x and an oracle test that only barely passed on its worst seed. this part is three real fixes to that: the wasted half of every planning decision, a 24% estimate miss the oracle had been quietly tolerating, and a one-line change to how a mixed-speed squad plans its route. then a run of smaller reports from actually using the editor, which turned into one UI reversal and two real bugs.</p>
 
       <p class="links">try it: <a href="https://kaandinc.com/environment-aware-pathfinding/" target="_blank" rel="noopener">live demo</a> · <a href="https://github.com/kaan0d/environment-aware-pathfinding" target="_blank" rel="noopener">source</a> · part 1: <a href="pathfinding-part-1">the unit that walked around a wall</a> · part 2: <a href="pathfinding-part-2">a demo you can break</a></p>
 
       <div class="stats">
-        <div class="stat"><b>3 of 7</b><span>follow-up items tackled; two declined as the same risk as a bug from part 2, two blocked on hardware or a push</span></div>
+        <div class="stat"><b>3</b><span>real fixes: planning waste, an oracle estimate miss, mixed-speed squads</span></div>
         <div class="stat"><b>24% → 4%</b><span>estimate error on the map that found this part's planner bug</span></div>
         <div class="stat"><b>123</b><span>tests, all green, plus a strict type check and a production build, after every change</span></div>
       </div>
-
-      <h2>the follow-up list, and what I did not touch</h2>
-
-      <p>a finished stage still leaves things unfixed, so I wrote them all down instead of carrying them in my head: planning speed, building order, slot accounting across squads, why the oracle's worst picks miss, mixed-speed squads, real GPU numbers, whether the published page actually works, plus six other groups (a fairer classic opponent, more environment, editor features, art, engineering, writing) that are not this part's subject. the first group, "close the known gaps of v1", is seven items:</p>
-
-      <div class="table-wrap"><table class="data roomy">
-        <thead><tr><th>#</th><th>item</th><th>size</th><th>outcome</th></tr></thead>
-        <tbody>
-          <tr><td>1</td><td>planning speed, 25 ms against a 3 ms target</td><td class="dim">M</td><td>fixed, partly</td></tr>
-          <tr><td>2</td><td>building order is greedy per target</td><td class="dim">M</td><td class="dim">declined</td></tr>
-          <tr><td>3</td><td>slot count ignores other squads and later hit times</td><td class="dim">M</td><td class="dim">declined</td></tr>
-          <tr><td>4</td><td>explain the oracle's worst misses</td><td class="dim">S</td><td>fixed</td></tr>
-          <tr><td>5</td><td>mixed-speed squads use the mean speed</td><td class="dim">S</td><td>fixed</td></tr>
-          <tr><td>6</td><td>real GPU frame numbers</td><td class="dim">S</td><td class="dim">blocked, needs a real machine</td></tr>
-          <tr><td>7</td><td>check the published page</td><td class="dim">S</td><td class="dim">blocked, nothing pushed yet</td></tr>
-        </tbody>
-      </table></div>
-
-      <p>items 2 and 3 are declined, not skipped, and it is worth saying why. both are scoring changes to the squad planner: item 2 wants a candidate scored by the time to finish every building, not just its own target, and item 3 wants the slot count to account for other squads heading to the same wall and the real hit time of walls broken earlier in the same route. part 2 already told the story of what that kind of change costs: the narrow-passage bug took roughly seven rounds of "run the oracle, look at the worst seed, adjust, run it again" before the bound I could write down honestly was 198 of 200 within 5%, not the 200 of 200 I first hoped for. items 2 and 3 are that shape of work again, and the list itself does not put them in its suggested first three. so I asked instead of guessing, and left them for a session that can afford the tuning.</p>
 
       <h2>the half of every decision nobody was reading</h2>
 
@@ -135,7 +116,7 @@ evaluate(world: World, members: <span class="kw">readonly</span> Troop[]): Evalu
 
       <h2>a right-click menu, and the one thing it broke</h2>
 
-      <p>the rest of this part is not from the follow-up list. it is what came back once someone actually used the editor for a while, which finds a different kind of bug than a list written in one sitting does.</p>
+      <p>the rest of this part is not about the planner at all. it is what came back once someone actually used the editor for a while, which finds a different kind of bug than sitting down and listing what's wrong ever does.</p>
 
       <p>the first report was that picking a wall level, a building type or a unit type meant a trip to the side panel before every click, and asked for something closer to how a file manager's right-click menu works: click the map, get asked what to put there. the editor's four tools collapsed into one - <strong>Place</strong> - plus Spawn point, Erase and Select as before. a click with Place active opens a small popup at the cursor with three columns, and picking an entry places it on that cell and closes the menu:</p>
 
@@ -219,4 +200,4 @@ deployAt(cells: { x: number; y: number }[], troopType: string): <span class="kw"
 
       <h2>the whole thing in one paragraph</h2>
 
-      <p>a follow-up list written after shipping is not the same list you would write while still building: two of its seven items turned out to be the same shape of costly tuning as a bug from the previous part, so I declined them rather than guess at a smaller version. the three I did take on were a wasted half of every planning decision (fixed, though the real speed target is still 8x away), a 24% estimate miss that had been sitting inside the oracle's own passing tolerance until someone asked to explain it (fixed, root cause in one function that dropped a value it had already computed correctly), and a one-line change to which speed a mixed squad plans around (fixed, and it moved the worst pick from 1.052 to 1.021). none of that is what someone using the editor actually noticed first - what they noticed was a menu that made bulk wall-painting impossible, two unlabeled buttons, a spawn timestamp that meant something different than expected, and a heat map that only ever showed on one side. every one of those came from watching the thing get used, not from a list written in one sitting, and that is probably the more honest source of the next one.</p>
+      <p>three real fixes this time: a wasted half of every planning decision (fixed, though the real speed target is still 8x away), a 24% estimate miss that had been sitting inside the oracle's own passing tolerance until someone asked to explain it (fixed, root cause in one function that dropped a value it had already computed correctly), and a one-line change to which speed a mixed squad plans around (fixed, and it moved the worst pick from 1.052 to 1.021). none of that is what someone using the editor actually noticed first - what they noticed was a menu that made bulk wall-painting impossible, two unlabeled buttons, a spawn timestamp that meant something different than expected, and a heat map that only ever showed on one side. every one of those came from watching the thing get used, not from a list written in one sitting, and that is probably the more honest source of the next one.</p>
