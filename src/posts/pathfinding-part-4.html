@@ -1,0 +1,85 @@
+---
+title: pathfinding part 4: a cap tuned against its own demo, a cache that mostly didn't move the number, and a lighter editor
+date: 2026-09-22T20:00
+label: Sep 2026
+---
+<p>part 3 was three planner fixes and a run of editor reports. this part is smaller and more mixed: a second pass at the field cache the "still open" list kept pointing at, a walk-distance cap for the classic planner that almost undid the whole demo's point on its way in, a debug view correction, and a round of cutting the editor down rather than adding to it.</p>
+
+      <p class="links">try it: <a href="https://kaandinc.com/environment-aware-pathfinding/" target="_blank" rel="noopener">live demo</a> · <a href="https://github.com/kaan0d/environment-aware-pathfinding" target="_blank" rel="noopener">source</a> · part 1: <a href="pathfinding-part-1">the unit that walked around a wall</a> · part 2: <a href="pathfinding-part-2">a demo you can break</a> · part 3: <a href="pathfinding-part-3">the follow-up list</a></p>
+
+      <div class="stats">
+        <div class="stat"><b>34 vs 30</b><span>cells: the L-corner scenario's own walk-around distance against the cap I almost shipped</span></div>
+        <div class="stat"><b>21.22 → 21.71 ms</b><span>the field cache's actual effect on a 10-squad planning round</span></div>
+        <div class="stat"><b>142</b><span>tests, all green, plus a strict type check and a production build, after every change</span></div>
+      </div>
+
+      <h2>a cap tuned against its own demo</h2>
+
+      <p>classic never had a reason to give up on walking. however long the way around a wall was, it took it, because nothing in the planner ever compared that distance to anything. real games are not this patient - past some distance a unit gives up on the detour and just breaks in, same as it already did when there was no path at all. the fix is a <code>maxWalk</code> the classic planner checks before committing to the walk:</p>
+
+      <div class="codeblock"><code>plan(world: World, troopId: number): Plan | <span class="kw">null</span> {
+  <span class="kw">const</span> troop = world.troops[troopId]
+  <span class="kw">this</span>.search.run(<span class="kw">this</span>.grid.cellOfPoint(troop.x, troop.y))
+  <span class="kw">const</span> nearest = <span class="kw">this</span>.nearestBuilding(world, troop, <span class="kw">false</span>)
+  <span class="kw">if</span> (nearest === <span class="kw">null</span>) <span class="kw">return</span> <span class="kw">null</span>
+  <span class="kw">const</span> slot = <span class="kw">this</span>.bestSlot(world, troop.id, 'building', nearest.id)
+  <span class="kw">const</span> walkOk = slot &gt;= 0 &amp;&amp; <span class="kw">this</span>.search.dist[slot] &lt;= <span class="kw">this</span>.maxWalk
+  <span class="kw">return</span> (
+    (walkOk ? <span class="kw">this</span>.planTarget(world, troop, 'building', nearest.id) : <span class="kw">null</span>) ??
+    <span class="kw">this</span>.planBreakthrough(world, troop, nearest) ??
+    <span class="kw">this</span>.planTarget(world, troop, 'building', nearest.id) ??<span class="cm"> // too far, but no wall worth breaking either: walk anyway</span>
+    <span class="kw">this</span>.planNearestReachable(world, troop)
+  )
+}</code></div>
+
+      <p>the number I picked first was 30 cells, and the test suite caught the problem with it before I'd looked at a single map by eye: the scenario the whole demo opens on, "L corner", exists specifically to show classic taking a long way around a thin wall - and its own walk-around distance turned out to be about 34 cells. a 30-cell default meant classic started breaking that same wall too, on the flagship scenario, on load, collapsing the exact contrast the scenario's own description promises. "crowd effect", the other scenario built around a long detour, was even closer to the edge at 37.6 cells. I moved the default to 40, comfortably past both:</p>
+
+      <div class="chart-wrap"><svg class="chart" viewBox="0 0 760 116" role="img" aria-labelledby="p4c2t p4c2d"><title id="p4c2t">The two classicMaxWalk defaults tried, against the L-corner scenario's own walk-around distance</title><desc id="p4c2d">A default cap of 30 cells sits under the L-corner scenario's 34-cell walk-around, so classic would start breaking that wall too. 40 cells clears it, with the crowd-effect scenario's 37.6-cell detour still 2.4 cells under.</desc><line class="grid" x1="240" y1="18" x2="240" y2="86"/><text class="tick" x="240" y="104" text-anchor="middle">0 cells</text><line class="grid" x1="355" y1="18" x2="355" y2="86"/><text class="tick" x="355" y="104" text-anchor="middle">11.25 cells</text><line class="grid" x1="470" y1="18" x2="470" y2="86"/><text class="tick" x="470" y="104" text-anchor="middle">22.5 cells</text><line class="grid" x1="585" y1="18" x2="585" y2="86"/><text class="tick" x="585" y="104" text-anchor="middle">33.75 cells</text><line class="grid" x1="700" y1="18" x2="700" y2="86"/><text class="tick" x="700" y="104" text-anchor="middle">45 cells</text><line class="budget" x1="585.51" y1="14" x2="585.51" y2="86"/><text class="lbl" x="591.51" y="12">L-corner detour: ~34 cells</text><text class="lbl" x="228" y="41" text-anchor="end">cap: 30 (first try)</text><rect class="bar-after" x="240" y="28" width="306.67" height="14"/><text class="val hot" x="552.67" y="39">30 cells</text><text class="lbl" x="228" y="67" text-anchor="end">cap: 40 (shipped)</text><rect class="bar-after" x="240" y="54" width="408.89" height="14"/><text class="val hot" x="654.89" y="65">40 cells</text></svg></div>
+
+      <p>the cap itself lives in one constant, used both as the sidebar slider's default and the fallback when a scenario doesn't set its own:</p>
+
+      <div class="codeblock"><code><span class="kw">export</span> <span class="kw">const</span> CLASSIC_MAX_WALK = 40 <span class="cm">// default scenario.classicMaxWalk: past this many cells, Classic tries a wall first too</span></code></div>
+
+      <p>every built-in scenario still opens with classic walking, same as parts 1 through 3 described it; a custom map built in the editor now gets a real cap instead of infinite patience, and the sidebar's "Classic max walk" slider lets anyone lower it and watch the wall break sooner.</p>
+
+      <h2>a field cache that mostly didn't move the number</h2>
+
+      <p>part 3's speed section ended with a list of what might close the remaining 7x gap to the 3 ms target, and a field cache keyed by squad strength and map version was first on it. I built it: <code>strengthOf()</code> caches per unique combination of stacking and per-member speed/dps, and a squad's flow field is cached by start cell, break spec and strength signature -</p>
+
+      <div class="codeblock"><code><span class="kw">private</span> fieldKey(spec: Spec, strengthSignature: string, start: number): string {
+  <span class="kw">const</span> breaks = [...spec.allowedBreaks].sort((a, b) =&gt; a - b).join(',')
+  <span class="kw">const</span> banned = [...spec.bannedCells].sort((a, b) =&gt; a - b).join(',')
+  <span class="kw">return</span> `${start}|${spec.onlyBuilding}|${spec.noBreaks}|${breaks}|${banned}|${strengthSignature}`
+}</code></div>
+
+      <p>- both cleared on every map-version change, since a destroyed wall changes the grid a cached field was computed against. caching is restricted to the single-start-cell case: the flow field's <code>settle</code> parameter early-exits once its target cells are finalized, so a field cached while settling for one target is not provably complete for a different one, and the only call shape safe to reuse is the one where there is exactly one start cell and no early exit.</p>
+
+      <div class="chart-wrap"><svg class="chart" viewBox="0 0 760 136" role="img" aria-labelledby="p4c1t p4c1d"><title id="p4c1t">Full squad-planning round, 40x28 map, 10 squads, 50 troops, before and after the field cache</title><desc id="p4c1d">Mean time per round: 21.22 ms before the field cache, 21.71 ms after - no real change.</desc><rect class="key-before" x="240" y="8" width="12" height="12"/><text class="lbl" x="258" y="18">before (no field cache)</text><rect class="key-after" x="240" y="28" width="12" height="12"/><text class="lbl" x="258" y="38">after (field cache, single-start candidates only)</text><line class="grid" x1="240" y1="46" x2="240" y2="106"/><text class="tick" x="240" y="124" text-anchor="middle">0 ms</text><line class="grid" x1="355" y1="46" x2="355" y2="106"/><text class="tick" x="355" y="124" text-anchor="middle">6.5 ms</text><line class="grid" x1="470" y1="46" x2="470" y2="106"/><text class="tick" x="470" y="124" text-anchor="middle">13 ms</text><line class="grid" x1="585" y1="46" x2="585" y2="106"/><text class="tick" x="585" y="124" text-anchor="middle">19.5 ms</text><line class="grid" x1="700" y1="46" x2="700" y2="106"/><text class="tick" x="700" y="124" text-anchor="middle">26 ms</text><text class="lbl" x="228" y="74" text-anchor="end">squad round</text><rect class="bar-before" x="240" y="56" width="375.43" height="14"/><text class="val" x="621.43" y="67">21.22 ms</text><rect class="bar-after" x="240" y="74" width="384.1" height="14"/><text class="val hot" x="630.1" y="85">21.71 ms</text></svg></div>
+
+      <p>21.71 ms against 21.22 ms - within noise, not the win I was hoping for. the reason is that a squad's own decision was already cached, keyed by leader id, cleared on the same version change: nothing inside one version was ever recomputed for the same squad twice. what the field cache actually buys is narrower than "cache the computation" suggested - cross-squad reuse, when two different squads share a start cell and a composition inside the same version. worth having, not worth overselling.</p>
+
+      <h2>letting the route show on both panels after all</h2>
+
+      <p>part 3 described the heat map moving to both debug panels while keeping the route line and squad-radius ring tied to whichever panel was actually selected, reasoning that a route drawn for the other panel would be showing something not true of it - a copy of the unit behaving differently. that reasoning had a hole in it: both panels already draw a followed unit's route from that panel's own world, reading that world's own, currently-real <code>plan</code> - not a copy of anything, the actual route classic (or the squad planner) computed on that side. there was nothing to protect against. dropping the panel restriction was one line:</p>
+
+      <div class="codeblock"><code>labels.visible = <span class="kw">true</span>
+<span class="kw">this</span>.drawHalos(world, halos)
+<span class="cm">// Same troop id in both worlds (same deployments) - followed unit's route shows on both panels, not just</span>
+<span class="cm">// the one debug.panel points at.</span>
+<span class="kw">const</span> followed = debug.troopId === <span class="kw">null</span> ? undefined : world.troops[debug.troopId]
+<span class="kw">this</span>.drawWallInfo(world, followed?.isActive() ? followed : undefined)</code></div>
+
+      <figure>
+        <img src="img/pathfinding-part4-overview.jpg" width="1568" height="778" alt="The demo with debug on: both panels are tinted from red to green, both show a blue-and-green route line for the followed unit - the left panel's long walk around a wall, the right panel's short break through it - and the sidebar on the right shows the trimmed unit controls, the classic max walk slider at 40, and a Pause button next to the timeline's scrub bar at the bottom." loading="lazy">
+        <figcaption>debug on, one unit followed: classic's long way around on the left, the squad planner's straight break-in on the right, both now visible at once. the pause button and the cut-down sidebar from the sections below are also in this shot.</figcaption>
+      </figure>
+
+      <h2>smaller: a pause button, and a lighter editor</h2>
+
+      <p>the timeline's scrub bar sat at the bottom with a step button and jump-to-event arrows, but pausing meant reaching back up to the top bar. it now has its own play/pause button right next to the scrub bar, reading and toggling the same state the top-bar one does - scrubbing back through a run and pausing it are in the same place now.</p>
+
+      <p>the rest is subtraction. the sidebar's "new unit type" and "new building type" forms - name, speed, dps, hp inputs, a button - came out entirely: three unit types and three building types cover every scenario here, and a form for a fourth was never load-bearing. "units per drop" lost its slider too; "Add at spawn points" is now "Add unit" and always adds exactly one, so getting to three units for the crowd-effect scenario is three clicks instead of a slider drag. the unit-type label next to its dropdown gets a small mention only because of what caused it to sit slightly off: the dropdown had a bottom margin left over from when the label used to stack above it, which pulled its visible center a few pixels off the label's - one of those bugs that is invisible until you actually look for it, which is true of most of the fixes in this part.</p>
+
+      <h2>the whole thing in one paragraph</h2>
+
+      <p>a cap for classic that needed its own number tuned against the demo it was supposed to serve, not the other list item it came from; a field cache that turned out to mostly duplicate a cache that already existed, which is itself the more useful finding than the cache; a debug restriction that was more cautious than the code underneath it actually needed; and an editor that is smaller than it was at the start of this part, on purpose. none of these are large on their own. together they are the difference between a demo that happens to work and one where the numbers on screen mean what the sidebar next to them says they mean.</p>
