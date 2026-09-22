@@ -1,6 +1,6 @@
 ---
 title: pathfinding part 1: the unit that walked around a wall it could have broken
-date: 2026-09-21
+date: 2026-09-21T18:00
 label: Sep 2026
 ---
 <p>in games where a crowd of units attacks a base, there is a familiar mistake: a wall stands between a unit and its target, a long way around exists, and the unit takes it, even though breaking one cell of the wall would have been much faster. I am building a browser demo that shows this mistake and fixes it. the fix is to treat the environment as something the planner can weigh in seconds, not as a fixed map of obstacles. this is part 1 and it is about the algorithm. it is a work log more than a summary: stage 1 built the baseline, the mistake reproduced on purpose. stage 2 built the planner that decides by time, for one unit at a time. stage 3 made it work for a crowd: units that stand together share one plan, and the number of places around a wall decides how many of them can hit it. part 2 is the demo built on top of it, part 3 is what real use of that demo found.</p>
