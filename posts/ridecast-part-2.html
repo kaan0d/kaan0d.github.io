@@ -59,7 +59,7 @@
 <article class="post">
   <header class="post-head">
     <a class="post-head__back roll" href="../blog"><span class="roll__in" data-text="&amp;larr; blog">&larr; blog</span></a>
-    <p class="post-head__meta" data-hero><time datetime="2026-09-24">Sep 2026</time> &nbsp;/&nbsp; 2 min read</p>
+    <p class="post-head__meta" data-hero><time datetime="2026-09-24">Sep 2026</time> &nbsp;/&nbsp; 3 min read</p>
     <h1 class="post-head__title" data-split="lines" data-hero>ridecast part 2: from warnings to decisions</h1>
   </header>
   <div class="post-layout">
@@ -69,9 +69,9 @@
       <p class="links">previous post: <a href="ridecast">ridecast: weather for the moment you get there</a> · source: <a href="https://github.com/kaan0d/ridecast" target="_blank" rel="noopener">github</a></p>
 
       <div class="stats">
-        <div class="stat"><b>6</b><span>stages done out of 10</span></div>
-        <div class="stat"><b>39</b><span>unit tests in the pure core</span></div>
-        <div class="stat"><b>2</b><span>forecast requests to score two routes</span></div>
+        <div class="stat"><b>7</b><span>stages done out of 10</span></div>
+        <div class="stat"><b>41</b><span>unit tests in the pure core</span></div>
+        <div class="stat"><b>24</b><span>departure times scored from one cached forecast</span></div>
         <div class="stat"><b>+29 min</b><span>for 92% less risk, in the rain test</span></div>
       </div>
 
@@ -94,6 +94,22 @@
       <p>the badge said +29 minutes and 92% lower risk, which is 3:54 minus 3:25; the percentage comes from the unrounded scores, the table shows them rounded to one decimal. the whole comparison took two forecast requests. when I then changed the speed to 100 km/h, both routes were scored again (2 h 44 min and 3 h 7 min, +23 minutes) without a single new request, because the sample points depend only on the route and the forecast is cached by their coordinates; only the arrival times moved.</p>
 
       <p>the score is my own weighting, and it measures the share of distance at each level, not the time spent there. a slow stretch in the rain counts the same as a fast one of the same length. that is the next thing I would change if the suggestions start to feel wrong.</p>
+
+      <h2 id="when-to-leave">when to leave</h2>
+
+      <p>stage 7 adds a third departure option next to "now" and a fixed time: "en iyi saat". it takes every full hour in the next 24 hours, builds the whole timeline for each one (same speed, same breaks), scores the route the same way as in stage 6, and lists the three lowest, with the arrival time and the score. equal scores go to the earlier departure. the first one is taken automatically, and tapping another re-plans the route for that time.</p>
+
+      <p>24 candidates did not cost 24 requests. the sample points belong to the route, not to the departure, so all candidates need the forecast at the same coordinates, just for later hours. I made every forecast request ask for at least three days, which covers the last candidate's arrival, and the normal view and all 24 candidates now read one cached response. switching to "en iyi saat" on a real route made no new request at all.</p>
+
+      <div class="table-wrap"><table class="data">
+        <thead><tr><th>test on Kadıköy to Eskişehir</th><th>top three departures</th></tr></thead>
+        <tbody>
+          <tr><td>real forecast, planned at night</td><td class="num">08:00, 09:00, 10:00, all risk 0.0</td></tr>
+          <tr><td>2 mm/h rain injected from 07:00 to 13:00</td><td class="num">15:00 (0.5), 16:00 (0.5), 14:00 (1.4)</td></tr>
+        </tbody>
+      </table></div>
+
+      <p>in the rain test no morning hour made the list. even 15:00 is not clean: the wet road estimate remembers the last three hours of rain, so the start of the route still counts as wet. the real-forecast row shows a weakness too: on a calm day the three best are simply three neighbouring hours, which is correct but not very useful. spreading them out is a small change I left for later.</p>
 
     </div>
   </div>
