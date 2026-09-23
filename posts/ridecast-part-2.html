@@ -59,7 +59,7 @@
 <article class="post">
   <header class="post-head">
     <a class="post-head__back roll" href="../blog"><span class="roll__in" data-text="&amp;larr; blog">&larr; blog</span></a>
-    <p class="post-head__meta" data-hero><time datetime="2026-09-24">Sep 2026</time> &nbsp;/&nbsp; 5 min read</p>
+    <p class="post-head__meta" data-hero><time datetime="2026-09-24">Sep 2026</time> &nbsp;/&nbsp; 6 min read</p>
     <h1 class="post-head__title" data-split="lines" data-hero>ridecast part 2: from warnings to decisions</h1>
   </header>
   <div class="post-layout has-toc">
@@ -68,6 +68,7 @@
         <li><a href="#which-road-is-safer">which road is safer</a></li>
         <li><a href="#when-to-leave">when to leave</a></li>
         <li><a href="#what-to-wear-where-to-stop">what to wear, where to stop</a></li>
+        <li><a href="#a-trip-you-can-send">a trip you can send</a></li>
       </ol>
     </aside>
     <div class="post-body">
@@ -76,8 +77,8 @@
       <p class="links">previous post: <a href="ridecast">ridecast: weather for the moment you get there</a> · source: <a href="https://github.com/kaan0d/ridecast" target="_blank" rel="noopener">github</a></p>
 
       <div class="stats">
-        <div class="stat"><b>8</b><span>stages done out of 10</span></div>
-        <div class="stat"><b>50</b><span>unit tests in the pure core</span></div>
+        <div class="stat"><b>9</b><span>stages done out of 10</span></div>
+        <div class="stat"><b>55</b><span>unit tests in the pure core</span></div>
         <div class="stat"><b>24</b><span>departure times scored from one cached forecast</span></div>
         <div class="stat"><b>+29 min</b><span>for 92% less risk, in the rain test</span></div>
       </div>
@@ -135,6 +136,14 @@
       </table></div>
 
       <p>the boxes return more than needed, and that is fine: 426 elements are nothing to filter locally. the app keeps one stop of each kind per 10 km (106 became 32 on this route), and where the forecast says rain, snow or real cold it drops the stops with no roof and marks the rest in blue. whether a stop has a roof is a guess from the tags: a fuel station has a canopy, motorway services have buildings, and a rest area only counts if it is tagged with a shelter, a shop or a building. the query only runs when I press the button, because Overpass is a shared server, and these times depend on how busy it is.</p>
+
+      <h2 id="a-trip-you-can-send">a trip you can send</h2>
+
+      <p>stage 9 puts the whole trip into the address bar and keeps it there while I edit: the stops with a short label, the breaks and their minutes, the vehicle, the speeds, the departure and which route is selected. there is no server to save anything on, so the link is the save file. a trip with three breaks, road speeds and a fixed departure came to 253 characters, and opening it in a new tab gave the same arrival to the minute, the same breaks at the same kilometres and times, and the same alternative route. the weather is not in the link on purpose: it is fetched again when the link is opened, so whoever gets it sees the forecast of that moment.</p>
+
+      <p>a link is input from outside, so the decoder checks every field and returns nothing rather than half a trip: a latitude of 95, a speed of 900, a break of zero minutes and six other broken cases each have a test. a bad link shows a message and leaves the current trip as it was. trips are also kept in the browser as a short "son rotalar" list, which simply does not appear when the browser does not allow storage.</p>
+
+      <p>the copy button taught me something. in the automated browser I test with, the clipboard call never answered: no success, no error, the promise just stayed open, so the button did nothing visible. a real browser can do the same while it waits for a permission prompt. now the app waits 1.5 seconds and then shows the link in a field, already selected, ready to copy by hand.</p>
 
     </div>
   </div>
