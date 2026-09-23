@@ -1,0 +1,35 @@
+---
+title: ridecast part 2: from warnings to decisions
+date: 2026-09-24
+label: Sep 2026
+---
+<p>the first ridecast post ended with a map that knows the weather at my arrival time at every point, and a list of warnings: rain here, fog there, cold after dark. a list is not a decision, though. part 2 is about turning it into one: which road, when to leave, what to wear. it grows with every stage, like the first one.</p>
+
+      <p class="links">previous post: <a href="ridecast">ridecast: weather for the moment you get there</a> · source: <a href="https://github.com/kaan0d/ridecast" target="_blank" rel="noopener">github</a></p>
+
+      <div class="stats">
+        <div class="stat"><b>6</b><span>stages done out of 10</span></div>
+        <div class="stat"><b>39</b><span>unit tests in the pure core</span></div>
+        <div class="stat"><b>2</b><span>forecast requests to score two routes</span></div>
+        <div class="stat"><b>+29 min</b><span>for 92% less risk, in the rain test</span></div>
+      </div>
+
+      <h2>which road is safer</h2>
+
+      <p>OSRM usually gives one or two alternatives to the fastest route. stage 6 gets the forecast for each of them, one request per route, and scores it. every sample point already has a level from none to high; the score is the average over the route, weighted by how much of the route each point stands for, with weights 0, 1, 3 and 9. the steps grow fast on purpose: 20 km of heavy rain should count for more than 100 km of a damp road.</p>
+
+      <p>the route with the lowest score gets an "en güvenli rota" badge with what it costs against the fastest one, for example "+18 dk, risk %40 daha düşük". two rules keep the badge honest. if the safer route is less than 10% better, the fastest keeps it, because a detour for a rounding error is not advice. and if no route has any risk at all, there is no badge.</p>
+
+      <p>a dry day cannot show any of this, so I tested it the way I tested the break advice in part 1: I overrode fetch in the browser and put 3 mm/h of rain on every forecast point south of 40.6° N and west of 29.8° E. that covers the Gemlik and İznik part of the main route from Kadıköy to Eskişehir; the alternative through Sakarya and Bilecik stays outside it.</p>
+
+      <div class="table-wrap"><table class="data">
+        <thead><tr><th>route, 08:00, 80 km/h, rain injected</th><th>distance</th><th>time</th><th>risk score</th><th>worst</th></tr></thead>
+        <tbody>
+          <tr><td>main route</td><td class="num">273 km</td><td class="num">3 h 25 min</td><td class="num">0.9</td><td>medium</td></tr>
+          <tr><td>alternative, marked safest</td><td class="num">312 km</td><td class="num">3 h 54 min</td><td class="num">0.1</td><td>low</td></tr>
+        </tbody>
+      </table></div>
+
+      <p>the badge said +29 minutes and 92% lower risk, which is 3:54 minus 3:25; the percentage comes from the unrounded scores, the table shows them rounded to one decimal. the whole comparison took two forecast requests. when I then changed the speed to 100 km/h, both routes were scored again (2 h 44 min and 3 h 7 min, +23 minutes) without a single new request, because the sample points depend only on the route and the forecast is cached by their coordinates; only the arrival times moved.</p>
+
+      <p>the score is my own weighting, and it measures the share of distance at each level, not the time spent there. a slow stretch in the rain counts the same as a fast one of the same length. that is the next thing I would change if the suggestions start to feel wrong.</p>
