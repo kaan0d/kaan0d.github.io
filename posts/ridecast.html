@@ -1,0 +1,171 @@
+<!doctype html>
+<html lang="en" data-page="post">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ridecast: weather for the moment you get there | Kaan Dinç</title>
+<meta name="description" content="every weather app answers the wrong question for a motorcycle ride. it tells me what the sky is doing in Eskişehir now, when what I need to know is what...">
+<meta name="theme-color" content="#0a0a09">
+<link rel="canonical" href="https://kaandinc.com/posts/ridecast">
+<meta property="og:type" content="article">
+<meta property="og:title" content="ridecast: weather for the moment you get there | Kaan Dinç">
+<meta property="og:description" content="every weather app answers the wrong question for a motorcycle ride. it tells me what the sky is doing in Eskişehir now, when what I need to know is what...">
+<meta property="og:url" content="https://kaandinc.com/posts/ridecast">
+<meta property="og:site_name" content="Kaan Dinç">
+<meta property="og:image" content="https://kaandinc.com/assets/og.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="Kaan Dinç, computer engineer. K logo beside 3D solids in amber on black.">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="ridecast: weather for the moment you get there | Kaan Dinç">
+<meta name="twitter:description" content="every weather app answers the wrong question for a motorcycle ride. it tells me what the sky is doing in Eskişehir now, when what I need to know is what...">
+<meta name="twitter:image" content="https://kaandinc.com/assets/og.png">
+<link rel="icon" href="../assets/favicon.svg" type="image/svg+xml">
+<link rel="preload" href="../assets/fonts/Geist-Variable.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="stylesheet" href="../assets/css/base.css">
+<link rel="stylesheet" href="../assets/css/post.css">
+<script>
+(function (d) {
+  d.classList.add('js');
+  if (matchMedia('(prefers-reduced-motion: reduce)').matches) d.classList.add('reduce');
+  // Safety net: reveal content if the animation scripts never report ready.
+  setTimeout(function () { if (!d.classList.contains('ready')) d.classList.add('no-anim'); }, 4000);
+})(document.documentElement);
+</script>
+
+</head>
+<body>
+<a class="skip" href="#main">skip to content</a>
+
+<header class="site-header">
+  <div class="site-header__left">
+    <a class="site-header__brand" href="../" aria-label="Kaan Dinç, home"><img src="../assets/favicon.svg" width="32" height="32" alt=""><span>Kaan Dinç</span></a>
+    <a class="btn btn--cv btn--sm" href="https://drive.google.com/file/d/1M5Ri6U8PAwSgwr31EN4JDeT90P7OuCPo/view" target="_blank" rel="noopener"><span>view my cv</span><span class="btn__arrow" aria-hidden="true">&nearr;</span></a>
+  </div>
+  <nav class="site-nav" aria-label="primary">
+    <a class="roll" href="../" data-spy="top"><span class="roll__in" data-text="home">home</span></a>
+    <a class="roll" href="../#about" data-spy="about"><span class="roll__in" data-text="about">about</span></a>
+    <a class="roll" href="../#projects" data-spy="projects"><span class="roll__in" data-text="projects">projects</span></a>
+    <a class="roll" href="../#experience" data-spy="experience"><span class="roll__in" data-text="experience">experience</span></a>
+    <a class="roll" href="../#skills" data-spy="skills"><span class="roll__in" data-text="skills">skills</span></a>
+    <a class="roll" href="../#education" data-spy="education"><span class="roll__in" data-text="education">education</span></a>
+    <a class="roll" href="../#repos" data-spy="repos"><span class="roll__in" data-text="repos">repos</span></a>
+    <a class="roll is-active" href="../blog" aria-current="page"><span class="roll__in" data-text="blog">blog</span></a>
+  </nav>
+</header>
+
+<main id="main">
+<div class="progress" aria-hidden="true"><span></span></div>
+<article class="post">
+  <header class="post-head">
+    <a class="post-head__back roll" href="../blog"><span class="roll__in" data-text="&amp;larr; blog">&larr; blog</span></a>
+    <p class="post-head__meta" data-hero><time datetime="2026-09-23">Sep 2026</time> &nbsp;/&nbsp; 5 min read</p>
+    <h1 class="post-head__title" data-split="lines" data-hero>ridecast: weather for the moment you get there</h1>
+  </header>
+  <div class="post-layout has-toc">
+    <aside class="toc" aria-label="on this page">
+      <ol>
+        <li><a href="#the-plan">the plan</a></li>
+        <li><a href="#which-road-am-i-on">which road am I on</a></li>
+        <li><a href="#breaks-move-everything-after-them">breaks move everything after them</a></li>
+        <li><a href="#the-forecast-along-the-line">the forecast along the line</a></li>
+        <li><a href="#making-it-feel-like-an-app">making it feel like an app</a></li>
+        <li><a href="#not-shown-yet">not shown yet</a></li>
+      </ol>
+    </aside>
+    <div class="post-body">
+<p>every weather app answers the wrong question for a motorcycle ride. it tells me what the sky is doing in Eskişehir now, when what I need to know is what it will be doing at 11:24, when I get there, and what it did on the pass I cross at 09:30. ridecast is a web app that answers that: I give it a route, a speed, breaks and a departure time, and it puts the forecast for my arrival time on every point along the line. this post grows with every stage of the build, so it is a work log more than a summary.</p>
+
+      <div class="stats">
+        <div class="stat"><b>4</b><span>stages done out of 10</span></div>
+        <div class="stat"><b>20</b><span>unit tests, all in the pure core</span></div>
+        <div class="stat"><b>15</b><span>weather points on a 273 km test route, one request</span></div>
+        <div class="stat"><b>0</b><span>API keys and backend servers</span></div>
+      </div>
+
+      <h2 id="the-plan">the plan</h2>
+
+      <p>the app is Vite, TypeScript and Leaflet, with no backend. every service it talks to is free and keyless: Nominatim for address search, the OSRM demo server for routes, Open-Meteo for the forecast, and later Overpass for fuel stops. the rule that shaped the code is that everything that decides something (arrival times, which forecast hour applies, later the risk score) lives in <code>src/core</code>, with no DOM, no Leaflet and no fetch, so it can move to a phone app later and so it can be tested without a browser.</p>
+
+      <div class="table-wrap"><table class="data roomy">
+        <thead><tr><th>stage</th><th>what it added</th><th>how it was checked</th></tr></thead>
+        <tbody>
+          <tr><td class="num">1</td><td>map, address search, map clicks, routes with alternatives</td><td class="dim">a coordinate-order test, a faked OSRM outage shows an error</td></tr>
+          <tr><td class="num">2</td><td>vehicle type, average or per-road-type speed, departure time, arrival times</td><td class="dim">6 tests; three speed settings match a hand calculation on a real route</td></tr>
+          <tr><td class="num">3</td><td>breaks: click the route, drag, set minutes, or place them automatically</td><td class="dim">7 tests; every later arrival moves by exactly the break</td></tr>
+          <tr><td class="num">4</td><td>forecast along the route, plus a redesign</td><td class="dim">6 tests; a map value matches the raw Open-Meteo number</td></tr>
+        </tbody>
+      </table></div>
+
+      <h2 id="which-road-am-i-on">which road am I on</h2>
+
+      <p>a car and a motorcycle are not slower than OSRM in the same way. on a motorway I ride faster than OSRM's car estimate, in town slower. so stage 2 lets me set one speed per road type, and that needs the road type, which the demo server does not give. I printed the average speed of every OSRM step from Kadıköy to Eskişehir: the O-4 and O-5 motorways came out at 95 to 104 km/h, the D-100 and D-650 main roads at 82 to 88, and city streets at 40 to 65. the guess checks the road number first (O-4 is a motorway, D-100 a main road, which is how Turkey numbers them), and falls back to the step speed: 90 km/h and up counts as motorway, 70 and up as main road. the app labels it as an estimate, because a fast provincial road with no number still counts as urban.</p>
+
+      <div class="table-wrap"><table class="data">
+        <thead><tr><th>setting, Kadıköy to Eskişehir, 273 km</th><th>time</th></tr></thead>
+        <tbody>
+          <tr><td>80 km/h average</td><td class="num">3 h 25 min</td></tr>
+          <tr><td>motorcycle defaults per road type (110 / 80 / 40)</td><td class="num">3 h 47 min</td></tr>
+          <tr><td>car defaults per road type (120 / 90 / 45)</td><td class="num">3 h 23 min</td></tr>
+        </tbody>
+      </table></div>
+
+      <p>the per-road-type time is longer than the flat 80, because 56 km of that route counts as urban at 40 km/h. ferries keep OSRM's own duration, since my speed does not apply on a boat.</p>
+
+      <h2 id="breaks-move-everything-after-them">breaks move everything after them</h2>
+
+      <p>the arrival-time code builds a timeline: a distance and a clock time at every step boundary. a break is two boundaries at the same distance, one when I stop and one when I leave. that makes the rule easy to test: every time before the break stays where it was, and every time after it moves by exactly the break. the chart is the stage 3 check on the same route, leaving at 08:00 at 80 km/h: one break I clicked at km 107 and set to 30 minutes, and two automatic 10 minute breaks every 100 km.</p>
+
+      <div class="chart-wrap"><svg class="chart" viewBox="0 0 760 150" role="img" aria-labelledby="rc1t rc1d"><title id="rc1t">The same ride with and without three breaks</title><desc id="rc1d">Without breaks the ride runs from 08:00 to 11:24. With breaks at km 100 (10 min), km 107 (30 min) and km 200 (10 min) it arrives at 12:14, exactly 50 minutes later.</desc><rect class="key-after" x="240" y="8" width="12" height="12"/><text class="lbl" x="258" y="18">riding</text><rect class="key-before" x="330" y="8" width="12" height="12"/><text class="lbl" x="348" y="18">break</text><line class="grid" x1="240" y1="30" x2="240" y2="116"/><text class="tick" x="240" y="134" text-anchor="middle">08:00</text><line class="grid" x1="342.22" y1="30" x2="342.22" y2="116"/><text class="tick" x="342.22" y="134" text-anchor="middle">09:00</text><line class="grid" x1="444.44" y1="30" x2="444.44" y2="116"/><text class="tick" x="444.44" y="134" text-anchor="middle">10:00</text><line class="grid" x1="546.67" y1="30" x2="546.67" y2="116"/><text class="tick" x="546.67" y="134" text-anchor="middle">11:00</text><line class="grid" x1="648.89" y1="30" x2="648.89" y2="116"/><text class="tick" x="648.89" y="134" text-anchor="middle">12:00</text><text class="lbl" x="228" y="57" text-anchor="end">no breaks</text><rect class="bar-after" x="240" y="44" width="347.56" height="18"/><text class="val" x="593.56" y="57">11:24</text><text class="lbl" x="228" y="97" text-anchor="end">three breaks</text><rect class="bar-after" x="240" y="84" width="127.78" height="18"/><rect class="bar-before" x="367.78" y="84" width="17.04" height="18"/><rect class="bar-after" x="384.81" y="84" width="8.52" height="18"/><rect class="bar-before" x="393.33" y="84" width="51.11" height="18"/><rect class="bar-after" x="444.44" y="84" width="119.26" height="18"/><rect class="bar-before" x="563.7" y="84" width="17.04" height="18"/><rect class="bar-after" x="580.74" y="84" width="92" height="18"/><text class="val hot" x="678.74" y="97">12:14</text></svg></div>
+
+      <p>the automatic breaks sit on a timeline built without breaks, so the 30 minute stop does not push the next automatic one further down the road. the first version got that wrong in the test, not the code: I expected the second break at 09:30 and it was at 09:40, because 60 minutes of riding plus a 10 minute break plus 30 more minutes is 100, not 90. breaks are stored as points on the map, so switching to the alternative route and back puts them where they were.</p>
+
+      <h2 id="the-forecast-along-the-line">the forecast along the line</h2>
+
+      <p>stage 4 samples the route about every 15 minutes of driving, at most 30 points, and sends all of them to Open-Meteo in one request. the points are spaced by OSRM's own duration, not by my speed, on purpose: when I change the speed or add a break, the points stay put and only their arrival times move, so the next render reuses the cached forecast instead of asking again. coordinates are rounded to 0.05 degrees (about 5 km) for the same reason. each point then takes the forecast hour closest to its arrival, and shows nothing if the closest hour is more than 90 minutes away.</p>
+
+      <p>to check the matching I compared one number with the API directly. the first point on the test route rounds to 41.00, 29.00; Open-Meteo gives 14.5° there at 08:00 the next morning, and the capsule on the map says 15°. the point at km 117, reached at 09:27, uses the 09:00 hour, because 27 minutes is closer than 33. I also blocked Open-Meteo in the browser: the strip says the forecast could not be loaded and offers a retry, and the retry works. one retry during testing took the full 15 second timeout on a slow reply, which is exactly the case the message is for.</p>
+
+      <figure>
+        <img src="img/ridecast-weather.jpg" width="1568" height="744" alt="ridecast at night: a dark map of the Marmara region with a white route from Istanbul to Eskişehir, weather capsules with temperatures along it, an open forecast card for km 117 showing 13 degrees and clear, and the panel on the left with an arrival time of 11:24 and an hourly weather strip." loading="lazy">
+        <figcaption>the forecast card for km 117. the capsules thin out when zoomed out, so the route is not hidden under them; the arrival point always shows.</figcaption>
+      </figure>
+
+      <h2 id="making-it-feel-like-an-app">making it feel like an app</h2>
+
+      <p>the first three stages had a sidebar next to a map, which works and looks like a web page. before stage 4 I redesigned it with one brief: what would a ride app look like if Uber and Apple made it together. the map is now the whole screen. on a phone the controls live in a bottom sheet with a grab handle that snaps between a peek and full height; on a desktop the same sheet floats as a card. the route is an ink line on a contrasting casing, the start is a dot and the destination a square joined by a thin rail, the arrival time is the biggest thing on the screen, and the settings are grouped lists with segmented controls. it follows the system light or dark theme.</p>
+
+      <p>the muted map took a detour. the usual keyless grey basemap now draws "API KEY REQUIRED" over every tile when the request comes from a browser, so the app uses the standard OpenStreetMap tiles and mutes them with a CSS filter: grey for light mode, inverted and grey at night.</p>
+
+      <h2 id="not-shown-yet">not shown yet</h2>
+
+      <p>there is no risk score yet, so rain, wind and cold are shown but not judged. that is stage 5, with motorcycle thresholds, wind chill at riding speed, a wet road estimate from the last hours of rain, and dark riding after sunset. the forecast is for a 5 km grid point, not the exact road, and nothing here has been tried on a real ride yet.</p>
+
+    </div>
+  </div>
+</article>
+<nav class="post-steps" aria-label="more posts">
+  <span></span>
+  <a class="post-step post-step--older" href="pathfinding-part-4">
+      <span class="post-step__dir">older &rarr;</span>
+      <span class="post-step__title">pathfinding part 4: a cap tuned against its own demo, a cache that mostly didn't move the number, and a lighter editor</span>
+    </a>
+</nav>
+</main>
+
+<footer class="site-footer">
+  <span>&copy; 2026 Kaan Dinç. All rights reserved.</span>
+  <span>Çanakkale, Turkey</span>
+  <button class="roll" type="button" data-top><span class="roll__in" data-text="back to top">back to top</span></button>
+</footer>
+
+<button class="scroll-cue is-hidden" type="button" aria-label="scroll down"><span></span></button>
+
+<script defer src="../assets/vendor/gsap.min.js"></script>
+<script defer src="../assets/vendor/ScrollTrigger.min.js"></script>
+<script defer src="../assets/vendor/SplitText.min.js"></script>
+<script defer src="../assets/vendor/lenis.min.js"></script>
+<script defer src="../assets/js/core.js"></script>
+<script defer src="../assets/js/post.js"></script>
+</body>
+</html>
