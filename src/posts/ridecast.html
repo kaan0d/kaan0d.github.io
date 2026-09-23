@@ -6,8 +6,8 @@ label: Sep 2026
 <p>every weather app answers the wrong question for a motorcycle ride. it tells me what the sky is doing in Eskişehir now, when what I need to know is what it will be doing at 11:24, when I get there, and what it did on the pass I cross at 09:30. ridecast is a web app that answers that: I give it a route, a speed, breaks and a departure time, and it puts the forecast for my arrival time on every point along the line. this post grows with every stage of the build, so it is a work log more than a summary.</p>
 
       <div class="stats">
-        <div class="stat"><b>4</b><span>stages done out of 10</span></div>
-        <div class="stat"><b>20</b><span>unit tests, all in the pure core</span></div>
+        <div class="stat"><b>5</b><span>stages done out of 10</span></div>
+        <div class="stat"><b>34</b><span>unit tests, all in the pure core</span></div>
         <div class="stat"><b>15</b><span>weather points on a 273 km test route, one request</span></div>
         <div class="stat"><b>0</b><span>API keys and backend servers</span></div>
       </div>
@@ -23,6 +23,7 @@ label: Sep 2026
           <tr><td class="num">2</td><td>vehicle type, average or per-road-type speed, departure time, arrival times</td><td class="dim">6 tests; three speed settings match a hand calculation on a real route</td></tr>
           <tr><td class="num">3</td><td>breaks: click the route, drag, set minutes, or place them automatically</td><td class="dim">7 tests; every later arrival moves by exactly the break</td></tr>
           <tr><td class="num">4</td><td>forecast along the route, plus a redesign</td><td class="dim">6 tests; a map value matches the raw Open-Meteo number</td></tr>
+          <tr><td class="num">5</td><td>risk levels, wind chill, wet road estimate, darkness, rain advice for breaks</td><td class="dim">14 tests; injected rain turns the route orange and the break advice matches a hand calculation</td></tr>
         </tbody>
       </table></div>
 
@@ -66,6 +67,18 @@ label: Sep 2026
 
       <p>the muted map took a detour. the usual keyless grey basemap now draws "API KEY REQUIRED" over every tile when the request comes from a browser, so the app uses the standard OpenStreetMap tiles and mutes them with a CSS filter: grey for light mode, inverted and grey at night.</p>
 
+      <h2>judging the weather</h2>
+
+      <p>stage 5 turns numbers into warnings. every point gets a level from none to high, and every threshold lives in one config file, one set per vehicle. the motorcycle is the strictest: 0.1 mm of rain is already a low warning, gusts start counting at 35 km/h, and a wet road is a medium one. a car gets the same weather with far fewer warnings, and a test pins that: 0.6 mm of rain and 45 km/h gusts give a motorcycle three warnings and a car one.</p>
+
+      <p>the cold warning does not use the air temperature. on a bike the air moves at riding speed plus whatever part of the wind comes from ahead, so the app takes the route's heading at each point, adds the headwind part to the speed the timeline says I am riding there, and puts that into the wind chill formula used by Environment Canada. I checked the formula against two values of their table (-5° at 30 km/h feels like -13, -10° at 20 km/h like -18). on a real night test from Kadıköy the last 100 km came out at a felt -1°, a high warning, while the forecast card still showed single-digit air temperatures above zero. the formula is only defined up to 10°, so above that the app says nothing about cold.</p>
+
+      <p>the wet road is a guess and the app says so: rain in the arrival hour or the two hours before it makes the road damp or wet, and the same near freezing makes it an ice risk. darkness comes from each day's sunrise and sunset at that point, and dark parts of the route get a dotted pattern on top of the risk colour.</p>
+
+      <p>to test the colours on a dry day I forced 2 mm/h of rain into the 09:00 and 10:00 forecast hours in the browser. the route turned orange from km 59 to the end (rain, then the wet road it leaves behind), and a 30 minute break at km 100, from 09:15 to 09:45, said that the rain stops 45 minutes after it and suggested 75 minutes. by hand: the 11:00 hour is dry, so the rain ends at 10:30, and 10:30 minus 09:45 is 45. one rule got softer after the first real run: fog in the weather code with 8.2 km of visibility was rated medium, which is silly, so fog alone is now low and the visibility decides the rest.</p>
+
+      <p>the redesign also had a bug that only a wide screen showed: the CSS filter that mutes the map was on the whole tile layer, and at 2560 px the browser stopped painting it past about 1,750 px. filtering each tile instead fixed it.</p>
+
       <h2>not shown yet</h2>
 
-      <p>there is no risk score yet, so rain, wind and cold are shown but not judged. that is stage 5, with motorcycle thresholds, wind chill at riding speed, a wet road estimate from the last hours of rain, and dark riding after sunset. the forecast is for a 5 km grid point, not the exact road, and nothing here has been tried on a real ride yet.</p>
+      <p>the levels are per sample point, about every 15 minutes of driving, so a short shower between two points can slip through. the thresholds are my own starting values, not from a standard, and nothing here has been tried on a real ride yet. next is comparing the alternative routes by risk and suggesting the safest one.</p>
