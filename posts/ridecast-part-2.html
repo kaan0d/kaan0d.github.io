@@ -59,18 +59,25 @@
 <article class="post">
   <header class="post-head">
     <a class="post-head__back roll" href="../blog"><span class="roll__in" data-text="&amp;larr; blog">&larr; blog</span></a>
-    <p class="post-head__meta" data-hero><time datetime="2026-09-24">Sep 2026</time> &nbsp;/&nbsp; 3 min read</p>
+    <p class="post-head__meta" data-hero><time datetime="2026-09-24">Sep 2026</time> &nbsp;/&nbsp; 5 min read</p>
     <h1 class="post-head__title" data-split="lines" data-hero>ridecast part 2: from warnings to decisions</h1>
   </header>
-  <div class="post-layout">
+  <div class="post-layout has-toc">
+    <aside class="toc" aria-label="on this page">
+      <ol>
+        <li><a href="#which-road-is-safer">which road is safer</a></li>
+        <li><a href="#when-to-leave">when to leave</a></li>
+        <li><a href="#what-to-wear-where-to-stop">what to wear, where to stop</a></li>
+      </ol>
+    </aside>
     <div class="post-body">
 <p>the first ridecast post ended with a map that knows the weather at my arrival time at every point, and a list of warnings: rain here, fog there, cold after dark. a list is not a decision, though. part 2 is about turning it into one: which road, when to leave, what to wear. it grows with every stage, like the first one.</p>
 
       <p class="links">previous post: <a href="ridecast">ridecast: weather for the moment you get there</a> · source: <a href="https://github.com/kaan0d/ridecast" target="_blank" rel="noopener">github</a></p>
 
       <div class="stats">
-        <div class="stat"><b>7</b><span>stages done out of 10</span></div>
-        <div class="stat"><b>41</b><span>unit tests in the pure core</span></div>
+        <div class="stat"><b>8</b><span>stages done out of 10</span></div>
+        <div class="stat"><b>50</b><span>unit tests in the pure core</span></div>
         <div class="stat"><b>24</b><span>departure times scored from one cached forecast</span></div>
         <div class="stat"><b>+29 min</b><span>for 92% less risk, in the rain test</span></div>
       </div>
@@ -110,6 +117,24 @@
       </table></div>
 
       <p>in the rain test no morning hour made the list. even 15:00 is not clean: the wet road estimate remembers the last three hours of rain, so the start of the route still counts as wet. the real-forecast row shows a weakness too: on a calm day the three best are simply three neighbouring hours, which is correct but not very useful. spreading them out is a small change I left for later.</p>
+
+      <h2 id="what-to-wear-where-to-stop">what to wear, where to stop</h2>
+
+      <p>stage 8 has two small parts. the first is a clothing list. it is a fixed table, not a model: each row names an item, the vehicles it applies to, and a condition, like a felt temperature of 8° or less, rain or a wet road, darkness, or gusts of 50 km/h. the app takes the worst value of each along the route and prints every row that matches, with the reason next to it. on a real night run nine rows matched for the motorcycle, from a wind layer to heated gloves and a reflective vest (felt -1°, 1 km of fog, dark), and none for a car. two of the nine were visors, one for fog and one for the dark, saying almost the same thing, so they are now one item, and rows that name the same item merge their reasons instead of repeating it.</p>
+
+      <p>the second part finds fuel stations, motorway services and rest areas near the route, from OpenStreetMap through Overpass, and lets me add any of them as a break. my first query asked for everything within 1 km of the route line. Overpass answered with a 504, and on the retry it took 27 seconds and came back empty with a timeout note hidden in an otherwise normal response. so I measured the other way of asking: one bounding box per stretch of route, and throw away anything further than 1 km from the line in the browser.</p>
+
+      <div class="table-wrap"><table class="data roomy">
+        <thead><tr><th>query for the 273 km route</th><th class="num">time</th><th class="num">result</th></tr></thead>
+        <tbody>
+          <tr><td>within 1 km of the line, a point every 1.5 km</td><td class="num">27.5 s</td><td class="num">empty (timeout)</td></tr>
+          <tr><td>within 1 km of the line, a point every 5 km</td><td class="num">8.7 s</td><td class="num">504</td></tr>
+          <tr><td>one box per 10 km (27 boxes)</td><td class="num">12.2 s</td><td class="num">320 elements</td></tr>
+          <tr><td>one box per 20 km (14 boxes)</td><td class="num">5.9-8.3 s</td><td class="num">426 elements</td></tr>
+        </tbody>
+      </table></div>
+
+      <p>the boxes return more than needed, and that is fine: 426 elements are nothing to filter locally. the app keeps one stop of each kind per 10 km (106 became 32 on this route), and where the forecast says rain, snow or real cold it drops the stops with no roof and marks the rest in blue. whether a stop has a roof is a guess from the tags: a fuel station has a canopy, motorway services have buildings, and a rest area only counts if it is tagged with a shelter, a shop or a building. the query only runs when I press the button, because Overpass is a shared server, and these times depend on how busy it is.</p>
 
     </div>
   </div>
