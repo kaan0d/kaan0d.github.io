@@ -1,0 +1,125 @@
+<!doctype html>
+<html lang="en" data-page="post">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ridecast part 2: from warnings to decisions | Kaan Dinç</title>
+<meta name="description" content="the first ridecast post ended with a map that knows the weather at my arrival time at every point, and a list of warnings: rain here, fog there, cold...">
+<meta name="theme-color" content="#0a0a09">
+<link rel="canonical" href="https://kaandinc.com/posts/ridecast-part-2">
+<meta property="og:type" content="article">
+<meta property="og:title" content="ridecast part 2: from warnings to decisions | Kaan Dinç">
+<meta property="og:description" content="the first ridecast post ended with a map that knows the weather at my arrival time at every point, and a list of warnings: rain here, fog there, cold...">
+<meta property="og:url" content="https://kaandinc.com/posts/ridecast-part-2">
+<meta property="og:site_name" content="Kaan Dinç">
+<meta property="og:image" content="https://kaandinc.com/assets/og.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="Kaan Dinç, computer engineer. K logo beside 3D solids in amber on black.">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="ridecast part 2: from warnings to decisions | Kaan Dinç">
+<meta name="twitter:description" content="the first ridecast post ended with a map that knows the weather at my arrival time at every point, and a list of warnings: rain here, fog there, cold...">
+<meta name="twitter:image" content="https://kaandinc.com/assets/og.png">
+<link rel="icon" href="../assets/favicon.svg" type="image/svg+xml">
+<link rel="preload" href="../assets/fonts/Geist-Variable.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="stylesheet" href="../assets/css/base.css">
+<link rel="stylesheet" href="../assets/css/post.css">
+<script>
+(function (d) {
+  d.classList.add('js');
+  if (matchMedia('(prefers-reduced-motion: reduce)').matches) d.classList.add('reduce');
+  // Safety net: reveal content if the animation scripts never report ready.
+  setTimeout(function () { if (!d.classList.contains('ready')) d.classList.add('no-anim'); }, 4000);
+})(document.documentElement);
+</script>
+
+</head>
+<body>
+<a class="skip" href="#main">skip to content</a>
+
+<header class="site-header">
+  <div class="site-header__left">
+    <a class="site-header__brand" href="../" aria-label="Kaan Dinç, home"><img src="../assets/favicon.svg" width="32" height="32" alt=""><span>Kaan Dinç</span></a>
+    <a class="btn btn--cv btn--sm" href="https://drive.google.com/file/d/1M5Ri6U8PAwSgwr31EN4JDeT90P7OuCPo/view" target="_blank" rel="noopener"><span>view my cv</span><span class="btn__arrow" aria-hidden="true">&nearr;</span></a>
+  </div>
+  <nav class="site-nav" aria-label="primary">
+    <a class="roll" href="../" data-spy="top"><span class="roll__in" data-text="home">home</span></a>
+    <a class="roll" href="../#about" data-spy="about"><span class="roll__in" data-text="about">about</span></a>
+    <a class="roll" href="../#projects" data-spy="projects"><span class="roll__in" data-text="projects">projects</span></a>
+    <a class="roll" href="../#experience" data-spy="experience"><span class="roll__in" data-text="experience">experience</span></a>
+    <a class="roll" href="../#skills" data-spy="skills"><span class="roll__in" data-text="skills">skills</span></a>
+    <a class="roll" href="../#education" data-spy="education"><span class="roll__in" data-text="education">education</span></a>
+    <a class="roll" href="../#repos" data-spy="repos"><span class="roll__in" data-text="repos">repos</span></a>
+    <a class="roll is-active" href="../blog" aria-current="page"><span class="roll__in" data-text="blog">blog</span></a>
+  </nav>
+</header>
+
+<main id="main">
+<div class="progress" aria-hidden="true"><span></span></div>
+<article class="post">
+  <header class="post-head">
+    <a class="post-head__back roll" href="../blog"><span class="roll__in" data-text="&amp;larr; blog">&larr; blog</span></a>
+    <p class="post-head__meta" data-hero><time datetime="2026-09-24">Sep 2026</time> &nbsp;/&nbsp; 2 min read</p>
+    <h1 class="post-head__title" data-split="lines" data-hero>ridecast part 2: from warnings to decisions</h1>
+  </header>
+  <div class="post-layout">
+    <div class="post-body">
+<p>the first ridecast post ended with a map that knows the weather at my arrival time at every point, and a list of warnings: rain here, fog there, cold after dark. a list is not a decision, though. part 2 is about turning it into one: which road, when to leave, what to wear. it grows with every stage, like the first one.</p>
+
+      <p class="links">previous post: <a href="ridecast">ridecast: weather for the moment you get there</a> · source: <a href="https://github.com/kaan0d/ridecast" target="_blank" rel="noopener">github</a></p>
+
+      <div class="stats">
+        <div class="stat"><b>6</b><span>stages done out of 10</span></div>
+        <div class="stat"><b>39</b><span>unit tests in the pure core</span></div>
+        <div class="stat"><b>2</b><span>forecast requests to score two routes</span></div>
+        <div class="stat"><b>+29 min</b><span>for 92% less risk, in the rain test</span></div>
+      </div>
+
+      <h2 id="which-road-is-safer">which road is safer</h2>
+
+      <p>OSRM usually gives one or two alternatives to the fastest route. stage 6 gets the forecast for each of them, one request per route, and scores it. every sample point already has a level from none to high; the score is the average over the route, weighted by how much of the route each point stands for, with weights 0, 1, 3 and 9. the steps grow fast on purpose: 20 km of heavy rain should count for more than 100 km of a damp road.</p>
+
+      <p>the route with the lowest score gets an "en güvenli rota" badge with what it costs against the fastest one, for example "+18 dk, risk %40 daha düşük". two rules keep the badge honest. if the safer route is less than 10% better, the fastest keeps it, because a detour for a rounding error is not advice. and if no route has any risk at all, there is no badge.</p>
+
+      <p>a dry day cannot show any of this, so I tested it the way I tested the break advice in part 1: I overrode fetch in the browser and put 3 mm/h of rain on every forecast point south of 40.6° N and west of 29.8° E. that covers the Gemlik and İznik part of the main route from Kadıköy to Eskişehir; the alternative through Sakarya and Bilecik stays outside it.</p>
+
+      <div class="table-wrap"><table class="data">
+        <thead><tr><th>route, 08:00, 80 km/h, rain injected</th><th>distance</th><th>time</th><th>risk score</th><th>worst</th></tr></thead>
+        <tbody>
+          <tr><td>main route</td><td class="num">273 km</td><td class="num">3 h 25 min</td><td class="num">0.9</td><td>medium</td></tr>
+          <tr><td>alternative, marked safest</td><td class="num">312 km</td><td class="num">3 h 54 min</td><td class="num">0.1</td><td>low</td></tr>
+        </tbody>
+      </table></div>
+
+      <p>the badge said +29 minutes and 92% lower risk, which is 3:54 minus 3:25; the percentage comes from the unrounded scores, the table shows them rounded to one decimal. the whole comparison took two forecast requests. when I then changed the speed to 100 km/h, both routes were scored again (2 h 44 min and 3 h 7 min, +23 minutes) without a single new request, because the sample points depend only on the route and the forecast is cached by their coordinates; only the arrival times moved.</p>
+
+      <p>the score is my own weighting, and it measures the share of distance at each level, not the time spent there. a slow stretch in the rain counts the same as a fast one of the same length. that is the next thing I would change if the suggestions start to feel wrong.</p>
+
+    </div>
+  </div>
+</article>
+<nav class="post-steps" aria-label="more posts">
+  <span></span>
+  <a class="post-step post-step--older" href="ridecast">
+      <span class="post-step__dir">older &rarr;</span>
+      <span class="post-step__title">ridecast: weather for the moment you get there</span>
+    </a>
+</nav>
+</main>
+
+<footer class="site-footer">
+  <span>&copy; 2026 Kaan Dinç. All rights reserved.</span>
+  <span>Çanakkale, Turkey</span>
+  <button class="roll" type="button" data-top><span class="roll__in" data-text="back to top">back to top</span></button>
+</footer>
+
+<button class="scroll-cue is-hidden" type="button" aria-label="scroll down"><span></span></button>
+
+<script defer src="../assets/vendor/gsap.min.js"></script>
+<script defer src="../assets/vendor/ScrollTrigger.min.js"></script>
+<script defer src="../assets/vendor/SplitText.min.js"></script>
+<script defer src="../assets/vendor/lenis.min.js"></script>
+<script defer src="../assets/js/core.js"></script>
+<script defer src="../assets/js/post.js"></script>
+</body>
+</html>
