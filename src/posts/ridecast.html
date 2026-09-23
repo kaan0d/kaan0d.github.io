@@ -31,8 +31,8 @@ label: Sep 2026
 
       <p>a car and a motorcycle are not slower than OSRM in the same way. on a motorway I ride faster than OSRM's car estimate, in town slower. so stage 2 lets me set one speed per road type, and that needs the road type, which the demo server does not give. I printed the average speed of every OSRM step from Kadıköy to Eskişehir: the O-4 and O-5 motorways came out at 95 to 104 km/h, the D-100 and D-650 main roads at 82 to 88, and city streets at 40 to 65. the guess checks the road number first (O-4 is a motorway, D-100 a main road, which is how Turkey numbers them), and falls back to the step speed: 90 km/h and up counts as motorway, 70 and up as main road. the app labels it as an estimate, because a fast provincial road with no number still counts as urban.</p>
 
-      <div class="table-wrap"><table class="data">
-        <thead><tr><th>setting, Kadıköy to Eskişehir, 273 km</th><th>time</th></tr></thead>
+      <div class="table-wrap"><table class="data roomy">
+        <thead><tr><th>setting, Kadıköy to Eskişehir, 273 km</th><th class="num">time</th></tr></thead>
         <tbody>
           <tr><td>80 km/h average</td><td class="num">3 h 25 min</td></tr>
           <tr><td>motorcycle defaults per road type (110 / 80 / 40)</td><td class="num">3 h 47 min</td></tr>

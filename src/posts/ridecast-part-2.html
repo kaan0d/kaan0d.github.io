@@ -22,8 +22,8 @@ label: Sep 2026
 
       <p>a dry day cannot show any of this, so I tested it the way I tested the break advice in part 1: I overrode fetch in the browser and put 3 mm/h of rain on every forecast point south of 40.6° N and west of 29.8° E. that covers the Gemlik and İznik part of the main route from Kadıköy to Eskişehir; the alternative through Sakarya and Bilecik stays outside it.</p>
 
-      <div class="table-wrap"><table class="data">
-        <thead><tr><th>route, 08:00, 80 km/h, rain injected</th><th>distance</th><th>time</th><th>risk score</th><th>worst</th></tr></thead>
+      <div class="table-wrap"><table class="data roomy">
+        <thead><tr><th>route, 08:00, 80 km/h, rain injected</th><th class="num">distance</th><th class="num">time</th><th class="num">risk score</th><th>worst level</th></tr></thead>
         <tbody>
           <tr><td>main route</td><td class="num">273 km</td><td class="num">3 h 25 min</td><td class="num">0.9</td><td>medium</td></tr>
           <tr><td>alternative, marked safest</td><td class="num">312 km</td><td class="num">3 h 54 min</td><td class="num">0.1</td><td>low</td></tr>
@@ -40,11 +40,11 @@ label: Sep 2026
 
       <p>24 candidates did not cost 24 requests. the sample points belong to the route, not to the departure, so all candidates need the forecast at the same coordinates, just for later hours. I made every forecast request ask for at least three days, which covers the last candidate's arrival, and the normal view and all 24 candidates now read one cached response. switching to "en iyi saat" on a real route made no new request at all.</p>
 
-      <div class="table-wrap"><table class="data">
-        <thead><tr><th>test on Kadıköy to Eskişehir</th><th>top three departures</th></tr></thead>
+      <div class="table-wrap"><table class="data roomy">
+        <thead><tr><th>test on Kadıköy to Eskişehir</th><th class="num">1st (risk)</th><th class="num">2nd (risk)</th><th class="num">3rd (risk)</th></tr></thead>
         <tbody>
-          <tr><td>real forecast, planned at night</td><td class="num">08:00, 09:00, 10:00, all risk 0.0</td></tr>
-          <tr><td>2 mm/h rain injected from 07:00 to 13:00</td><td class="num">15:00 (0.5), 16:00 (0.5), 14:00 (1.4)</td></tr>
+          <tr><td>real forecast, planned at night</td><td class="num">08:00 (0.0)</td><td class="num">09:00 (0.0)</td><td class="num">10:00 (0.0)</td></tr>
+          <tr><td>2 mm/h rain injected from 07:00 to 13:00</td><td class="num">15:00 (0.5)</td><td class="num">16:00 (0.5)</td><td class="num">14:00 (1.4)</td></tr>
         </tbody>
       </table></div>
 
