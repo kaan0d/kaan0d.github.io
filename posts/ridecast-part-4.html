@@ -59,7 +59,7 @@
 <article class="post">
   <header class="post-head">
     <a class="post-head__back roll" href="../blog"><span class="roll__in" data-text="&amp;larr; blog">&larr; blog</span></a>
-    <p class="post-head__meta" data-hero><time datetime="2026-09-24T21:00">Sep 2026</time> &nbsp;/&nbsp; 7 min read</p>
+    <p class="post-head__meta" data-hero><time datetime="2026-09-24T21:00">Sep 2026</time> &nbsp;/&nbsp; 8 min read</p>
     <h1 class="post-head__title" data-split="lines" data-hero>ridecast part 4: one screen for the ride</h1>
   </header>
   <div class="post-layout has-toc">
@@ -69,17 +69,18 @@
         <li><a href="#settings-out-of-the-way">settings out of the way</a></li>
         <li><a href="#one-screen-for-the-ride">one screen for the ride</a></li>
         <li><a href="#a-warning-that-came-and-went">a warning that came and went</a></li>
+        <li><a href="#fuel-from-the-tank-not-the-map">fuel from the tank, not the map</a></li>
         <li><a href="#less-to-carry">less to carry</a></li>
         <li><a href="#what-this-does-not-show">what this does not show</a></li>
       </ol>
     </aside>
     <div class="post-body">
-<p>the 29 stages were done, so I started using ridecast the way I would before a ride, on my phone, and everything that annoyed me became the next change. part 4 is that list: the app now opens on the map with only a search bar, the settings moved off the main panel, riding has one screen with the map on top and the numbers underneath, a warning that kept disappearing turned out to be a rule worth changing, and two features are gone. one more change is not in the code: the repository is private now and the app is no longer online, because I want to take it further before showing it again. the posts go on.</p>
+<p>the 29 stages were done, so I started using ridecast the way I would before a ride, on my phone, and everything that annoyed me became the next change. part 4 is that list: the app now opens on the map with only a search bar, the settings moved off the main panel, riding has one screen with the map on top and the numbers underneath, a warning that kept disappearing turned out to be a rule worth changing, the fuel stop list gave way to a warning from the tank, and two more features are gone.</p>
 
-      <p class="links">previous posts: <a href="ridecast">part 1</a> · <a href="ridecast-part-2">part 2</a> · <a href="ridecast-part-3">part 3</a></p>
+      <p class="links">previous posts: <a href="ridecast">part 1</a> · <a href="ridecast-part-2">part 2</a> · <a href="ridecast-part-3">part 3</a> · live: <a href="https://kaandinc.com/ridecast/" target="_blank" rel="noopener">kaandinc.com/ridecast</a></p>
 
       <div class="stats">
-        <div class="stat"><b>87</b><span>unit tests in the pure core, after the removed features took theirs with them</span></div>
+        <div class="stat"><b>84</b><span>unit tests in the pure core, after the removed features took theirs with them</span></div>
         <div class="stat"><b>30 m</b><span>on the scale bar when the ride map opens, at zoom 18</span></div>
         <div class="stat"><b>3 px</b><span>of the header buttons hidden under the edge of the panel's scroll area</span></div>
         <div class="stat"><b>13:15:52</b><span>when the next warning changed in a 6-minute test without moving</span></div>
@@ -132,6 +133,14 @@
 
       <p>an arrival time is never exact to the minute, so a point between two forecast hours now looks at both and keeps the worse one, or the closer one when they are equal. at the start of the same route, reached at 13:21, it now takes the 30 km/h crosswind of the 14:00 forecast. the planner and the departure scores use the same rule, so they show a few more warnings than before. I chose that on purpose: on a bike, a warning that turns out not to be needed costs less than one that disappears two minutes before it would have mattered.</p>
 
+      <h2 id="fuel-from-the-tank-not-the-map">fuel from the tank, not the map</h2>
+
+      <p>the fuel and rest stops from part 2 came from Overpass, a public OpenStreetMap server: one query for the whole route that took several seconds, a list of about 35 stops on Kadıköy to Eskişehir, and a fuel range check that warned where two stations were further apart than the tank goes. before a ride that is a lot to read, and on the bike it answers the wrong question. what I want to know while riding is when to start looking for a station, and the phone can work that out without a map of stations.</p>
+
+      <p>with a fuel range set, "start ride" now first asks how full the tank is: full, ¾, ½ or ¼. those are the marks on a fuel gauge, and four big buttons are easy to hit with gloves on. "cancel" does not start the ride. during the ride the app adds up the distance between GPS fixes. it uses the fixes themselves, not the route, so reroutes and detours count too. a move only counts once it is larger than the fix's accuracy and 20 m, so a phone standing still with 10 m accuracy and 11 m of jitter adds nothing. when the estimated range left drops to 20% of a full tank, an amber card says fuel looks quite low, with the km left, and that it is a good time to look for a fuel station. the phone vibrates, and it beeps if the sound is on. like the fuel light on the bike, the card stays until I tap "filled up", and then the count starts again from a full tank.</p>
+
+      <p>in the test the range was 100 km and I picked ¼, so 25 km in the tank and a warning at 20 km. after 8 km of fake fixes the card said about 17 km left, and "filled up" took it away. what I gave up: the stop list and its map pins, the sheltered stops suggested in rain or cold, adding a stop as a break, and the gap warning in the plan. the app no longer talks to Overpass at all.</p>
+
       <h2 id="less-to-carry">less to carry</h2>
 
       <p>two features from part 3 are gone: opening and saving GPX files, and the calendar export. both were about moving a plan into another app, and I never used either. they took their parser, their writers, their tests and their texts with them, and the app no longer saves any file. "copy link" became a link icon next to "start ride".</p>
@@ -140,7 +149,7 @@
 
       <h2 id="what-this-does-not-show">what this does not show</h2>
 
-      <p>still no real ride, and the ride screen now depends on it more than anything did before: GPS on a phone in a mount, gloves on the zoom buttons, the keyboard fix on a real phone and a screen that has to stay on. the worse-of-two-hours rule has been checked on one route on one day. and with the app offline and the code private, this blog is now the only public part of ridecast.</p>
+      <p>still no real ride, and the ride screen now depends on it more than anything did before: GPS on a phone in a mount, gloves on the zoom buttons, the keyboard fix on a real phone and a screen that has to stay on. the worse-of-two-hours rule has been checked on one route on one day. the fuel estimate knows nothing about how much the bike really uses: it is the tank level I picked times the range, minus the distance ridden, and fixes missed while the phone keeps the page in the background are counted as one straight line.</p>
 
     </div>
   </div>
