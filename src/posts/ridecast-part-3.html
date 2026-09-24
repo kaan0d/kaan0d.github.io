@@ -1,0 +1,91 @@
+---
+title: ridecast part 3: a map that behaves, and longer trips
+date: 2026-09-24T20:00
+label: Sep 2026
+---
+<p>after part 2, ridecast could tell me which road, when to leave and what to wear, but only on my own machine, in Turkish, with map controls that worked the way I had guessed they should. part 3 covers stages 11 to 29: putting it online, making the map behave like Google Maps, keeping it useful without signal, routing that fits the vehicle, three new warnings, trips longer than a day, and an English interface by default. as before, every number below comes from running the app, not from memory.</p>
+
+      <p class="links">previous posts: <a href="ridecast">part 1</a> · <a href="ridecast-part-2">part 2</a> · live: <a href="https://kaandinc.com/ridecast/" target="_blank" rel="noopener">kaandinc.com/ridecast</a> · source: <a href="https://github.com/kaan0d/ridecast" target="_blank" rel="noopener">github</a></p>
+
+      <div class="stats">
+        <div class="stat"><b>29</b><span>stages, all done</span></div>
+        <div class="stat"><b>91</b><span>unit tests in the pure core</span></div>
+        <div class="stat"><b>0.021°</b><span>largest error of the sun position, against Open-Meteo sunrise and sunset times</span></div>
+        <div class="stat"><b>26 km</b><span>longest stretch without fuel from Kadıköy to Eskişehir</span></div>
+      </div>
+
+      <h2>putting it online</h2>
+
+      <p>stage 11 was supposed to be the easy one: build, upload, done. the build part was easy. GitHub Pages serves the ridecast repository under my own domain, a workflow runs the tests and the build on every push, and a relative base path makes the same files work at /ridecast/. the first deploy still failed, because Pages has to be switched on once in the repository settings, which only I could do from my account.</p>
+
+      <p>the real work was reading the usage policies of the free services I lean on, now that strangers could use the app. Nominatim's policy says in plain words that it must not be used for search-as-you-type from a browser, which is exactly what my address field did. suggestions moved to Photon, which is built for that; Nominatim is now only asked for the address of a point, one request per second. Photon had a quirk of its own: without a language parameter it followed my browser and turned "İstanbul, Türkiye" into "Istanbul, Turkey", so it now asks for local names.</p>
+
+      <h2>a map that behaves like Google Maps</h2>
+
+      <p>Google Maps is what most people's hands already know, so every place where ridecast behaved differently felt like a bug even when it was a choice. stages 13 and 14 copy the parts that matter: stops reorder by dragging their dot in the list (or with the arrow keys), two stops get a swap button, a right click or a long press opens a menu with "directions from here", "directions to here", "add stop", "add a break here", "what's here?" and "measure distance", and a plain click drops a pin with an address card instead of silently making it a stop. stop pins drag, and dragging the route line itself drops a new stop where it is released, placed before the next stop along that route. there is a layer switch with satellite and terrain maps and a rain radar, a ruler, and the usual buttons in the bottom right.</p>
+
+      <p>every route also got a bubble with its duration, like Google's. the obvious place for a bubble is the middle of the route, but two alternatives usually share their first and last kilometres, so their middles can sit on top of each other. the bubble goes to the point in the middle 60% of the route that is furthest from every other route, which puts it on the stretch where that route is on its own. it is one small function with a test.</p>
+
+      <p>two findings from those stages were about things I could not see. the rain radar comes from RainViewer, and above zoom level 7 their server returns an image that literally says "Zoom Level Not Supported", which a map would happily show as rain; the radar now stops at zoom 7 and scales up. and the weather capsules at the start and the end of a route sat on top of the stop pins, so the pins could not be grabbed at all. nothing failed, the pin just never moved.</p>
+
+      <p>that pin drag was also the hardest thing to test. my browser automation runs in a background tab, where Chrome does not run animation frames, and the map library moves a dragged marker in an animation frame. from stage 13 to stage 29 the drag stayed "not verified" in my notes. the fix was a test page, kept out of the published app, that runs animation frames on ordinary timers before the map loads. then the drag worked: the destination moved, got a new address, and the route was planned again at 263 km.</p>
+
+      <h2>no signal on the mountain</h2>
+
+      <p>the places where the weather matters most on a bike are often the places without signal. stage 15 makes ridecast an installable app with a service worker I wrote by hand: at install it reads the page, caches every file the page links, and afterwards keeps the last 40 route and forecast responses. network first, cache as the fallback. with the web server stopped, a reload still showed the trip with all 15 weather points. in live mode a failed forecast refresh no longer empties the screen; it keeps the last forecast, says "offline", and asks again when the connection returns. map tiles are the exception: the tile servers' rules forbid downloading them in advance, so offline maps only show what the browser happened to keep.</p>
+
+      <h2>the right road for the vehicle</h2>
+
+      <p>until stage 16 every vehicle got the car route; a bicycle only changed the speed. the FOSSGIS servers run the same routing engine with bike and foot profiles, so that part was a new address. the harder part was "avoid motorways, tolls and ferries", the options every map app has. I measured first: both public routing servers answer the exclude option with "Exclude flag combination is not supported". Valhalla, another open routing engine with a public server, does support it and even has a motorcycle profile, so a trip with any avoid option goes there, and its manoeuvres are translated into the steps the rest of the app already understands, including the O- and D- road numbers the road type guess reads.</p>
+
+      <div class="table-wrap"><table class="data roomy">
+        <thead><tr><th>Kadıköy to Eskişehir, motorcycle</th><th class="num">distance</th><th class="num">time</th><th>note</th></tr></thead>
+        <tbody>
+          <tr><td>plain route and its alternative</td><td class="num">273 / 312 km</td><td class="num">3 h 25 / 3 h 54</td><td class="dim">OSRM demo server</td></tr>
+          <tr><td>avoid motorways</td><td class="num">284 / 291 km</td><td class="num">4 h 6 / 4 h 11</td><td class="dim">Valhalla</td></tr>
+          <tr><td>avoid tolls, speeds by road type</td><td class="num">271 km</td><td class="num">4 h 14</td><td class="dim">takes a 25 km ferry instead of the toll bridge</td></tr>
+          <tr><td>same trip by bicycle</td><td class="num">247 / 295 km</td><td class="num">-</td><td class="dim">FOSSGIS bike profile</td></tr>
+        </tbody>
+      </table></div>
+
+      <p>the toll row looks odd and is right: avoiding the toll bridge over the gulf means the ferry, and the ferry detection counted it separately. Valhalla orders routes by its own cost, not by time, so its first route is not always the fastest. stage 17 added the other way to get a route: open a GPX file from a planner built for curvy roads, and ridecast uses the track as it is, with every warning, break and live feature on top, or save the selected route with its stops and breaks as GPX.</p>
+
+      <h2>better scores, three new warnings</h2>
+
+      <p>part 2 ended with two weaknesses, and stage 18 fixes both. the route score now weighs each point by the riding time of its stretch instead of its length, so two 50 km halves, one dry at 100 km/h and one rainy at 25 km/h, score 2.4 instead of 1.5. the three best departures now have to be at least two hours apart, so a calm day lists 08:00, 10:00 and 14:00 instead of three neighbouring hours. the rain warning also carries the forecast's probability, and a high probability alone is a low warning for riders.</p>
+
+      <p>stage 19 adds two warnings that matter on a bike. heat stress uses the apparent temperature, which includes humidity, because riding gear traps heat long before the air feels dangerous. sun glare needs the position of the sun at every point and arrival time, from the NOAA equations. I had no astronomy library to compare against, so I used Open-Meteo instead: at the sunrise and sunset times it publishes, the sun's centre is 0.833° below the horizon by definition.</p>
+
+      <div class="table-wrap"><table class="data roomy">
+        <thead><tr><th>Open-Meteo time</th><th class="num">expected</th><th class="num">computed</th></tr></thead>
+        <tbody>
+          <tr><td>Istanbul sunrise, 24 Sep 2026</td><td class="num">-0.833°</td><td class="num">-0.837°</td></tr>
+          <tr><td>Istanbul sunset, 24 Sep 2026</td><td class="num">-0.833°</td><td class="num">-0.843°</td></tr>
+          <tr><td>Eskişehir sunrise, 24 Sep 2026</td><td class="num">-0.833°</td><td class="num">-0.836°</td></tr>
+          <tr><td>Istanbul sunrise, 21 Jun 2025</td><td class="num">-0.833°</td><td class="num">-0.841°</td></tr>
+          <tr><td>Istanbul sunset, 21 Jun 2025</td><td class="num">-0.833°</td><td class="num">-0.817°</td></tr>
+          <tr><td>Istanbul sunrise, 21 Dec 2025</td><td class="num">-0.833°</td><td class="num">-0.854°</td></tr>
+        </tbody>
+      </table></div>
+
+      <p>glare is then a sun at most 15° high, within 30° of the direction of travel, under a sky clear enough to see it. on the real forecast, Kadıköy to Bolu leaving at 07:00 flagged "low sun ahead" for kilometres 50 to 99, from 07:37 to 08:14, which is exactly the stretch where that road heads east into the morning. my first test of it failed, and the formula was fine: I had converted the sunrise time to UTC wrongly by 40 minutes in the test itself.</p>
+
+      <p>stage 25 adds the warning a rider cares about more than any gust number: crosswind. it takes the part of the gusts across the direction of travel and the side it comes from. 45 km/h from the east while riding north is all crosswind and a medium warning; the same gusts head-on are only a low gust warning. when the crosswind warning is at least as serious as the gust one it takes its place, so one wind gives one row. the test routes had no strong side wind on the day, so this one has only been checked by its unit tests.</p>
+
+      <h2>longer trips</h2>
+
+      <p>a long ride does not always fit in one day, so stage 20 turns a break into an overnight stop: instead of minutes it has a "ride on at" time, and the trip continues at the first such morning at least four hours after arriving. the summary then shows each day with its start, end and distance, and forecasts more than three days ahead are marked as uncertain. stage 27 widens "best time" from 24 hours to the next 7 days and lists the best departure of each day. the first version listed eight: the 168-hour window ended a few hours into the eighth day, and those night hours made a fake day with a risk of 2.7. stage 28 exports the plan to a calendar, one event per riding day with that day's breaks and warnings, written by hand to the iCalendar rules (lines folded at 75 bytes without cutting a Turkish letter in half).</p>
+
+      <p>stage 26 adds a fuel range. the app loads the fuel stations along the route and warns where two places to fill up are further apart than the tank. on Kadıköy to Eskişehir the longest stretch without fuel is 26 km, so a realistic range warns about nothing, and a 10 km test range gives three warnings, each with the last station before the gap. the number is more reassuring than useful on this road; it is meant for the mountain roads where it will not be.</p>
+
+      <p>stage 21 remembers the warnings of every trip I plan. when I open the same trip again later, the first forecast is compared with the saved one and a short card lists what changed: new warnings, stronger or weaker ones, ones that start earlier or later, and ones that are gone. planning on a Wednesday for a Saturday ride, that card is the quickest way to see whether the plan still holds.</p>
+
+      <h2>english first, and two things I measured and dropped</h2>
+
+      <p>stage 24 made English the default and Turkish an option, because most people who find this page do not read Turkish. every text moved into two message files of the same shape, which the type checker compares. the pure core, which builds the warning texts, now gets them passed in, so it still knows nothing about languages, and its tests simply run with the Turkish texts and did not change. the two refactors of the app's main file (stages 12 and 23) happened for the same reason: every new feature had to touch it.</p>
+
+      <p>stage 22 was meant to give rain timing to the quarter hour with Open-Meteo's 15-minute data. I checked first. in Vienna the quarters differ and add up to the hourly value, a real 15-minute model; in Istanbul the one rainy hour of the week showed the same value in all four quarters, the hourly number repeated. for Turkey it adds nothing, so it is not used; the radar layer answers "is it raining now" better. what the stage kept is a sunlight mode for the live view: black on white with darker risk colours, measured at 6.07:1 or more for every colour pair, where the normal light theme's yellow ring was only 1.87:1 on white.</p>
+
+      <h2>what this does not show</h2>
+
+      <p>it still has not been on a real ride; that test is mine to do next, on a phone mounted on the bike. the crosswind warning has not met a real windy forecast. the thresholds are still my own values, the road type and the wet road are still guesses, and the free servers underneath it (OSRM's demo, FOSSGIS, Valhalla, Overpass, the tile servers) are made for light use, which a personal app is and a popular one would not be.</p>
