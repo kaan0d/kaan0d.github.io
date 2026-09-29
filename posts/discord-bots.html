@@ -3,13 +3,13 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>watch, remember, tell: two discord bots | Kaan Dinç</title>
-<meta name="description" content="i've written two discord bots that have nothing to do with each other on paper, and they turned out to be the same program. Lespy hands out XP for saying...">
+<title>rejs: a moderation bot that can undo itself | Kaan Dinç</title>
+<meta name="description" content="this post used to be about two Discord bots: Lespy, which handed out XP for saying thanks, and rejs, which watched a FiveM server and reported who joined....">
 <meta name="theme-color" content="#0a0a09">
 <link rel="canonical" href="https://kaandinc.com/posts/discord-bots">
 <meta property="og:type" content="article">
-<meta property="og:title" content="watch, remember, tell: two discord bots | Kaan Dinç">
-<meta property="og:description" content="i've written two discord bots that have nothing to do with each other on paper, and they turned out to be the same program. Lespy hands out XP for saying...">
+<meta property="og:title" content="rejs: a moderation bot that can undo itself | Kaan Dinç">
+<meta property="og:description" content="this post used to be about two Discord bots: Lespy, which handed out XP for saying thanks, and rejs, which watched a FiveM server and reported who joined....">
 <meta property="og:url" content="https://kaandinc.com/posts/discord-bots">
 <meta property="og:site_name" content="Kaan Dinç">
 <meta property="og:image" content="https://kaandinc.com/assets/og.png">
@@ -17,8 +17,8 @@
 <meta property="og:image:height" content="630">
 <meta property="og:image:alt" content="Kaan Dinç, computer engineer. K logo beside 3D solids in amber on black.">
 <meta name="twitter:card" content="summary_large_image">
-<meta name="twitter:title" content="watch, remember, tell: two discord bots | Kaan Dinç">
-<meta name="twitter:description" content="i've written two discord bots that have nothing to do with each other on paper, and they turned out to be the same program. Lespy hands out XP for saying...">
+<meta name="twitter:title" content="rejs: a moderation bot that can undo itself | Kaan Dinç">
+<meta name="twitter:description" content="this post used to be about two Discord bots: Lespy, which handed out XP for saying thanks, and rejs, which watched a FiveM server and reported who joined....">
 <meta name="twitter:image" content="https://kaandinc.com/assets/og.png">
 <link rel="icon" href="../assets/favicon.svg" type="image/svg+xml">
 <link rel="preload" href="../assets/fonts/Geist-Variable.woff2" as="font" type="font/woff2" crossorigin>
@@ -59,120 +59,132 @@
 <article class="post">
   <header class="post-head">
     <a class="post-head__back roll" href="../blog"><span class="roll__in" data-text="&amp;larr; blog">&larr; blog</span></a>
-    <p class="post-head__meta" data-hero><time datetime="2024-06-01">2024</time> &nbsp;/&nbsp; 3 min read</p>
-    <h1 class="post-head__title" data-split="lines" data-hero>watch, remember, tell: two discord bots</h1>
+    <p class="post-head__meta" data-hero><time datetime="2026-09-29">Sep 2026</time> &nbsp;/&nbsp; 7 min read</p>
+    <h1 class="post-head__title" data-split="lines" data-hero>rejs: a moderation bot that can undo itself</h1>
   </header>
   <div class="post-layout has-toc">
     <aside class="toc" aria-label="on this page">
       <ol>
-        <li><a href="#the-loop">the loop</a></li>
-        <li><a href="#lespy-xp-for-saying-thanks">Lespy: xp for saying thanks</a></li>
-        <li><a href="#rejs-who-s-online">rejs: who's online</a></li>
-        <li><a href="#what-they-share">what they share</a></li>
+        <li><a href="#from-two-bots-to-one">from two bots to one</a></li>
+        <li><a href="#moderation-with-a-paper-trail">moderation with a paper trail</a></li>
+        <li><a href="#undo">undo</a></li>
+        <li><a href="#when-undo-is-not-enough">when undo is not enough</a></li>
+        <li><a href="#one-look-for-every-message">one look for every message</a></li>
+        <li><a href="#the-game-server-monitor-again">the game server monitor, again</a></li>
+        <li><a href="#what-i-learned">what I learned</a></li>
       </ol>
     </aside>
     <div class="post-body">
-<p>i've written two discord bots that have nothing to do with each other on paper, and they turned out to be the same program. <b>Lespy</b> hands out XP for saying thanks. <b>rejs</b> watches a game server and reports who joins and leaves. both boil down to the same loop: watch something, remember what changed, tell the right channel.</p>
+<p>this post used to be about two Discord bots: Lespy, which handed out XP for saying thanks, and rejs, which watched a FiveM server and reported who joined. I merged them and rewrote the result as one slash-command moderation bot. the XP system is gone, the game server monitor is one feature among about thirty, and the part I like most is a command I did not plan at the start: <code>/undo</code>. this is what rejs is now, and what changed in how I think about a bot that can delete things.</p>
 
-      <p class="links">source: <a href="https://github.com/kaan0d/Lespy" target="_blank" rel="noopener">Lespy</a> · <a href="https://github.com/kaan0d/rejs" target="_blank" rel="noopener">rejs</a></p>
+      <p class="links">source: <a href="https://github.com/kaan0d/rejs" target="_blank" rel="noopener">rejs</a> · the old Lespy is <a href="https://github.com/kaan0d/Lespy" target="_blank" rel="noopener">still on GitHub</a></p>
 
       <div class="stats">
-        <div class="stat"><b>2</b><span>bots, one loop</span></div>
-        <div class="stat"><b>1 s</b><span>rejs poll interval</span></div>
-        <div class="stat"><b>60 s</b><span>Lespy cooldown per sender</span></div>
-        <div class="stat"><b>10 to 1000</b><span>XP per level, clamped</span></div>
-        <div class="stat"><b>500</b><span>level cap</span></div>
-        <div class="stat"><b>3</b><span>permission tiers</span></div>
+        <div class="stat"><b>1</b><span>bot: Lespy was merged in, then its XP system removed</span></div>
+        <div class="stat"><b>50+</b><span>slash commands, all hidden from members who can't use them</span></div>
+        <div class="stat"><b>7 days</b><span>every staff action can be undone</span></div>
+        <div class="stat"><b>7</b><span>daily snapshots of each server's roles and channels</span></div>
+        <div class="stat"><b>10 s</b><span>game server poll, down from 1 s in the first version</span></div>
+        <div class="stat"><b>43</b><span>tests, run with Node's built-in runner</span></div>
       </div>
 
-      <h2 id="the-loop">the loop</h2>
+      <h2 id="from-two-bots-to-one">from two bots to one</h2>
 
-      <figure>
-        <div class="diagram-wrap"><svg class="diagram" viewBox="0 0 760 112" role="img" aria-label="poll, diff, store, announce"><defs><marker id="ah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0 L10 5 L0 10 z" class="head"/></marker></defs><rect class="box" x="0" y="20" width="150" height="70" rx="3"/><text class="t" x="75" y="52" text-anchor="middle">poll</text><text class="s" x="75" y="72" text-anchor="middle">endpoint or chat</text><line class="arrow" x1="156" y1="55" x2="195" y2="55" marker-end="url(#ah)"/><rect class="box hot" x="203" y="20" width="150" height="70" rx="3"/><text class="t" x="278" y="52" text-anchor="middle">diff</text><text class="s" x="278" y="72" text-anchor="middle">what changed</text><line class="arrow" x1="359" y1="55" x2="399" y2="55" marker-end="url(#ah)"/><rect class="box" x="407" y="20" width="150" height="70" rx="3"/><text class="t" x="482" y="52" text-anchor="middle">store</text><text class="s" x="482" y="72" text-anchor="middle">SQLite file</text><line class="arrow" x1="563" y1="55" x2="602" y2="55" marker-end="url(#ah)"/><rect class="box" x="610" y="20" width="150" height="70" rx="3"/><text class="t" x="685" y="52" text-anchor="middle">announce</text><text class="s" x="685" y="72" text-anchor="middle">the right channel</text></svg></div>
-        <figcaption>the whole design of both bots. the diff step is where each one has its own rules.</figcaption>
-      </figure>
+      <p>rejs started in 2024 as a small Node bot: poll the game server once a second, compare the player list with the last one, post joins and leaves. Lespy was Python, with its own database and its own permission tiers. running two bots for one community meant two tokens, two hosts and two places to look when something broke.</p>
 
-      <h2 id="lespy-xp-for-saying-thanks">Lespy: xp for saying thanks</h2>
+      <p>in September 2026 I merged Lespy into rejs, and then removed the thank-you XP entirely. it was fun, but it was the one feature that made the server about the bot instead of about the people, and a moderation bot needs to be boring in the right way. what stayed from both is the same loop as before: watch something, remember what changed, tell the right channel. anti-raid watches joins, anti-nuke watches destructive actions, the monitor watches the game server. the loop is the same and only the thing being watched changes.</p>
 
-      <p>Lespy is a Python bot on discord.py with SQLite behind it, built for a community server. the rule is small: if a message contains one of a few trigger words ("ty", "thanks", "thank you") and it replies to or mentions someone else, that person gets 1 XP. thanking yourself gets you nothing. the point is to reward whoever actually helped, not whoever talks the most.</p>
+      <h2 id="moderation-with-a-paper-trail">moderation with a paper trail</h2>
 
-      <div class="codeblock"><code><span class="cm"># condensed from bot.py: a thank-you only counts when it points at someone else</span>
-<span class="kw">if</span> message.reference:
-    replied_to = <span class="kw">await</span> message.channel.fetch_message(message.reference.message_id)
-    <span class="kw">if</span> replied_to.author == message.author:   <span class="cm"># thanking yourself</span>
-        <span class="kw">return</span>
-    user = replied_to.author
-<span class="kw">elif</span> message.mentions:
-    user = message.mentions[0]</code></div>
+      <p>every action (warn, timeout, kick, ban, softban) becomes a numbered case, posted to a mod log and to Discord's own audit log, and the member gets a DM when possible. <code>/history</code> shows everything for one person, including private staff notes. a moderator cannot act on someone with an equal or higher role, and that check is one function with its own test, because it is the one that must never be wrong.</p>
 
-      <p>levels get harder as you climb. the XP needed for the next level is <code>level * 2 * multiplier</code>, clamped between a minimum and a maximum, with a level cap on top. every number (trigger words, multiplier, clamps, cooldowns) lives in one config file instead of the code, so tuning the pace of a server doesn't mean touching the bot.</p>
-
-      <div class="codeblock"><code>required_xp = round(level * 2 * level_xp_multiplier)                              <span class="cm"># 1.2 by default</span>
-required_xp = max(min_level_experience, min(required_xp, max_level_experience))   <span class="cm"># 10 .. 1000</span></code></div>
-
-      <p>there are three permission tiers, each in its own file, so a command's audience is decided by where it lives.</p>
+      <p>bans can have a duration. the unban is stored in the database, not in a timer, so a restart cannot make a temporary ban permanent. ban DMs carry an Appeal button: it opens a form, the appeal lands in a staff channel with Accept and Deny, and an accepted member gets a single-use invite back.</p>
 
       <div class="table-wrap"><table class="data">
-        <thead><tr><th>tier</th><th>who</th><th>commands</th></tr></thead>
+        <thead><tr><th>layer</th><th>watches</th><th>does</th></tr></thead>
         <tbody>
-          <tr><td class="">user</td><td class="">everyone</td><td class="mono">leaderboard, progress, help</td></tr>
-          <tr><td class="">admin</td><td class="">rows in the admins table</td><td class="mono">setlevel, addxp, showadmins</td></tr>
-          <tr><td class="">super admin</td><td class="">Discord IDs in the config file</td><td class="mono">addadmin, removeadmin, resetall, deleteuser, deleteusers</td></tr>
+          <tr><td class="">anti-spam</td><td class="">floods, repeats, caps, emoji, links</td><td class="mono">deletes and warns, so escalation takes over</td></tr>
+          <tr><td class="">anti-raid</td><td class="">20 joins in 60 s, by default</td><td class="mono">raises verification, locks channels, kicks raiders, pings staff</td></tr>
+          <tr><td class="">age gate</td><td class="">accounts younger than a set age</td><td class="mono">quarantine role that only sees one channel</td></tr>
+          <tr><td class="">anti-nuke</td><td class="">every account except the owner</td><td class="mono">strips its roles and alerts the owner</td></tr>
         </tbody>
       </table></div>
 
-      <p>the part that took longest was the cooldown. without one, two friends can farm each other with "thanks" all day, so a sender gets 60 seconds between XP-giving messages. one thing i'd change now: the cooldown check runs before the message reaches the command handler, so someone on cooldown can't run commands until it expires. the fix is to process commands first and keep XP as its own concern:</p>
+      <p>anti-nuke is the one I would defend hardest. a hijacked admin account is the worst case for a Discord server, and the account already has permission to do everything, so permission checks cannot stop it. counting is what can: too many bans, kicks or deleted channels in a short window and the bot takes its roles away. only the server owner can change that setting, because an admin who could switch it off would be exactly the account it exists for.</p>
 
-      <div class="codeblock"><code><span class="cm"># what i'd change it to</span>
-@bot.event
-<span class="kw">async</span> <span class="kw">def</span> on_message(message):
-    <span class="kw">if</span> message.author.bot:
-        <span class="kw">return</span>
-    <span class="kw">await</span> bot.process_commands(message)   <span class="cm"># commands never depend on the xp cooldown</span>
-    <span class="kw">await</span> award_thanks_xp(message)        <span class="cm"># xp logic, cooldown included, lives here</span></code></div>
+      <h2 id="undo">undo</h2>
 
-      <h2 id="rejs-who-s-online">rejs: who's online</h2>
+      <p>a bot with ban and delete permissions will eventually do something you did not mean, through a typo, a wrong ID or a bulk command with the wrong list. so every staff command and staff button runs inside a journal entry, and <code>/undo</code> lists the entries from the last 7 days and reverses the one you pick.</p>
 
-      <p>rejs is Node with discord.js and SQLite. FiveM game servers expose their player list as JSON, so the bot polls that endpoint once a second and compares it with the players it already has marked as in-game. the diff is two sets:</p>
+      <figure>
+        <div class="diagram-wrap"><svg class="diagram" viewBox="0 0 760 112" role="img" aria-label="command, journal, undo"><defs><marker id="ah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0 L10 5 L0 10 z" class="head"/></marker></defs><rect class="box" x="0" y="20" width="200" height="70" rx="3"/><text class="t" x="100" y="52" text-anchor="middle">command runs</text><text class="s" x="100" y="72" text-anchor="middle">inside one journal entry</text><line class="arrow" x1="206" y1="55" x2="272" y2="55" marker-end="url(#ah)"/><rect class="box hot" x="280" y="20" width="200" height="70" rx="3"/><text class="t" x="380" y="52" text-anchor="middle">journal</text><text class="s" x="380" y="72" text-anchor="middle">old rows + reverse steps</text><line class="arrow" x1="486" y1="55" x2="552" y2="55" marker-end="url(#ah)"/><rect class="box" x="560" y="20" width="200" height="70" rx="3"/><text class="t" x="660" y="52" text-anchor="middle">/undo</text><text class="s" x="660" y="72" text-anchor="middle">replays newest first</text></svg></div>
+        <figcaption>two kinds of change need two kinds of record: the database and Discord itself.</figcaption>
+      </figure>
 
-      <div class="codeblock"><code><span class="kw">const</span> currentIds  = <span class="kw">new</span> Set(currentData.map(player =&gt; player.id));
-<span class="kw">const</span> previousIds = <span class="kw">new</span> Set(previousData.map(player =&gt; player.id));
+      <p>database changes are captured without any command knowing about it. every table gets three SQLite triggers, and while a journal entry is open they copy the old row into an undo table. a new command that saves a setting is undoable the day it is written, with no extra code.</p>
 
-<span class="kw">const</span> joined = currentData.filter(player =&gt; !previousIds.has(player.id));
-<span class="kw">const</span> left   = previousData.filter(player =&gt; !currentIds.has(player.id));</code></div>
+      <div class="codeblock"><code><span class="cm">-- generated for every table: while an entry is open, keep the old row</span>
+CREATE TRIGGER undo_&lt;table&gt;_update AFTER UPDATE ON &lt;table&gt;
+  WHEN (SELECT tx FROM undo_state) IS NOT NULL
+  BEGIN INSERT INTO undo_rows (tx, tbl, op, row_id, old) VALUES ((SELECT tx FROM undo_state), '&lt;table&gt;', 'update', OLD.rowid, &lt;old row as json&gt;); END;</code></div>
 
-      <p>new ids get a green "joined" line in the channel. missing ones get a red "left" line and a leave timestamp. the bot's status shows the live count from a second endpoint, like "64/128 players". the player table keeps names plus steam and discord identifiers, so a session traces back to an account and not just a display name.</p>
+      <p>Discord changes cannot be captured that way, so a command records a step next to the change: how to reverse it. "I created this channel, delete it." "I changed this overwrite, here is what it was." the journal knows which entry it is in through Node's <code>AsyncLocalStorage</code>, which is why two commands running at the same moment keep separate entries and there is a test for exactly that. the entry row is only created on the first change, so read-only commands leave nothing behind.</p>
 
-      <p><code>!setservermonitor</code> doesn't trust its arguments. before saving anything, it fetches the endpoint and refuses unless the answer is a JSON array:</p>
+      <p>some things cannot be taken back: a kick, a deleted message. the command says so at the time it happens, and <code>/undo</code> shows that list before it does anything, next to what it can reverse. a tool that promises "undo" and then quietly skips half of it is worse than none.</p>
 
-      <div class="codeblock"><code><span class="kw">const</span> response = <span class="kw">await</span> fetch(playersUrl);
-<span class="kw">if</span> (!response.ok) <span class="kw">return</span> message.reply('Failed to fetch data from the provided IP address.');
+      <p>the hardest case was deleting a channel or a category. it comes back with a new ID, and the log channel, sticky messages, schedules and older undo entries all pointed at the old one. so after recreating it the bot rewrites every text column that mentions the old ID, in every table that has a <code>guild_id</code>:</p>
 
-<span class="kw">const</span> data = <span class="kw">await</span> response.json();
-<span class="kw">if</span> (!Array.isArray(data)) <span class="kw">return</span> message.reply('The provided IP address does not <span class="kw">return</span> valid JSON data.');</code></div>
-
-      <p>on startup the bot copies every table into a timestamped backup and then clears the players table, so each run starts a fresh log without losing history. commands load from a folder, and <code>!reload</code> re-reads them without restarting the bot.</p>
-
-      <div class="codeblock"><code><span class="kw">async</span> <span class="kw">function</span> initializeDatabase() {
-  <span class="kw">await</span> backupDatabase();   <span class="cm">// every table into logs/backup_&lt;timestamp&gt;.db</span>
-  <span class="kw">await</span> clearDatabase();    <span class="cm">// then this run starts with an empty players table</span>
+      <div class="codeblock"><code><span class="kw">for</span> (<span class="kw">const</span> { name, type } <span class="kw">of</span> columns) {
+  <span class="kw">if</span> (type !== 'TEXT' || name === 'guild_id') <span class="kw">continue</span>;
+  rawPrepare(`UPDATE ${table} SET ${name} = REPLACE(${name}, ?, ?) WHERE guild_id = ? AND instr(${name}, ?) &gt; 0`)
+    .run(oldId, newId, guildId, oldId);
 }</code></div>
 
-      <p>the least tidy part is server restarts. the server goes away on a schedule, and a bot that treats every failed fetch as an outage either spams retries or gives up. rejs knows two ten-minute restart windows and backs off differently inside them, but the retry counters are module-level globals and the windows are hard-coded. before adding anything else i'd rebuild that as a small state machine: up, down, restarting.</p>
+      <p>it is blunt, and it works because Discord IDs are long enough that a false match is not a real risk. I would not do it with short IDs. roles are harder still: a deleted role comes back with its members and its channel permissions, and permission overwrites for roles that are gone for good are dropped, because Discord refuses the whole channel if one of them points at nothing.</p>
 
-      <h2 id="what-they-share">what they share</h2>
+      <h2 id="when-undo-is-not-enough">when undo is not enough</h2>
 
-      <p>poll, diff, persist, announce. SQLite is enough for both: one file, no server, and the state survives a restart, which is all a bot needs. neither one has to be a Discord bot. chat is just the interface people already keep open, a free notification channel with permissions and history built in.</p>
+      <p>undo covers a mistake. it does not cover someone who deletes fifty roles and channels on purpose, and then the journal is not the tool. every day the bot saves a snapshot of each server's roles, with who had them, and of every channel with its settings and permissions, keeping the last 7. <code>/restore</code> compares the newest snapshot with the server, shows what is missing, and rebuilds it: roles first, then categories, then channels inside them, then gives members their roles back.</p>
+
+      <p>the order matters more than anything else in that command. a channel can have a permission overwrite for a role, and a role can only be given to a member after it exists, so each step waits for the one before it and each recreated thing gets a new ID that the next step has to use. the snapshot also asks for every member of the server once a day, and I marked that in the code as a limit: fine up to about 100,000 members, and something to rethink beyond that. the database itself is copied to <code>backups/</code> every day, last 7 kept, for the day the file is the problem.</p>
+
+      <h2 id="one-look-for-every-message">one look for every message</h2>
+
+      <p>the last big change was visual. every message the bot sends, replies, DMs, logs and panels, is now a Components V2 card: an accent color for the outcome (green done, red error, orange warning), headings, avatar thumbnails and buttons inside the card. the commands did not change to get there. they still build ordinary text, embeds and buttons, and one function converts them right before they reach Discord.</p>
+
+      <div class="codeblock"><code><span class="cm">// commands still write "✅ Done"; the marker picks the color and is removed from the text</span>
+<span class="kw">const</span> MARKERS = [['✅', Colors.Green], ['❌', Colors.Red], ['⛔', Colors.Red], ['⚠️', Colors.Orange]];</code></div>
+
+      <p>that made the look one decision in one file, and it made the commit that removed the decorative emojis almost mechanical: the color already says whether it worked. the cost is Discord's limit of 4,000 characters of text per card message, so long content is shortened, longest text first, and there is a test for that too.</p>
+
+      <h2 id="the-game-server-monitor-again">the game server monitor, again</h2>
+
+      <p>the monitor is still there, and it fixed what the first version got wrong. the retry counters were module-level globals; they are now one small state object per Discord server, and a server counts as offline only after 3 failed polls in a row, because a single miss is usually a hiccup. the hard-coded restart windows are gone: the bot posts once when the server goes offline, once when it comes back, and marks everyone as left in between.</p>
+
+      <p>the other problem was identity. FiveM reuses server IDs, so a player who leaves and one who joins can have the same number a minute apart. sessions are now keyed by the license identifier, with the name only as a fallback:</p>
+
+      <div class="codeblock"><code><span class="cm">// FiveM server ids get reused, the license identifier does not.</span>
+<span class="kw">const</span> playerKey = (p) =&gt; p.identifiers?.find((id) =&gt; id.startsWith('license:')) ?? `name:${p.name}`;</code></div>
+
+      <p>joins and leaves come in one card per update, with how long each player stayed, instead of a line each. the bot's status and an optional voice channel name show the live count (Discord allows two renames per 10 minutes, so that one is throttled). <code>/server</code> draws the last 24 hours as a text sparkline with the peak, <code>/playtime</code> ranks players from the recorded sessions, and <code>/watchlist</code> pings staff when a chosen player joins. the poll went from 1 s to 10 s: nobody reads a join message that fast, and a public bot polling every community's server once a second was not going to scale.</p>
+
+      <p>one shortcut is still marked in the code: a session left open by a bot restart counts the downtime as playtime. it needs a "bot was down" marker, and it has not been worth it yet.</p>
+
+      <h2 id="what-i-learned">what I learned</h2>
+
+      <p>the useful design question for a bot with power is not "what can it do" but "what happens after it does the wrong thing". undo, snapshots, confirmation buttons on every bulk action, a role hierarchy check and an owner-only anti-nuke are all answers to that. the features people ask for are the small part; the safety net around them is where the time went.</p>
+
+      <p>and the merge taught me what was actually shared between the two old bots. it was never XP or players. it was a database file, a command loader and a habit of telling a channel what changed, and that is still all rejs is: SQLite in one file, no dashboard, on your own PC or a VPS kept alive by pm2. chat is the interface people already have open.</p>
 
     </div>
   </div>
 </article>
 <nav class="post-steps" aria-label="more posts">
-  <a class="post-step post-step--newer" href="retail-desktop-apps">
-      <span class="post-step__dir">&larr; newer</span>
-      <span class="post-step__title">the app that must never lose a sale</span>
-    </a>
   <span></span>
+  <a class="post-step post-step--older" href="ridecast-part-4">
+      <span class="post-step__dir">older &rarr;</span>
+      <span class="post-step__title">ridecast part 4: one screen for the ride</span>
+    </a>
 </nav>
 </main>
 

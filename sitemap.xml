@@ -2,6 +2,7 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   <url><loc>https://kaandinc.com/</loc></url>
   <url><loc>https://kaandinc.com/blog</loc></url>
+  <url><loc>https://kaandinc.com/posts/discord-bots</loc></url>
   <url><loc>https://kaandinc.com/posts/ridecast-part-4</loc></url>
   <url><loc>https://kaandinc.com/posts/ridecast-part-3</loc></url>
   <url><loc>https://kaandinc.com/posts/ridecast-part-2</loc></url>
@@ -19,5 +20,4 @@
   <url><loc>https://kaandinc.com/posts/ecommerce-admin-panel</loc></url>
   <url><loc>https://kaandinc.com/posts/screen-region-detection</loc></url>
   <url><loc>https://kaandinc.com/posts/retail-desktop-apps</loc></url>
-  <url><loc>https://kaandinc.com/posts/discord-bots</loc></url>
 </urlset>
