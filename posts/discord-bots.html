@@ -4,12 +4,12 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>rejs: a moderation bot that can undo itself | Kaan Dinç</title>
-<meta name="description" content="this post used to be about two Discord bots: Lespy, which handed out XP for saying thanks, and rejs, which watched a FiveM server and reported who joined....">
+<meta name="description" content="rejs is a Discord moderation and automation bot with a FiveM server monitor built in. it began as a game server watcher, took over the jobs of an older...">
 <meta name="theme-color" content="#0a0a09">
 <link rel="canonical" href="https://kaandinc.com/posts/discord-bots">
 <meta property="og:type" content="article">
 <meta property="og:title" content="rejs: a moderation bot that can undo itself | Kaan Dinç">
-<meta property="og:description" content="this post used to be about two Discord bots: Lespy, which handed out XP for saying thanks, and rejs, which watched a FiveM server and reported who joined....">
+<meta property="og:description" content="rejs is a Discord moderation and automation bot with a FiveM server monitor built in. it began as a game server watcher, took over the jobs of an older...">
 <meta property="og:url" content="https://kaandinc.com/posts/discord-bots">
 <meta property="og:site_name" content="Kaan Dinç">
 <meta property="og:image" content="https://kaandinc.com/assets/og.png">
@@ -18,7 +18,7 @@
 <meta property="og:image:alt" content="Kaan Dinç, computer engineer. K logo beside 3D solids in amber on black.">
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:title" content="rejs: a moderation bot that can undo itself | Kaan Dinç">
-<meta name="twitter:description" content="this post used to be about two Discord bots: Lespy, which handed out XP for saying thanks, and rejs, which watched a FiveM server and reported who joined....">
+<meta name="twitter:description" content="rejs is a Discord moderation and automation bot with a FiveM server monitor built in. it began as a game server watcher, took over the jobs of an older...">
 <meta name="twitter:image" content="https://kaandinc.com/assets/og.png">
 <link rel="icon" href="../assets/favicon.svg" type="image/svg+xml">
 <link rel="preload" href="../assets/fonts/Geist-Variable.woff2" as="font" type="font/woff2" crossorigin>
@@ -65,7 +65,7 @@
   <div class="post-layout has-toc">
     <aside class="toc" aria-label="on this page">
       <ol>
-        <li><a href="#from-two-bots-to-one">from two bots to one</a></li>
+        <li><a href="#where-it-came-from">where it came from</a></li>
         <li><a href="#moderation-with-a-paper-trail">moderation with a paper trail</a></li>
         <li><a href="#undo">undo</a></li>
         <li><a href="#when-undo-is-not-enough">when undo is not enough</a></li>
@@ -75,12 +75,12 @@
       </ol>
     </aside>
     <div class="post-body">
-<p>this post used to be about two Discord bots: Lespy, which handed out XP for saying thanks, and rejs, which watched a FiveM server and reported who joined. I merged them and rewrote the result as one slash-command moderation bot. the XP system is gone, the game server monitor is one feature among about thirty, and the part I like most is a command I did not plan at the start: <code>/undo</code>. this is what rejs is now, and what changed in how I think about a bot that can delete things.</p>
+<p>rejs is a Discord moderation and automation bot with a FiveM server monitor built in. it began as a game server watcher, took over the jobs of an older bot of mine, and is now one slash-command bot. the game server monitor is one feature among about thirty, and the part I like most is a command I did not plan at the start: <code>/undo</code>. this is what rejs is, and what changed in how I think about a bot that can delete things.</p>
 
-      <p class="links">source: <a href="https://github.com/kaan0d/rejs" target="_blank" rel="noopener">rejs</a> · the old Lespy is <a href="https://github.com/kaan0d/Lespy" target="_blank" rel="noopener">still on GitHub</a></p>
+      <p class="links">source: <a href="https://github.com/kaan0d/rejs" target="_blank" rel="noopener">rejs</a></p>
 
       <div class="stats">
-        <div class="stat"><b>1</b><span>bot: Lespy was merged in, then its XP system removed</span></div>
+        <div class="stat"><b>1</b><span>bot, with moderation, tickets, protection and a game server monitor in it</span></div>
         <div class="stat"><b>50+</b><span>slash commands, all hidden from members who can't use them</span></div>
         <div class="stat"><b>7 days</b><span>every staff action can be undone</span></div>
         <div class="stat"><b>7</b><span>daily snapshots of each server's roles and channels</span></div>
@@ -88,11 +88,11 @@
         <div class="stat"><b>43</b><span>tests, run with Node's built-in runner</span></div>
       </div>
 
-      <h2 id="from-two-bots-to-one">from two bots to one</h2>
+      <h2 id="where-it-came-from">where it came from</h2>
 
-      <p>rejs started in 2024 as a small Node bot: poll the game server once a second, compare the player list with the last one, post joins and leaves. Lespy was Python, with its own database and its own permission tiers. running two bots for one community meant two tokens, two hosts and two places to look when something broke.</p>
+      <p>rejs started in 2024 as a small Node bot: poll the game server once a second, compare the player list with the last one, post joins and leaves. in September 2026 I rewrote it as a slash-command bot and moved everything my older leveling bot did into it, so one community runs one token, one host and one database. I dropped the thank-you XP on the way. it was fun, but it made the server about the bot instead of the people, and a moderation bot needs to be boring in the right way.</p>
 
-      <p>in September 2026 I merged Lespy into rejs, and then removed the thank-you XP entirely. it was fun, but it was the one feature that made the server about the bot instead of about the people, and a moderation bot needs to be boring in the right way. what stayed from both is the same loop as before: watch something, remember what changed, tell the right channel. anti-raid watches joins, anti-nuke watches destructive actions, the monitor watches the game server. the loop is the same and only the thing being watched changes.</p>
+      <p>what stayed is one loop: watch something, remember what changed, tell the right channel. anti-raid watches joins, anti-nuke watches destructive actions, the monitor watches the game server. the loop is the same and only the thing being watched changes.</p>
 
       <h2 id="moderation-with-a-paper-trail">moderation with a paper trail</h2>
 
@@ -174,7 +174,7 @@ CREATE TRIGGER undo_&lt;table&gt;_update AFTER UPDATE ON &lt;table&gt;
 
       <p>the useful design question for a bot with power is not "what can it do" but "what happens after it does the wrong thing". undo, snapshots, confirmation buttons on every bulk action, a role hierarchy check and an owner-only anti-nuke are all answers to that. the features people ask for are the small part; the safety net around them is where the time went.</p>
 
-      <p>and the merge taught me what was actually shared between the two old bots. it was never XP or players. it was a database file, a command loader and a habit of telling a channel what changed, and that is still all rejs is: SQLite in one file, no dashboard, on your own PC or a VPS kept alive by pm2. chat is the interface people already have open.</p>
+      <p>and the rewrite showed me what rejs really is: a database file, a command loader and a habit of telling a channel what changed. SQLite in one file, no dashboard, on your own PC or a VPS kept alive by pm2. chat is the interface people already have open.</p>
 
     </div>
   </div>

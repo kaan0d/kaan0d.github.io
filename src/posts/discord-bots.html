@@ -3,12 +3,12 @@ title: rejs: a moderation bot that can undo itself
 date: 2026-09-29
 label: Sep 2026
 ---
-<p>this post used to be about two Discord bots: Lespy, which handed out XP for saying thanks, and rejs, which watched a FiveM server and reported who joined. I merged them and rewrote the result as one slash-command moderation bot. the XP system is gone, the game server monitor is one feature among about thirty, and the part I like most is a command I did not plan at the start: <code>/undo</code>. this is what rejs is now, and what changed in how I think about a bot that can delete things.</p>
+<p>rejs is a Discord moderation and automation bot with a FiveM server monitor built in. it began as a game server watcher, took over the jobs of an older bot of mine, and is now one slash-command bot. the game server monitor is one feature among about thirty, and the part I like most is a command I did not plan at the start: <code>/undo</code>. this is what rejs is, and what changed in how I think about a bot that can delete things.</p>
 
-      <p class="links">source: <a href="https://github.com/kaan0d/rejs" target="_blank" rel="noopener">rejs</a> · the old Lespy is <a href="https://github.com/kaan0d/Lespy" target="_blank" rel="noopener">still on GitHub</a></p>
+      <p class="links">source: <a href="https://github.com/kaan0d/rejs" target="_blank" rel="noopener">rejs</a></p>
 
       <div class="stats">
-        <div class="stat"><b>1</b><span>bot: Lespy was merged in, then its XP system removed</span></div>
+        <div class="stat"><b>1</b><span>bot, with moderation, tickets, protection and a game server monitor in it</span></div>
         <div class="stat"><b>50+</b><span>slash commands, all hidden from members who can't use them</span></div>
         <div class="stat"><b>7 days</b><span>every staff action can be undone</span></div>
         <div class="stat"><b>7</b><span>daily snapshots of each server's roles and channels</span></div>
@@ -16,11 +16,11 @@ label: Sep 2026
         <div class="stat"><b>43</b><span>tests, run with Node's built-in runner</span></div>
       </div>
 
-      <h2>from two bots to one</h2>
+      <h2>where it came from</h2>
 
-      <p>rejs started in 2024 as a small Node bot: poll the game server once a second, compare the player list with the last one, post joins and leaves. Lespy was Python, with its own database and its own permission tiers. running two bots for one community meant two tokens, two hosts and two places to look when something broke.</p>
+      <p>rejs started in 2024 as a small Node bot: poll the game server once a second, compare the player list with the last one, post joins and leaves. in September 2026 I rewrote it as a slash-command bot and moved everything my older leveling bot did into it, so one community runs one token, one host and one database. I dropped the thank-you XP on the way. it was fun, but it made the server about the bot instead of the people, and a moderation bot needs to be boring in the right way.</p>
 
-      <p>in September 2026 I merged Lespy into rejs, and then removed the thank-you XP entirely. it was fun, but it was the one feature that made the server about the bot instead of about the people, and a moderation bot needs to be boring in the right way. what stayed from both is the same loop as before: watch something, remember what changed, tell the right channel. anti-raid watches joins, anti-nuke watches destructive actions, the monitor watches the game server. the loop is the same and only the thing being watched changes.</p>
+      <p>what stayed is one loop: watch something, remember what changed, tell the right channel. anti-raid watches joins, anti-nuke watches destructive actions, the monitor watches the game server. the loop is the same and only the thing being watched changes.</p>
 
       <h2>moderation with a paper trail</h2>
 
@@ -102,4 +102,4 @@ CREATE TRIGGER undo_&lt;table&gt;_update AFTER UPDATE ON &lt;table&gt;
 
       <p>the useful design question for a bot with power is not "what can it do" but "what happens after it does the wrong thing". undo, snapshots, confirmation buttons on every bulk action, a role hierarchy check and an owner-only anti-nuke are all answers to that. the features people ask for are the small part; the safety net around them is where the time went.</p>
 
-      <p>and the merge taught me what was actually shared between the two old bots. it was never XP or players. it was a database file, a command loader and a habit of telling a channel what changed, and that is still all rejs is: SQLite in one file, no dashboard, on your own PC or a VPS kept alive by pm2. chat is the interface people already have open.</p>
+      <p>and the rewrite showed me what rejs really is: a database file, a command loader and a habit of telling a channel what changed. SQLite in one file, no dashboard, on your own PC or a VPS kept alive by pm2. chat is the interface people already have open.</p>
