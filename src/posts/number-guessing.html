@@ -1,0 +1,73 @@
+---
+title: number guess battle: two browsers, one relay, no shared server state
+date: 2026-05-15
+label: May 2026
+---
+<p>number guess battle is a two-player game in Turkish and English. each player locks a secret number, then you take turns guessing the other's. every answer is higher, lower or correct, and your valid range narrows after each guess. first to hit the number wins. it's live at <a href="https://kaandinc.com/number-guessing/" target="_blank" rel="noopener">kaandinc.com/number-guessing</a>, with an online mode through a room code and a solo mode against the computer.</p>
+
+      <p>the stack is Next.js 16 with React 19 and Tailwind 4. the interesting part is what's not there: no database, no accounts and no game logic on the server. the server is an 80-line WebSocket relay that knows which two sockets share a room and forwards their messages. everything else happens in the two browsers.</p>
+
+      <div class="stats">
+        <div class="stat"><b>80</b><span>lines of relay</span></div>
+        <div class="stat"><b>9,000</b><span>possible room codes</span></div>
+        <div class="stat"><b>30 s</b><span>to come back after a refresh</span></div>
+        <div class="stat"><b>7</b><span>guesses binary search needs for 1–100</span></div>
+        <div class="stat"><b>4</b><span>tests on node:test</span></div>
+        <div class="stat"><b>0</b><span>databases</span></div>
+      </div>
+
+      <figure>
+        <img src="img/number-guessing-turn.webp" width="1400" height="800" alt="Number Guess Battle mid-game: it's your turn with 7 seconds left, the valid range has narrowed to 51 to 69, your secret number 37 is shown, and the recent guesses list reads 50 higher, 50 lower, 70 lower, 25 higher." loading="lazy">
+        <figcaption>four guesses in: the range is down to 51–69 and the turn timer is running.</figcaption>
+      </figure>
+
+      <h2>a relay instead of a backend</h2>
+
+      <p>the first version synced through a hosted realtime service. it worked, but every game depended on a third party for something very small: two clients sending each other a few JSON messages. so I replaced it with my own relay on the <code>ws</code> package, attached to the same Node process that serves the Next app.</p>
+
+      <p>the relay understands three messages. <code>create</code> picks an unused 4-digit code, <code>join</code> puts a second socket in that room (or answers <code>not_found</code> or <code>full</code>), and <code>broadcast</code> forwards any event to the other member. when a socket closes, the other one gets <code>peer_left</code>. a ping every 30 seconds drops dead connections and keeps proxies from closing idle ones. it never reads the payloads, so it has no game rules to get wrong.</p>
+
+      <div class="codeblock"><code><span class="kw">} else if</span> (msg.type === 'broadcast' &amp;&amp; ws.room &amp;&amp; <span class="kw">typeof</span> msg.event === 'string') {
+  <span class="kw">const</span> out = JSON.stringify({ type: 'broadcast', event: msg.event, payload: msg.payload ?? {} })
+  <span class="kw">for</span> (<span class="kw">const</span> peer <span class="kw">of</span> rooms.get(ws.room)) <span class="kw">if</span> (peer !== ws) peer.send(out)
+}</code></div>
+
+      <h2>rules as pure functions</h2>
+
+      <p>the game state lives in React context, but the rules don't. answering a guess, narrowing the guesser's range, ending the game, counting wins and resetting a round are plain functions in one file that take a state and return the next one. the online path, the solo path and the tests all call the same ones, so a rule can't drift between modes, and the tests run on <code>node --test</code> straight against the TypeScript file, with no build step and no framework.</p>
+
+      <h2>the secret number never leaves your browser</h2>
+
+      <p>the first working version had a quiet problem: when you locked your number, it was sent to the opponent with the ready flag. the UI never showed it, but anyone with the network tab open could read it from the WebSocket frames and win on the first guess. the fix was to change who answers. now each browser answers guesses against its own number. the guesser sends <code>guess_made</code>, the owner computes higher, lower or correct, and sends back only that.</p>
+
+      <p>the numbers still need to show up on the end screen, so they're revealed after the winning guess and not before. the loser sends their number with the result that ends the game, and the winner sends theirs back in a <code>reveal</code> message. the honest limit is the other direction: since each browser answers for its own number, a modified client could lie about "higher" or "lower". closing that needs the server to hold the numbers, which is exactly the shared state I wanted to avoid. for a game between friends, hiding the number is the part that matters.</p>
+
+      <h2>coming back after a refresh</h2>
+
+      <p>with all state in the browser, refreshing the page used to end the game. now the state and the player id are written to <code>sessionStorage</code> on every change. it survives a reload but not closing the tab, which is the right lifetime here. on load, a saved game reconnects to its room code and asks the opponent for the current state.</p>
+
+      <p>the player who stayed is the one who knows the truth while the other is away, so their state wins, with one exception: the returning player's own secret number, which only they ever had. a few details make it hold together:</p>
+
+      <ul>
+        <li>when the relay says <code>peer_left</code>, the game isn't cancelled straight away. the remaining player sees a banner, their turn timer pauses, and they can't guess, because nobody would answer. after 30 seconds without a rejoin, the game is called off.</li>
+        <li>the restored page starts with nobody's turn, so the returning player can't guess before the real state arrives.</li>
+        <li>if the remaining player had guessed just as the other dropped, that guess never got an answer. on rejoin, it's taken back and the turn goes back to them.</li>
+        <li>a lock-in that was sent but never arrived is sent again, so the round can't stall in number selection.</li>
+      </ul>
+
+      <h2>a bot you can beat</h2>
+
+      <p>solo mode makes the computer player 2. it never touches the relay: the bot locks a random number, and after each of your guesses it takes its turn 1.5 seconds later, through the same rule functions. its guess is a random number inside its narrowed range. guessing the midpoint would be one line, but then it plays perfectly and wins whenever it goes first. a random guesser still closes in, it's just slower, and that's what makes it beatable.</p>
+
+      <figure>
+        <img src="img/number-guessing-end.webp" width="1400" height="800" alt="The end screen: You Won!, guesses made 3, a line reading 'Binary search never needs more than 7', both secret numbers 37 and 64 revealed, and the header score You 1 – 0 Deniz." loading="lazy">
+        <figcaption>the end screen reveals both numbers and puts your guess count next to the binary search bound.</figcaption>
+      </figure>
+
+      <p>the end screen also shows how many guesses halving the range would need at most: ⌈log₂(n + 1)⌉ for n numbers, so 7 for 1–100 and 14 for the full 1–9999 range. it doesn't change the game, but it tells you whether you won through strategy or luck. the score in the header carries over to rematches.</p>
+
+      <h2>a static site and a relay on two hosts</h2>
+
+      <p>the page is a GitHub Pages project, served from <code>/number-guessing</code>. Next's static export handles the sub-path with <code>basePath</code>, but the metadata icons don't get the prefix, so the config passes the base path to the app as an environment variable and the icon URLs use it. a GitHub Actions workflow runs the tests, builds the export and deploys it on every push to main.</p>
+
+      <p>Pages can't run a WebSocket server, so the relay runs on a small VPS under pm2, behind a Cloudflare-proxied subdomain. Cloudflare provides TLS for the browser and talks plain HTTP to the server. that last leg is unencrypted, but it only carries game moves and player names, so it's an acceptable trade for not running a certificate on the box. the relay URL is a repository variable that the build bakes into the page. if it's unset, the build hides the online buttons and the site still works as a solo game. the same repo also runs as one Node server with the relay on the same host, which is how it's tested locally.</p>

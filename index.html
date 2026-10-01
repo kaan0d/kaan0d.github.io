@@ -193,6 +193,21 @@
     <article class="stack-card" style="--i:6">
       <div class="stack-card__inner">
         <div class="stack-card__text">
+          <h3 class="stack-card__title">Number Guess Battle</h3>
+          <p class="stack-card__kind">Online Multiplayer Game</p>
+          <p class="stack-card__desc">Two-player number guessing game in Turkish and English: each player locks a secret number, then you take turns guessing the other's while your valid range narrows. Online games run through a room code and an 80-line WebSocket relay of my own that only forwards messages, so all game state lives in the two browsers. Each browser answers guesses against its own number, so the secret never crosses the network until the game ends; a refreshed tab rejoins its room within 30 seconds, and the score carries over to rematches. There is also a solo mode against a bot that never touches the server. The page is a static export on GitHub Pages and the relay runs on a VPS behind Cloudflare; the game rules are pure functions covered by unit tests. The write-up is <a href="posts/number-guessing">on the blog</a>.</p>
+          <ul class="tags"><li>TypeScript</li><li>Next.js</li><li>WebSocket</li></ul>
+          <p class="stack-card__links"><a class="roll" href="https://kaandinc.com/number-guessing/" target="_blank" rel="noopener"><span class="roll__in" data-text="live app">live app</span></a><a class="roll" href="posts/number-guessing"><span class="roll__in" data-text="write-up">write-up</span></a><a class="roll" href="https://github.com/kaan0d/number-guessing" target="_blank" rel="noopener"><span class="roll__in" data-text="source">source</span></a></p>
+        </div>
+        <div class="stack-card__visual media">
+          <img src="posts/img/number-guessing-turn.webp" width="1400" height="800" alt="Number Guess Battle mid-game: your turn with 7 seconds left, the valid range narrowed to 51 to 69, and a list of recent higher and lower answers." loading="lazy">
+        </div>
+      </div>
+    </article>
+
+    <article class="stack-card" style="--i:7">
+      <div class="stack-card__inner">
+        <div class="stack-card__text">
           <h3 class="stack-card__title">Invoice Application</h3>
           <p class="stack-card__kind">Desktop app for a retail business</p>
           <p class="stack-card__desc">Desktop application for a retail business that fills PDF receipt templates, tracks payment status and customer history, and numbers receipts automatically.</p>
@@ -392,6 +407,11 @@
       <a class="repo-card" href="https://github.com/kaan0d/country-quiz" target="_blank" rel="noopener">
         <h3 class="repo-card__name">country-quiz</h3>
         <p class="repo-card__desc">World map quiz in Turkish and English on Next.js and react-simple-maps. Six modes including typed answers and neighbours, distance hints on wrong picks, a date-seeded daily challenge and a miss heatmap, as a static site with no backend.</p>
+        <p class="repo-card__meta">TypeScript</p>
+      </a>
+      <a class="repo-card" href="https://github.com/kaan0d/number-guessing" target="_blank" rel="noopener">
+        <h3 class="repo-card__name">number-guessing</h3>
+        <p class="repo-card__desc">Two-player number guessing game on Next.js with a small WebSocket relay and no database. Secret numbers stay in their owner's browser, refreshed tabs rejoin their room, and a solo mode plays against a bot, as a static Pages site plus a relay on a VPS.</p>
         <p class="repo-card__meta">TypeScript</p>
       </a>
       <a class="repo-card" href="https://github.com/kaan0d/simple-volume-saver" target="_blank" rel="noopener">
