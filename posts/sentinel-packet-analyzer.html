@@ -181,7 +181,8 @@ parse_dns(header).anomalies == ('truncated dns message: question 1 of 65535 is m
       <div class="term"><pre><span class="pr">$ python -m sentinel ids attacks.pcap --format text    # 3 of 13
 </span>2023-11-14T22:13:20.140000Z [medium] port-scan: 10.9.9.1 probed 15 ports on 10.0.0.30 in 0.1s
 2023-11-14T22:13:32.099000Z [high] syn-flood: 100 SYNs to 10.0.0.2:80 in 0.1s from 100 sources, 20 completed
-2023-11-14T22:13:50.000000Z [medium] dns-tunnel: 10.0.5.5 asked for a random-looking name under evil-cdn.test
+2023-11-14T22:13:50.000000Z [medium] dns-tunnel: 10.0.5.5 asked for a random-looking name under evil-cdn.test</pre></div>
+
       <p><strong>a busy server is not a flood.</strong> a SYN rate alone flags any busy server. what differs is what comes next: a real client answers the SYN-ACK with an ACK, a spoofed source never does. the detector matches ACKs to SYNs by 4-tuple. a busy server with 150 SYNs in a second, all completed, stays quiet; a flood of 400 SYNs in 0.4 s with 20 completed alerts at the hundredth SYN.</p>
 
       <p><strong>measure before choosing a threshold.</strong> my first entropy threshold was a guess, and wrong. measured on 40-character subdomains: base32 is above 4.2 bits in 290 of 300 samples, base64 in 300 of 300, hex never (it tops out at 4), and readable made-up hostnames reach 4.10. so the default is 4.2, only names of 40+ characters are judged, and entropy is one of four signals. hex tunnels are missed.</p>
