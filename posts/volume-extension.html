@@ -62,16 +62,27 @@
     <p class="post-head__meta" data-hero><time datetime="2026-09-16">Sep 2026</time> &nbsp;/&nbsp; 1 min read</p>
     <h1 class="post-head__title" data-split="lines" data-hero>a volume knob that remembers every site</h1>
   </header>
-  <div class="post-layout">
+  <div class="post-layout has-toc">
+    <aside class="toc" aria-label="on this page">
+      <ol>
+        <li><a href="#the-popup">the popup</a></li>
+        <li><a href="#applying-the-level">applying the level</a></li>
+        <li><a href="#why-it-stayed">why it stayed</a></li>
+      </ol>
+    </aside>
     <div class="post-body">
 <p>every site handles volume differently, and half of them fight you if you try to fix it from the OS mixer. some clamp it, some remember nothing between visits, some route audio through a custom player that ignores the system slider entirely.</p>
 
       <p>simple-volume-saver sits on top of that: pick a level per site, it remembers, and you can reset it without digging through five different players' settings. the core is a background service worker that injects a small function into the page, and a bit of <code>chrome.storage</code>, nothing that needed a framework. saved levels are kept per site in <code>chrome.storage.sync</code>, so they follow you across signed-in devices, and a live audio-reactive visualizer, fed by <code>chrome.tabCapture</code>, shows the tab's real audio output rather than a decorative animation.</p>
 
+      <h2 id="the-popup">the popup</h2>
+
       <figure>
         <img src="img/volume-extension.webp" width="1586" height="992" alt="The Volume Saver popup on github.com: a glowing fader over a volume readout at 100%, Reset and Save site buttons, and Volume and Saved Sites tabs, on a dark blue background." loading="lazy">
         <figcaption>the popup on github.com. drag the fader to set the level, then save the site or reset it.</figcaption>
       </figure>
+
+      <h2 id="applying-the-level">applying the level</h2>
 
       <p>the popup is intentionally small: a slider, a site name, a reset button. most of the actual work happens in the service worker: when a tab finishes loading or starts playing audio, it looks up the saved level for that site's origin and injects a function that applies it to every media element on the page.</p>
 
@@ -100,6 +111,8 @@
   applyToAll();
   <span class="cm">// ...then a MutationObserver re-applies it to media added later</span>
 }</code></div>
+
+      <h2 id="why-it-stayed">why it stayed</h2>
 
       <p>nothing fancy under the hood, but it's the kind of tool I actually reach for every day, which is more than I can say for most of what I've shipped.</p>
 
