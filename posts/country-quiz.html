@@ -1,0 +1,183 @@
+<!doctype html>
+<html lang="en" data-page="post">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>country quiz: a world map that tells you how wrong you were | Kaan Dinç</title>
+<meta name="description" content="country quiz is a world map game in Turkish and English. a country's name shows up and you click it on the map, or the map marks one and you name it....">
+<meta name="theme-color" content="#0a0a09">
+<link rel="canonical" href="https://kaandinc.com/posts/country-quiz">
+<meta property="og:type" content="article">
+<meta property="og:title" content="country quiz: a world map that tells you how wrong you were | Kaan Dinç">
+<meta property="og:description" content="country quiz is a world map game in Turkish and English. a country's name shows up and you click it on the map, or the map marks one and you name it....">
+<meta property="og:url" content="https://kaandinc.com/posts/country-quiz">
+<meta property="og:site_name" content="Kaan Dinç">
+<meta property="og:image" content="https://kaandinc.com/assets/og.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="Kaan Dinç, computer engineer. K logo beside 3D solids in amber on black.">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="country quiz: a world map that tells you how wrong you were | Kaan Dinç">
+<meta name="twitter:description" content="country quiz is a world map game in Turkish and English. a country's name shows up and you click it on the map, or the map marks one and you name it....">
+<meta name="twitter:image" content="https://kaandinc.com/assets/og.png">
+<link rel="icon" href="../assets/favicon.svg" type="image/svg+xml">
+<link rel="preload" href="../assets/fonts/Geist-Variable.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="stylesheet" href="../assets/css/base.css">
+<link rel="stylesheet" href="../assets/css/post.css">
+<script>
+(function (d) {
+  d.classList.add('js');
+  if (matchMedia('(prefers-reduced-motion: reduce)').matches) d.classList.add('reduce');
+  // Safety net: reveal content if the animation scripts never report ready.
+  setTimeout(function () { if (!d.classList.contains('ready')) d.classList.add('no-anim'); }, 4000);
+})(document.documentElement);
+</script>
+
+</head>
+<body>
+<a class="skip" href="#main">skip to content</a>
+
+<header class="site-header">
+  <div class="site-header__left">
+    <a class="site-header__brand" href="../" aria-label="Kaan Dinç, home"><img src="../assets/favicon.svg" width="32" height="32" alt=""><span>Kaan Dinç</span></a>
+    <a class="btn btn--cv btn--sm" href="https://drive.google.com/file/d/1M5Ri6U8PAwSgwr31EN4JDeT90P7OuCPo/view" target="_blank" rel="noopener"><span>view my cv</span><span class="btn__arrow" aria-hidden="true">&nearr;</span></a>
+  </div>
+  <nav class="site-nav" aria-label="primary">
+    <a class="roll" href="../" data-spy="top"><span class="roll__in" data-text="home">home</span></a>
+    <a class="roll" href="../#about" data-spy="about"><span class="roll__in" data-text="about">about</span></a>
+    <a class="roll" href="../#projects" data-spy="projects"><span class="roll__in" data-text="projects">projects</span></a>
+    <a class="roll" href="../#experience" data-spy="experience"><span class="roll__in" data-text="experience">experience</span></a>
+    <a class="roll" href="../#skills" data-spy="skills"><span class="roll__in" data-text="skills">skills</span></a>
+    <a class="roll" href="../#education" data-spy="education"><span class="roll__in" data-text="education">education</span></a>
+    <a class="roll" href="../#repos" data-spy="repos"><span class="roll__in" data-text="repos">repos</span></a>
+    <a class="roll is-active" href="../blog" aria-current="page"><span class="roll__in" data-text="blog">blog</span></a>
+  </nav>
+</header>
+
+<main id="main">
+<div class="progress" aria-hidden="true"><span></span></div>
+<article class="post">
+  <header class="post-head">
+    <a class="post-head__back roll" href="../blog"><span class="roll__in" data-text="&amp;larr; blog">&larr; blog</span></a>
+    <p class="post-head__meta" data-hero><time datetime="2026-04-20">Apr 2026</time> &nbsp;/&nbsp; 5 min read</p>
+    <h1 class="post-head__title" data-split="lines" data-hero>country quiz: a world map that tells you how wrong you were</h1>
+  </header>
+  <div class="post-layout has-toc">
+    <aside class="toc" aria-label="on this page">
+      <ol>
+        <li><a href="#the-game-is-a-reducer">the game is a reducer</a></li>
+        <li><a href="#a-miss-that-points-somewhere">a miss that points somewhere</a></li>
+        <li><a href="#typing-a-name">typing a name</a></li>
+        <li><a href="#neighbours-from-the-map-itself">neighbours from the map itself</a></li>
+        <li><a href="#the-same-ten-countries-for-everyone">the same ten countries for everyone</a></li>
+        <li><a href="#where-you-keep-missing">where you keep missing</a></li>
+        <li><a href="#living-under-country-quiz">living under /country-quiz</a></li>
+      </ol>
+    </aside>
+    <div class="post-body">
+<p>country quiz is a world map game in Turkish and English. a country's name shows up and you click it on the map, or the map marks one and you name it. there are six ways to play: by name, by flag, by capital, a reverse mode with four options, a typed mode, and a neighbours mode where any country that shares a border is the right answer. it runs entirely in the browser with no backend, and it's live at <a href="https://kaandinc.com/country-quiz/" target="_blank" rel="noopener">kaandinc.com/country-quiz</a>.</p>
+
+      <p>the stack is Next.js 16 with React 19, Tailwind 4 and react-simple-maps, built as a static export. the map shapes (world-atlas at 1:50m) and all the flags are served from the same folder as the page, so after the first load nothing else is fetched.</p>
+
+      <div class="stats">
+        <div class="stat"><b>202</b><span>playable countries</span></div>
+        <div class="stat"><b>6</b><span>game modes</span></div>
+        <div class="stat"><b>158</b><span>countries with a land neighbour</span></div>
+        <div class="stat"><b>12</b><span>unit tests on node:test</span></div>
+        <div class="stat"><b>740 KB</b><span>map shapes, served locally</span></div>
+        <div class="stat"><b>0</b><span>servers</span></div>
+      </div>
+
+      <figure>
+        <img src="img/country-quiz-game.webp" width="1400" height="800" alt="country quiz mid-game: Vietnam is asked, most of the world is already green, Thailand is red after a wrong click, and the strip under the title reads 'Thailand, try again, 762 km' with an arrow pointing right." loading="lazy">
+        <figcaption>a wrong pick turns red and the strip says how far off it was and which way to look.</figcaption>
+      </figure>
+
+      <h2 id="the-game-is-a-reducer">the game is a reducer</h2>
+
+      <p>all the rules live in one pure function. the queue holds ISO alpha-3 codes and <code>queue[0]</code> is the country being asked. a correct answer moves it to <code>done</code>; three misses on the same country (a hint counts as one) reveal it in yellow and send it to the back of the queue. skipping rotates the queue, and a timed run just ends when the clock does. because the reducer never touches the DOM, the whole thing is tested with plain <code>node --test</code>, with no browser and no test framework.</p>
+
+      <div class="codeblock"><code><span class="kw">case</span> "answer":
+  <span class="kw">if</span> (a.code === s.queue[0]) <span class="kw">return</span> { ...s, score: s.score + 1, attempts: s.attempts + 1, phase: "correct" };
+  <span class="kw">if</span> (s.wrong.includes(a.code)) <span class="kw">return</span> s;   <span class="cm">// the same wrong country only counts once</span>
+  <span class="kw">return</span> miss(s, { wrong: [...s.wrong, a.code] });</code></div>
+
+      <p>the component around it handles everything that isn't a rule: the pause after an answer, the countdown, sound, keyboard shortcuts, and saving the unfinished game to <code>localStorage</code> on every change. lifetime misses per country are kept there too, and a practice round asks only the 20 countries you miss most. a clean find takes one off that country's count, so the list gets shorter as you learn.</p>
+
+      <h2 id="a-miss-that-points-somewhere">a miss that points somewhere</h2>
+
+      <p>the first version only said "wrong, try again". that's true but useless: if you click Thailand looking for Vietnam, you were close, and if you click Peru you weren't. now a wrong pick shows the distance from the clicked country to the answer and an arrow toward it.</p>
+
+      <div class="codeblock"><code><span class="kw">export</span> <span class="kw">function</span> offBy(from: [number, number], to: [number, number]) {
+  <span class="kw">const</span> [lng1, lat1, lng2, lat2] = [...from, ...to].map((d) =&gt; (d * Math.PI) / 180);
+  <span class="kw">const</span> a = Math.sin((lat2 - lat1) / 2) ** 2 + Math.cos(lat1) * Math.cos(lat2) * Math.sin((lng2 - lng1) / 2) ** 2;
+  <span class="kw">const</span> km = 2 * 6371 * Math.asin(Math.sqrt(a));
+  <span class="kw">const</span> deg = (Math.atan2(to[0] - from[0], to[1] - from[1]) * 180) / Math.PI;
+  <span class="kw">return</span> { km: Math.round(km), deg: (deg + 360) % 360 };
+}</code></div>
+
+      <p>the distance is the real great-circle distance, but the direction is deliberately not the great-circle bearing. the map is equirectangular, so lines of latitude are straight. if you click France while looking for Japan, the shortest path on the globe leaves France heading north-east (a bearing of about 34°), because it bends up over Siberia. on the screen, Japan is almost straight east (about 94°). the arrow is there to tell you where to look on the map in front of you, so it uses the flat map's angle. the map also doesn't wrap around, so from Japan to the US the arrow points west across the whole map, not east over the Pacific. the test pins a short case: Paris to Istanbul comes out at about 2,250 km, with the arrow between east and south-east.</p>
+
+      <h2 id="typing-a-name">typing a name</h2>
+
+      <p>the reverse mode gives four options, and after a while you learn to eliminate instead of remembering. the typed mode marks a country and gives you a text box. the hard part is deciding what counts as right. "Côte d'Ivoire", "cote divoire" and "Fildişi Sahili" should all work, and so should "argentna". "Pera" shouldn't count as Peru.</p>
+
+      <div class="codeblock"><code><span class="kw">export</span> <span class="kw">const</span> normalize = (s: string) =&gt;
+  s.normalize("NFD").replace(/\p{M}/gu, "").toLowerCase().replace(/ı/g, "i").replace(/[^a-z0-9]/g, "");</code></div>
+
+      <p>everything is normalized first: decompose, drop the accent marks, lowercase, and map the dotless Turkish ı to i, because NFD leaves it alone. then the input is compared to the answer's Turkish and English names with an edit distance. the allowance grows with length: no typos under five letters, one up to seven, two from eight. short names get none, because one letter is the whole difference between Iran and Iraq. if the input isn't close to the answer but is exactly another country's name, it counts as a wrong pick and that country turns red on the map. if it matches nothing, it's ignored, so a typo in the middle of a name doesn't cost a miss.</p>
+
+      <h2 id="neighbours-from-the-map-itself">neighbours from the map itself</h2>
+
+      <p>the neighbours mode needed a border list, and I didn't want to type 158 of them by hand. the map file already knows: it's TopoJSON, where two countries that share a border share the same arcs. <code>topojson-client</code> (already installed as a dependency of react-simple-maps) has a <code>neighbors()</code> function that returns exactly that, so a 30-line script reads the map once and writes <code>lib/neighbors.ts</code>.</p>
+
+      <p>two shapes needed care. Somaliland and Northern Cyprus are drawn separately in the atlas but aren't playable, and if they're skipped, Somalia loses its border with Djibouti, which runs through Somaliland. the script counts them as Somalia and Cyprus. the honest limit is that the borders come from the 1:50m shapes, so anything the map doesn't draw doesn't exist: Spain and Morocco share land borders at Ceuta and Melilla, but the map doesn't, so neither does the game.</p>
+
+      <h2 id="the-same-ten-countries-for-everyone">the same ten countries for everyone</h2>
+
+      <p>the daily challenge picks ten countries from the date, so everyone playing on the same day gets the same set. <code>Math.random</code> can't be seeded, so the date string is hashed and fed into mulberry32, a tiny 32-bit generator, which drives an ordinary Fisher-Yates shuffle. small islands are left out to keep it fair, and in neighbours mode only countries with a land border are picked. at the end, the result is one square per country in the day's order: green first try, yellow found after a miss, red revealed. it copies to the clipboard as text, so it pastes anywhere.</p>
+
+      <h2 id="where-you-keep-missing">where you keep missing</h2>
+
+      <figure>
+        <img src="img/country-quiz-explore.webp" width="1400" height="800" alt="The explore view: a dark world map where West Africa, Central Asia, the Balkans and parts of Central America are tinted red, Ghana is highlighted in yellow, and a card at the bottom shows Ghana's flag, Accra, Africa and 'No misses'." loading="lazy">
+        <figcaption>the explore view tints every country by how often you've missed it. tapping one shows its flag, capital and miss count.</figcaption>
+      </figure>
+
+      <p>the lifetime misses were already being saved for the practice round, so the explore view just paints them. no colour scale library: each country's fill is <code>color-mix(in srgb, #ef4444 N%, #334155)</code>, with five or more misses fully red. the picture it gives is usually more honest than you'd like. West Africa and Central Asia light up fast.</p>
+
+      <h2 id="living-under-country-quiz">living under /country-quiz</h2>
+
+      <p>the site is a GitHub Pages project, so it's served from a sub-path instead of the domain root. Next's <code>basePath</code> handles its own scripts and links, but not plain <code>&lt;img&gt;</code> tags or URLs passed to <code>fetch</code>, and the flags and the map file are exactly those. the base path is defined once in the config, exposed as an environment variable, and every flag URL goes through one small helper. a GitHub Actions workflow runs the tests, builds the static export and deploys it on every push to main. the installable manifest also needed the prefix on its start URL and icon, or the installed app would open the site root instead of the game.</p>
+
+    </div>
+  </div>
+</article>
+<nav class="post-steps" aria-label="more posts">
+  <a class="post-step post-step--newer" href="volume-extension">
+      <span class="post-step__dir">&larr; newer</span>
+      <span class="post-step__title">a volume knob that remembers every site</span>
+    </a>
+  <a class="post-step post-step--older" href="ecommerce-admin-panel">
+      <span class="post-step__dir">older &rarr;</span>
+      <span class="post-step__title">no cart, no checkout, one whatsapp button</span>
+    </a>
+</nav>
+</main>
+
+<footer class="site-footer">
+  <span>&copy; 2026 Kaan Dinç. All rights reserved.</span>
+  <span>Çanakkale, Turkey</span>
+  <button class="roll" type="button" data-top><span class="roll__in" data-text="back to top">back to top</span></button>
+</footer>
+
+<button class="scroll-cue is-hidden" type="button" aria-label="scroll down"><span></span></button>
+
+<script defer src="../assets/vendor/gsap.min.js"></script>
+<script defer src="../assets/vendor/ScrollTrigger.min.js"></script>
+<script defer src="../assets/vendor/SplitText.min.js"></script>
+<script defer src="../assets/vendor/lenis.min.js"></script>
+<script defer src="../assets/js/core.js"></script>
+<script defer src="../assets/js/post.js"></script>
+</body>
+</html>
