@@ -20,7 +20,7 @@
       <p class="stat__label">lines of code written across my projects</p>
     </div>
     <div class="stat" data-fade>
-      <p class="stat__num"><span data-count="13">13</span></p>
+      <p class="stat__num"><span data-count="14">14</span></p>
       <p class="stat__label">projects built, from a packet analyzer to a physics engine to retail software</p>
     </div>
     <div class="stat" data-fade>
@@ -119,6 +119,21 @@
     </article>
 
     <article class="stack-card" style="--i:5">
+      <div class="stack-card__inner">
+        <div class="stack-card__text">
+          <h3 class="stack-card__title">Country Quiz</h3>
+          <p class="stack-card__kind">World Map Game</p>
+          <p class="stack-card__desc">World map quiz in Turkish and English with six modes: find a country by name, flag or capital, name a marked one from four options or by typing it (accents, case and small typos forgiven), or click any country that borders the one asked. A wrong pick shows how many km it was off and an arrow toward the answer. Borders for 158 countries are worked out from the map's shared edges, a date-seeded daily challenge gives everyone the same ten countries with a shareable result, and an explore view tints the map by lifetime misses. Runs fully in the browser as a static export with no backend; the game rules are a pure reducer covered by unit tests. The write-up is <a href="posts/country-quiz">on the blog</a>.</p>
+          <ul class="tags"><li>TypeScript</li><li>Next.js</li><li>react-simple-maps</li></ul>
+          <p class="stack-card__links"><a class="roll" href="https://kaandinc.com/country-quiz/" target="_blank" rel="noopener">${ROLL}live app</a><a class="roll" href="posts/country-quiz">${ROLL}write-up</a><a class="roll" href="https://github.com/kaan0d/country-quiz" target="_blank" rel="noopener">${ROLL}source</a></p>
+        </div>
+        <div class="stack-card__visual media">
+          <img src="posts/img/country-quiz-game.webp" width="1400" height="800" alt="Country quiz mid-game: Vietnam is asked, most of the world is green, Thailand is red after a wrong click and the strip reads 762 km with an arrow pointing right." loading="lazy">
+        </div>
+      </div>
+    </article>
+
+    <article class="stack-card" style="--i:6">
       <div class="stack-card__inner">
         <div class="stack-card__text">
           <h3 class="stack-card__title">Invoice Application</h3>
@@ -315,6 +330,11 @@
       <a class="repo-card" href="https://github.com/kaan0d/ridecast" target="_blank" rel="noopener">
         <h3 class="repo-card__name">ridecast</h3>
         <p class="repo-card__desc">Route weather planner for motorcycle riders in TypeScript and Leaflet. Weather and risk at the time you reach each point, safest route, best departure time, multi-day tours, Google Maps style map controls, an offline PWA and a GPS ride screen with a low-fuel warning, with no backend.</p>
+        <p class="repo-card__meta">TypeScript</p>
+      </a>
+      <a class="repo-card" href="https://github.com/kaan0d/country-quiz" target="_blank" rel="noopener">
+        <h3 class="repo-card__name">country-quiz</h3>
+        <p class="repo-card__desc">World map quiz in Turkish and English on Next.js and react-simple-maps. Six modes including typed answers and neighbours, distance hints on wrong picks, a date-seeded daily challenge and a miss heatmap, as a static site with no backend.</p>
         <p class="repo-card__meta">TypeScript</p>
       </a>
       <a class="repo-card" href="https://github.com/kaan0d/simple-volume-saver" target="_blank" rel="noopener">
