@@ -16,11 +16,11 @@
 <section class="stats" aria-label="highlights">
   <div class="stats__grid">
     <div class="stat" data-fade>
-      <p class="stat__num"><span data-count="60">60</span>K+</p>
+      <p class="stat__num"><span data-count="64">64</span>K+</p>
       <p class="stat__label">lines of code written across my projects</p>
     </div>
     <div class="stat" data-fade>
-      <p class="stat__num"><span data-count="14">14</span></p>
+      <p class="stat__num"><span data-count="15">15</span></p>
       <p class="stat__label">projects built, from a packet analyzer to a physics engine to retail software</p>
     </div>
     <div class="stat" data-fade>
@@ -149,6 +149,21 @@
     </article>
 
     <article class="stack-card" style="--i:7">
+      <div class="stack-card__inner">
+        <div class="stack-card__text">
+          <h3 class="stack-card__title">tls-peek</h3>
+          <p class="stack-card__kind">HTTPS Inspector for Windows</p>
+          <p class="stack-card__desc">Shows the HTTPS requests one Windows program sends (URLs, headers, tokens and bodies) in a local web UI. It is built on mitmproxy's local mode, which captures through the WinDivert driver, so it also works on programs that ignore the system proxy; you pick the program from a list and switch it live. Each capture gets its own CA that is removed again on stop. On top of the request list: intercept and rewrite rules, a Connection tab with both TLS sides, the certificate chain and timing split into connect, TLS, wait and download, 13 passive security checks, an API map that groups requests into endpoints with JSON shapes and exports OpenAPI, and raw TCP, UDP and DNS views. Exports mask credentials by name and by token shape. The UI is plain ES modules on Python's standard library HTTP server, and CI tests it on Windows and builds a single exe. The write-up is <a href="posts/tls-peek">on the blog</a>.</p>
+          <ul class="tags"><li>Python</li><li>mitmproxy</li><li>JavaScript</li></ul>
+          <p class="stack-card__links"><a class="roll" href="posts/tls-peek">${ROLL}write-up</a><a class="roll" href="https://github.com/kaan0d/tls-peek" target="_blank" rel="noopener">${ROLL}source</a><a class="roll" href="https://github.com/kaan0d/tls-peek/releases/latest" target="_blank" rel="noopener">${ROLL}download</a></p>
+        </div>
+        <div class="stack-card__visual media">
+          <img src="posts/img/tls-peek-connection.webp" width="1400" height="800" alt="tls-peek capture UI: a list of HTTPS requests and the Connection tab of one request, with a timing bar split into connect, TLS, waiting and download, TLS 1.3 details and the server certificate." loading="lazy">
+        </div>
+      </div>
+    </article>
+
+    <article class="stack-card" style="--i:8">
       <div class="stack-card__inner">
         <div class="stack-card__text">
           <h3 class="stack-card__title">Invoice Application</h3>
@@ -356,6 +371,11 @@
         <h3 class="repo-card__name">number-guessing</h3>
         <p class="repo-card__desc">Two-player number guessing game on Next.js with a small WebSocket relay and no database. Secret numbers stay in their owner's browser, refreshed tabs rejoin their room, and a solo mode plays against a bot, as a static Pages site plus a relay on a VPS.</p>
         <p class="repo-card__meta">TypeScript</p>
+      </a>
+      <a class="repo-card" href="https://github.com/kaan0d/tls-peek" target="_blank" rel="noopener">
+        <h3 class="repo-card__name">tls-peek</h3>
+        <p class="repo-card__desc">HTTPS inspector for one Windows program on mitmproxy's local mode, with a per-capture CA, intercept and rewrite rules, TLS and timing details, passive security checks, an API map with OpenAPI export and raw TCP, UDP and DNS views, shipped as a single exe.</p>
+        <p class="repo-card__meta">Python</p>
       </a>
       <a class="repo-card" href="https://github.com/kaan0d/simple-volume-saver" target="_blank" rel="noopener">
         <h3 class="repo-card__name">simple-volume-saver</h3>
