@@ -3,12 +3,12 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>tls-peek: HTTPS inspection for a single Windows program | Kaan Dinç</title>
+<title>tls-peek part 1: HTTPS inspection for a single Windows program | Kaan Dinç</title>
 <meta name="description" content="A Python tool that captures and decrypts the HTTPS traffic of one chosen Windows program through mitmproxy's local mode, with a per-capture CA that is removed on stop, 13 passive security checks, an API map with OpenAPI export, and a single exe built by CI.">
 <meta name="theme-color" content="#0a0a09">
 <link rel="canonical" href="https://kaandinc.com/posts/tls-peek">
 <meta property="og:type" content="article">
-<meta property="og:title" content="tls-peek: HTTPS inspection for a single Windows program | Kaan Dinç">
+<meta property="og:title" content="tls-peek part 1: HTTPS inspection for a single Windows program | Kaan Dinç">
 <meta property="og:description" content="A Python tool that captures and decrypts the HTTPS traffic of one chosen Windows program through mitmproxy's local mode, with a per-capture CA that is removed on stop, 13 passive security checks, an API map with OpenAPI export, and a single exe built by CI.">
 <meta property="og:url" content="https://kaandinc.com/posts/tls-peek">
 <meta property="og:site_name" content="Kaan Dinç">
@@ -17,7 +17,7 @@
 <meta property="og:image:height" content="630">
 <meta property="og:image:alt" content="Kaan Dinç, computer engineer. K logo beside 3D solids in amber on black.">
 <meta name="twitter:card" content="summary_large_image">
-<meta name="twitter:title" content="tls-peek: HTTPS inspection for a single Windows program | Kaan Dinç">
+<meta name="twitter:title" content="tls-peek part 1: HTTPS inspection for a single Windows program | Kaan Dinç">
 <meta name="twitter:description" content="A Python tool that captures and decrypts the HTTPS traffic of one chosen Windows program through mitmproxy's local mode, with a per-capture CA that is removed on stop, 13 passive security checks, an API map with OpenAPI export, and a single exe built by CI.">
 <meta name="twitter:image" content="https://kaandinc.com/assets/og.png">
 <link rel="icon" href="../assets/favicon.svg" type="image/svg+xml">
@@ -60,7 +60,7 @@
   <header class="post-head">
     <a class="post-head__back roll" href="../blog"><span class="roll__in" data-text="&amp;larr; blog">&larr; blog</span></a>
     <p class="post-head__meta" data-hero><time datetime="2026-10-05">Oct 2026</time> &nbsp;/&nbsp; 6 min read</p>
-    <h1 class="post-head__title" data-split="lines" data-hero>tls-peek: HTTPS inspection for a single Windows program</h1>
+    <h1 class="post-head__title" data-split="lines" data-hero>tls-peek part 1: HTTPS inspection for a single Windows program</h1>
     <p class="post-head__sub" data-hero>Reading what one Windows program says over HTTPS.</p>
   </header>
   <div class="post-layout has-toc">
@@ -79,7 +79,7 @@
     <div class="post-body">
 <aside class="brief" aria-label="project summary">
   <p class="brief__summary">A Python tool that captures and decrypts the HTTPS traffic of one chosen Windows program through mitmproxy's local mode, with a per-capture CA that is removed on stop, 13 passive security checks, an API map with OpenAPI export, and a single exe built by CI.</p>
-  <dl class="brief__facts"><div><dt>Role</dt><dd>Solo, personal project</dd></div><div><dt>Stack</dt><dd>Python, mitmproxy, WinDivert, JavaScript (ES modules), GitHub Actions</dd></div><div><dt>Status</dt><dd>Released as a single exe on GitHub</dd></div><div><dt>Links</dt><dd><a href="https://github.com/kaan0d/tls-peek" target="_blank" rel="noopener">source</a> · <a href="https://github.com/kaan0d/tls-peek/releases/latest" target="_blank" rel="noopener">download</a></dd></div></dl>
+  <dl class="brief__facts"><div><dt>Role</dt><dd>Solo, personal project</dd></div><div><dt>Stack</dt><dd>Python, mitmproxy, WinDivert, JavaScript (ES modules), GitHub Actions</dd></div><div><dt>Status</dt><dd>Released as a single exe on GitHub</dd></div><div><dt>Links</dt><dd><a href="https://github.com/kaan0d/tls-peek" target="_blank" rel="noopener">source</a> · <a href="https://github.com/kaan0d/tls-peek/releases/latest" target="_blank" rel="noopener">download</a></dd></div><div><dt>Series</dt><dd><b>Part 1</b> · <a href="tls-peek-part-2">Part 2</a></dd></div></dl>
 </aside>
 <p>tls-peek shows the HTTPS requests one Windows desktop program sends: URLs, headers, tokens and bodies, in a local web UI. You pick the program from a list, use it as usual, and its traffic shows up live. It's built on mitmproxy's <code>local</code> mode, which captures traffic through the WinDivert driver instead of a proxy setting, so it also works on programs that ignore the system proxy. That covers a lot of desktop software: Electron apps, game launchers and anything with its own HTTP stack.</p>
 
@@ -168,7 +168,10 @@
   </div>
 </article>
 <nav class="post-steps" aria-label="more posts">
-  <span></span>
+  <a class="post-step post-step--newer" href="tls-peek-part-2">
+      <span class="post-step__dir">&larr; newer</span>
+      <span class="post-step__title">tls-peek part 2: what real traffic broke</span>
+    </a>
   <a class="post-step post-step--older" href="discord-bots">
       <span class="post-step__dir">older &rarr;</span>
       <span class="post-step__title">rejs: a Discord moderation bot with a 7-day undo</span>
