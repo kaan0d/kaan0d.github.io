@@ -1,0 +1,21 @@
+Copyright (c) 2026 Kaan. All rights reserved.
+
+This repository contains the personal portfolio website of Kaan Dinç
+(kaandinc.com): its design, visual identity, layout, styles, scripts, build
+tooling, text, blog posts, images, and other content.
+
+No license or permission is granted to copy, modify, merge, publish,
+distribute, sublicense, sell, or otherwise use any part of this repository,
+in whole or in part, in source or built form, without prior written
+permission from the copyright holder.
+
+The only exception is the rights that the GitHub Terms of Service grant to
+users of GitHub for public repositories, namely viewing the repository and
+forking it on GitHub. Those rights do not include reusing the design or
+content in any other project or site.
+
+Third-party components bundled in this repository (GSAP, Lenis, Three.js, and
+the Geist fonts) are not covered by this notice. They remain the property of
+their respective authors and are used under their own licenses.
+
+Permission requests: kaan.dnc.7505@gmail.com
