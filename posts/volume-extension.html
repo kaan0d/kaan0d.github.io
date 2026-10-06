@@ -3,13 +3,13 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>a volume knob that remembers every site | Kaan Dinç</title>
-<meta name="description" content="Every site handles volume differently, and half of them fight you if you try to fix it from the OS mixer. Some clamp it, some remember nothing between...">
+<title>Simple Volume Saver: per-site volume control for Chrome | Kaan Dinç</title>
+<meta name="description" content="A Manifest V3 Chrome extension that saves a volume level per site, applies it to every media element including ones added later, syncs the levels across devices, and shows the tab's real audio output in a visualizer.">
 <meta name="theme-color" content="#0a0a09">
 <link rel="canonical" href="https://kaandinc.com/posts/volume-extension">
 <meta property="og:type" content="article">
-<meta property="og:title" content="a volume knob that remembers every site | Kaan Dinç">
-<meta property="og:description" content="Every site handles volume differently, and half of them fight you if you try to fix it from the OS mixer. Some clamp it, some remember nothing between...">
+<meta property="og:title" content="Simple Volume Saver: per-site volume control for Chrome | Kaan Dinç">
+<meta property="og:description" content="A Manifest V3 Chrome extension that saves a volume level per site, applies it to every media element including ones added later, syncs the levels across devices, and shows the tab's real audio output in a visualizer.">
 <meta property="og:url" content="https://kaandinc.com/posts/volume-extension">
 <meta property="og:site_name" content="Kaan Dinç">
 <meta property="og:image" content="https://kaandinc.com/assets/og.png">
@@ -17,8 +17,8 @@
 <meta property="og:image:height" content="630">
 <meta property="og:image:alt" content="Kaan Dinç, computer engineer. K logo beside 3D solids in amber on black.">
 <meta name="twitter:card" content="summary_large_image">
-<meta name="twitter:title" content="a volume knob that remembers every site | Kaan Dinç">
-<meta name="twitter:description" content="Every site handles volume differently, and half of them fight you if you try to fix it from the OS mixer. Some clamp it, some remember nothing between...">
+<meta name="twitter:title" content="Simple Volume Saver: per-site volume control for Chrome | Kaan Dinç">
+<meta name="twitter:description" content="A Manifest V3 Chrome extension that saves a volume level per site, applies it to every media element including ones added later, syncs the levels across devices, and shows the tab's real audio output in a visualizer.">
 <meta name="twitter:image" content="https://kaandinc.com/assets/og.png">
 <link rel="icon" href="../assets/favicon.svg" type="image/svg+xml">
 <link rel="preload" href="../assets/fonts/Geist-Variable.woff2" as="font" type="font/woff2" crossorigin>
@@ -60,7 +60,8 @@
   <header class="post-head">
     <a class="post-head__back roll" href="../blog"><span class="roll__in" data-text="&amp;larr; blog">&larr; blog</span></a>
     <p class="post-head__meta" data-hero><time datetime="2026-09-16">Sep 2026</time> &nbsp;/&nbsp; 1 min read</p>
-    <h1 class="post-head__title" data-split="lines" data-hero>a volume knob that remembers every site</h1>
+    <h1 class="post-head__title" data-split="lines" data-hero>Simple Volume Saver: per-site volume control for Chrome</h1>
+    <p class="post-head__sub" data-hero>A volume knob that remembers every site.</p>
   </header>
   <div class="post-layout has-toc">
     <aside class="toc" aria-label="on this page">
@@ -71,6 +72,10 @@
       </ol>
     </aside>
     <div class="post-body">
+<aside class="brief" aria-label="project summary">
+  <p class="brief__summary">A Manifest V3 Chrome extension that saves a volume level per site, applies it to every media element including ones added later, syncs the levels across devices, and shows the tab's real audio output in a visualizer.</p>
+  <dl class="brief__facts"><div><dt>Role</dt><dd>Solo, personal project</dd></div><div><dt>Stack</dt><dd>JavaScript, Chrome Extensions (Manifest V3), Web Audio API</dd></div><div><dt>Status</dt><dd>Open source</dd></div><div><dt>Links</dt><dd><a href="https://github.com/kaan0d/simple-volume-saver" target="_blank" rel="noopener">source</a></dd></div></dl>
+</aside>
 <p>Every site handles volume differently, and half of them fight you if you try to fix it from the OS mixer. Some clamp it, some remember nothing between visits, some route audio through a custom player that ignores the system slider entirely.</p>
 
       <p>simple-volume-saver sits on top of that: pick a level per site, it remembers, and you can reset it without digging through five different players' settings. The core is a background service worker that injects a small function into the page, and a bit of <code>chrome.storage</code>, nothing that needed a framework. Saved levels are kept per site in <code>chrome.storage.sync</code>, so they follow you across signed-in devices, and a live audio-reactive visualizer, fed by <code>chrome.tabCapture</code>, shows the tab's real audio output rather than a decorative animation.</p>
@@ -122,11 +127,11 @@
 <nav class="post-steps" aria-label="more posts">
   <a class="post-step post-step--newer" href="impulse-physics-engine">
       <span class="post-step__dir">&larr; newer</span>
-      <span class="post-step__title">impulse part 1: 2d physics with no library to blame</span>
+      <span class="post-step__title">Impulse part 1: a 2D physics engine from scratch in TypeScript</span>
     </a>
   <a class="post-step post-step--older" href="number-guessing">
       <span class="post-step__dir">older &rarr;</span>
-      <span class="post-step__title">number guess battle: two browsers, one relay, no shared server state</span>
+      <span class="post-step__title">Number Guess Battle: real-time multiplayer over a stateless relay</span>
     </a>
 </nav>
 </main>

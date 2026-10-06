@@ -3,13 +3,13 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>the app that must never lose a sale | Kaan Dinç</title>
-<meta name="description" content="A small retail business doesn't want a web app it has to keep alive. It wants something it double-clicks that never loses a sale. I built two Python...">
+<title>Offline desktop apps for a retail shop: ledger and receipts | Kaan Dinç</title>
+<meta name="description" content="Two Python desktop apps for one shop: a layered ledger for stock, sales, credit accounts and statements with a backup on every start, and a receipt app that renders PDFs that grow to fit, with Turkish casing, amounts in words and Decimal arithmetic.">
 <meta name="theme-color" content="#0a0a09">
 <link rel="canonical" href="https://kaandinc.com/posts/retail-desktop-apps">
 <meta property="og:type" content="article">
-<meta property="og:title" content="the app that must never lose a sale | Kaan Dinç">
-<meta property="og:description" content="A small retail business doesn't want a web app it has to keep alive. It wants something it double-clicks that never loses a sale. I built two Python...">
+<meta property="og:title" content="Offline desktop apps for a retail shop: ledger and receipts | Kaan Dinç">
+<meta property="og:description" content="Two Python desktop apps for one shop: a layered ledger for stock, sales, credit accounts and statements with a backup on every start, and a receipt app that renders PDFs that grow to fit, with Turkish casing, amounts in words and Decimal arithmetic.">
 <meta property="og:url" content="https://kaandinc.com/posts/retail-desktop-apps">
 <meta property="og:site_name" content="Kaan Dinç">
 <meta property="og:image" content="https://kaandinc.com/assets/og.png">
@@ -17,8 +17,8 @@
 <meta property="og:image:height" content="630">
 <meta property="og:image:alt" content="Kaan Dinç, computer engineer. K logo beside 3D solids in amber on black.">
 <meta name="twitter:card" content="summary_large_image">
-<meta name="twitter:title" content="the app that must never lose a sale | Kaan Dinç">
-<meta name="twitter:description" content="A small retail business doesn't want a web app it has to keep alive. It wants something it double-clicks that never loses a sale. I built two Python...">
+<meta name="twitter:title" content="Offline desktop apps for a retail shop: ledger and receipts | Kaan Dinç">
+<meta name="twitter:description" content="Two Python desktop apps for one shop: a layered ledger for stock, sales, credit accounts and statements with a backup on every start, and a receipt app that renders PDFs that grow to fit, with Turkish casing, amounts in words and Decimal arithmetic.">
 <meta name="twitter:image" content="https://kaandinc.com/assets/og.png">
 <link rel="icon" href="../assets/favicon.svg" type="image/svg+xml">
 <link rel="preload" href="../assets/fonts/Geist-Variable.woff2" as="font" type="font/woff2" crossorigin>
@@ -60,7 +60,8 @@
   <header class="post-head">
     <a class="post-head__back roll" href="../blog"><span class="roll__in" data-text="&amp;larr; blog">&larr; blog</span></a>
     <p class="post-head__meta" data-hero><time datetime="2025-06-01">2025</time> &nbsp;/&nbsp; 3 min read</p>
-    <h1 class="post-head__title" data-split="lines" data-hero>the app that must never lose a sale</h1>
+    <h1 class="post-head__title" data-split="lines" data-hero>Offline desktop apps for a retail shop: ledger and receipts</h1>
+    <p class="post-head__sub" data-hero>The app that must never lose a sale.</p>
   </header>
   <div class="post-layout has-toc">
     <aside class="toc" aria-label="on this page">
@@ -73,6 +74,10 @@
       </ol>
     </aside>
     <div class="post-body">
+<aside class="brief" aria-label="project summary">
+  <p class="brief__summary">Two Python desktop apps for one shop: a layered ledger for stock, sales, credit accounts and statements with a backup on every start, and a receipt app that renders PDFs that grow to fit, with Turkish casing, amounts in words and Decimal arithmetic.</p>
+  <dl class="brief__facts"><div><dt>Role</dt><dd>Solo, client project</dd></div><div><dt>Stack</dt><dd>Python, customtkinter, PyMuPDF, SQLite, PyInstaller</dd></div><div><dt>Status</dt><dd>Client project, source is private</dd></div></dl>
+</aside>
 <p>A small retail business doesn't want a web app it has to keep alive. It wants something it double-clicks that never loses a sale. I built two Python desktop apps for one shop, and they taught me different things. They're client projects, so this is a tour of the decisions, not the code.</p>
 
       <div class="stats">
@@ -186,7 +191,7 @@ ok = render_receipt_pdf(...)                 <span class="cm"># draw and save th
 <nav class="post-steps" aria-label="more posts">
   <a class="post-step post-step--newer" href="screen-region-detection">
       <span class="post-step__dir">&larr; newer</span>
-      <span class="post-step__title">sixty frames a second, one rectangle</span>
+      <span class="post-step__title">Real-time screen region detection with OpenCV</span>
     </a>
   <span></span>
 </nav>

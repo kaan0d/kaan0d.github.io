@@ -1,5 +1,13 @@
 ---
-title: impulse part 1: 2d physics with no library to blame
+title: Impulse part 1: a 2D physics engine from scratch in TypeScript
+subtitle: 2D physics with no library to blame.
+summary: A 2D rigid body physics engine with SAT collision, a sequential impulse solver, sleeping and joints, written without physics libraries. It runs in the browser as about 36 kB of JavaScript, and every piece is checked against something other than itself.
+role: Solo, personal project
+stack: TypeScript, Canvas 2D, Vite, Vitest, Playwright
+status: Live demo, open source
+links: live demo https://kaandinc.com/impulse/ | benchmark https://kaandinc.com/impulse/bench/ | source https://github.com/kaan0d/impulse | raw numbers data/impulse-benchmark.json
+series: impulse
+part: 1
 date: 2026-09-17
 label: Sep 2026
 ---
@@ -7,7 +15,6 @@ label: Sep 2026
 
       <p>My map was Erin Catto's Box2D Lite: sequential impulses, warm starting, accumulated impulse clamping. I used it for the ideas and wrote every piece to fit this codebase, then tried to prove each piece against something other than itself. Most of this post is about that second part.</p>
 
-      <p class="links">Try it: <a href="https://kaan0d.github.io/impulse/" target="_blank" rel="noopener">live demo</a> · <a href="https://kaan0d.github.io/impulse/bench/" target="_blank" rel="noopener">benchmark page</a> · <a href="https://github.com/kaan0d/impulse" target="_blank" rel="noopener">source</a> · <a href="data/impulse-benchmark.json">raw numbers</a></p>
 
       <div class="stats">
         <div class="stat"><b>0</b><span>runtime dependencies</span></div>
@@ -152,7 +159,7 @@ advance(frameSeconds: <span class="kw">number</span>): <span class="kw">number</
         <p>The "before" tower times come from an earlier solver setup (30 iterations, no block solver), so that chart compares the whole change, not one part of it. The same goes for the step times: they dropped by roughly four times after the change, but I changed the iteration count and the browser mode at once, so I can't credit either one alone. It went from 3.3 ms to 0.86 ms for the pyramid, and from 10.4 ms to 2.6 ms for 1,000 bodies.</p>
       </div>
 
-      <h2>How I checked it's right</h2>
+      <h2>Verification</h2>
 
       <p>A physics engine can look right and be wrong, so most tests compare against something independent of the code they test:</p>
 
@@ -191,7 +198,7 @@ advance(frameSeconds: <span class="kw">number</span>): <span class="kw">number</
 
       <p>The sabotage and the ordinary failures turned up problems on both sides. Several times a test failed because my test was wrong, not the engine: a vector helper mutated its input and broke my "is the point inside" oracle, and a test expected a bullet to stop against a small circle that it only grazed, when a glancing hit should deflect it. And one test found a real bug: removing a joint left a sleeping body asleep in mid-air, so removing a joint now wakes its bodies.</p>
 
-      <h2>What it still can't do</h2>
+      <h2>Limits</h2>
 
       <p>A pile of 500 mixed bodies never falls asleep in the time I measured, so sleeping helps stacks and pyramids but not big chaotic piles.</p>
 

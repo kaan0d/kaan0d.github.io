@@ -1,5 +1,10 @@
 ---
-title: no cart, no checkout, one whatsapp button
+title: Product catalog and admin panel for an electrical shop
+subtitle: No cart, no checkout, one WhatsApp button.
+summary: A live price-and-stock catalog for an electrical and security-equipment shop, where every product opens a pre-written WhatsApp message, with a custom admin panel for the owner, deployed on Cloudflare Workers with D1 and R2.
+role: Solo, client project
+stack: TanStack Start, React 19, Tailwind v4, Zod, Cloudflare Workers, D1, R2
+status: Client project, source is private
 date: 2026-04-01
 label: Apr 2026
 ---
@@ -104,7 +109,7 @@ label: Apr 2026
 
       <p>There's no sign-up: admins are created by other admins, nobody can revoke their own access, and the very first admin comes from environment variables, only when the users table is empty. Secrets live in Wrangler secrets, not in the config. Every server function sits behind CSRF middleware, and the admin route is marked noindex.</p>
 
-      <h2>Workers gotchas</h2>
+      <h2>Cloudflare Workers pitfalls</h2>
 
       <p>Three things cost me time. First, route files ship their top-level imports to the browser, so importing the database module at the top of a route pulls <code>cloudflare:workers</code> into the client bundle and breaks it. Every server function imports what it needs inside its handler.</p>
 
@@ -122,7 +127,7 @@ label: Apr 2026
   <span class="kw">return</span> payload.unhandled === <span class="kw">true</span> &amp;&amp; payload.message === "HTTPError";
 }</code></div>
 
-      <h2>Small things</h2>
+      <h2>Smaller details</h2>
 
       <p>Filters and sorting live in the URL (category, brand, price range, in stock, discounted, sort) and are validated by the router, so any filtered view is a link you can send someone on WhatsApp. Search lowercases with the Turkish locale so İ and I behave, and slugs transliterate ç ğ ı ö ş ü. The sitemap is generated from the active products, and there's a <code>security.txt</code>.</p>
 

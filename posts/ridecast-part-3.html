@@ -3,13 +3,13 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>ridecast part 3: a map that behaves, and longer trips | Kaan Dinç</title>
-<meta name="description" content="After part 2, ridecast could tell me which road, when to leave and what to wear, but only on my own machine, in Turkish, with map controls that worked the...">
+<title>Ridecast part 3: deployment, map controls, offline use and multi-day trips | Kaan Dinç</title>
+<meta name="description" content="Stages 11 to 29: putting the app online, map controls that work like Google Maps, staying useful without signal, routing that fits the vehicle, three new warnings, trips longer than a day, and an English interface by default.">
 <meta name="theme-color" content="#0a0a09">
 <link rel="canonical" href="https://kaandinc.com/posts/ridecast-part-3">
 <meta property="og:type" content="article">
-<meta property="og:title" content="ridecast part 3: a map that behaves, and longer trips | Kaan Dinç">
-<meta property="og:description" content="After part 2, ridecast could tell me which road, when to leave and what to wear, but only on my own machine, in Turkish, with map controls that worked the...">
+<meta property="og:title" content="Ridecast part 3: deployment, map controls, offline use and multi-day trips | Kaan Dinç">
+<meta property="og:description" content="Stages 11 to 29: putting the app online, map controls that work like Google Maps, staying useful without signal, routing that fits the vehicle, three new warnings, trips longer than a day, and an English interface by default.">
 <meta property="og:url" content="https://kaandinc.com/posts/ridecast-part-3">
 <meta property="og:site_name" content="Kaan Dinç">
 <meta property="og:image" content="https://kaandinc.com/assets/og.png">
@@ -17,8 +17,8 @@
 <meta property="og:image:height" content="630">
 <meta property="og:image:alt" content="Kaan Dinç, computer engineer. K logo beside 3D solids in amber on black.">
 <meta name="twitter:card" content="summary_large_image">
-<meta name="twitter:title" content="ridecast part 3: a map that behaves, and longer trips | Kaan Dinç">
-<meta name="twitter:description" content="After part 2, ridecast could tell me which road, when to leave and what to wear, but only on my own machine, in Turkish, with map controls that worked the...">
+<meta name="twitter:title" content="Ridecast part 3: deployment, map controls, offline use and multi-day trips | Kaan Dinç">
+<meta name="twitter:description" content="Stages 11 to 29: putting the app online, map controls that work like Google Maps, staying useful without signal, routing that fits the vehicle, three new warnings, trips longer than a day, and an English interface by default.">
 <meta name="twitter:image" content="https://kaandinc.com/assets/og.png">
 <link rel="icon" href="../assets/favicon.svg" type="image/svg+xml">
 <link rel="preload" href="../assets/fonts/Geist-Variable.woff2" as="font" type="font/woff2" crossorigin>
@@ -60,7 +60,8 @@
   <header class="post-head">
     <a class="post-head__back roll" href="../blog"><span class="roll__in" data-text="&amp;larr; blog">&larr; blog</span></a>
     <p class="post-head__meta" data-hero><time datetime="2026-09-24T20:00">Sep 2026</time> &nbsp;/&nbsp; 9 min read</p>
-    <h1 class="post-head__title" data-split="lines" data-hero>ridecast part 3: a map that behaves, and longer trips</h1>
+    <h1 class="post-head__title" data-split="lines" data-hero>Ridecast part 3: deployment, map controls, offline use and multi-day trips</h1>
+    <p class="post-head__sub" data-hero>A map that behaves, and longer trips.</p>
   </header>
   <div class="post-layout has-toc">
     <aside class="toc" aria-label="on this page">
@@ -71,14 +72,17 @@
         <li><a href="#the-right-road-for-the-vehicle">The right road for the vehicle</a></li>
         <li><a href="#better-scores-three-new-warnings">Better scores, three new warnings</a></li>
         <li><a href="#longer-trips">Longer trips</a></li>
-        <li><a href="#english-first-and-two-things-i-measured-and-dropped">English first, and two things I measured and dropped</a></li>
-        <li><a href="#what-this-does-not-show">What this does not show</a></li>
+        <li><a href="#english-first-and-two-features-measured-and-dropped">English first, and two features measured and dropped</a></li>
+        <li><a href="#limits">Limits</a></li>
       </ol>
     </aside>
     <div class="post-body">
+<aside class="brief" aria-label="project summary">
+  <p class="brief__summary">Stages 11 to 29: putting the app online, map controls that work like Google Maps, staying useful without signal, routing that fits the vehicle, three new warnings, trips longer than a day, and an English interface by default.</p>
+  <dl class="brief__facts"><div><dt>Role</dt><dd>Solo, personal project</dd></div><div><dt>Stack</dt><dd>TypeScript, Vite, Leaflet, Open-Meteo, OSRM, Vitest</dd></div><div><dt>Status</dt><dd>Live; the map has since moved from Leaflet to MapLibre</dd></div><div><dt>Links</dt><dd><a href="https://kaandinc.com/ridecast/" target="_blank" rel="noopener">live app</a> · <a href="https://github.com/kaan0d/ridecast" target="_blank" rel="noopener">source</a></dd></div><div><dt>Series</dt><dd><a href="ridecast">Part 1</a> · <a href="ridecast-part-2">Part 2</a> · <b>Part 3</b> · <a href="ridecast-part-4">Part 4</a></dd></div></dl>
+</aside>
 <p>After part 2, ridecast could tell me which road, when to leave and what to wear, but only on my own machine, in Turkish, with map controls that worked the way I had guessed they should. Part 3 covers stages 11 to 29: putting it online, making the map behave like Google Maps, keeping it useful without signal, routing that fits the vehicle, three new warnings, trips longer than a day, and an English interface by default. As before, every number below comes from running the app, not from memory.</p>
 
-      <p class="links">Previous posts: <a href="ridecast">part 1</a> · <a href="ridecast-part-2">part 2</a> · live: <a href="https://kaandinc.com/ridecast/" target="_blank" rel="noopener">kaandinc.com/ridecast</a> · source: <a href="https://github.com/kaan0d/ridecast" target="_blank" rel="noopener">github</a></p>
 
       <div class="stats">
         <div class="stat"><b>29</b><span>stages, all done</span></div>
@@ -153,13 +157,13 @@
 
       <p>Stage 21 remembers the warnings of every trip I plan. When I open the same trip again later, the first forecast is compared with the saved one and a short card lists what changed: new warnings, stronger or weaker ones, ones that start earlier or later, and ones that are gone. Planning on a Wednesday for a Saturday ride, that card is the quickest way to see whether the plan still holds.</p>
 
-      <h2 id="english-first-and-two-things-i-measured-and-dropped">English first, and two things I measured and dropped</h2>
+      <h2 id="english-first-and-two-features-measured-and-dropped">English first, and two features measured and dropped</h2>
 
       <p>Stage 24 made English the default and Turkish an option, because most people who find this page do not read Turkish. Every text moved into two message files of the same shape, which the type checker compares. The pure core, which builds the warning texts, now gets them passed in, so it still knows nothing about languages, and its tests simply run with the Turkish texts and did not change. The two refactors of the app's main file (stages 12 and 23) happened for the same reason: every new feature had to touch it.</p>
 
       <p>Stage 22 was meant to give rain timing to the quarter hour with Open-Meteo's 15-minute data. I checked first. In Vienna the quarters differ and add up to the hourly value, a real 15-minute model; in Istanbul the one rainy hour of the week showed the same value in all four quarters, the hourly number repeated. For Turkey it adds nothing, so it is not used; the radar layer answers "is it raining now" better. What the stage kept is a sunlight mode for the live view: black on white with darker risk colours, measured at 6.07:1 or more for every colour pair, where the normal light theme's yellow ring was only 1.87:1 on white.</p>
 
-      <h2 id="what-this-does-not-show">What this does not show</h2>
+      <h2 id="limits">Limits</h2>
 
       <p>It still has not been on a real ride; that test is mine to do next, on a phone mounted on the bike. The crosswind warning has not met a real windy forecast. The thresholds are still my own values, the road type and the wet road are still guesses, and the free servers underneath it (OSRM's demo, FOSSGIS, Valhalla, Overpass, the tile servers) are made for light use, which a personal app is and a popular one would not be. The build goes on in <a href="ridecast-part-4">ridecast part 4: one screen for the ride</a>.</p>
 
@@ -169,11 +173,11 @@
 <nav class="post-steps" aria-label="more posts">
   <a class="post-step post-step--newer" href="ridecast-part-4">
       <span class="post-step__dir">&larr; newer</span>
-      <span class="post-step__title">ridecast part 4: one screen for the ride</span>
+      <span class="post-step__title">Ridecast part 4: a ride screen shaped by real use</span>
     </a>
   <a class="post-step post-step--older" href="ridecast-part-2">
       <span class="post-step__dir">older &rarr;</span>
-      <span class="post-step__title">ridecast part 2: from warnings to decisions</span>
+      <span class="post-step__title">Ridecast part 2: safer routes, departure times and gear</span>
     </a>
 </nav>
 </main>

@@ -59,12 +59,21 @@ function loadPosts() {
     return {
       slug: file.replace(/\.html$/, ''),
       title: meta.title,
+      subtitle: meta.subtitle,
+      summary: meta.summary,
+      role: meta.role,
+      stack: meta.stack ? meta.stack.split(', ') : [],
+      status: meta.status,
+      // "label url | label url"
+      links: meta.links ? meta.links.split(' | ').map((l) => { const i = l.lastIndexOf(' '); return { label: l.slice(0, i), url: l.slice(i + 1) }; }) : [],
+      series: meta.series,
+      part: meta.part,
       date: meta.date,
       label: meta.label,
       html,
       toc,
       minutes: Math.max(1, Math.round(prose.split(' ').length / 220)),
-      description: firstParagraph.length > 155 ? firstParagraph.slice(0, 155).replace(/\s\S*$/, '') + '...' : firstParagraph,
+      description: meta.summary || (firstParagraph.length > 155 ? firstParagraph.slice(0, 155).replace(/\s\S*$/, '') + '...' : firstParagraph),
     };
   });
   return posts.sort((a, b) => b.date.localeCompare(a.date));
@@ -178,7 +187,7 @@ function blogMain(posts) {
       <ul class="post-list">
 ${posts.filter((p) => p.date.startsWith(year)).map((p) => `        <li><a class="post-row" href="posts/${p.slug}">
           <span class="post-row__date">${p.label}</span>
-          <span class="post-row__title">${p.title}</span>
+          <span class="post-row__title">${p.title}${p.stack.length ? `<span class="post-row__tags">${p.stack.slice(0, 4).join(' · ')}</span>` : ''}</span>
           <span class="post-row__meta">${p.minutes} min read</span>
           <span class="post-row__arrow" aria-hidden="true">&rarr;</span>
         </a></li>`).join('\n')}
@@ -188,10 +197,31 @@ ${posts.filter((p) => p.date.startsWith(year)).map((p) => `        <li><a class=
   return `<section class="blog-hero">
   <div class="obj" data-obj="tetra" aria-hidden="true"></div>
   <h1 class="blog-hero__title" data-split="lines" data-hero>blog</h1>
-  <p class="blog-hero__lede" data-fade data-hero>notes on what i've been building.</p>
+  <p class="blog-hero__lede" data-fade data-hero>Notes on what I've been building.</p>
 </section>
 <div class="blog-index">${groups}
 </div>`;
+}
+
+// Project brief at the top of a post: one-line summary, role, stack, status, links and the series it belongs to.
+function brief(post, posts) {
+  const ext = (url) => url.startsWith('http') ? ' target="_blank" rel="noopener"' : '';
+  const facts = [
+    ['Role', post.role],
+    ['Stack', post.stack.join(', ')],
+    ['Status', post.status],
+    ['Links', post.links.map((l) => `<a href="${l.url}"${ext(l.url)}>${l.label}</a>`).join(' · ')],
+  ];
+  if (post.series) {
+    const parts = posts.filter((p) => p.series === post.series).sort((a, b) => a.part - b.part);
+    facts.push(['Series', parts.map((p) => p.slug === post.slug ? `<b>Part ${p.part}</b>` : `<a href="${p.slug}">Part ${p.part}</a>`).join(' · ')]);
+  }
+  const rows = facts.filter(([, v]) => v).map(([k, v]) => `<div><dt>${k}</dt><dd>${v}</dd></div>`).join('');
+  if (!post.summary && !rows) return '';
+  return `<aside class="brief" aria-label="project summary">
+${post.summary ? `  <p class="brief__summary">${post.summary}</p>
+` : ''}  <dl class="brief__facts">${rows}</dl>
+</aside>`;
 }
 
 function postMain(post, posts) {
@@ -214,10 +244,12 @@ ${post.toc.map((t) => `        <li><a href="#${t.id}">${t.text}</a></li>`).join(
   <header class="post-head">
     <a class="post-head__back roll" href="../blog">${roll('&larr; blog')}</a>
     <p class="post-head__meta" data-hero><time datetime="${post.date}">${post.label}</time> &nbsp;/&nbsp; ${post.minutes} min read</p>
-    <h1 class="post-head__title" data-split="lines" data-hero>${post.title}</h1>
+    <h1 class="post-head__title" data-split="lines" data-hero>${post.title}</h1>${post.subtitle ? `
+    <p class="post-head__sub" data-hero>${post.subtitle}</p>` : ''}
   </header>
   <div class="post-layout${toc ? ' has-toc' : ''}">${toc}
     <div class="post-body">
+${brief(post, posts)}
 ${post.html}
     </div>
   </div>

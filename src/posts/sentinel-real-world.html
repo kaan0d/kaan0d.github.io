@@ -1,5 +1,13 @@
 ---
-title: sentinel part 3: traffic I didn't make
+title: Sentinel part 3: the detectors on real-world traffic
+subtitle: Traffic I didn't make.
+summary: The unchanged detectors on 2.7 million packets of real captures. All 5 real attack captures raised the alert of their own kind and no other, and on 14.6 s of a 1 Gbps backbone they found 376 scanning sources, the same 376 as an independent tshark recount.
+role: Solo, personal project
+stack: Python, struct, ruff, mypy (strict), pytest
+status: Open source
+links: source https://github.com/kaan0d/sentinel
+series: sentinel
+part: 3
 date: 2026-09-20
 label: Sep 2026
 ---
@@ -97,12 +105,12 @@ label: Sep 2026
 
       <p>50,394 packets a second through the detectors on the backbone slice (35,073 on the week at the web server, 30,618 on the SYN flood), on the same machine as the benchmark of stage 7. The link carried about 148,000 packets a second, so Sentinel ran at a third of real time. Pure Python on one core. For a gigabit link that is a limit, and the README says so.</p>
 
-      <h2>What this does not show</h2>
+      <h2>Limits</h2>
 
       <p>How many packets of an attack Sentinel got right, and a false alarm rate. The labels are per file, and the two big captures have none, so what I checked is that what the alerts say is true, and not that each one is an attack. It is one slice of one link and one week at one server. The backbone is not symmetric, so "unanswered" cannot be read as "a scan", and a detector that waits for a handshake sees half of it. There is one ARP spoofing file, one iodine capture, and no SYN flood with ordinary traffic in it. Where the cs3 files come from is not known.</p>
 
       <p>And I changed nothing. What I found is three limits: a DNS check whose threshold suits one client and not a backbone, a state limit that a backbone reaches in fourteen seconds, and a count in a port-scan alert that stops at four times the threshold. I could turn a number down until this slice looked clean, but that would only tune Sentinel to fourteen seconds of one link. They are in the limits list of the README, where the next person will find them.</p>
 
-      <h2>Where this goes</h2>
+      <h2>Next steps</h2>
 
       <p>There is no stage 14 planned. What would make this stronger is data with a label for every packet, so that "fires" can become "gets right, this many times". Kitsune has it, and it is 19 GB behind a server that will not hand over a part. If I find a mirror that does, that is the next measurement.</p>

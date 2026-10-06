@@ -3,13 +3,13 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>no cart, no checkout, one whatsapp button | Kaan Dinç</title>
-<meta name="description" content="This is the website for an electrical and security-equipment shop in Çanakkale: switches, cable, cameras, intercoms, satellite gear. The first decision...">
+<title>Product catalog and admin panel for an electrical shop | Kaan Dinç</title>
+<meta name="description" content="A live price-and-stock catalog for an electrical and security-equipment shop, where every product opens a pre-written WhatsApp message, with a custom admin panel for the owner, deployed on Cloudflare Workers with D1 and R2.">
 <meta name="theme-color" content="#0a0a09">
 <link rel="canonical" href="https://kaandinc.com/posts/ecommerce-admin-panel">
 <meta property="og:type" content="article">
-<meta property="og:title" content="no cart, no checkout, one whatsapp button | Kaan Dinç">
-<meta property="og:description" content="This is the website for an electrical and security-equipment shop in Çanakkale: switches, cable, cameras, intercoms, satellite gear. The first decision...">
+<meta property="og:title" content="Product catalog and admin panel for an electrical shop | Kaan Dinç">
+<meta property="og:description" content="A live price-and-stock catalog for an electrical and security-equipment shop, where every product opens a pre-written WhatsApp message, with a custom admin panel for the owner, deployed on Cloudflare Workers with D1 and R2.">
 <meta property="og:url" content="https://kaandinc.com/posts/ecommerce-admin-panel">
 <meta property="og:site_name" content="Kaan Dinç">
 <meta property="og:image" content="https://kaandinc.com/assets/og.png">
@@ -17,8 +17,8 @@
 <meta property="og:image:height" content="630">
 <meta property="og:image:alt" content="Kaan Dinç, computer engineer. K logo beside 3D solids in amber on black.">
 <meta name="twitter:card" content="summary_large_image">
-<meta name="twitter:title" content="no cart, no checkout, one whatsapp button | Kaan Dinç">
-<meta name="twitter:description" content="This is the website for an electrical and security-equipment shop in Çanakkale: switches, cable, cameras, intercoms, satellite gear. The first decision...">
+<meta name="twitter:title" content="Product catalog and admin panel for an electrical shop | Kaan Dinç">
+<meta name="twitter:description" content="A live price-and-stock catalog for an electrical and security-equipment shop, where every product opens a pre-written WhatsApp message, with a custom admin panel for the owner, deployed on Cloudflare Workers with D1 and R2.">
 <meta name="twitter:image" content="https://kaandinc.com/assets/og.png">
 <link rel="icon" href="../assets/favicon.svg" type="image/svg+xml">
 <link rel="preload" href="../assets/fonts/Geist-Variable.woff2" as="font" type="font/woff2" crossorigin>
@@ -60,7 +60,8 @@
   <header class="post-head">
     <a class="post-head__back roll" href="../blog"><span class="roll__in" data-text="&amp;larr; blog">&larr; blog</span></a>
     <p class="post-head__meta" data-hero><time datetime="2026-04-01">Apr 2026</time> &nbsp;/&nbsp; 4 min read</p>
-    <h1 class="post-head__title" data-split="lines" data-hero>no cart, no checkout, one whatsapp button</h1>
+    <h1 class="post-head__title" data-split="lines" data-hero>Product catalog and admin panel for an electrical shop</h1>
+    <p class="post-head__sub" data-hero>No cart, no checkout, one WhatsApp button.</p>
   </header>
   <div class="post-layout has-toc">
     <aside class="toc" aria-label="on this page">
@@ -69,11 +70,15 @@
         <li><a href="#discounts-as-an-operation">Discounts as an operation</a></li>
         <li><a href="#photos-that-clean-up-after-themselves">Photos that clean up after themselves</a></li>
         <li><a href="#login-without-an-auth-service">Login without an auth service</a></li>
-        <li><a href="#workers-gotchas">Workers gotchas</a></li>
-        <li><a href="#small-things">Small things</a></li>
+        <li><a href="#cloudflare-workers-pitfalls">Cloudflare Workers pitfalls</a></li>
+        <li><a href="#smaller-details">Smaller details</a></li>
       </ol>
     </aside>
     <div class="post-body">
+<aside class="brief" aria-label="project summary">
+  <p class="brief__summary">A live price-and-stock catalog for an electrical and security-equipment shop, where every product opens a pre-written WhatsApp message, with a custom admin panel for the owner, deployed on Cloudflare Workers with D1 and R2.</p>
+  <dl class="brief__facts"><div><dt>Role</dt><dd>Solo, client project</dd></div><div><dt>Stack</dt><dd>TanStack Start, React 19, Tailwind v4, Zod, Cloudflare Workers, D1, R2</dd></div><div><dt>Status</dt><dd>Client project, source is private</dd></div></dl>
+</aside>
 <p>This is the website for an electrical and security-equipment shop in Çanakkale: switches, cable, cameras, intercoms, satellite gear. The first decision made everything simpler: it isn't a webshop. It's a live price-and-stock catalog, and every product page has a button that opens WhatsApp with the message already written. Customers still talk to a person, and the site makes sure they ask about the right thing.</p>
 
       <div class="codeblock"><code><span class="kw">export</span> <span class="kw">function</span> waLink(number: string, message: string) {
@@ -175,7 +180,7 @@
 
       <p>There's no sign-up: admins are created by other admins, nobody can revoke their own access, and the very first admin comes from environment variables, only when the users table is empty. Secrets live in Wrangler secrets, not in the config. Every server function sits behind CSRF middleware, and the admin route is marked noindex.</p>
 
-      <h2 id="workers-gotchas">Workers gotchas</h2>
+      <h2 id="cloudflare-workers-pitfalls">Cloudflare Workers pitfalls</h2>
 
       <p>Three things cost me time. First, route files ship their top-level imports to the browser, so importing the database module at the top of a route pulls <code>cloudflare:workers</code> into the client bundle and breaks it. Every server function imports what it needs inside its handler.</p>
 
@@ -193,7 +198,7 @@
   <span class="kw">return</span> payload.unhandled === <span class="kw">true</span> &amp;&amp; payload.message === "HTTPError";
 }</code></div>
 
-      <h2 id="small-things">Small things</h2>
+      <h2 id="smaller-details">Smaller details</h2>
 
       <p>Filters and sorting live in the URL (category, brand, price range, in stock, discounted, sort) and are validated by the router, so any filtered view is a link you can send someone on WhatsApp. Search lowercases with the Turkish locale so İ and I behave, and slugs transliterate ç ğ ı ö ş ü. The sitemap is generated from the active products, and there's a <code>security.txt</code>.</p>
 
@@ -207,11 +212,11 @@
 <nav class="post-steps" aria-label="more posts">
   <a class="post-step post-step--newer" href="country-quiz">
       <span class="post-step__dir">&larr; newer</span>
-      <span class="post-step__title">country quiz: a world map that tells you how wrong you were</span>
+      <span class="post-step__title">Country Quiz: a world map game with distance feedback</span>
     </a>
   <a class="post-step post-step--older" href="screen-region-detection">
       <span class="post-step__dir">older &rarr;</span>
-      <span class="post-step__title">sixty frames a second, one rectangle</span>
+      <span class="post-step__title">Real-time screen region detection with OpenCV</span>
     </a>
 </nav>
 </main>

@@ -3,13 +3,13 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>ridecast: weather for the moment you get there | Kaan Dinç</title>
-<meta name="description" content="Every weather app answers the wrong question for a motorcycle ride. It tells me what the sky is doing in Eskişehir now, when what I need to know is what...">
+<title>Ridecast part 1: route weather for the time you arrive | Kaan Dinç</title>
+<meta name="description" content="A web app for motorcycle riders that builds an arrival timeline along a route from speed, road type and breaks, matches every point to the hourly forecast for that time, and rates rain, wind, fog, ice and darkness along the way.">
 <meta name="theme-color" content="#0a0a09">
 <link rel="canonical" href="https://kaandinc.com/posts/ridecast">
 <meta property="og:type" content="article">
-<meta property="og:title" content="ridecast: weather for the moment you get there | Kaan Dinç">
-<meta property="og:description" content="Every weather app answers the wrong question for a motorcycle ride. It tells me what the sky is doing in Eskişehir now, when what I need to know is what...">
+<meta property="og:title" content="Ridecast part 1: route weather for the time you arrive | Kaan Dinç">
+<meta property="og:description" content="A web app for motorcycle riders that builds an arrival timeline along a route from speed, road type and breaks, matches every point to the hourly forecast for that time, and rates rain, wind, fog, ice and darkness along the way.">
 <meta property="og:url" content="https://kaandinc.com/posts/ridecast">
 <meta property="og:site_name" content="Kaan Dinç">
 <meta property="og:image" content="https://kaandinc.com/assets/og.png">
@@ -17,8 +17,8 @@
 <meta property="og:image:height" content="630">
 <meta property="og:image:alt" content="Kaan Dinç, computer engineer. K logo beside 3D solids in amber on black.">
 <meta name="twitter:card" content="summary_large_image">
-<meta name="twitter:title" content="ridecast: weather for the moment you get there | Kaan Dinç">
-<meta name="twitter:description" content="Every weather app answers the wrong question for a motorcycle ride. It tells me what the sky is doing in Eskişehir now, when what I need to know is what...">
+<meta name="twitter:title" content="Ridecast part 1: route weather for the time you arrive | Kaan Dinç">
+<meta name="twitter:description" content="A web app for motorcycle riders that builds an arrival timeline along a route from speed, road type and breaks, matches every point to the hourly forecast for that time, and rates rain, wind, fog, ice and darkness along the way.">
 <meta name="twitter:image" content="https://kaandinc.com/assets/og.png">
 <link rel="icon" href="../assets/favicon.svg" type="image/svg+xml">
 <link rel="preload" href="../assets/fonts/Geist-Variable.woff2" as="font" type="font/woff2" crossorigin>
@@ -60,7 +60,8 @@
   <header class="post-head">
     <a class="post-head__back roll" href="../blog"><span class="roll__in" data-text="&amp;larr; blog">&larr; blog</span></a>
     <p class="post-head__meta" data-hero><time datetime="2026-09-23">Sep 2026</time> &nbsp;/&nbsp; 7 min read</p>
-    <h1 class="post-head__title" data-split="lines" data-hero>ridecast: weather for the moment you get there</h1>
+    <h1 class="post-head__title" data-split="lines" data-hero>Ridecast part 1: route weather for the time you arrive</h1>
+    <p class="post-head__sub" data-hero>Weather for the moment you get there.</p>
   </header>
   <div class="post-layout has-toc">
     <aside class="toc" aria-label="on this page">
@@ -71,10 +72,14 @@
         <li><a href="#the-forecast-along-the-line">The forecast along the line</a></li>
         <li><a href="#making-it-feel-like-an-app">Making it feel like an app</a></li>
         <li><a href="#judging-the-weather">Judging the weather</a></li>
-        <li><a href="#not-shown-yet">Not shown yet</a></li>
+        <li><a href="#limits">Limits</a></li>
       </ol>
     </aside>
     <div class="post-body">
+<aside class="brief" aria-label="project summary">
+  <p class="brief__summary">A web app for motorcycle riders that builds an arrival timeline along a route from speed, road type and breaks, matches every point to the hourly forecast for that time, and rates rain, wind, fog, ice and darkness along the way.</p>
+  <dl class="brief__facts"><div><dt>Role</dt><dd>Solo, personal project</dd></div><div><dt>Stack</dt><dd>TypeScript, Vite, Leaflet, Open-Meteo, OSRM, Vitest</dd></div><div><dt>Status</dt><dd>Live; the map has since moved from Leaflet to MapLibre</dd></div><div><dt>Links</dt><dd><a href="https://kaandinc.com/ridecast/" target="_blank" rel="noopener">live app</a> · <a href="https://github.com/kaan0d/ridecast" target="_blank" rel="noopener">source</a></dd></div><div><dt>Series</dt><dd><b>Part 1</b> · <a href="ridecast-part-2">Part 2</a> · <a href="ridecast-part-3">Part 3</a> · <a href="ridecast-part-4">Part 4</a></dd></div></dl>
+</aside>
 <p>Every weather app answers the wrong question for a motorcycle ride. It tells me what the sky is doing in Eskişehir now, when what I need to know is what it will be doing at 11:24, when I get there, and what it did on the pass I cross at 09:30. ridecast is a web app that answers that: I give it a route, a speed, breaks and a departure time, and it puts the forecast for my arrival time on every point along the line. This post grows with every stage of the build, so it is a work log more than a summary.</p>
 
 <p>The reason is simple: I ride a motorcycle, and about twice a month I take it on a long trip. Before every one of them I end up with a map in one tab and a weather app in another, guessing which town I will pass at which hour and whether the rain there will have started yet. In a car that guess costs a little comfort; on a bike it decides whether I leave at 07:00 or 10:00, which layers I pack and where I stop. I wanted one screen that does the guessing for me, so I built it.</p>
@@ -153,7 +158,7 @@
 
       <p>The redesign also had a bug that only a wide screen showed: the CSS filter that mutes the map was on the whole tile layer, and at 2560 px the browser stopped painting it past about 1,750 px. Filtering each tile instead fixed it.</p>
 
-      <h2 id="not-shown-yet">Not shown yet</h2>
+      <h2 id="limits">Limits</h2>
 
       <p>The levels are per sample point, about every 15 minutes of driving, so a short shower between two points can slip through. The thresholds are my own starting values, not from a standard, and nothing here has been tried on a real ride yet. The rest of the build continues in <a href="ridecast-part-2">ridecast part 2: from warnings to decisions</a>.</p>
 
@@ -163,11 +168,11 @@
 <nav class="post-steps" aria-label="more posts">
   <a class="post-step post-step--newer" href="ridecast-part-2">
       <span class="post-step__dir">&larr; newer</span>
-      <span class="post-step__title">ridecast part 2: from warnings to decisions</span>
+      <span class="post-step__title">Ridecast part 2: safer routes, departure times and gear</span>
     </a>
   <a class="post-step post-step--older" href="pathfinding-part-4">
       <span class="post-step__dir">older &rarr;</span>
-      <span class="post-step__title">pathfinding part 4: a cap tuned against its own demo, a cache that mostly didn't move the number, and a lighter editor</span>
+      <span class="post-step__title">Pathfinding part 4: a walk-distance cap, a field cache and a lighter editor</span>
     </a>
 </nav>
 </main>

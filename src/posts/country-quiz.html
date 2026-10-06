@@ -1,5 +1,11 @@
 ---
-title: country quiz: a world map that tells you how wrong you were
+title: Country Quiz: a world map game with distance feedback
+subtitle: A world map that tells you how wrong you were.
+summary: A static world map quiz in Turkish and English with six modes, distance and direction feedback on every wrong pick, borders for 158 countries worked out from shared map edges, and a date-seeded daily challenge. The game rules are a unit-tested reducer.
+role: Solo, personal project
+stack: Next.js 16, React 19, Tailwind 4, react-simple-maps, TypeScript
+status: Live, open source
+links: live app https://kaandinc.com/country-quiz/ | source https://github.com/kaan0d/country-quiz
 date: 2026-04-20
 label: Apr 2026
 ---
@@ -74,6 +80,6 @@ label: Apr 2026
 
       <p>The lifetime misses were already being saved for the practice round, so the explore view just paints them. No colour scale library: each country's fill is <code>color-mix(in srgb, #ef4444 N%, #334155)</code>, with five or more misses fully red. The picture it gives is usually more honest than you'd like. West Africa and Central Asia light up fast.</p>
 
-      <h2>Living under /country-quiz</h2>
+      <h2>Deployment under /country-quiz</h2>
 
       <p>The site is a GitHub Pages project, so it's served from a sub-path instead of the domain root. Next's <code>basePath</code> handles its own scripts and links, but not plain <code>&lt;img&gt;</code> tags or URLs passed to <code>fetch</code>, and the flags and the map file are exactly those. The base path is defined once in the config, exposed as an environment variable, and every flag URL goes through one small helper. A GitHub Actions workflow runs the tests, builds the static export and deploys it on every push to main. The installable manifest also needed the prefix on its start URL and icon, or the installed app would open the site root instead of the game.</p>

@@ -3,13 +3,13 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>rejs: a moderation bot that can undo itself | Kaan Dinç</title>
-<meta name="description" content="rejs is a Discord moderation and automation bot with a FiveM server monitor built in. It began as a game server watcher, took over the jobs of an older...">
+<title>rejs: a Discord moderation bot with a 7-day undo | Kaan Dinç</title>
+<meta name="description" content="A Node.js Discord bot that combines moderation, anti-raid and anti-nuke protection, tickets and a FiveM server monitor in one slash-command bot. Every staff action is journaled through SQLite triggers and can be undone for 7 days.">
 <meta name="theme-color" content="#0a0a09">
 <link rel="canonical" href="https://kaandinc.com/posts/discord-bots">
 <meta property="og:type" content="article">
-<meta property="og:title" content="rejs: a moderation bot that can undo itself | Kaan Dinç">
-<meta property="og:description" content="rejs is a Discord moderation and automation bot with a FiveM server monitor built in. It began as a game server watcher, took over the jobs of an older...">
+<meta property="og:title" content="rejs: a Discord moderation bot with a 7-day undo | Kaan Dinç">
+<meta property="og:description" content="A Node.js Discord bot that combines moderation, anti-raid and anti-nuke protection, tickets and a FiveM server monitor in one slash-command bot. Every staff action is journaled through SQLite triggers and can be undone for 7 days.">
 <meta property="og:url" content="https://kaandinc.com/posts/discord-bots">
 <meta property="og:site_name" content="Kaan Dinç">
 <meta property="og:image" content="https://kaandinc.com/assets/og.png">
@@ -17,8 +17,8 @@
 <meta property="og:image:height" content="630">
 <meta property="og:image:alt" content="Kaan Dinç, computer engineer. K logo beside 3D solids in amber on black.">
 <meta name="twitter:card" content="summary_large_image">
-<meta name="twitter:title" content="rejs: a moderation bot that can undo itself | Kaan Dinç">
-<meta name="twitter:description" content="rejs is a Discord moderation and automation bot with a FiveM server monitor built in. It began as a game server watcher, took over the jobs of an older...">
+<meta name="twitter:title" content="rejs: a Discord moderation bot with a 7-day undo | Kaan Dinç">
+<meta name="twitter:description" content="A Node.js Discord bot that combines moderation, anti-raid and anti-nuke protection, tickets and a FiveM server monitor in one slash-command bot. Every staff action is journaled through SQLite triggers and can be undone for 7 days.">
 <meta name="twitter:image" content="https://kaandinc.com/assets/og.png">
 <link rel="icon" href="../assets/favicon.svg" type="image/svg+xml">
 <link rel="preload" href="../assets/fonts/Geist-Variable.woff2" as="font" type="font/woff2" crossorigin>
@@ -60,7 +60,8 @@
   <header class="post-head">
     <a class="post-head__back roll" href="../blog"><span class="roll__in" data-text="&amp;larr; blog">&larr; blog</span></a>
     <p class="post-head__meta" data-hero><time datetime="2026-09-29">Sep 2026</time> &nbsp;/&nbsp; 7 min read</p>
-    <h1 class="post-head__title" data-split="lines" data-hero>rejs: a moderation bot that can undo itself</h1>
+    <h1 class="post-head__title" data-split="lines" data-hero>rejs: a Discord moderation bot with a 7-day undo</h1>
+    <p class="post-head__sub" data-hero>A moderation bot that can undo itself.</p>
   </header>
   <div class="post-layout has-toc">
     <aside class="toc" aria-label="on this page">
@@ -71,13 +72,16 @@
         <li><a href="#when-undo-is-not-enough">When undo is not enough</a></li>
         <li><a href="#one-look-for-every-message">One look for every message</a></li>
         <li><a href="#the-game-server-monitor-again">The game server monitor, again</a></li>
-        <li><a href="#what-i-learned">What I learned</a></li>
+        <li><a href="#lessons-learned">Lessons learned</a></li>
       </ol>
     </aside>
     <div class="post-body">
+<aside class="brief" aria-label="project summary">
+  <p class="brief__summary">A Node.js Discord bot that combines moderation, anti-raid and anti-nuke protection, tickets and a FiveM server monitor in one slash-command bot. Every staff action is journaled through SQLite triggers and can be undone for 7 days.</p>
+  <dl class="brief__facts"><div><dt>Role</dt><dd>Solo, personal project</dd></div><div><dt>Stack</dt><dd>Node.js, discord.js, SQLite, node:test, pm2</dd></div><div><dt>Status</dt><dd>Running on a VPS, open source</dd></div><div><dt>Links</dt><dd><a href="https://github.com/kaan0d/rejs" target="_blank" rel="noopener">source</a></dd></div></dl>
+</aside>
 <p>rejs is a Discord moderation and automation bot with a FiveM server monitor built in. It began as a game server watcher, took over the jobs of an older bot of mine, and is now one slash-command bot. The game server monitor is one feature among about thirty, and the part I like most is a command I did not plan at the start: <code>/undo</code>. This is what rejs is, and what changed in how I think about a bot that can delete things.</p>
 
-      <p class="links">Source: <a href="https://github.com/kaan0d/rejs" target="_blank" rel="noopener">rejs</a></p>
 
       <div class="stats">
         <div class="stat"><b>1</b><span>bot, with moderation, tickets, protection and a game server monitor in it</span></div>
@@ -170,7 +174,7 @@ CREATE TRIGGER undo_&lt;table&gt;_update AFTER UPDATE ON &lt;table&gt;
 
       <p>One shortcut is still marked in the code: a session left open by a bot restart counts the downtime as playtime. It needs a "bot was down" marker, and it has not been worth it yet.</p>
 
-      <h2 id="what-i-learned">What I learned</h2>
+      <h2 id="lessons-learned">Lessons learned</h2>
 
       <p>The useful design question for a bot with power is not "what can it do" but "what happens after it does the wrong thing". Undo, snapshots, confirmation buttons on every bulk action, a role hierarchy check and an owner-only anti-nuke are all answers to that. The features people ask for are the small part; the safety net around them is where the time went.</p>
 
@@ -182,11 +186,11 @@ CREATE TRIGGER undo_&lt;table&gt;_update AFTER UPDATE ON &lt;table&gt;
 <nav class="post-steps" aria-label="more posts">
   <a class="post-step post-step--newer" href="tls-peek">
       <span class="post-step__dir">&larr; newer</span>
-      <span class="post-step__title">tls-peek: reading what one Windows program says over HTTPS</span>
+      <span class="post-step__title">tls-peek: HTTPS inspection for a single Windows program</span>
     </a>
   <a class="post-step post-step--older" href="ridecast-part-4">
       <span class="post-step__dir">older &rarr;</span>
-      <span class="post-step__title">ridecast part 4: one screen for the ride</span>
+      <span class="post-step__title">Ridecast part 4: a ride screen shaped by real use</span>
     </a>
 </nav>
 </main>

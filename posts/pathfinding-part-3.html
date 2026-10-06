@@ -3,13 +3,13 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>pathfinding part 3: a planner bug the oracle explains, and what real use broke in the editor | Kaan Dinç</title>
-<meta name="description" content="Part 2 left the planner 8x over its speed target and the oracle barely passing on its worst seed. This part has three planner fixes: skip the planning...">
+<title>Pathfinding part 3: planner fixes and editor issues from real use | Kaan Dinç</title>
+<meta name="description" content="Three planner fixes: skipping planning work nobody reads, carrying bumped arrivals between stages (estimate miss down from 24% to 4%), and pricing mixed-speed squads by their slowest member. Then four editor issues that only showed up in real use.">
 <meta name="theme-color" content="#0a0a09">
 <link rel="canonical" href="https://kaandinc.com/posts/pathfinding-part-3">
 <meta property="og:type" content="article">
-<meta property="og:title" content="pathfinding part 3: a planner bug the oracle explains, and what real use broke in the editor | Kaan Dinç">
-<meta property="og:description" content="Part 2 left the planner 8x over its speed target and the oracle barely passing on its worst seed. This part has three planner fixes: skip the planning...">
+<meta property="og:title" content="Pathfinding part 3: planner fixes and editor issues from real use | Kaan Dinç">
+<meta property="og:description" content="Three planner fixes: skipping planning work nobody reads, carrying bumped arrivals between stages (estimate miss down from 24% to 4%), and pricing mixed-speed squads by their slowest member. Then four editor issues that only showed up in real use.">
 <meta property="og:url" content="https://kaandinc.com/posts/pathfinding-part-3">
 <meta property="og:site_name" content="Kaan Dinç">
 <meta property="og:image" content="https://kaandinc.com/assets/og.png">
@@ -17,8 +17,8 @@
 <meta property="og:image:height" content="630">
 <meta property="og:image:alt" content="Kaan Dinç, computer engineer. K logo beside 3D solids in amber on black.">
 <meta name="twitter:card" content="summary_large_image">
-<meta name="twitter:title" content="pathfinding part 3: a planner bug the oracle explains, and what real use broke in the editor | Kaan Dinç">
-<meta name="twitter:description" content="Part 2 left the planner 8x over its speed target and the oracle barely passing on its worst seed. This part has three planner fixes: skip the planning...">
+<meta name="twitter:title" content="Pathfinding part 3: planner fixes and editor issues from real use | Kaan Dinç">
+<meta name="twitter:description" content="Three planner fixes: skipping planning work nobody reads, carrying bumped arrivals between stages (estimate miss down from 24% to 4%), and pricing mixed-speed squads by their slowest member. Then four editor issues that only showed up in real use.">
 <meta name="twitter:image" content="https://kaandinc.com/assets/og.png">
 <link rel="icon" href="../assets/favicon.svg" type="image/svg+xml">
 <link rel="preload" href="../assets/fonts/Geist-Variable.woff2" as="font" type="font/woff2" crossorigin>
@@ -60,7 +60,8 @@
   <header class="post-head">
     <a class="post-head__back roll" href="../blog"><span class="roll__in" data-text="&amp;larr; blog">&larr; blog</span></a>
     <p class="post-head__meta" data-hero><time datetime="2026-09-22T18:00">Sep 2026</time> &nbsp;/&nbsp; 4 min read</p>
-    <h1 class="post-head__title" data-split="lines" data-hero>pathfinding part 3: a planner bug the oracle explains, and what real use broke in the editor</h1>
+    <h1 class="post-head__title" data-split="lines" data-hero>Pathfinding part 3: planner fixes and editor issues from real use</h1>
+    <p class="post-head__sub" data-hero>A planner bug the oracle explains, and what real use broke in the editor.</p>
   </header>
   <div class="post-layout has-toc">
     <aside class="toc" aria-label="on this page">
@@ -70,13 +71,16 @@
         <li><a href="#the-slowest-one-sets-the-pace">The slowest one sets the pace</a></li>
         <li><a href="#a-right-click-menu-and-the-one-thing-it-broke">A right-click menu, and the one thing it broke</a></li>
         <li><a href="#three-more-things-only-real-use-found">Three more things only real use found</a></li>
-        <li><a href="#still-open">Still open</a></li>
+        <li><a href="#open-issues">Open issues</a></li>
       </ol>
     </aside>
     <div class="post-body">
+<aside class="brief" aria-label="project summary">
+  <p class="brief__summary">Three planner fixes: skipping planning work nobody reads, carrying bumped arrivals between stages (estimate miss down from 24% to 4%), and pricing mixed-speed squads by their slowest member. Then four editor issues that only showed up in real use.</p>
+  <dl class="brief__facts"><div><dt>Role</dt><dd>Solo, personal project</dd></div><div><dt>Stack</dt><dd>TypeScript, PixiJS, Vite, Vitest</dd></div><div><dt>Status</dt><dd>Live demo, open source</dd></div><div><dt>Links</dt><dd><a href="https://kaandinc.com/environment-aware-pathfinding/" target="_blank" rel="noopener">live demo</a> · <a href="https://github.com/kaan0d/environment-aware-pathfinding" target="_blank" rel="noopener">source</a></dd></div><div><dt>Series</dt><dd><a href="pathfinding-part-1">Part 1</a> · <a href="pathfinding-part-2">Part 2</a> · <b>Part 3</b> · <a href="pathfinding-part-4">Part 4</a></dd></div></dl>
+</aside>
 <p>Part 2 left the planner 8x over its speed target and the oracle barely passing on its worst seed. This part has three planner fixes: skip the planning work nobody reads, carry bumped arrivals between stages (24% estimate miss down to 4%), and price mixed-speed squads by their slowest member. Then four editor issues that only showed up in real use.</p>
 
-      <p class="links">Try it: <a href="https://kaandinc.com/environment-aware-pathfinding/" target="_blank" rel="noopener">live demo</a> · <a href="https://github.com/kaan0d/environment-aware-pathfinding" target="_blank" rel="noopener">source</a> · part 1: <a href="pathfinding-part-1">the unit that walked around a wall</a> · part 2: <a href="pathfinding-part-2">a demo you can break</a> · part 4: <a href="pathfinding-part-4">a cap, a cache, a lighter editor</a></p>
 
       <div class="stats">
         <div class="stat"><b>3</b><span>real fixes: planning waste, an oracle estimate miss, mixed-speed squads</span></div>
@@ -179,7 +183,7 @@ arrivals = result.ready</code></div>
         <figcaption>The heat map on both panels now, for the same followed unit's type against each panel's own walls. Only the right panel, where the selection actually is, gets the ring and the route.</figcaption>
       </figure>
 
-      <h2 id="still-open">Still open</h2>
+      <h2 id="open-issues">Open issues</h2>
 
       <ul>
         <li>Squad round is 21 ms against a 3 ms target. Next ideas: a field cache keyed by squad strength and map version, replanning only the squads a change affects, a worker.</li>
@@ -191,11 +195,11 @@ arrivals = result.ready</code></div>
 <nav class="post-steps" aria-label="more posts">
   <a class="post-step post-step--newer" href="pathfinding-part-4">
       <span class="post-step__dir">&larr; newer</span>
-      <span class="post-step__title">pathfinding part 4: a cap tuned against its own demo, a cache that mostly didn't move the number, and a lighter editor</span>
+      <span class="post-step__title">Pathfinding part 4: a walk-distance cap, a field cache and a lighter editor</span>
     </a>
   <a class="post-step post-step--older" href="pathfinding-part-2">
       <span class="post-step__dir">older &rarr;</span>
-      <span class="post-step__title">pathfinding part 2: a demo you can break, with an editor, nine maps and a debug view</span>
+      <span class="post-step__title">Pathfinding part 2: interactive demo, map editor and debug view</span>
     </a>
 </nav>
 </main>

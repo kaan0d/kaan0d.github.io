@@ -3,13 +3,13 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>pathfinding part 1: the unit that walked around a wall it could have broken | Kaan Dinç</title>
-<meta name="description" content="In games where a crowd of units attacks a base, a familiar mistake: a wall stands between a unit and its target, a long way around exists, and the unit...">
+<title>Pathfinding part 1: deciding when to break a wall instead of walking around it | Kaan Dinç</title>
+<meta name="description" content="A planner that prices walls in seconds, so units weigh breaking through against walking around, extended to squads that are limited by how many units fit at a wall. An oracle checks its decisions against the real simulation on 200 random maps.">
 <meta name="theme-color" content="#0a0a09">
 <link rel="canonical" href="https://kaandinc.com/posts/pathfinding-part-1">
 <meta property="og:type" content="article">
-<meta property="og:title" content="pathfinding part 1: the unit that walked around a wall it could have broken | Kaan Dinç">
-<meta property="og:description" content="In games where a crowd of units attacks a base, a familiar mistake: a wall stands between a unit and its target, a long way around exists, and the unit...">
+<meta property="og:title" content="Pathfinding part 1: deciding when to break a wall instead of walking around it | Kaan Dinç">
+<meta property="og:description" content="A planner that prices walls in seconds, so units weigh breaking through against walking around, extended to squads that are limited by how many units fit at a wall. An oracle checks its decisions against the real simulation on 200 random maps.">
 <meta property="og:url" content="https://kaandinc.com/posts/pathfinding-part-1">
 <meta property="og:site_name" content="Kaan Dinç">
 <meta property="og:image" content="https://kaandinc.com/assets/og.png">
@@ -17,8 +17,8 @@
 <meta property="og:image:height" content="630">
 <meta property="og:image:alt" content="Kaan Dinç, computer engineer. K logo beside 3D solids in amber on black.">
 <meta name="twitter:card" content="summary_large_image">
-<meta name="twitter:title" content="pathfinding part 1: the unit that walked around a wall it could have broken | Kaan Dinç">
-<meta name="twitter:description" content="In games where a crowd of units attacks a base, a familiar mistake: a wall stands between a unit and its target, a long way around exists, and the unit...">
+<meta name="twitter:title" content="Pathfinding part 1: deciding when to break a wall instead of walking around it | Kaan Dinç">
+<meta name="twitter:description" content="A planner that prices walls in seconds, so units weigh breaking through against walking around, extended to squads that are limited by how many units fit at a wall. An oracle checks its decisions against the real simulation on 200 random maps.">
 <meta name="twitter:image" content="https://kaandinc.com/assets/og.png">
 <link rel="icon" href="../assets/favicon.svg" type="image/svg+xml">
 <link rel="preload" href="../assets/fonts/Geist-Variable.woff2" as="font" type="font/woff2" crossorigin>
@@ -60,24 +60,28 @@
   <header class="post-head">
     <a class="post-head__back roll" href="../blog"><span class="roll__in" data-text="&amp;larr; blog">&larr; blog</span></a>
     <p class="post-head__meta" data-hero><time datetime="2026-09-21T18:00">Sep 2026</time> &nbsp;/&nbsp; 8 min read</p>
-    <h1 class="post-head__title" data-split="lines" data-hero>pathfinding part 1: the unit that walked around a wall it could have broken</h1>
+    <h1 class="post-head__title" data-split="lines" data-hero>Pathfinding part 1: deciding when to break a wall instead of walking around it</h1>
+    <p class="post-head__sub" data-hero>The unit that walked around a wall it could have broken.</p>
   </header>
   <div class="post-layout has-toc">
     <aside class="toc" aria-label="on this page">
       <ol>
         <li><a href="#the-setup">The setup</a></li>
-        <li><a href="#stage-1-the-baseline-and-the-mistake">Stage 1: the baseline and the mistake</a></li>
-        <li><a href="#stage-2-a-wall-is-a-cell-with-a-price">Stage 2: a wall is a cell with a price</a></li>
-        <li><a href="#stage-3-a-crowd-is-not-a-bigger-unit">Stage 3: a crowd is not a bigger unit</a></li>
+        <li><a href="#the-baseline-and-the-mistake">The baseline and the mistake</a></li>
+        <li><a href="#a-wall-is-a-cell-with-a-price">A wall is a cell with a price</a></li>
+        <li><a href="#a-crowd-is-not-a-bigger-unit">A crowd is not a bigger unit</a></li>
         <li><a href="#the-oracle">The oracle</a></li>
-        <li><a href="#speed-where-i-missed">Speed, where I missed</a></li>
-        <li><a href="#still-open">Still open</a></li>
+        <li><a href="#performance-and-where-it-missed-the-target">Performance, and where it missed the target</a></li>
+        <li><a href="#open-issues">Open issues</a></li>
       </ol>
     </aside>
     <div class="post-body">
+<aside class="brief" aria-label="project summary">
+  <p class="brief__summary">A planner that prices walls in seconds, so units weigh breaking through against walking around, extended to squads that are limited by how many units fit at a wall. An oracle checks its decisions against the real simulation on 200 random maps.</p>
+  <dl class="brief__facts"><div><dt>Role</dt><dd>Solo, personal project</dd></div><div><dt>Stack</dt><dd>TypeScript, Vitest, Node.js</dd></div><div><dt>Status</dt><dd>Live demo, open source</dd></div><div><dt>Links</dt><dd><a href="https://kaandinc.com/environment-aware-pathfinding/" target="_blank" rel="noopener">live demo</a> · <a href="https://github.com/kaan0d/environment-aware-pathfinding" target="_blank" rel="noopener">source</a></dd></div><div><dt>Series</dt><dd><b>Part 1</b> · <a href="pathfinding-part-2">Part 2</a> · <a href="pathfinding-part-3">Part 3</a> · <a href="pathfinding-part-4">Part 4</a></dd></div></dl>
+</aside>
 <p>In games where a crowd of units attacks a base, a familiar mistake: a wall stands between a unit and its target, a long way around exists, and the unit takes it, even though breaking one wall cell would be much faster. This project fixes that by pricing walls in seconds, so the planner can weigh breaking against walking. Part 1 is the algorithm in three stages: a baseline that reproduces the mistake, a planner that decides by time for one unit, and squads that share one plan and are limited by how many units fit around a wall.</p>
 
-      <p class="links">Try it: <a href="https://kaandinc.com/environment-aware-pathfinding/" target="_blank" rel="noopener">live demo</a> · <a href="https://github.com/kaan0d/environment-aware-pathfinding" target="_blank" rel="noopener">source</a> · part 2: <a href="pathfinding-part-2">a demo you can break</a> · part 3: <a href="pathfinding-part-3">the follow-up list</a> · part 4: <a href="pathfinding-part-4">a cap, a cache, a lighter editor</a></p>
 
       <div class="stats">
         <div class="stat"><b>3 of 6</b><span>stages in this part: simulation and classic AI, the time-cost planner, squads</span></div>
@@ -93,7 +97,7 @@
 
       <p>Stack: TypeScript, Vite, Vitest. <code>src/sim</code> has no DOM and no rendering, runs on a fixed 1/30 s step, and has no randomness, so the same scenario always gives the same result.</p>
 
-      <h2 id="stage-1-the-baseline-and-the-mistake">Stage 1: the baseline and the mistake</h2>
+      <h2 id="the-baseline-and-the-mistake">The baseline and the mistake</h2>
 
       <p>Walls come in five levels (100 to 2,000 hit points), buildings in 1x1, 2x2 and 3x3. A cell holds at most one attacker, and an event log makes two runs comparable exactly.</p>
 
@@ -122,7 +126,7 @@
 
       <p>Everything else asks "passable, breakable or blocked", never "is this a wall". A test scans <code>src/sim</code> and fails if any other file compares against a cell kind; I added one such line to confirm the test goes red.</p>
 
-      <h2 id="stage-2-a-wall-is-a-cell-with-a-price">Stage 2: a wall is a cell with a price</h2>
+      <h2 id="a-wall-is-a-cell-with-a-price">A wall is a cell with a price</h2>
 
       <p>The cost model is one function:</p>
 
@@ -166,7 +170,7 @@
 
       <p>For one unit alone, across three unit types and three wall levels, the worst estimate error is 1.0% against a 5% target. The estimate is always 0.03 to 0.10 s short, most likely from the fixed step at each walk/hit hand-over. One field takes 0.58 ms on 40x28 and 6.15 ms on 100x100 (targets 1 ms and 10 ms, Node 22, one machine).</p>
 
-      <h2 id="stage-3-a-crowd-is-not-a-bigger-unit">Stage 3: a crowd is not a bigger unit</h2>
+      <h2 id="a-crowd-is-not-a-bigger-unit">A crowd is not a bigger unit</h2>
 
       <p>Six stage 2 units deployed together on a level 3 wall make six decisions and break two different wall cells: 8.53 s. One shared decision takes 6.97 s. Two things make a shared decision harder than multiplying damage: a wall can only be hit from the free cells next to it, one unit per cell, and units do not arrive together.</p>
 
@@ -255,11 +259,11 @@
 
       <p>The suite is 52 tests at the end of stage 3, and every stage 1 and 2 number is unchanged.</p>
 
-      <h2 id="speed-where-i-missed">Speed, where I missed</h2>
+      <h2 id="performance-and-where-it-missed-the-target">Performance, and where it missed the target</h2>
 
       <p>The target was one full planning round for 10 squads and 50 units on 40x28 in under 3 ms. A round (every squad decides again, the cost of one destroyed wall) took 56.7 ms at first, and 25.0 ms once searches stop as soon as the cells they were asked about are final. That is 2.4 ms per squad and 8x over target. A squad needs up to seven fields and six rollouts. A field cache and replanning only affected squads would come first.</p>
 
-      <h2 id="still-open">Still open</h2>
+      <h2 id="open-issues">Open issues</h2>
 
       <ul>
         <li>Building order is greedy: behind thick walls the cheapest-first pick wins the first building but loses the total, 68.20 s against 65.83 s for classic.</li>
@@ -275,11 +279,11 @@
 <nav class="post-steps" aria-label="more posts">
   <a class="post-step post-step--newer" href="pathfinding-part-2">
       <span class="post-step__dir">&larr; newer</span>
-      <span class="post-step__title">pathfinding part 2: a demo you can break, with an editor, nine maps and a debug view</span>
+      <span class="post-step__title">Pathfinding part 2: interactive demo, map editor and debug view</span>
     </a>
   <a class="post-step post-step--older" href="impulse-soft-step">
       <span class="post-step__dir">older &rarr;</span>
-      <span class="post-step__title">impulse part 2: the ball that cheated and the box that wouldn't sleep</span>
+      <span class="post-step__title">Impulse part 2: restitution, scene queries and a soft-step solver</span>
     </a>
 </nav>
 </main>

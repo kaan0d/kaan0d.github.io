@@ -3,13 +3,13 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>country quiz: a world map that tells you how wrong you were | Kaan Dinç</title>
-<meta name="description" content="Country quiz is a world map game in Turkish and English. A country's name shows up and you click it on the map, or the map marks one and you name it....">
+<title>Country Quiz: a world map game with distance feedback | Kaan Dinç</title>
+<meta name="description" content="A static world map quiz in Turkish and English with six modes, distance and direction feedback on every wrong pick, borders for 158 countries worked out from shared map edges, and a date-seeded daily challenge. The game rules are a unit-tested reducer.">
 <meta name="theme-color" content="#0a0a09">
 <link rel="canonical" href="https://kaandinc.com/posts/country-quiz">
 <meta property="og:type" content="article">
-<meta property="og:title" content="country quiz: a world map that tells you how wrong you were | Kaan Dinç">
-<meta property="og:description" content="Country quiz is a world map game in Turkish and English. A country's name shows up and you click it on the map, or the map marks one and you name it....">
+<meta property="og:title" content="Country Quiz: a world map game with distance feedback | Kaan Dinç">
+<meta property="og:description" content="A static world map quiz in Turkish and English with six modes, distance and direction feedback on every wrong pick, borders for 158 countries worked out from shared map edges, and a date-seeded daily challenge. The game rules are a unit-tested reducer.">
 <meta property="og:url" content="https://kaandinc.com/posts/country-quiz">
 <meta property="og:site_name" content="Kaan Dinç">
 <meta property="og:image" content="https://kaandinc.com/assets/og.png">
@@ -17,8 +17,8 @@
 <meta property="og:image:height" content="630">
 <meta property="og:image:alt" content="Kaan Dinç, computer engineer. K logo beside 3D solids in amber on black.">
 <meta name="twitter:card" content="summary_large_image">
-<meta name="twitter:title" content="country quiz: a world map that tells you how wrong you were | Kaan Dinç">
-<meta name="twitter:description" content="Country quiz is a world map game in Turkish and English. A country's name shows up and you click it on the map, or the map marks one and you name it....">
+<meta name="twitter:title" content="Country Quiz: a world map game with distance feedback | Kaan Dinç">
+<meta name="twitter:description" content="A static world map quiz in Turkish and English with six modes, distance and direction feedback on every wrong pick, borders for 158 countries worked out from shared map edges, and a date-seeded daily challenge. The game rules are a unit-tested reducer.">
 <meta name="twitter:image" content="https://kaandinc.com/assets/og.png">
 <link rel="icon" href="../assets/favicon.svg" type="image/svg+xml">
 <link rel="preload" href="../assets/fonts/Geist-Variable.woff2" as="font" type="font/woff2" crossorigin>
@@ -60,7 +60,8 @@
   <header class="post-head">
     <a class="post-head__back roll" href="../blog"><span class="roll__in" data-text="&amp;larr; blog">&larr; blog</span></a>
     <p class="post-head__meta" data-hero><time datetime="2026-04-20">Apr 2026</time> &nbsp;/&nbsp; 5 min read</p>
-    <h1 class="post-head__title" data-split="lines" data-hero>country quiz: a world map that tells you how wrong you were</h1>
+    <h1 class="post-head__title" data-split="lines" data-hero>Country Quiz: a world map game with distance feedback</h1>
+    <p class="post-head__sub" data-hero>A world map that tells you how wrong you were.</p>
   </header>
   <div class="post-layout has-toc">
     <aside class="toc" aria-label="on this page">
@@ -71,10 +72,14 @@
         <li><a href="#neighbours-from-the-map-itself">Neighbours from the map itself</a></li>
         <li><a href="#the-same-ten-countries-for-everyone">The same ten countries for everyone</a></li>
         <li><a href="#where-you-keep-missing">Where you keep missing</a></li>
-        <li><a href="#living-under-country-quiz">Living under /country-quiz</a></li>
+        <li><a href="#deployment-under-country-quiz">Deployment under /country-quiz</a></li>
       </ol>
     </aside>
     <div class="post-body">
+<aside class="brief" aria-label="project summary">
+  <p class="brief__summary">A static world map quiz in Turkish and English with six modes, distance and direction feedback on every wrong pick, borders for 158 countries worked out from shared map edges, and a date-seeded daily challenge. The game rules are a unit-tested reducer.</p>
+  <dl class="brief__facts"><div><dt>Role</dt><dd>Solo, personal project</dd></div><div><dt>Stack</dt><dd>Next.js 16, React 19, Tailwind 4, react-simple-maps, TypeScript</dd></div><div><dt>Status</dt><dd>Live, open source</dd></div><div><dt>Links</dt><dd><a href="https://kaandinc.com/country-quiz/" target="_blank" rel="noopener">live app</a> · <a href="https://github.com/kaan0d/country-quiz" target="_blank" rel="noopener">source</a></dd></div></dl>
+</aside>
 <p>Country quiz is a world map game in Turkish and English. A country's name shows up and you click it on the map, or the map marks one and you name it. There are six ways to play: by name, by flag, by capital, a reverse mode with four options, a typed mode, and a neighbours mode where any country that shares a border is the right answer. It runs entirely in the browser with no backend, and it's live at <a href="https://kaandinc.com/country-quiz/" target="_blank" rel="noopener">kaandinc.com/country-quiz</a>.</p>
 
       <p>The stack is Next.js 16 with React 19, Tailwind 4 and react-simple-maps, built as a static export. The map shapes (world-atlas at 1:50m) and all the flags are served from the same folder as the page, so after the first load nothing else is fetched.</p>
@@ -146,7 +151,7 @@
 
       <p>The lifetime misses were already being saved for the practice round, so the explore view just paints them. No colour scale library: each country's fill is <code>color-mix(in srgb, #ef4444 N%, #334155)</code>, with five or more misses fully red. The picture it gives is usually more honest than you'd like. West Africa and Central Asia light up fast.</p>
 
-      <h2 id="living-under-country-quiz">Living under /country-quiz</h2>
+      <h2 id="deployment-under-country-quiz">Deployment under /country-quiz</h2>
 
       <p>The site is a GitHub Pages project, so it's served from a sub-path instead of the domain root. Next's <code>basePath</code> handles its own scripts and links, but not plain <code>&lt;img&gt;</code> tags or URLs passed to <code>fetch</code>, and the flags and the map file are exactly those. The base path is defined once in the config, exposed as an environment variable, and every flag URL goes through one small helper. A GitHub Actions workflow runs the tests, builds the static export and deploys it on every push to main. The installable manifest also needed the prefix on its start URL and icon, or the installed app would open the site root instead of the game.</p>
 
@@ -156,11 +161,11 @@
 <nav class="post-steps" aria-label="more posts">
   <a class="post-step post-step--newer" href="number-guessing">
       <span class="post-step__dir">&larr; newer</span>
-      <span class="post-step__title">number guess battle: two browsers, one relay, no shared server state</span>
+      <span class="post-step__title">Number Guess Battle: real-time multiplayer over a stateless relay</span>
     </a>
   <a class="post-step post-step--older" href="ecommerce-admin-panel">
       <span class="post-step__dir">older &rarr;</span>
-      <span class="post-step__title">no cart, no checkout, one whatsapp button</span>
+      <span class="post-step__title">Product catalog and admin panel for an electrical shop</span>
     </a>
 </nav>
 </main>

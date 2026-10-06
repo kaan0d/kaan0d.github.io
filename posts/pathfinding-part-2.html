@@ -3,13 +3,13 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>pathfinding part 2: a demo you can break, with an editor, nine maps and a debug view | Kaan Dinç</title>
-<meta name="description" content="Part 1 was the algorithm: a simulation, a planner that prices walls in seconds, and squads that share attack positions, checked against the real...">
+<title>Pathfinding part 2: interactive demo, map editor and debug view | Kaan Dinç</title>
+<meta name="description" content="A two-panel PixiJS demo on a fixed time step, a map editor with nine ready maps, a debug view that explains each unit's decision, and a GitHub Pages build. One of the maps exposed a planner bug the tests had missed.">
 <meta name="theme-color" content="#0a0a09">
 <link rel="canonical" href="https://kaandinc.com/posts/pathfinding-part-2">
 <meta property="og:type" content="article">
-<meta property="og:title" content="pathfinding part 2: a demo you can break, with an editor, nine maps and a debug view | Kaan Dinç">
-<meta property="og:description" content="Part 1 was the algorithm: a simulation, a planner that prices walls in seconds, and squads that share attack positions, checked against the real...">
+<meta property="og:title" content="Pathfinding part 2: interactive demo, map editor and debug view | Kaan Dinç">
+<meta property="og:description" content="A two-panel PixiJS demo on a fixed time step, a map editor with nine ready maps, a debug view that explains each unit's decision, and a GitHub Pages build. One of the maps exposed a planner bug the tests had missed.">
 <meta property="og:url" content="https://kaandinc.com/posts/pathfinding-part-2">
 <meta property="og:site_name" content="Kaan Dinç">
 <meta property="og:image" content="https://kaandinc.com/assets/og.png">
@@ -17,8 +17,8 @@
 <meta property="og:image:height" content="630">
 <meta property="og:image:alt" content="Kaan Dinç, computer engineer. K logo beside 3D solids in amber on black.">
 <meta name="twitter:card" content="summary_large_image">
-<meta name="twitter:title" content="pathfinding part 2: a demo you can break, with an editor, nine maps and a debug view | Kaan Dinç">
-<meta name="twitter:description" content="Part 1 was the algorithm: a simulation, a planner that prices walls in seconds, and squads that share attack positions, checked against the real...">
+<meta name="twitter:title" content="Pathfinding part 2: interactive demo, map editor and debug view | Kaan Dinç">
+<meta name="twitter:description" content="A two-panel PixiJS demo on a fixed time step, a map editor with nine ready maps, a debug view that explains each unit's decision, and a GitHub Pages build. One of the maps exposed a planner bug the tests had missed.">
 <meta name="twitter:image" content="https://kaandinc.com/assets/og.png">
 <link rel="icon" href="../assets/favicon.svg" type="image/svg+xml">
 <link rel="preload" href="../assets/fonts/Geist-Variable.woff2" as="font" type="font/woff2" crossorigin>
@@ -60,24 +60,28 @@
   <header class="post-head">
     <a class="post-head__back roll" href="../blog"><span class="roll__in" data-text="&amp;larr; blog">&larr; blog</span></a>
     <p class="post-head__meta" data-hero><time datetime="2026-09-22">Sep 2026</time> &nbsp;/&nbsp; 7 min read</p>
-    <h1 class="post-head__title" data-split="lines" data-hero>pathfinding part 2: a demo you can break, with an editor, nine maps and a debug view</h1>
+    <h1 class="post-head__title" data-split="lines" data-hero>Pathfinding part 2: interactive demo, map editor and debug view</h1>
+    <p class="post-head__sub" data-hero>A demo you can break, with an editor, nine maps and a debug view.</p>
   </header>
   <div class="post-layout has-toc">
     <aside class="toc" aria-label="on this page">
       <ol>
-        <li><a href="#stage-4-making-it-visible">Stage 4: making it visible</a></li>
-        <li><a href="#stage-5-an-editor-and-nine-maps">Stage 5: an editor and nine maps</a></li>
+        <li><a href="#making-it-visible">Making it visible</a></li>
+        <li><a href="#an-editor-and-nine-maps">An editor and nine maps</a></li>
         <li><a href="#a-switch-attackers-inside-each-other">A switch: attackers inside each other</a></li>
-        <li><a href="#stage-6-cartoon-style-and-a-debug-view">Stage 6: cartoon style and a debug view</a></li>
+        <li><a href="#cartoon-style-and-a-debug-view">Cartoon style and a debug view</a></li>
         <li><a href="#frame-time">Frame time</a></li>
         <li><a href="#publishing">Publishing</a></li>
-        <li><a href="#still-open">Still open</a></li>
+        <li><a href="#open-issues">Open issues</a></li>
       </ol>
     </aside>
     <div class="post-body">
+<aside class="brief" aria-label="project summary">
+  <p class="brief__summary">A two-panel PixiJS demo on a fixed time step, a map editor with nine ready maps, a debug view that explains each unit's decision, and a GitHub Pages build. One of the maps exposed a planner bug the tests had missed.</p>
+  <dl class="brief__facts"><div><dt>Role</dt><dd>Solo, personal project</dd></div><div><dt>Stack</dt><dd>TypeScript, PixiJS, Vite, Vitest</dd></div><div><dt>Status</dt><dd>Live demo, open source</dd></div><div><dt>Links</dt><dd><a href="https://kaandinc.com/environment-aware-pathfinding/" target="_blank" rel="noopener">live demo</a> · <a href="https://github.com/kaan0d/environment-aware-pathfinding" target="_blank" rel="noopener">source</a></dd></div><div><dt>Series</dt><dd><a href="pathfinding-part-1">Part 1</a> · <b>Part 2</b> · <a href="pathfinding-part-3">Part 3</a> · <a href="pathfinding-part-4">Part 4</a></dd></div></dl>
+</aside>
 <p>Part 1 was the algorithm: a simulation, a planner that prices walls in seconds, and squads that share attack positions, checked against the real simulation on 200 random maps. This part is what sits on top of it: a two-panel PixiJS demo with a fixed time step, an editor, nine ready maps, a switch that lets attackers share a cell, a debug view that shows why a unit decided what it did, and a GitHub Pages build. One of the maps found a planner bug the tests had missed.</p>
 
-      <p class="links">Try it: <a href="https://kaandinc.com/environment-aware-pathfinding/" target="_blank" rel="noopener">live demo</a> · <a href="https://github.com/kaan0d/environment-aware-pathfinding" target="_blank" rel="noopener">source</a> · part 1: <a href="pathfinding-part-1">the unit that walked around a wall</a> · part 3: <a href="pathfinding-part-3">the follow-up list</a> · part 4: <a href="pathfinding-part-4">a cap, a cache, a lighter editor</a></p>
 
       <div class="stats">
         <div class="stat"><b>6 of 6</b><span>stages done; this part covers stages 4 to 6</span></div>
@@ -85,7 +89,7 @@
         <div class="stat"><b>123</b><span>tests, all green, plus a strict type check and a production build</span></div>
       </div>
 
-      <h2 id="stage-4-making-it-visible">Stage 4: making it visible</h2>
+      <h2 id="making-it-visible">Making it visible</h2>
 
       <p>One canvas, two panels: the classic algorithm on the left, the new one on the right, same map, same units, same deploy events. The drawing code only reads the worlds, and <code>src/sim</code> still imports nothing from Pixi.</p>
 
@@ -130,7 +134,7 @@
         <figcaption>The end of the L-corner run at 4x speed. The banner compares the two finish times.</figcaption>
       </figure>
 
-      <h2 id="stage-5-an-editor-and-nine-maps">Stage 5: an editor and nine maps</h2>
+      <h2 id="an-editor-and-nine-maps">An editor and nine maps</h2>
 
       <p>The map is one <code>Scenario</code> object and both worlds are built from it. Every edit is a small pure function on it, with unit tests: paint a wall of level 1 to 5, erase, place a 1x1, 2x2 or 3x3 building where the whole footprint is free, add a spawn point, change the hit points of one wall or building. Any edit resets both worlds. Sliders cover unit speed, damage and hit points, squad radius, candidate count and a wall hit point multiplier, and a switch turns group behavior off.</p>
 
@@ -219,7 +223,7 @@
 
       <p>The slot-rule tests from parts 1 and 2 now switch the rule off explicitly. New tests cover the default, the corridor wall (4.53 s against 22.03 s), no waiting or reserving, determinism, and the demo switch rebuilding both worlds. The suite is 123 tests.</p>
 
-      <h2 id="stage-6-cartoon-style-and-a-debug-view">Stage 6: cartoon style and a debug view</h2>
+      <h2 id="cartoon-style-and-a-debug-view">Cartoon style and a debug view</h2>
 
       <p>Everything is drawn in code, no image files: wall posts that join their neighbors, five wall levels (wood, stone, iron, gold, obsidian), cracks at 75%, 50% and 25% hit points, three round characters that hop, squash and lunge. Hits throw sparks and falling walls throw dust. Particles live in a fixed pool of typed arrays capped at 360, with their own random generator, so decoration cannot touch the simulation.</p>
 
@@ -265,7 +269,7 @@
         <figcaption>The same page at 700 pixels wide. Nothing overflows sideways, the controls move below the maps, and the readout sits close to the top of the map.</figcaption>
       </figure>
 
-      <h2 id="still-open">Still open</h2>
+      <h2 id="open-issues">Open issues</h2>
 
       <ul>
         <li>Building order inside a target area is still greedy.</li>
@@ -279,11 +283,11 @@
 <nav class="post-steps" aria-label="more posts">
   <a class="post-step post-step--newer" href="pathfinding-part-3">
       <span class="post-step__dir">&larr; newer</span>
-      <span class="post-step__title">pathfinding part 3: a planner bug the oracle explains, and what real use broke in the editor</span>
+      <span class="post-step__title">Pathfinding part 3: planner fixes and editor issues from real use</span>
     </a>
   <a class="post-step post-step--older" href="pathfinding-part-1">
       <span class="post-step__dir">older &rarr;</span>
-      <span class="post-step__title">pathfinding part 1: the unit that walked around a wall it could have broken</span>
+      <span class="post-step__title">Pathfinding part 1: deciding when to break a wall instead of walking around it</span>
     </a>
 </nav>
 </main>

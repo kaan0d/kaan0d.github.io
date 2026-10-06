@@ -3,13 +3,13 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>sentinel part 3: traffic I didn't make | Kaan Dinç</title>
-<meta name="description" content="The last post ended with the honest top of the limits list: almost everything in Sentinel had been tested on traffic I made myself or on a handful of...">
+<title>Sentinel part 3: the detectors on real-world traffic | Kaan Dinç</title>
+<meta name="description" content="The unchanged detectors on 2.7 million packets of real captures. All 5 real attack captures raised the alert of their own kind and no other, and on 14.6 s of a 1 Gbps backbone they found 376 scanning sources, the same 376 as an independent tshark recount.">
 <meta name="theme-color" content="#0a0a09">
 <link rel="canonical" href="https://kaandinc.com/posts/sentinel-real-world">
 <meta property="og:type" content="article">
-<meta property="og:title" content="sentinel part 3: traffic I didn't make | Kaan Dinç">
-<meta property="og:description" content="The last post ended with the honest top of the limits list: almost everything in Sentinel had been tested on traffic I made myself or on a handful of...">
+<meta property="og:title" content="Sentinel part 3: the detectors on real-world traffic | Kaan Dinç">
+<meta property="og:description" content="The unchanged detectors on 2.7 million packets of real captures. All 5 real attack captures raised the alert of their own kind and no other, and on 14.6 s of a 1 Gbps backbone they found 376 scanning sources, the same 376 as an independent tshark recount.">
 <meta property="og:url" content="https://kaandinc.com/posts/sentinel-real-world">
 <meta property="og:site_name" content="Kaan Dinç">
 <meta property="og:image" content="https://kaandinc.com/assets/og.png">
@@ -17,8 +17,8 @@
 <meta property="og:image:height" content="630">
 <meta property="og:image:alt" content="Kaan Dinç, computer engineer. K logo beside 3D solids in amber on black.">
 <meta name="twitter:card" content="summary_large_image">
-<meta name="twitter:title" content="sentinel part 3: traffic I didn't make | Kaan Dinç">
-<meta name="twitter:description" content="The last post ended with the honest top of the limits list: almost everything in Sentinel had been tested on traffic I made myself or on a handful of...">
+<meta name="twitter:title" content="Sentinel part 3: the detectors on real-world traffic | Kaan Dinç">
+<meta name="twitter:description" content="The unchanged detectors on 2.7 million packets of real captures. All 5 real attack captures raised the alert of their own kind and no other, and on 14.6 s of a 1 Gbps backbone they found 376 scanning sources, the same 376 as an independent tshark recount.">
 <meta name="twitter:image" content="https://kaandinc.com/assets/og.png">
 <link rel="icon" href="../assets/favicon.svg" type="image/svg+xml">
 <link rel="preload" href="../assets/fonts/Geist-Variable.woff2" as="font" type="font/woff2" crossorigin>
@@ -60,7 +60,8 @@
   <header class="post-head">
     <a class="post-head__back roll" href="../blog"><span class="roll__in" data-text="&amp;larr; blog">&larr; blog</span></a>
     <p class="post-head__meta" data-hero><time datetime="2026-09-20">Sep 2026</time> &nbsp;/&nbsp; 8 min read</p>
-    <h1 class="post-head__title" data-split="lines" data-hero>sentinel part 3: traffic I didn't make</h1>
+    <h1 class="post-head__title" data-split="lines" data-hero>Sentinel part 3: the detectors on real-world traffic</h1>
+    <p class="post-head__sub" data-hero>Traffic I didn't make.</p>
   </header>
   <div class="post-layout has-toc">
     <aside class="toc" aria-label="on this page">
@@ -68,11 +69,15 @@
         <li><a href="#finding-real-traffic">Finding real traffic</a></li>
         <li><a href="#do-the-detectors-fire-on-real-attacks">Do the detectors fire on real attacks?</a></li>
         <li><a href="#traffic-that-nobody-labelled">Traffic that nobody labelled</a></li>
-        <li><a href="#what-this-does-not-show">What this does not show</a></li>
-        <li><a href="#where-this-goes">Where this goes</a></li>
+        <li><a href="#limits">Limits</a></li>
+        <li><a href="#next-steps">Next steps</a></li>
       </ol>
     </aside>
     <div class="post-body">
+<aside class="brief" aria-label="project summary">
+  <p class="brief__summary">The unchanged detectors on 2.7 million packets of real captures. All 5 real attack captures raised the alert of their own kind and no other, and on 14.6 s of a 1 Gbps backbone they found 376 scanning sources, the same 376 as an independent tshark recount.</p>
+  <dl class="brief__facts"><div><dt>Role</dt><dd>Solo, personal project</dd></div><div><dt>Stack</dt><dd>Python, struct, ruff, mypy (strict), pytest</dd></div><div><dt>Status</dt><dd>Open source</dd></div><div><dt>Links</dt><dd><a href="https://github.com/kaan0d/sentinel" target="_blank" rel="noopener">source</a></dd></div><div><dt>Series</dt><dd><a href="sentinel-packet-analyzer">Part 1</a> · <a href="sentinel-next-level">Part 2</a> · <b>Part 3</b></dd></div></dl>
+</aside>
 <p>The <a href="sentinel-next-level">last post</a> ended with the honest top of the limits list: almost everything in Sentinel had been tested on traffic I made myself or on a handful of small public files, and hardly at all on a busy real network. This post is that test. I took real captures, some of them attacks made by other people and some of them ordinary traffic that nobody has labelled, and ran the detectors over them. I did not change a line of the program. The rules are the ones it ships with.</p>
 
       <p>It is a different kind of stage from the others, because there is nothing to build and the interesting part is what I am allowed to conclude. So most of this post is about that.</p>
@@ -167,13 +172,13 @@
 
       <p>50,394 packets a second through the detectors on the backbone slice (35,073 on the week at the web server, 30,618 on the SYN flood), on the same machine as the benchmark of stage 7. The link carried about 148,000 packets a second, so Sentinel ran at a third of real time. Pure Python on one core. For a gigabit link that is a limit, and the README says so.</p>
 
-      <h2 id="what-this-does-not-show">What this does not show</h2>
+      <h2 id="limits">Limits</h2>
 
       <p>How many packets of an attack Sentinel got right, and a false alarm rate. The labels are per file, and the two big captures have none, so what I checked is that what the alerts say is true, and not that each one is an attack. It is one slice of one link and one week at one server. The backbone is not symmetric, so "unanswered" cannot be read as "a scan", and a detector that waits for a handshake sees half of it. There is one ARP spoofing file, one iodine capture, and no SYN flood with ordinary traffic in it. Where the cs3 files come from is not known.</p>
 
       <p>And I changed nothing. What I found is three limits: a DNS check whose threshold suits one client and not a backbone, a state limit that a backbone reaches in fourteen seconds, and a count in a port-scan alert that stops at four times the threshold. I could turn a number down until this slice looked clean, but that would only tune Sentinel to fourteen seconds of one link. They are in the limits list of the README, where the next person will find them.</p>
 
-      <h2 id="where-this-goes">Where this goes</h2>
+      <h2 id="next-steps">Next steps</h2>
 
       <p>There is no stage 14 planned. What would make this stronger is data with a label for every packet, so that "fires" can become "gets right, this many times". Kitsune has it, and it is 19 GB behind a server that will not hand over a part. If I find a mirror that does, that is the next measurement.</p>
 
@@ -183,11 +188,11 @@
 <nav class="post-steps" aria-label="more posts">
   <a class="post-step post-step--newer" href="impulse-soft-step">
       <span class="post-step__dir">&larr; newer</span>
-      <span class="post-step__title">impulse part 2: the ball that cheated and the box that wouldn't sleep</span>
+      <span class="post-step__title">Impulse part 2: restitution, scene queries and a soft-step solver</span>
     </a>
   <a class="post-step post-step--older" href="sentinel-next-level">
       <span class="post-step__dir">older &rarr;</span>
-      <span class="post-step__title">sentinel part 2: leaving the lab</span>
+      <span class="post-step__title">Sentinel part 2: pcapng, tshark comparison, JA3 and Windows capture</span>
     </a>
 </nav>
 </main>

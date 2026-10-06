@@ -1,5 +1,10 @@
 ---
-title: sixty frames a second, one rectangle
+title: Real-time screen region detection with OpenCV
+subtitle: Sixty frames a second, one rectangle.
+summary: Two Python tools that capture a chosen screen region at 60 fps, find a marker or read arrows and progress lines with OpenCV, and press keys through a hysteresis controller whose thresholds reload while it runs.
+role: Solo, personal tools
+stack: Python, OpenCV, NumPy, mss, Tkinter
+status: Personal tools, source is private
 date: 2025-12-01
 label: Dec 2025
 ---
@@ -110,6 +115,6 @@ progress = active_span / total_span</code></div>
 <span class="kw">if</span> self.pending_count &gt;= TRACK_STABLE_FRAMES:         <span class="cm"># 2 frames in a row</span>
     self.stable_pattern = (mode_name, list(pattern))</code></div>
 
-      <h2>What i took from it</h2>
+      <h2>Lessons learned</h2>
 
       <p>Color alone matches far too much, and the shape filters do the real work. A decision from one frame is noise, so require agreement over a few frames and tolerate short gaps. Anything that drives an output needs hysteresis. Thresholds should be tunable while the thing runs. And generating templates in code means there's nothing to re-capture when the display changes.</p>

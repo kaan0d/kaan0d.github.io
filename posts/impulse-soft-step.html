@@ -3,13 +3,13 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>impulse part 2: the ball that cheated and the box that wouldn't sleep | Kaan Dinç</title>
-<meta name="description" content="The first Impulse post ended with a list of things that did not work. A ball came back 3.5% too high. A pile of 500 bodies never fell asleep. Fast bodies...">
+<title>Impulse part 2: restitution, scene queries and a soft-step solver | Kaan Dinç</title>
+<meta name="description" content="Five more stages on the Impulse engine: a 3.5% bounce error fixed, raycasts and overlap queries with filters, a soft-step solver with substeps, rolling resistance that lets a 500-body pile sleep, and contacts that start 2 cm before bodies touch.">
 <meta name="theme-color" content="#0a0a09">
 <link rel="canonical" href="https://kaandinc.com/posts/impulse-soft-step">
 <meta property="og:type" content="article">
-<meta property="og:title" content="impulse part 2: the ball that cheated and the box that wouldn't sleep | Kaan Dinç">
-<meta property="og:description" content="The first Impulse post ended with a list of things that did not work. A ball came back 3.5% too high. A pile of 500 bodies never fell asleep. Fast bodies...">
+<meta property="og:title" content="Impulse part 2: restitution, scene queries and a soft-step solver | Kaan Dinç">
+<meta property="og:description" content="Five more stages on the Impulse engine: a 3.5% bounce error fixed, raycasts and overlap queries with filters, a soft-step solver with substeps, rolling resistance that lets a 500-body pile sleep, and contacts that start 2 cm before bodies touch.">
 <meta property="og:url" content="https://kaandinc.com/posts/impulse-soft-step">
 <meta property="og:site_name" content="Kaan Dinç">
 <meta property="og:image" content="https://kaandinc.com/assets/og.png">
@@ -17,8 +17,8 @@
 <meta property="og:image:height" content="630">
 <meta property="og:image:alt" content="Kaan Dinç, computer engineer. K logo beside 3D solids in amber on black.">
 <meta name="twitter:card" content="summary_large_image">
-<meta name="twitter:title" content="impulse part 2: the ball that cheated and the box that wouldn't sleep | Kaan Dinç">
-<meta name="twitter:description" content="The first Impulse post ended with a list of things that did not work. A ball came back 3.5% too high. A pile of 500 bodies never fell asleep. Fast bodies...">
+<meta name="twitter:title" content="Impulse part 2: restitution, scene queries and a soft-step solver | Kaan Dinç">
+<meta name="twitter:description" content="Five more stages on the Impulse engine: a 3.5% bounce error fixed, raycasts and overlap queries with filters, a soft-step solver with substeps, rolling resistance that lets a 500-body pile sleep, and contacts that start 2 cm before bodies touch.">
 <meta name="twitter:image" content="https://kaandinc.com/assets/og.png">
 <link rel="icon" href="../assets/favicon.svg" type="image/svg+xml">
 <link rel="preload" href="../assets/fonts/Geist-Variable.woff2" as="font" type="font/woff2" crossorigin>
@@ -60,7 +60,8 @@
   <header class="post-head">
     <a class="post-head__back roll" href="../blog"><span class="roll__in" data-text="&amp;larr; blog">&larr; blog</span></a>
     <p class="post-head__meta" data-hero><time datetime="2026-09-21">Sep 2026</time> &nbsp;/&nbsp; 9 min read</p>
-    <h1 class="post-head__title" data-split="lines" data-hero>impulse part 2: the ball that cheated and the box that wouldn't sleep</h1>
+    <h1 class="post-head__title" data-split="lines" data-hero>Impulse part 2: restitution, scene queries and a soft-step solver</h1>
+    <p class="post-head__sub" data-hero>The ball that cheated and the box that wouldn't sleep.</p>
   </header>
   <div class="post-layout has-toc">
     <aside class="toc" aria-label="on this page">
@@ -72,13 +73,16 @@
         <li><a href="#the-box-that-would-not-sleep">The box that would not sleep</a></li>
         <li><a href="#contacts-before-they-touch">Contacts before they touch</a></li>
         <li><a href="#the-numbers">The numbers</a></li>
-        <li><a href="#what-is-still-not-solved">What is still not solved</a></li>
+        <li><a href="#limits">Limits</a></li>
       </ol>
     </aside>
     <div class="post-body">
+<aside class="brief" aria-label="project summary">
+  <p class="brief__summary">Five more stages on the Impulse engine: a 3.5% bounce error fixed, raycasts and overlap queries with filters, a soft-step solver with substeps, rolling resistance that lets a 500-body pile sleep, and contacts that start 2 cm before bodies touch.</p>
+  <dl class="brief__facts"><div><dt>Role</dt><dd>Solo, personal project</dd></div><div><dt>Stack</dt><dd>TypeScript, Canvas 2D, Vite, Vitest, Playwright</dd></div><div><dt>Status</dt><dd>Live demo, open source</dd></div><div><dt>Links</dt><dd><a href="https://kaandinc.com/impulse/" target="_blank" rel="noopener">live demo</a> · <a href="https://github.com/kaan0d/impulse" target="_blank" rel="noopener">source</a></dd></div><div><dt>Series</dt><dd><a href="impulse-physics-engine">Part 1</a> · <b>Part 2</b></dd></div></dl>
+</aside>
 <p>The first Impulse post ended with a list of things that did not work. A ball came back 3.5% too high. A pile of 500 bodies never fell asleep. Fast bodies could only be stopped by static walls. Round two is me going through that list, and a few things I found on the way. This post grows with every stage, so it is a work log more than a summary.</p>
 
-      <p class="links">Try it: <a href="https://kaandinc.com/impulse/" target="_blank" rel="noopener">live demo</a> · <a href="https://github.com/kaan0d/impulse" target="_blank" rel="noopener">source</a> · previous post: <a href="impulse-physics-engine">impulse part 1: 2d physics with no library to blame</a></p>
 
       <div class="stats">
         <div class="stat"><b>5</b><span>new stages, 13 to 17</span></div>
@@ -185,7 +189,7 @@
 
       <p>4 substeps with a relax pass cost about the same as 10 iterations. The awake pyramid got 37% slower (0.86 to 1.18 ms) because of the extra speculative contacts, and every other row got faster. Two runs of the same scene differ by up to about 12%, so I would not read anything into the small differences.</p>
 
-      <h2 id="what-is-still-not-solved">What is still not solved</h2>
+      <h2 id="limits">Limits</h2>
 
       <p>A 20-box tower still compresses by about 7 cm at 40 Hz. Soft contacts trade stiffness for stability, and I have not found a better place on that trade.</p>
 
@@ -201,11 +205,11 @@
 <nav class="post-steps" aria-label="more posts">
   <a class="post-step post-step--newer" href="pathfinding-part-1">
       <span class="post-step__dir">&larr; newer</span>
-      <span class="post-step__title">pathfinding part 1: the unit that walked around a wall it could have broken</span>
+      <span class="post-step__title">Pathfinding part 1: deciding when to break a wall instead of walking around it</span>
     </a>
   <a class="post-step post-step--older" href="sentinel-real-world">
       <span class="post-step__dir">older &rarr;</span>
-      <span class="post-step__title">sentinel part 3: traffic I didn't make</span>
+      <span class="post-step__title">Sentinel part 3: the detectors on real-world traffic</span>
     </a>
 </nav>
 </main>

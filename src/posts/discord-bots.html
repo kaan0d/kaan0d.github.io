@@ -1,11 +1,16 @@
 ---
-title: rejs: a moderation bot that can undo itself
+title: rejs: a Discord moderation bot with a 7-day undo
+subtitle: A moderation bot that can undo itself.
+summary: A Node.js Discord bot that combines moderation, anti-raid and anti-nuke protection, tickets and a FiveM server monitor in one slash-command bot. Every staff action is journaled through SQLite triggers and can be undone for 7 days.
+role: Solo, personal project
+stack: Node.js, discord.js, SQLite, node:test, pm2
+status: Running on a VPS, open source
+links: source https://github.com/kaan0d/rejs
 date: 2026-09-29
 label: Sep 2026
 ---
 <p>rejs is a Discord moderation and automation bot with a FiveM server monitor built in. It began as a game server watcher, took over the jobs of an older bot of mine, and is now one slash-command bot. The game server monitor is one feature among about thirty, and the part I like most is a command I did not plan at the start: <code>/undo</code>. This is what rejs is, and what changed in how I think about a bot that can delete things.</p>
 
-      <p class="links">Source: <a href="https://github.com/kaan0d/rejs" target="_blank" rel="noopener">rejs</a></p>
 
       <div class="stats">
         <div class="stat"><b>1</b><span>bot, with moderation, tickets, protection and a game server monitor in it</span></div>
@@ -98,7 +103,7 @@ CREATE TRIGGER undo_&lt;table&gt;_update AFTER UPDATE ON &lt;table&gt;
 
       <p>One shortcut is still marked in the code: a session left open by a bot restart counts the downtime as playtime. It needs a "bot was down" marker, and it has not been worth it yet.</p>
 
-      <h2>What I learned</h2>
+      <h2>Lessons learned</h2>
 
       <p>The useful design question for a bot with power is not "what can it do" but "what happens after it does the wrong thing". Undo, snapshots, confirmation buttons on every bulk action, a role hierarchy check and an owner-only anti-nuke are all answers to that. The features people ask for are the small part; the safety net around them is where the time went.</p>
 

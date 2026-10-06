@@ -3,13 +3,13 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>number guess battle: two browsers, one relay, no shared server state | Kaan Dinç</title>
-<meta name="description" content="Number guess battle is a two-player game in Turkish and English. Each player locks a secret number, then you take turns guessing the other's. Every answer...">
+<title>Number Guess Battle: real-time multiplayer over a stateless relay | Kaan Dinç</title>
+<meta name="description" content="A two-player guessing game where an 80-line WebSocket relay only forwards messages. All game state lives in the two browsers, the secret number never crosses the network before the game ends, and a refreshed tab rejoins its room within 30 seconds.">
 <meta name="theme-color" content="#0a0a09">
 <link rel="canonical" href="https://kaandinc.com/posts/number-guessing">
 <meta property="og:type" content="article">
-<meta property="og:title" content="number guess battle: two browsers, one relay, no shared server state | Kaan Dinç">
-<meta property="og:description" content="Number guess battle is a two-player game in Turkish and English. Each player locks a secret number, then you take turns guessing the other's. Every answer...">
+<meta property="og:title" content="Number Guess Battle: real-time multiplayer over a stateless relay | Kaan Dinç">
+<meta property="og:description" content="A two-player guessing game where an 80-line WebSocket relay only forwards messages. All game state lives in the two browsers, the secret number never crosses the network before the game ends, and a refreshed tab rejoins its room within 30 seconds.">
 <meta property="og:url" content="https://kaandinc.com/posts/number-guessing">
 <meta property="og:site_name" content="Kaan Dinç">
 <meta property="og:image" content="https://kaandinc.com/assets/og.png">
@@ -17,8 +17,8 @@
 <meta property="og:image:height" content="630">
 <meta property="og:image:alt" content="Kaan Dinç, computer engineer. K logo beside 3D solids in amber on black.">
 <meta name="twitter:card" content="summary_large_image">
-<meta name="twitter:title" content="number guess battle: two browsers, one relay, no shared server state | Kaan Dinç">
-<meta name="twitter:description" content="Number guess battle is a two-player game in Turkish and English. Each player locks a secret number, then you take turns guessing the other's. Every answer...">
+<meta name="twitter:title" content="Number Guess Battle: real-time multiplayer over a stateless relay | Kaan Dinç">
+<meta name="twitter:description" content="A two-player guessing game where an 80-line WebSocket relay only forwards messages. All game state lives in the two browsers, the secret number never crosses the network before the game ends, and a refreshed tab rejoins its room within 30 seconds.">
 <meta name="twitter:image" content="https://kaandinc.com/assets/og.png">
 <link rel="icon" href="../assets/favicon.svg" type="image/svg+xml">
 <link rel="preload" href="../assets/fonts/Geist-Variable.woff2" as="font" type="font/woff2" crossorigin>
@@ -60,7 +60,8 @@
   <header class="post-head">
     <a class="post-head__back roll" href="../blog"><span class="roll__in" data-text="&amp;larr; blog">&larr; blog</span></a>
     <p class="post-head__meta" data-hero><time datetime="2026-05-15">May 2026</time> &nbsp;/&nbsp; 4 min read</p>
-    <h1 class="post-head__title" data-split="lines" data-hero>number guess battle: two browsers, one relay, no shared server state</h1>
+    <h1 class="post-head__title" data-split="lines" data-hero>Number Guess Battle: real-time multiplayer over a stateless relay</h1>
+    <p class="post-head__sub" data-hero>Two browsers, one relay, no shared server state.</p>
   </header>
   <div class="post-layout has-toc">
     <aside class="toc" aria-label="on this page">
@@ -74,6 +75,10 @@
       </ol>
     </aside>
     <div class="post-body">
+<aside class="brief" aria-label="project summary">
+  <p class="brief__summary">A two-player guessing game where an 80-line WebSocket relay only forwards messages. All game state lives in the two browsers, the secret number never crosses the network before the game ends, and a refreshed tab rejoins its room within 30 seconds.</p>
+  <dl class="brief__facts"><div><dt>Role</dt><dd>Solo, personal project</dd></div><div><dt>Stack</dt><dd>Next.js 16, React 19, Tailwind 4, Node.js, ws</dd></div><div><dt>Status</dt><dd>Live, open source</dd></div><div><dt>Links</dt><dd><a href="https://kaandinc.com/number-guessing/" target="_blank" rel="noopener">live app</a> · <a href="https://github.com/kaan0d/number-guessing" target="_blank" rel="noopener">source</a></dd></div></dl>
+</aside>
 <p>Number guess battle is a two-player game in Turkish and English. Each player locks a secret number, then you take turns guessing the other's. Every answer is higher, lower or correct, and your valid range narrows after each guess. First to hit the number wins. It's live at <a href="https://kaandinc.com/number-guessing/" target="_blank" rel="noopener">kaandinc.com/number-guessing</a>, with an online mode through a room code and a solo mode against the computer.</p>
 
       <p>The stack is Next.js 16 with React 19 and Tailwind 4. The interesting part is what's not there: no database, no accounts and no game logic on the server. The server is an 80-line WebSocket relay that knows which two sockets share a room and forwards their messages. Everything else happens in the two browsers.</p>
@@ -149,11 +154,11 @@
 <nav class="post-steps" aria-label="more posts">
   <a class="post-step post-step--newer" href="volume-extension">
       <span class="post-step__dir">&larr; newer</span>
-      <span class="post-step__title">a volume knob that remembers every site</span>
+      <span class="post-step__title">Simple Volume Saver: per-site volume control for Chrome</span>
     </a>
   <a class="post-step post-step--older" href="country-quiz">
       <span class="post-step__dir">older &rarr;</span>
-      <span class="post-step__title">country quiz: a world map that tells you how wrong you were</span>
+      <span class="post-step__title">Country Quiz: a world map game with distance feedback</span>
     </a>
 </nav>
 </main>

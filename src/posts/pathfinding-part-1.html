@@ -1,11 +1,18 @@
 ---
-title: pathfinding part 1: the unit that walked around a wall it could have broken
+title: Pathfinding part 1: deciding when to break a wall instead of walking around it
+subtitle: The unit that walked around a wall it could have broken.
+summary: A planner that prices walls in seconds, so units weigh breaking through against walking around, extended to squads that are limited by how many units fit at a wall. An oracle checks its decisions against the real simulation on 200 random maps.
+role: Solo, personal project
+stack: TypeScript, Vitest, Node.js
+status: Live demo, open source
+links: live demo https://kaandinc.com/environment-aware-pathfinding/ | source https://github.com/kaan0d/environment-aware-pathfinding
+series: pathfinding
+part: 1
 date: 2026-09-21T18:00
 label: Sep 2026
 ---
 <p>In games where a crowd of units attacks a base, a familiar mistake: a wall stands between a unit and its target, a long way around exists, and the unit takes it, even though breaking one wall cell would be much faster. This project fixes that by pricing walls in seconds, so the planner can weigh breaking against walking. Part 1 is the algorithm in three stages: a baseline that reproduces the mistake, a planner that decides by time for one unit, and squads that share one plan and are limited by how many units fit around a wall.</p>
 
-      <p class="links">Try it: <a href="https://kaandinc.com/environment-aware-pathfinding/" target="_blank" rel="noopener">live demo</a> · <a href="https://github.com/kaan0d/environment-aware-pathfinding" target="_blank" rel="noopener">source</a> · part 2: <a href="pathfinding-part-2">a demo you can break</a> · part 3: <a href="pathfinding-part-3">the follow-up list</a> · part 4: <a href="pathfinding-part-4">a cap, a cache, a lighter editor</a></p>
 
       <div class="stats">
         <div class="stat"><b>3 of 6</b><span>stages in this part: simulation and classic AI, the time-cost planner, squads</span></div>
@@ -21,7 +28,7 @@ label: Sep 2026
 
       <p>Stack: TypeScript, Vite, Vitest. <code>src/sim</code> has no DOM and no rendering, runs on a fixed 1/30 s step, and has no randomness, so the same scenario always gives the same result.</p>
 
-      <h2>Stage 1: the baseline and the mistake</h2>
+      <h2>The baseline and the mistake</h2>
 
       <p>Walls come in five levels (100 to 2,000 hit points), buildings in 1x1, 2x2 and 3x3. A cell holds at most one attacker, and an event log makes two runs comparable exactly.</p>
 
@@ -50,7 +57,7 @@ label: Sep 2026
 
       <p>Everything else asks "passable, breakable or blocked", never "is this a wall". A test scans <code>src/sim</code> and fails if any other file compares against a cell kind; I added one such line to confirm the test goes red.</p>
 
-      <h2>Stage 2: a wall is a cell with a price</h2>
+      <h2>A wall is a cell with a price</h2>
 
       <p>The cost model is one function:</p>
 
@@ -94,7 +101,7 @@ label: Sep 2026
 
       <p>For one unit alone, across three unit types and three wall levels, the worst estimate error is 1.0% against a 5% target. The estimate is always 0.03 to 0.10 s short, most likely from the fixed step at each walk/hit hand-over. One field takes 0.58 ms on 40x28 and 6.15 ms on 100x100 (targets 1 ms and 10 ms, Node 22, one machine).</p>
 
-      <h2>Stage 3: a crowd is not a bigger unit</h2>
+      <h2>A crowd is not a bigger unit</h2>
 
       <p>Six stage 2 units deployed together on a level 3 wall make six decisions and break two different wall cells: 8.53 s. One shared decision takes 6.97 s. Two things make a shared decision harder than multiplying damage: a wall can only be hit from the free cells next to it, one unit per cell, and units do not arrive together.</p>
 
@@ -183,11 +190,11 @@ label: Sep 2026
 
       <p>The suite is 52 tests at the end of stage 3, and every stage 1 and 2 number is unchanged.</p>
 
-      <h2>Speed, where I missed</h2>
+      <h2>Performance, and where it missed the target</h2>
 
       <p>The target was one full planning round for 10 squads and 50 units on 40x28 in under 3 ms. A round (every squad decides again, the cost of one destroyed wall) took 56.7 ms at first, and 25.0 ms once searches stop as soon as the cells they were asked about are final. That is 2.4 ms per squad and 8x over target. A squad needs up to seven fields and six rollouts. A field cache and replanning only affected squads would come first.</p>
 
-      <h2>Still open</h2>
+      <h2>Open issues</h2>
 
       <ul>
         <li>Building order is greedy: behind thick walls the cheapest-first pick wins the first building but loses the total, 68.20 s against 65.83 s for classic.</li>

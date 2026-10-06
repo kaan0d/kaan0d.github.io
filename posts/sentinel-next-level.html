@@ -3,13 +3,13 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>sentinel part 2: leaving the lab | Kaan Dinç</title>
-<meta name="description" content="The first post ended with seven finished stages and a &quot;what it still can't do&quot; list: Sentinel had only seen traffic I generated, and could not open the...">
+<title>Sentinel part 2: pcapng, tshark comparison, JA3 and Windows capture | Kaan Dinç</title>
+<meta name="description" content="Five items from the first limits list: a pcapng reader, a field-by-field comparison with Wireshark's tshark, two new detectors, JA3 TLS fingerprints and live capture on Windows.">
 <meta name="theme-color" content="#0a0a09">
 <link rel="canonical" href="https://kaandinc.com/posts/sentinel-next-level">
 <meta property="og:type" content="article">
-<meta property="og:title" content="sentinel part 2: leaving the lab | Kaan Dinç">
-<meta property="og:description" content="The first post ended with seven finished stages and a &quot;what it still can't do&quot; list: Sentinel had only seen traffic I generated, and could not open the...">
+<meta property="og:title" content="Sentinel part 2: pcapng, tshark comparison, JA3 and Windows capture | Kaan Dinç">
+<meta property="og:description" content="Five items from the first limits list: a pcapng reader, a field-by-field comparison with Wireshark's tshark, two new detectors, JA3 TLS fingerprints and live capture on Windows.">
 <meta property="og:url" content="https://kaandinc.com/posts/sentinel-next-level">
 <meta property="og:site_name" content="Kaan Dinç">
 <meta property="og:image" content="https://kaandinc.com/assets/og.png">
@@ -17,8 +17,8 @@
 <meta property="og:image:height" content="630">
 <meta property="og:image:alt" content="Kaan Dinç, computer engineer. K logo beside 3D solids in amber on black.">
 <meta name="twitter:card" content="summary_large_image">
-<meta name="twitter:title" content="sentinel part 2: leaving the lab | Kaan Dinç">
-<meta name="twitter:description" content="The first post ended with seven finished stages and a &quot;what it still can't do&quot; list: Sentinel had only seen traffic I generated, and could not open the...">
+<meta name="twitter:title" content="Sentinel part 2: pcapng, tshark comparison, JA3 and Windows capture | Kaan Dinç">
+<meta name="twitter:description" content="Five items from the first limits list: a pcapng reader, a field-by-field comparison with Wireshark's tshark, two new detectors, JA3 TLS fingerprints and live capture on Windows.">
 <meta name="twitter:image" content="https://kaandinc.com/assets/og.png">
 <link rel="icon" href="../assets/favicon.svg" type="image/svg+xml">
 <link rel="preload" href="../assets/fonts/Geist-Variable.woff2" as="font" type="font/woff2" crossorigin>
@@ -60,21 +60,26 @@
   <header class="post-head">
     <a class="post-head__back roll" href="../blog"><span class="roll__in" data-text="&amp;larr; blog">&larr; blog</span></a>
     <p class="post-head__meta" data-hero><time datetime="2026-09-19">Sep 2026</time> &nbsp;/&nbsp; 10 min read</p>
-    <h1 class="post-head__title" data-split="lines" data-hero>sentinel part 2: leaving the lab</h1>
+    <h1 class="post-head__title" data-split="lines" data-hero>Sentinel part 2: pcapng, tshark comparison, JA3 and Windows capture</h1>
+    <p class="post-head__sub" data-hero>Leaving the lab.</p>
   </header>
   <div class="post-layout has-toc">
     <aside class="toc" aria-label="on this page">
       <ol>
-        <li><a href="#stage-8-the-file-people-actually-have">Stage 8: the file people actually have</a></li>
-        <li><a href="#stage-9-comparing-with-tshark">Stage 9: comparing with tshark</a></li>
-        <li><a href="#stage-10-two-more-detectors">Stage 10: two more detectors</a></li>
-        <li><a href="#stage-11-ja3-fingerprints">Stage 11: JA3 fingerprints</a></li>
-        <li><a href="#stage-12-capture-on-windows">Stage 12: capture on Windows</a></li>
+        <li><a href="#the-file-people-actually-have">The file people actually have</a></li>
+        <li><a href="#comparing-with-tshark">Comparing with tshark</a></li>
+        <li><a href="#two-more-detectors">Two more detectors</a></li>
+        <li><a href="#ja3-fingerprints">JA3 fingerprints</a></li>
+        <li><a href="#capture-on-windows">Capture on Windows</a></li>
         <li><a href="#limits">Limits</a></li>
       </ol>
     </aside>
     <div class="post-body">
-<p>The <a href="sentinel-packet-analyzer">first post</a> ended with seven finished stages and a "what it still can't do" list: Sentinel had only seen traffic I generated, and could not open the files people actually have. This post takes five items from that list, most important first: a pcapng reader, a field-by-field comparison with Wireshark's tshark, two new detectors, JA3 TLS fingerprints, and live capture on Windows. Same rules as before: one stage at a time, tests, ruff and strict mypy clean, a sabotage run, and a plain note on what I could not check.</p>
+<aside class="brief" aria-label="project summary">
+  <p class="brief__summary">Five items from the first limits list: a pcapng reader, a field-by-field comparison with Wireshark's tshark, two new detectors, JA3 TLS fingerprints and live capture on Windows.</p>
+  <dl class="brief__facts"><div><dt>Role</dt><dd>Solo, personal project</dd></div><div><dt>Stack</dt><dd>Python, struct, ruff, mypy (strict), pytest</dd></div><div><dt>Status</dt><dd>Open source</dd></div><div><dt>Links</dt><dd><a href="https://github.com/kaan0d/sentinel" target="_blank" rel="noopener">source</a></dd></div><div><dt>Series</dt><dd><a href="sentinel-packet-analyzer">Part 1</a> · <b>Part 2</b> · <a href="sentinel-real-world">Part 3</a></dd></div></dl>
+</aside>
+<p>The <a href="sentinel-packet-analyzer">first post</a> ended with seven finished stages and a "limits" list: Sentinel had only seen traffic I generated, and could not open the files people actually have. This post takes five items from that list, most important first: a pcapng reader, a field-by-field comparison with Wireshark's tshark, two new detectors, JA3 TLS fingerprints, and live capture on Windows. Same rules as before: one stage at a time, tests, ruff and strict mypy clean, a sabotage run, and a plain note on what I could not check.</p>
 
       <div class="stats">
         <div class="stat"><b>6</b><span>detectors, two new (SSH brute force, ICMP tunneling); 2 capture formats read</span></div>
@@ -85,7 +90,7 @@
         <div class="stat"><b>3</b><span>bugs found by other people's captures, and fixed</span></div>
       </div>
 
-      <h2 id="stage-8-the-file-people-actually-have">Stage 8: the file people actually have</h2>
+      <h2 id="the-file-people-actually-have">The file people actually have</h2>
 
       <p>Wireshark has saved pcapng by default for years, and the stage 1 reader only knew classic pcap:</p>
 
@@ -117,7 +122,7 @@ ts_ns += interface.offset_ns
 
       <p>The sabotage run had 57 new breaks, all caught, but the first run hung on three. They broke timestamps, so a test comparing the 647-line pcap and pcapng outputs failed, and pytest spent minutes building a diff of two long texts. The test now reports the first differing line number instead, and fails in six seconds.</p>
 
-      <h2 id="stage-9-comparing-with-tshark">Stage 9: comparing with tshark</h2>
+      <h2 id="comparing-with-tshark">Comparing with tshark</h2>
 
       <p>Everything so far was checked against my own reading of the protocols, so a misreading could sit in both code and tests. tshark was written by other people and has read far more traffic. <code>tools/compare_tshark.py</code> (a dev tool, not a dependency) runs tshark with reassembly off and checksums verified, asks for about 75 fields per packet, translates them into Sentinel's form, and compares. Most of the work was defining "equal": tshark prints 12-bit TCP flags where Sentinel keeps nine, counts fragment offsets in 8-byte units, and prints scaled windows. Each translation has a test. TCP and UDP conversations are compared too.</p>
 
@@ -159,7 +164,7 @@ ts_ns += interface.offset_ns
 
       <p>Seven of the 46 sabotage breaks for this stage survived the first run, all in the tool's own tests (a rule that explained too much, a packet count checked in only one direction). I tightened them. Wireshark's <code>editcap</code> also converted 9 captures to pcapng, and the reader returned the same 2,961 packets, timestamps included.</p>
 
-      <h2 id="stage-10-two-more-detectors">Stage 10: two more detectors</h2>
+      <h2 id="two-more-detectors">Two more detectors</h2>
 
       <div class="table-wrap"><table class="data">
         <thead><tr><th>detector</th><th>looks for</th><th>default</th></tr></thead>
@@ -177,7 +182,7 @@ ts_ns += interface.offset_ns
 
       <p>One sabotage break survived: a message that printed the threshold instead of the count. The first alert of a burst always has exactly threshold connections, so the text looked the same. The test for a later alert now checks the count in the message.</p>
 
-      <h2 id="stage-11-ja3-fingerprints">Stage 11: JA3 fingerprints</h2>
+      <h2 id="ja3-fingerprints">JA3 fingerprints</h2>
 
       <p>The server name says who a client talks to. The TLS library decides which ciphers and extensions it offers and in what order, so the ClientHello also says what is talking. JA3 is an MD5 of five fields in decimal, lists joined with dashes and fields with commas: version, ciphers, extension types, curves, point formats. <code>read</code> and <code>flows</code> print it, and the filter language gained <code>ja3 HASH</code>:</p>
 
@@ -190,7 +195,7 @@ ts_ns += interface.offset_ns
 
       <p>The spec's own example (<code>769,47-53-5-10-…,0-10-11,23-24-25,0</code>) gives <code>ada70206e40642a3e4461f35503241d5</code> as required, and tshark's JA3 agrees on 203 field values. Two sabotage survivors turned out to be a dead branch, which I deleted, and two were real: an extensions block whose inner lengths lie was taken as complete. Cutting a hello cannot produce those cases, so they got their own tests. Computing JA3 costs 4.56 µs and only runs when asked.</p>
 
-      <h2 id="stage-12-capture-on-windows">Stage 12: capture on Windows</h2>
+      <h2 id="capture-on-windows">Capture on Windows</h2>
 
       <p>Windows has no <code>AF_PACKET</code>. The options are Npcap, which would be a dependency in a project with none, or a raw socket with <code>SIO_RCVALL</code>, which needs Administrator and sees less. Before writing code, I opened one and probed it. Whole IP packets arrive with no Ethernet header, each once, including loopback (Linux gives two). Outgoing TCP checksums are offload partial sums, which stage 9 already handles. IPv6 gave nothing, and Windows reports no drop count.</p>
 
@@ -225,11 +230,11 @@ ts_ns += interface.offset_ns
 <nav class="post-steps" aria-label="more posts">
   <a class="post-step post-step--newer" href="sentinel-real-world">
       <span class="post-step__dir">&larr; newer</span>
-      <span class="post-step__title">sentinel part 3: traffic I didn't make</span>
+      <span class="post-step__title">Sentinel part 3: the detectors on real-world traffic</span>
     </a>
   <a class="post-step post-step--older" href="sentinel-packet-analyzer">
       <span class="post-step__dir">older &rarr;</span>
-      <span class="post-step__title">sentinel part 1: reading the wire, one byte at a time</span>
+      <span class="post-step__title">Sentinel part 1: a packet analyzer and IDS from scratch in Python</span>
     </a>
 </nav>
 </main>

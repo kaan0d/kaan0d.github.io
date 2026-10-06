@@ -1,11 +1,18 @@
 ---
-title: pathfinding part 2: a demo you can break, with an editor, nine maps and a debug view
+title: Pathfinding part 2: interactive demo, map editor and debug view
+subtitle: A demo you can break, with an editor, nine maps and a debug view.
+summary: A two-panel PixiJS demo on a fixed time step, a map editor with nine ready maps, a debug view that explains each unit's decision, and a GitHub Pages build. One of the maps exposed a planner bug the tests had missed.
+role: Solo, personal project
+stack: TypeScript, PixiJS, Vite, Vitest
+status: Live demo, open source
+links: live demo https://kaandinc.com/environment-aware-pathfinding/ | source https://github.com/kaan0d/environment-aware-pathfinding
+series: pathfinding
+part: 2
 date: 2026-09-22
 label: Sep 2026
 ---
 <p>Part 1 was the algorithm: a simulation, a planner that prices walls in seconds, and squads that share attack positions, checked against the real simulation on 200 random maps. This part is what sits on top of it: a two-panel PixiJS demo with a fixed time step, an editor, nine ready maps, a switch that lets attackers share a cell, a debug view that shows why a unit decided what it did, and a GitHub Pages build. One of the maps found a planner bug the tests had missed.</p>
 
-      <p class="links">Try it: <a href="https://kaandinc.com/environment-aware-pathfinding/" target="_blank" rel="noopener">live demo</a> · <a href="https://github.com/kaan0d/environment-aware-pathfinding" target="_blank" rel="noopener">source</a> · part 1: <a href="pathfinding-part-1">the unit that walked around a wall</a> · part 3: <a href="pathfinding-part-3">the follow-up list</a> · part 4: <a href="pathfinding-part-4">a cap, a cache, a lighter editor</a></p>
 
       <div class="stats">
         <div class="stat"><b>6 of 6</b><span>stages done; this part covers stages 4 to 6</span></div>
@@ -13,7 +20,7 @@ label: Sep 2026
         <div class="stat"><b>123</b><span>tests, all green, plus a strict type check and a production build</span></div>
       </div>
 
-      <h2>Stage 4: making it visible</h2>
+      <h2>Making it visible</h2>
 
       <p>One canvas, two panels: the classic algorithm on the left, the new one on the right, same map, same units, same deploy events. The drawing code only reads the worlds, and <code>src/sim</code> still imports nothing from Pixi.</p>
 
@@ -58,7 +65,7 @@ label: Sep 2026
         <figcaption>The end of the L-corner run at 4x speed. The banner compares the two finish times.</figcaption>
       </figure>
 
-      <h2>Stage 5: an editor and nine maps</h2>
+      <h2>An editor and nine maps</h2>
 
       <p>The map is one <code>Scenario</code> object and both worlds are built from it. Every edit is a small pure function on it, with unit tests: paint a wall of level 1 to 5, erase, place a 1x1, 2x2 or 3x3 building where the whole footprint is free, add a spawn point, change the hit points of one wall or building. Any edit resets both worlds. Sliders cover unit speed, damage and hit points, squad radius, candidate count and a wall hit point multiplier, and a switch turns group behavior off.</p>
 
@@ -147,7 +154,7 @@ label: Sep 2026
 
       <p>The slot-rule tests from parts 1 and 2 now switch the rule off explicitly. New tests cover the default, the corridor wall (4.53 s against 22.03 s), no waiting or reserving, determinism, and the demo switch rebuilding both worlds. The suite is 123 tests.</p>
 
-      <h2>Stage 6: cartoon style and a debug view</h2>
+      <h2>Cartoon style and a debug view</h2>
 
       <p>Everything is drawn in code, no image files: wall posts that join their neighbors, five wall levels (wood, stone, iron, gold, obsidian), cracks at 75%, 50% and 25% hit points, three round characters that hop, squash and lunge. Hits throw sparks and falling walls throw dust. Particles live in a fixed pool of typed arrays capped at 360, with their own random generator, so decoration cannot touch the simulation.</p>
 
@@ -193,7 +200,7 @@ label: Sep 2026
         <figcaption>The same page at 700 pixels wide. Nothing overflows sideways, the controls move below the maps, and the readout sits close to the top of the map.</figcaption>
       </figure>
 
-      <h2>Still open</h2>
+      <h2>Open issues</h2>
 
       <ul>
         <li>Building order inside a target area is still greedy.</li>

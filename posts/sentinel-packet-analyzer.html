@@ -3,13 +3,13 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>sentinel part 1: reading the wire, one byte at a time | Kaan Dinç</title>
-<meta name="description" content="Sentinel is a packet analyzer and rule-based intrusion detection system written from scratch in Python. The protocol parsers are hand-written with struct...">
+<title>Sentinel part 1: a packet analyzer and IDS from scratch in Python | Kaan Dinç</title>
+<meta name="description" content="Hand-written protocol parsers with no runtime dependencies, pcap reading and writing, TCP stream reassembly, a filter language, and detectors for port scans, SYN floods, ARP spoofing and DNS tunneling, checked with fuzzing, benchmarks and strict typing.">
 <meta name="theme-color" content="#0a0a09">
 <link rel="canonical" href="https://kaandinc.com/posts/sentinel-packet-analyzer">
 <meta property="og:type" content="article">
-<meta property="og:title" content="sentinel part 1: reading the wire, one byte at a time | Kaan Dinç">
-<meta property="og:description" content="Sentinel is a packet analyzer and rule-based intrusion detection system written from scratch in Python. The protocol parsers are hand-written with struct...">
+<meta property="og:title" content="Sentinel part 1: a packet analyzer and IDS from scratch in Python | Kaan Dinç">
+<meta property="og:description" content="Hand-written protocol parsers with no runtime dependencies, pcap reading and writing, TCP stream reassembly, a filter language, and detectors for port scans, SYN floods, ARP spoofing and DNS tunneling, checked with fuzzing, benchmarks and strict typing.">
 <meta property="og:url" content="https://kaandinc.com/posts/sentinel-packet-analyzer">
 <meta property="og:site_name" content="Kaan Dinç">
 <meta property="og:image" content="https://kaandinc.com/assets/og.png">
@@ -17,8 +17,8 @@
 <meta property="og:image:height" content="630">
 <meta property="og:image:alt" content="Kaan Dinç, computer engineer. K logo beside 3D solids in amber on black.">
 <meta name="twitter:card" content="summary_large_image">
-<meta name="twitter:title" content="sentinel part 1: reading the wire, one byte at a time | Kaan Dinç">
-<meta name="twitter:description" content="Sentinel is a packet analyzer and rule-based intrusion detection system written from scratch in Python. The protocol parsers are hand-written with struct...">
+<meta name="twitter:title" content="Sentinel part 1: a packet analyzer and IDS from scratch in Python | Kaan Dinç">
+<meta name="twitter:description" content="Hand-written protocol parsers with no runtime dependencies, pcap reading and writing, TCP stream reassembly, a filter language, and detectors for port scans, SYN floods, ARP spoofing and DNS tunneling, checked with fuzzing, benchmarks and strict typing.">
 <meta name="twitter:image" content="https://kaandinc.com/assets/og.png">
 <link rel="icon" href="../assets/favicon.svg" type="image/svg+xml">
 <link rel="preload" href="../assets/fonts/Geist-Variable.woff2" as="font" type="font/woff2" crossorigin>
@@ -60,23 +60,28 @@
   <header class="post-head">
     <a class="post-head__back roll" href="../blog"><span class="roll__in" data-text="&amp;larr; blog">&larr; blog</span></a>
     <p class="post-head__meta" data-hero><time datetime="2026-09-18">Sep 2026</time> &nbsp;/&nbsp; 9 min read</p>
-    <h1 class="post-head__title" data-split="lines" data-hero>sentinel part 1: reading the wire, one byte at a time</h1>
+    <h1 class="post-head__title" data-split="lines" data-hero>Sentinel part 1: a packet analyzer and IDS from scratch in Python</h1>
+    <p class="post-head__sub" data-hero>Reading the wire, one byte at a time.</p>
   </header>
   <div class="post-layout has-toc">
     <aside class="toc" aria-label="on this page">
       <ol>
-        <li><a href="#stage-1-a-parser-never-raises">Stage 1: a parser never raises</a></li>
-        <li><a href="#stage-2-what-the-payload-says">Stage 2: what the payload says</a></li>
-        <li><a href="#stage-3-from-packets-to-conversations">Stage 3: from packets to conversations</a></li>
-        <li><a href="#stage-4-a-filter-language">Stage 4: a filter language</a></li>
-        <li><a href="#stage-5-raising-the-alarm">Stage 5: raising the alarm</a></li>
-        <li><a href="#stage-6-a-real-network">Stage 6: a real network</a></li>
-        <li><a href="#stage-7-measuring-it">Stage 7: measuring it</a></li>
-        <li><a href="#how-i-checked-it-s-right">How I checked it's right</a></li>
+        <li><a href="#a-parser-never-raises">A parser never raises</a></li>
+        <li><a href="#what-the-payload-says">What the payload says</a></li>
+        <li><a href="#from-packets-to-conversations">From packets to conversations</a></li>
+        <li><a href="#a-filter-language">A filter language</a></li>
+        <li><a href="#raising-the-alarm">Raising the alarm</a></li>
+        <li><a href="#a-real-network">A real network</a></li>
+        <li><a href="#measuring-it">Measuring it</a></li>
+        <li><a href="#verification">Verification</a></li>
         <li><a href="#limits">Limits</a></li>
       </ol>
     </aside>
     <div class="post-body">
+<aside class="brief" aria-label="project summary">
+  <p class="brief__summary">Hand-written protocol parsers with no runtime dependencies, pcap reading and writing, TCP stream reassembly, a filter language, and detectors for port scans, SYN floods, ARP spoofing and DNS tunneling, checked with fuzzing, benchmarks and strict typing.</p>
+  <dl class="brief__facts"><div><dt>Role</dt><dd>Solo, personal project</dd></div><div><dt>Stack</dt><dd>Python, struct, ruff, mypy (strict), pytest</dd></div><div><dt>Status</dt><dd>Open source</dd></div><div><dt>Links</dt><dd><a href="https://github.com/kaan0d/sentinel" target="_blank" rel="noopener">source</a></dd></div><div><dt>Series</dt><dd><b>Part 1</b> · <a href="sentinel-next-level">Part 2</a> · <a href="sentinel-real-world">Part 3</a></dd></div></dl>
+</aside>
 <p>Sentinel is a packet analyzer and rule-based intrusion detection system written from scratch in Python. The protocol parsers are hand-written with <code>struct</code>: no Scapy, no dpkt, no pyshark, and no runtime dependencies. It reads pcap files and live Linux interfaces, prints tcpdump-style lines, reassembles TCP streams, filters with its own language, and raises JSON alerts for port scans, SYN floods, ARP spoofing and DNS tunneling. This post covers all seven stages, with the focus on what the parsers do with bad input and how I tried to prove they are right.</p>
 
       <div class="stats">
@@ -88,7 +93,7 @@
         <div class="stat"><b>196 of 196</b><span>deliberate one-line breaks caught by the tests</span></div>
       </div>
 
-      <h2 id="stage-1-a-parser-never-raises">Stage 1: a parser never raises</h2>
+      <h2 id="a-parser-never-raises">A parser never raises</h2>
 
       <p>A packet analyzer reads bytes anyone on the network can send. So no parser raises on bad input: not on a truncated packet, a header that lies about its length, or random bytes. Every parser returns a frozen dataclass with three shared fields:</p>
 
@@ -123,7 +128,7 @@
 
       <p>The pcap reader handles all four magic numbers, keeps timestamps as integer nanoseconds, and caps each record at 262,144 bytes before reading. It is the one place that raises, because a broken file is not a packet.</p>
 
-      <h2 id="stage-2-what-the-payload-says">Stage 2: what the payload says</h2>
+      <h2 id="what-the-payload-says">What the payload says</h2>
 
       <p>DNS is found by port 53; HTTP and TLS by content (<code>HTTP/1.</code> or a method, <code>16 03</code> plus a ClientHello), so HTTP on 8080 still works. Every application parser works on one segment; stage 3 handles streams.</p>
 
@@ -139,7 +144,7 @@ parse_dns(header).anomalies == ('truncated dns message: question 1 of 65535 is m
 
       <p><strong>Printing what the network sends.</strong> A terminal escape sequence inside a hostname would run in the analyst's terminal. Parsers escape control characters as <code>\xNN</code> at parse time, so filters and JSON alerts get the same safe strings.</p>
 
-      <h2 id="stage-3-from-packets-to-conversations">Stage 3: from packets to conversations</h2>
+      <h2 id="from-packets-to-conversations">From packets to conversations</h2>
 
       <p>A flow is a protocol and two endpoints; the client is whoever sent the SYN. Each direction of a TCP connection is reassembled into one byte stream. This is a POST split into three segments, out of order with one duplicate, replayed through the real reassembler:</p>
 
@@ -154,7 +159,7 @@ parse_dns(header).anomalies == ('truncated dns message: question 1 of 65535 is m
 
       <p><code>read</code> stays stateless on purpose: constant memory, and a line never depends on the rest of the capture. Everything that grows is capped and counted: 1 MiB per stream, 4,096 byte ranges per stream, 256 MiB in total, 200,000 flows.</p>
 
-      <h2 id="stage-4-a-filter-language">Stage 4: a filter language</h2>
+      <h2 id="a-filter-language">A filter language</h2>
 
       <p>A lexer, a parser and an evaluator, no library. <code>not</code> binds tighter than <code>and</code>, <code>and</code> tighter than <code>or</code>, and <code>tcp port 80</code> means <code>tcp and port 80</code> as in tcpdump. <code>and</code>/<code>or</code> keep their operands in one flat node, so a thousand-term chain is not a thousand levels of recursion.</p>
 
@@ -167,7 +172,7 @@ parse_dns(header).anomalies == ('truncated dns message: question 1 of 65535 is m
 
       <p>Python's <code>int()</code> raises on very long digit strings, so numbers are capped at ten digits. The evaluator is checked against 34 hand-written predicates over 80 packets; the parser against 25,000 random texts that must not raise.</p>
 
-      <h2 id="stage-5-raising-the-alarm">Stage 5: raising the alarm</h2>
+      <h2 id="raising-the-alarm">Raising the alarm</h2>
 
       <p>Four detectors, each counting something simple over a sliding window and saying what it counted:</p>
 
@@ -189,7 +194,7 @@ parse_dns(header).anomalies == ('truncated dns message: question 1 of 65535 is m
 
       <p>Thresholds come from TOML rule files (standard library). A rule can carry a stage 4 filter, so one rule can watch SSH more closely than the rest. An unknown key is an error, so a typo cannot silently keep a default. Exit codes: 0 when the capture was read, alerts or not; 1 for an unreadable capture; 2 for bad rules.</p>
 
-      <h2 id="stage-6-a-real-network">Stage 6: a real network</h2>
+      <h2 id="a-real-network">A real network</h2>
 
       <p><code>live</code> reads Ethernet frames from one Linux interface through an <code>AF_PACKET</code> socket and feeds the same decode, filter, print, detect and write steps. It only listens and does not enable promiscuous mode. I develop on Windows, so the socket layer is as thin as possible and a stand-in socket replays the generated captures. The strongest test: <code>live</code> on the attack capture must print exactly the 13 alerts <code>ids</code> prints, each one as it is raised. Output and <code>--write</code> flush after every packet, so a pipe shows lines at once and a killed capture leaves a readable file.</p>
 
@@ -197,7 +202,7 @@ parse_dns(header).anomalies == ('truncated dns message: question 1 of 65535 is m
 
       <p>Asking what changes when input never ends found a stage 5 bug: detectors never forgot a source, and past 100,000 keys they stopped tracking new ones, so a busy network would go blind within days. Tables now drop keys idle longer than the window, whose window is empty anyway. In a replay of 150,000 sources followed by a real scan, the old table missed the scan; the new one stays near 5,000 keys and finds it.</p>
 
-      <h2 id="stage-7-measuring-it">Stage 7: measuring it</h2>
+      <h2 id="measuring-it">Measuring it</h2>
 
       <p><code>python -m tools.bench</code> runs every stage over the same 100,000 generated packets (about 65 bytes each), three times, fastest run kept. On one core (Windows 11, Python 3.13.5): pcap read 1,564,676 packets per second, write 2,567,763, decode 98,710, <code>read</code> 44,135, <code>ids</code> 42,033. A profile of decoding shows no single hot spot: the biggest share is 13%, the rest is spread over parsers, checksums and <code>ipaddress</code> objects. The live loop runs 27,635 to 37,716 packets per second, about 2 MB/s at 65 bytes a packet. A busy network will make the kernel drop packets; the summary line says how many.</p>
 
@@ -205,7 +210,7 @@ parse_dns(header).anomalies == ('truncated dns message: question 1 of 65535 is m
 
       <p>CI runs ruff, strict mypy, the tests, 200,000 fuzz inputs and a benchmark on Python 3.12 and 3.13, Linux and Windows, plus a root job on Linux that runs the real packet socket on loopback and fails if those tests were skipped. It took four pushes: an unquoted step name with a colon that YAML read as a new key, then a float tolerance that only failed on Python 3.12 on Windows. The fourth run was green, and the real socket captured, decoded and saved a UDP datagram on loopback. The kernel delivers each loopback packet twice; like libpcap, <code>live</code> drops the outgoing copy, and CI confirmed two copies with that filter off and one with it on.</p>
 
-      <h2 id="how-i-checked-it-s-right">How I checked it's right</h2>
+      <h2 id="verification">Verification</h2>
 
       <p>The generator uses the same checksum function as the parsers, so a bug there would cancel itself out. Wherever possible, tests compare against something written separately: a textbook IPv4 header with a known checksum, a hand-built TCP pseudo-header, one hand-written hex packet per protocol, a big-endian pcap built with <code>struct</code>, and 300 random payloads cut into overlapping, shuffled pieces near the 32-bit wrap that must reassemble exactly.</p>
 
@@ -227,11 +232,11 @@ parse_dns(header).anomalies == ('truncated dns message: question 1 of 65535 is m
 <nav class="post-steps" aria-label="more posts">
   <a class="post-step post-step--newer" href="sentinel-next-level">
       <span class="post-step__dir">&larr; newer</span>
-      <span class="post-step__title">sentinel part 2: leaving the lab</span>
+      <span class="post-step__title">Sentinel part 2: pcapng, tshark comparison, JA3 and Windows capture</span>
     </a>
   <a class="post-step post-step--older" href="impulse-physics-engine">
       <span class="post-step__dir">older &rarr;</span>
-      <span class="post-step__title">impulse part 1: 2d physics with no library to blame</span>
+      <span class="post-step__title">Impulse part 1: a 2D physics engine from scratch in TypeScript</span>
     </a>
 </nav>
 </main>

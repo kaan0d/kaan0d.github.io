@@ -1,5 +1,13 @@
 ---
-title: ridecast: weather for the moment you get there
+title: Ridecast part 1: route weather for the time you arrive
+subtitle: Weather for the moment you get there.
+summary: A web app for motorcycle riders that builds an arrival timeline along a route from speed, road type and breaks, matches every point to the hourly forecast for that time, and rates rain, wind, fog, ice and darkness along the way.
+role: Solo, personal project
+stack: TypeScript, Vite, Leaflet, Open-Meteo, OSRM, Vitest
+status: Live; the map has since moved from Leaflet to MapLibre
+links: live app https://kaandinc.com/ridecast/ | source https://github.com/kaan0d/ridecast
+series: ridecast
+part: 1
 date: 2026-09-23
 label: Sep 2026
 ---
@@ -81,6 +89,6 @@ label: Sep 2026
 
       <p>The redesign also had a bug that only a wide screen showed: the CSS filter that mutes the map was on the whole tile layer, and at 2560 px the browser stopped painting it past about 1,750 px. Filtering each tile instead fixed it.</p>
 
-      <h2>Not shown yet</h2>
+      <h2>Limits</h2>
 
       <p>The levels are per sample point, about every 15 minutes of driving, so a short shower between two points can slip through. The thresholds are my own starting values, not from a standard, and nothing here has been tried on a real ride yet. The rest of the build continues in <a href="ridecast-part-2">ridecast part 2: from warnings to decisions</a>.</p>

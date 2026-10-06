@@ -1,11 +1,18 @@
 ---
-title: impulse part 2: the ball that cheated and the box that wouldn't sleep
+title: Impulse part 2: restitution, scene queries and a soft-step solver
+subtitle: The ball that cheated and the box that wouldn't sleep.
+summary: Five more stages on the Impulse engine: a 3.5% bounce error fixed, raycasts and overlap queries with filters, a soft-step solver with substeps, rolling resistance that lets a 500-body pile sleep, and contacts that start 2 cm before bodies touch.
+role: Solo, personal project
+stack: TypeScript, Canvas 2D, Vite, Vitest, Playwright
+status: Live demo, open source
+links: live demo https://kaandinc.com/impulse/ | source https://github.com/kaan0d/impulse
+series: impulse
+part: 2
 date: 2026-09-21
 label: Sep 2026
 ---
 <p>The first Impulse post ended with a list of things that did not work. A ball came back 3.5% too high. A pile of 500 bodies never fell asleep. Fast bodies could only be stopped by static walls. Round two is me going through that list, and a few things I found on the way. This post grows with every stage, so it is a work log more than a summary.</p>
 
-      <p class="links">Try it: <a href="https://kaandinc.com/impulse/" target="_blank" rel="noopener">live demo</a> · <a href="https://github.com/kaan0d/impulse" target="_blank" rel="noopener">source</a> · previous post: <a href="impulse-physics-engine">impulse part 1: 2d physics with no library to blame</a></p>
 
       <div class="stats">
         <div class="stat"><b>5</b><span>new stages, 13 to 17</span></div>
@@ -112,7 +119,7 @@ label: Sep 2026
 
       <p>4 substeps with a relax pass cost about the same as 10 iterations. The awake pyramid got 37% slower (0.86 to 1.18 ms) because of the extra speculative contacts, and every other row got faster. Two runs of the same scene differ by up to about 12%, so I would not read anything into the small differences.</p>
 
-      <h2>What is still not solved</h2>
+      <h2>Limits</h2>
 
       <p>A 20-box tower still compresses by about 7 cm at 40 Hz. Soft contacts trade stiffness for stability, and I have not found a better place on that trade.</p>
 

@@ -3,13 +3,13 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>impulse part 1: 2d physics with no library to blame | Kaan Dinç</title>
-<meta name="description" content="Impulse is a 2D rigid body physics engine I wrote from scratch in TypeScript, with no physics libraries: no Matter.js, no Planck, no Rapier. It simulates...">
+<title>Impulse part 1: a 2D physics engine from scratch in TypeScript | Kaan Dinç</title>
+<meta name="description" content="A 2D rigid body physics engine with SAT collision, a sequential impulse solver, sleeping and joints, written without physics libraries. It runs in the browser as about 36 kB of JavaScript, and every piece is checked against something other than itself.">
 <meta name="theme-color" content="#0a0a09">
 <link rel="canonical" href="https://kaandinc.com/posts/impulse-physics-engine">
 <meta property="og:type" content="article">
-<meta property="og:title" content="impulse part 1: 2d physics with no library to blame | Kaan Dinç">
-<meta property="og:description" content="Impulse is a 2D rigid body physics engine I wrote from scratch in TypeScript, with no physics libraries: no Matter.js, no Planck, no Rapier. It simulates...">
+<meta property="og:title" content="Impulse part 1: a 2D physics engine from scratch in TypeScript | Kaan Dinç">
+<meta property="og:description" content="A 2D rigid body physics engine with SAT collision, a sequential impulse solver, sleeping and joints, written without physics libraries. It runs in the browser as about 36 kB of JavaScript, and every piece is checked against something other than itself.">
 <meta property="og:url" content="https://kaandinc.com/posts/impulse-physics-engine">
 <meta property="og:site_name" content="Kaan Dinç">
 <meta property="og:image" content="https://kaandinc.com/assets/og.png">
@@ -17,8 +17,8 @@
 <meta property="og:image:height" content="630">
 <meta property="og:image:alt" content="Kaan Dinç, computer engineer. K logo beside 3D solids in amber on black.">
 <meta name="twitter:card" content="summary_large_image">
-<meta name="twitter:title" content="impulse part 1: 2d physics with no library to blame | Kaan Dinç">
-<meta name="twitter:description" content="Impulse is a 2D rigid body physics engine I wrote from scratch in TypeScript, with no physics libraries: no Matter.js, no Planck, no Rapier. It simulates...">
+<meta name="twitter:title" content="Impulse part 1: a 2D physics engine from scratch in TypeScript | Kaan Dinç">
+<meta name="twitter:description" content="A 2D rigid body physics engine with SAT collision, a sequential impulse solver, sleeping and joints, written without physics libraries. It runs in the browser as about 36 kB of JavaScript, and every piece is checked against something other than itself.">
 <meta name="twitter:image" content="https://kaandinc.com/assets/og.png">
 <link rel="icon" href="../assets/favicon.svg" type="image/svg+xml">
 <link rel="preload" href="../assets/fonts/Geist-Variable.woff2" as="font" type="font/woff2" crossorigin>
@@ -60,7 +60,8 @@
   <header class="post-head">
     <a class="post-head__back roll" href="../blog"><span class="roll__in" data-text="&amp;larr; blog">&larr; blog</span></a>
     <p class="post-head__meta" data-hero><time datetime="2026-09-17">Sep 2026</time> &nbsp;/&nbsp; 5 min read</p>
-    <h1 class="post-head__title" data-split="lines" data-hero>impulse part 1: 2d physics with no library to blame</h1>
+    <h1 class="post-head__title" data-split="lines" data-hero>Impulse part 1: a 2D physics engine from scratch in TypeScript</h1>
+    <p class="post-head__sub" data-hero>2D physics with no library to blame.</p>
   </header>
   <div class="post-layout has-toc">
     <aside class="toc" aria-label="on this page">
@@ -69,16 +70,19 @@
         <li><a href="#twelve-stages">Twelve stages</a></li>
         <li><a href="#what-it-looks-like">What it looks like</a></li>
         <li><a href="#the-numbers">The numbers</a></li>
-        <li><a href="#how-i-checked-it-s-right">How I checked it's right</a></li>
-        <li><a href="#what-it-still-can-t-do">What it still can't do</a></li>
+        <li><a href="#verification">Verification</a></li>
+        <li><a href="#limits">Limits</a></li>
       </ol>
     </aside>
     <div class="post-body">
+<aside class="brief" aria-label="project summary">
+  <p class="brief__summary">A 2D rigid body physics engine with SAT collision, a sequential impulse solver, sleeping and joints, written without physics libraries. It runs in the browser as about 36 kB of JavaScript, and every piece is checked against something other than itself.</p>
+  <dl class="brief__facts"><div><dt>Role</dt><dd>Solo, personal project</dd></div><div><dt>Stack</dt><dd>TypeScript, Canvas 2D, Vite, Vitest, Playwright</dd></div><div><dt>Status</dt><dd>Live demo, open source</dd></div><div><dt>Links</dt><dd><a href="https://kaandinc.com/impulse/" target="_blank" rel="noopener">live demo</a> · <a href="https://kaandinc.com/impulse/bench/" target="_blank" rel="noopener">benchmark</a> · <a href="https://github.com/kaan0d/impulse" target="_blank" rel="noopener">source</a> · <a href="data/impulse-benchmark.json">raw numbers</a></dd></div><div><dt>Series</dt><dd><b>Part 1</b> · <a href="impulse-soft-step">Part 2</a></dd></div></dl>
+</aside>
 <p>Impulse is a 2D rigid body physics engine I wrote from scratch in TypeScript, with no physics libraries: no Matter.js, no Planck, no Rapier. It simulates circles, boxes and convex polygons that collide, stack, fall asleep, get pinned together with joints and get grabbed with the mouse. It runs in the browser, has zero runtime dependencies, and the whole demo is about 36 kB of JavaScript.</p>
 
       <p>My map was Erin Catto's Box2D Lite: sequential impulses, warm starting, accumulated impulse clamping. I used it for the ideas and wrote every piece to fit this codebase, then tried to prove each piece against something other than itself. Most of this post is about that second part.</p>
 
-      <p class="links">Try it: <a href="https://kaan0d.github.io/impulse/" target="_blank" rel="noopener">live demo</a> · <a href="https://kaan0d.github.io/impulse/bench/" target="_blank" rel="noopener">benchmark page</a> · <a href="https://github.com/kaan0d/impulse" target="_blank" rel="noopener">source</a> · <a href="data/impulse-benchmark.json">raw numbers</a></p>
 
       <div class="stats">
         <div class="stat"><b>0</b><span>runtime dependencies</span></div>
@@ -223,7 +227,7 @@ advance(frameSeconds: <span class="kw">number</span>): <span class="kw">number</
         <p>The "before" tower times come from an earlier solver setup (30 iterations, no block solver), so that chart compares the whole change, not one part of it. The same goes for the step times: they dropped by roughly four times after the change, but I changed the iteration count and the browser mode at once, so I can't credit either one alone. It went from 3.3 ms to 0.86 ms for the pyramid, and from 10.4 ms to 2.6 ms for 1,000 bodies.</p>
       </div>
 
-      <h2 id="how-i-checked-it-s-right">How I checked it's right</h2>
+      <h2 id="verification">Verification</h2>
 
       <p>A physics engine can look right and be wrong, so most tests compare against something independent of the code they test:</p>
 
@@ -262,7 +266,7 @@ advance(frameSeconds: <span class="kw">number</span>): <span class="kw">number</
 
       <p>The sabotage and the ordinary failures turned up problems on both sides. Several times a test failed because my test was wrong, not the engine: a vector helper mutated its input and broke my "is the point inside" oracle, and a test expected a bullet to stop against a small circle that it only grazed, when a glancing hit should deflect it. And one test found a real bug: removing a joint left a sleeping body asleep in mid-air, so removing a joint now wakes its bodies.</p>
 
-      <h2 id="what-it-still-can-t-do">What it still can't do</h2>
+      <h2 id="limits">Limits</h2>
 
       <p>A pile of 500 mixed bodies never falls asleep in the time I measured, so sleeping helps stacks and pyramids but not big chaotic piles.</p>
 
@@ -280,11 +284,11 @@ advance(frameSeconds: <span class="kw">number</span>): <span class="kw">number</
 <nav class="post-steps" aria-label="more posts">
   <a class="post-step post-step--newer" href="sentinel-packet-analyzer">
       <span class="post-step__dir">&larr; newer</span>
-      <span class="post-step__title">sentinel part 1: reading the wire, one byte at a time</span>
+      <span class="post-step__title">Sentinel part 1: a packet analyzer and IDS from scratch in Python</span>
     </a>
   <a class="post-step post-step--older" href="volume-extension">
       <span class="post-step__dir">older &rarr;</span>
-      <span class="post-step__title">a volume knob that remembers every site</span>
+      <span class="post-step__title">Simple Volume Saver: per-site volume control for Chrome</span>
     </a>
 </nav>
 </main>

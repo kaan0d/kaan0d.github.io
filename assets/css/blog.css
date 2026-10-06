@@ -33,6 +33,7 @@
 .post-row__date, .post-row__meta { font-family: var(--font-mono); font-size: 0.82rem; color: var(--text-dim); }
 .post-row__meta { white-space: nowrap; }
 .post-row__title { font-size: clamp(1.3rem, 2.6vw, 2.2rem); font-weight: 500; letter-spacing: -0.035em; line-height: 1.15; transition: transform 0.6s var(--ease); }
+.post-row__tags { display: block; margin-top: 10px; font-family: var(--font-mono); font-size: 0.76rem; font-weight: 400; letter-spacing: 0; color: var(--text-dim); }
 .post-row:hover .post-row__title, .post-row:focus-visible .post-row__title { transform: translateX(14px); }
 .post-row__arrow { color: var(--text-dim); transition: transform 0.5s var(--ease), color 0.3s; }
 .post-row:hover .post-row__arrow, .post-row:focus-visible .post-row__arrow { color: var(--accent); transform: translateX(6px); }

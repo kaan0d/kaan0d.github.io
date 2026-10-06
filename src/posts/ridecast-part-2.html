@@ -1,11 +1,18 @@
 ---
-title: ridecast part 2: from warnings to decisions
+title: Ridecast part 2: safer routes, departure times and gear
+subtitle: From warnings to decisions.
+summary: Turning a list of warnings into decisions: which road is safer, when to leave, what to wear and where to stop, and a trip that can be sent to someone else.
+role: Solo, personal project
+stack: TypeScript, Vite, Leaflet, Open-Meteo, OSRM, Vitest
+status: Live; the map has since moved from Leaflet to MapLibre
+links: live app https://kaandinc.com/ridecast/ | source https://github.com/kaan0d/ridecast
+series: ridecast
+part: 2
 date: 2026-09-24
 label: Sep 2026
 ---
 <p>The first ridecast post ended with a map that knows the weather at my arrival time at every point, and a list of warnings: rain here, fog there, cold after dark. A list is not a decision, though. Part 2 is about turning it into one: which road, when to leave, what to wear. It grows with every stage, like the first one.</p>
 
-      <p class="links">Previous post: <a href="ridecast">ridecast: weather for the moment you get there</a> · source: <a href="https://github.com/kaan0d/ridecast" target="_blank" rel="noopener">github</a></p>
 
       <div class="stats">
         <div class="stat"><b>10</b><span>stages, all done</span></div>
@@ -84,6 +91,6 @@ label: Sep 2026
 
       <p>A smaller lesson from the same test: the automated tab was in the background, where Chrome slows timers down to about one per second, so my test scripts that waited in small steps crawled and looked frozen. Feeding the fixes without timers and waiting between steps from the outside fixed the testing, not the app.</p>
 
-      <h2>What this does not show</h2>
+      <h2>Limits</h2>
 
       <p>Nothing here has been tried on a real ride yet. On the web, GPS tracking is not reliable while the phone is locked or the browser is in the background, which is exactly how a phone often sits on a bike; that is the real argument for moving the pure core into a native app one day. The build goes on in <a href="ridecast-part-3">ridecast part 3: a map that behaves, and longer trips</a>. The risk thresholds are my own starting values, the road type and the wet road are guesses, and the free services it depends on (OSRM's demo server, Overpass, OpenStreetMap tiles) are meant for light use, not for many riders at once.</p>

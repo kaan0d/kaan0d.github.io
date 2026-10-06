@@ -3,13 +3,13 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>pathfinding part 4: a cap tuned against its own demo, a cache that mostly didn't move the number, and a lighter editor | Kaan Dinç</title>
-<meta name="description" content="Part 3 was three planner fixes and a run of editor reports. This part is smaller and more mixed: a second pass at the field cache the &quot;still open&quot; list...">
+<title>Pathfinding part 4: a walk-distance cap, a field cache and a lighter editor | Kaan Dinç</title>
+<meta name="description" content="A walk-distance cap for the classic planner, tuned so it does not undo the demo's point; a field cache that mostly duplicated an existing one, which was the more useful finding; a debug view correction; and an editor cut down on purpose.">
 <meta name="theme-color" content="#0a0a09">
 <link rel="canonical" href="https://kaandinc.com/posts/pathfinding-part-4">
 <meta property="og:type" content="article">
-<meta property="og:title" content="pathfinding part 4: a cap tuned against its own demo, a cache that mostly didn't move the number, and a lighter editor | Kaan Dinç">
-<meta property="og:description" content="Part 3 was three planner fixes and a run of editor reports. This part is smaller and more mixed: a second pass at the field cache the &quot;still open&quot; list...">
+<meta property="og:title" content="Pathfinding part 4: a walk-distance cap, a field cache and a lighter editor | Kaan Dinç">
+<meta property="og:description" content="A walk-distance cap for the classic planner, tuned so it does not undo the demo's point; a field cache that mostly duplicated an existing one, which was the more useful finding; a debug view correction; and an editor cut down on purpose.">
 <meta property="og:url" content="https://kaandinc.com/posts/pathfinding-part-4">
 <meta property="og:site_name" content="Kaan Dinç">
 <meta property="og:image" content="https://kaandinc.com/assets/og.png">
@@ -17,8 +17,8 @@
 <meta property="og:image:height" content="630">
 <meta property="og:image:alt" content="Kaan Dinç, computer engineer. K logo beside 3D solids in amber on black.">
 <meta name="twitter:card" content="summary_large_image">
-<meta name="twitter:title" content="pathfinding part 4: a cap tuned against its own demo, a cache that mostly didn't move the number, and a lighter editor | Kaan Dinç">
-<meta name="twitter:description" content="Part 3 was three planner fixes and a run of editor reports. This part is smaller and more mixed: a second pass at the field cache the &quot;still open&quot; list...">
+<meta name="twitter:title" content="Pathfinding part 4: a walk-distance cap, a field cache and a lighter editor | Kaan Dinç">
+<meta name="twitter:description" content="A walk-distance cap for the classic planner, tuned so it does not undo the demo's point; a field cache that mostly duplicated an existing one, which was the more useful finding; a debug view correction; and an editor cut down on purpose.">
 <meta name="twitter:image" content="https://kaandinc.com/assets/og.png">
 <link rel="icon" href="../assets/favicon.svg" type="image/svg+xml">
 <link rel="preload" href="../assets/fonts/Geist-Variable.woff2" as="font" type="font/woff2" crossorigin>
@@ -60,7 +60,8 @@
   <header class="post-head">
     <a class="post-head__back roll" href="../blog"><span class="roll__in" data-text="&amp;larr; blog">&larr; blog</span></a>
     <p class="post-head__meta" data-hero><time datetime="2026-09-22T20:00">Sep 2026</time> &nbsp;/&nbsp; 5 min read</p>
-    <h1 class="post-head__title" data-split="lines" data-hero>pathfinding part 4: a cap tuned against its own demo, a cache that mostly didn't move the number, and a lighter editor</h1>
+    <h1 class="post-head__title" data-split="lines" data-hero>Pathfinding part 4: a walk-distance cap, a field cache and a lighter editor</h1>
+    <p class="post-head__sub" data-hero>A cap tuned against its own demo, a cache that mostly didn't move the number, and a lighter editor.</p>
   </header>
   <div class="post-layout has-toc">
     <aside class="toc" aria-label="on this page">
@@ -69,13 +70,16 @@
         <li><a href="#a-field-cache-that-mostly-didn-t-move-the-number">A field cache that mostly didn't move the number</a></li>
         <li><a href="#letting-the-route-show-on-both-panels-after-all">Letting the route show on both panels after all</a></li>
         <li><a href="#smaller-a-pause-button-and-a-lighter-editor">Smaller: a pause button, and a lighter editor</a></li>
-        <li><a href="#the-whole-thing-in-one-paragraph">The whole thing in one paragraph</a></li>
+        <li><a href="#summary">Summary</a></li>
       </ol>
     </aside>
     <div class="post-body">
-<p>Part 3 was three planner fixes and a run of editor reports. This part is smaller and more mixed: a second pass at the field cache the "still open" list kept pointing at, a walk-distance cap for the classic planner that almost undid the whole demo's point on its way in, a debug view correction, and a round of cutting the editor down rather than adding to it.</p>
+<aside class="brief" aria-label="project summary">
+  <p class="brief__summary">A walk-distance cap for the classic planner, tuned so it does not undo the demo's point; a field cache that mostly duplicated an existing one, which was the more useful finding; a debug view correction; and an editor cut down on purpose.</p>
+  <dl class="brief__facts"><div><dt>Role</dt><dd>Solo, personal project</dd></div><div><dt>Stack</dt><dd>TypeScript, PixiJS, Vite, Vitest</dd></div><div><dt>Status</dt><dd>Live demo, open source</dd></div><div><dt>Links</dt><dd><a href="https://kaandinc.com/environment-aware-pathfinding/" target="_blank" rel="noopener">live demo</a> · <a href="https://github.com/kaan0d/environment-aware-pathfinding" target="_blank" rel="noopener">source</a></dd></div><div><dt>Series</dt><dd><a href="pathfinding-part-1">Part 1</a> · <a href="pathfinding-part-2">Part 2</a> · <a href="pathfinding-part-3">Part 3</a> · <b>Part 4</b></dd></div></dl>
+</aside>
+<p>Part 3 was three planner fixes and a run of editor reports. This part is smaller and more mixed: a second pass at the field cache the open issues list kept pointing at, a walk-distance cap for the classic planner that almost undid the whole demo's point on its way in, a debug view correction, and a round of cutting the editor down rather than adding to it.</p>
 
-      <p class="links">Try it: <a href="https://kaandinc.com/environment-aware-pathfinding/" target="_blank" rel="noopener">live demo</a> · <a href="https://github.com/kaan0d/environment-aware-pathfinding" target="_blank" rel="noopener">source</a> · part 1: <a href="pathfinding-part-1">the unit that walked around a wall</a> · part 2: <a href="pathfinding-part-2">a demo you can break</a> · part 3: <a href="pathfinding-part-3">the follow-up list</a></p>
 
       <div class="stats">
         <div class="stat"><b>34 vs 30</b><span>cells: the L-corner scenario's own walk-around distance against the cap I almost shipped</span></div>
@@ -150,7 +154,7 @@
 
       <p>The rest is subtraction. The sidebar's "new unit type" and "new building type" forms - name, speed, dps, hp inputs, a button - came out entirely: three unit types and three building types cover every scenario here, and a form for a fourth was never load-bearing. "Units per drop" lost its slider too; "Add at spawn points" is now "Add unit" and always adds exactly one, so getting to three units for the crowd-effect scenario is three clicks instead of a slider drag. The unit-type label next to its dropdown gets a small mention only because of what caused it to sit slightly off: the dropdown had a bottom margin left over from when the label used to stack above it, which pulled its visible center a few pixels off the label's - one of those bugs that is invisible until you actually look for it, which is true of most of the fixes in this part.</p>
 
-      <h2 id="the-whole-thing-in-one-paragraph">The whole thing in one paragraph</h2>
+      <h2 id="summary">Summary</h2>
 
       <p>A cap for classic that needed its own number tuned against the demo it was supposed to serve, not the other list item it came from; a field cache that turned out to mostly duplicate a cache that already existed, which is itself the more useful finding than the cache; a debug restriction that was more cautious than the code underneath it actually needed; and an editor that is smaller than it was at the start of this part, on purpose. None of these are large on their own. Together they are the difference between a demo that happens to work and one where the numbers on screen mean what the sidebar next to them says they mean.</p>
 
@@ -160,11 +164,11 @@
 <nav class="post-steps" aria-label="more posts">
   <a class="post-step post-step--newer" href="ridecast">
       <span class="post-step__dir">&larr; newer</span>
-      <span class="post-step__title">ridecast: weather for the moment you get there</span>
+      <span class="post-step__title">Ridecast part 1: route weather for the time you arrive</span>
     </a>
   <a class="post-step post-step--older" href="pathfinding-part-3">
       <span class="post-step__dir">older &rarr;</span>
-      <span class="post-step__title">pathfinding part 3: a planner bug the oracle explains, and what real use broke in the editor</span>
+      <span class="post-step__title">Pathfinding part 3: planner fixes and editor issues from real use</span>
     </a>
 </nav>
 </main>

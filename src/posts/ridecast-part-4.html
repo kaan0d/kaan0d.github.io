@@ -1,11 +1,18 @@
 ---
-title: ridecast part 4: one screen for the ride
+title: Ridecast part 4: a ride screen shaped by real use
+subtitle: One screen for the ride.
+summary: Changes from using the app before real rides: a map-first start screen, settings off the main panel, one ride screen with the map on top and the numbers below, a changed warning rule, a fuel warning based on tank range, and two features removed.
+role: Solo, personal project
+stack: TypeScript, Vite, Leaflet, Open-Meteo, OSRM, Vitest
+status: Live; the map has since moved from Leaflet to MapLibre
+links: live app https://kaandinc.com/ridecast/ | source https://github.com/kaan0d/ridecast
+series: ridecast
+part: 4
 date: 2026-09-24T21:00
 label: Sep 2026
 ---
 <p>The 29 stages were done, so I started using ridecast the way I would before a ride, on my phone, and everything that annoyed me became the next change. Part 4 is that list: the app now opens on the map with only a search bar, the settings moved off the main panel, riding has one screen with the map on top and the numbers underneath, a warning that kept disappearing turned out to be a rule worth changing, the fuel stop list gave way to a warning from the tank, and two more features are gone.</p>
 
-      <p class="links">Previous posts: <a href="ridecast">part 1</a> · <a href="ridecast-part-2">part 2</a> · <a href="ridecast-part-3">part 3</a> · live: <a href="https://kaandinc.com/ridecast/" target="_blank" rel="noopener">kaandinc.com/ridecast</a> · source: <a href="https://github.com/kaan0d/ridecast" target="_blank" rel="noopener">github</a></p>
 
       <div class="stats">
         <div class="stat"><b>84</b><span>unit tests in the pure core, after the removed features took theirs with them</span></div>
@@ -75,6 +82,6 @@ label: Sep 2026
 
       <p>The browser automation I had used for testing did not connect in this round, so every check above ran in headless Chrome, driven over its debugging protocol by a small script: fake GPS positions, taps, drags and screenshots at phone and desktop sizes. It is slower to set up than clicking around, but it gave me exact numbers, like the 3 px and the 13:15:52 above, instead of impressions.</p>
 
-      <h2>What this does not show</h2>
+      <h2>Limits</h2>
 
       <p>Still no real ride, and the ride screen now depends on it more than anything did before: GPS on a phone in a mount, gloves on the zoom buttons, the keyboard fix on a real phone and a screen that has to stay on. The worse-of-two-hours rule has been checked on one route on one day. The fuel estimate knows nothing about how much the bike really uses: it is the tank level I picked times the range, minus the distance ridden, and fixes missed while the phone keeps the page in the background are counted as one straight line.</p>

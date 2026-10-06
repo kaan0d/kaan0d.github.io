@@ -1,11 +1,18 @@
 ---
-title: pathfinding part 4: a cap tuned against its own demo, a cache that mostly didn't move the number, and a lighter editor
+title: Pathfinding part 4: a walk-distance cap, a field cache and a lighter editor
+subtitle: A cap tuned against its own demo, a cache that mostly didn't move the number, and a lighter editor.
+summary: A walk-distance cap for the classic planner, tuned so it does not undo the demo's point; a field cache that mostly duplicated an existing one, which was the more useful finding; a debug view correction; and an editor cut down on purpose.
+role: Solo, personal project
+stack: TypeScript, PixiJS, Vite, Vitest
+status: Live demo, open source
+links: live demo https://kaandinc.com/environment-aware-pathfinding/ | source https://github.com/kaan0d/environment-aware-pathfinding
+series: pathfinding
+part: 4
 date: 2026-09-22T20:00
 label: Sep 2026
 ---
-<p>Part 3 was three planner fixes and a run of editor reports. This part is smaller and more mixed: a second pass at the field cache the "still open" list kept pointing at, a walk-distance cap for the classic planner that almost undid the whole demo's point on its way in, a debug view correction, and a round of cutting the editor down rather than adding to it.</p>
+<p>Part 3 was three planner fixes and a run of editor reports. This part is smaller and more mixed: a second pass at the field cache the open issues list kept pointing at, a walk-distance cap for the classic planner that almost undid the whole demo's point on its way in, a debug view correction, and a round of cutting the editor down rather than adding to it.</p>
 
-      <p class="links">Try it: <a href="https://kaandinc.com/environment-aware-pathfinding/" target="_blank" rel="noopener">live demo</a> · <a href="https://github.com/kaan0d/environment-aware-pathfinding" target="_blank" rel="noopener">source</a> · part 1: <a href="pathfinding-part-1">the unit that walked around a wall</a> · part 2: <a href="pathfinding-part-2">a demo you can break</a> · part 3: <a href="pathfinding-part-3">the follow-up list</a></p>
 
       <div class="stats">
         <div class="stat"><b>34 vs 30</b><span>cells: the L-corner scenario's own walk-around distance against the cap I almost shipped</span></div>
@@ -80,6 +87,6 @@ label: Sep 2026
 
       <p>The rest is subtraction. The sidebar's "new unit type" and "new building type" forms - name, speed, dps, hp inputs, a button - came out entirely: three unit types and three building types cover every scenario here, and a form for a fourth was never load-bearing. "Units per drop" lost its slider too; "Add at spawn points" is now "Add unit" and always adds exactly one, so getting to three units for the crowd-effect scenario is three clicks instead of a slider drag. The unit-type label next to its dropdown gets a small mention only because of what caused it to sit slightly off: the dropdown had a bottom margin left over from when the label used to stack above it, which pulled its visible center a few pixels off the label's - one of those bugs that is invisible until you actually look for it, which is true of most of the fixes in this part.</p>
 
-      <h2>The whole thing in one paragraph</h2>
+      <h2>Summary</h2>
 
       <p>A cap for classic that needed its own number tuned against the demo it was supposed to serve, not the other list item it came from; a field cache that turned out to mostly duplicate a cache that already existed, which is itself the more useful finding than the cache; a debug restriction that was more cautious than the code underneath it actually needed; and an editor that is smaller than it was at the start of this part, on purpose. None of these are large on their own. Together they are the difference between a demo that happens to work and one where the numbers on screen mean what the sidebar next to them says they mean.</p>

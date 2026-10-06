@@ -1,11 +1,18 @@
 ---
-title: pathfinding part 3: a planner bug the oracle explains, and what real use broke in the editor
+title: Pathfinding part 3: planner fixes and editor issues from real use
+subtitle: A planner bug the oracle explains, and what real use broke in the editor.
+summary: Three planner fixes: skipping planning work nobody reads, carrying bumped arrivals between stages (estimate miss down from 24% to 4%), and pricing mixed-speed squads by their slowest member. Then four editor issues that only showed up in real use.
+role: Solo, personal project
+stack: TypeScript, PixiJS, Vite, Vitest
+status: Live demo, open source
+links: live demo https://kaandinc.com/environment-aware-pathfinding/ | source https://github.com/kaan0d/environment-aware-pathfinding
+series: pathfinding
+part: 3
 date: 2026-09-22T18:00
 label: Sep 2026
 ---
 <p>Part 2 left the planner 8x over its speed target and the oracle barely passing on its worst seed. This part has three planner fixes: skip the planning work nobody reads, carry bumped arrivals between stages (24% estimate miss down to 4%), and price mixed-speed squads by their slowest member. Then four editor issues that only showed up in real use.</p>
 
-      <p class="links">Try it: <a href="https://kaandinc.com/environment-aware-pathfinding/" target="_blank" rel="noopener">live demo</a> · <a href="https://github.com/kaan0d/environment-aware-pathfinding" target="_blank" rel="noopener">source</a> · part 1: <a href="pathfinding-part-1">the unit that walked around a wall</a> · part 2: <a href="pathfinding-part-2">a demo you can break</a> · part 4: <a href="pathfinding-part-4">a cap, a cache, a lighter editor</a></p>
 
       <div class="stats">
         <div class="stat"><b>3</b><span>real fixes: planning waste, an oracle estimate miss, mixed-speed squads</span></div>
@@ -108,7 +115,7 @@ arrivals = result.ready</code></div>
         <figcaption>The heat map on both panels now, for the same followed unit's type against each panel's own walls. Only the right panel, where the selection actually is, gets the ring and the route.</figcaption>
       </figure>
 
-      <h2>Still open</h2>
+      <h2>Open issues</h2>
 
       <ul>
         <li>Squad round is 21 ms against a 3 ms target. Next ideas: a field cache keyed by squad strength and map version, replanning only the squads a change affects, a worker.</li>

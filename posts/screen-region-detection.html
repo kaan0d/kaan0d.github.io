@@ -3,13 +3,13 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>sixty frames a second, one rectangle | Kaan Dinç</title>
-<meta name="description" content="Two small Python tools that look at one rectangle of the screen, work out what's in it, and press keys in response. It's a control loop where a human is...">
+<title>Real-time screen region detection with OpenCV | Kaan Dinç</title>
+<meta name="description" content="Two Python tools that capture a chosen screen region at 60 fps, find a marker or read arrows and progress lines with OpenCV, and press keys through a hysteresis controller whose thresholds reload while it runs.">
 <meta name="theme-color" content="#0a0a09">
 <link rel="canonical" href="https://kaandinc.com/posts/screen-region-detection">
 <meta property="og:type" content="article">
-<meta property="og:title" content="sixty frames a second, one rectangle | Kaan Dinç">
-<meta property="og:description" content="Two small Python tools that look at one rectangle of the screen, work out what's in it, and press keys in response. It's a control loop where a human is...">
+<meta property="og:title" content="Real-time screen region detection with OpenCV | Kaan Dinç">
+<meta property="og:description" content="Two Python tools that capture a chosen screen region at 60 fps, find a marker or read arrows and progress lines with OpenCV, and press keys through a hysteresis controller whose thresholds reload while it runs.">
 <meta property="og:url" content="https://kaandinc.com/posts/screen-region-detection">
 <meta property="og:site_name" content="Kaan Dinç">
 <meta property="og:image" content="https://kaandinc.com/assets/og.png">
@@ -17,8 +17,8 @@
 <meta property="og:image:height" content="630">
 <meta property="og:image:alt" content="Kaan Dinç, computer engineer. K logo beside 3D solids in amber on black.">
 <meta name="twitter:card" content="summary_large_image">
-<meta name="twitter:title" content="sixty frames a second, one rectangle | Kaan Dinç">
-<meta name="twitter:description" content="Two small Python tools that look at one rectangle of the screen, work out what's in it, and press keys in response. It's a control loop where a human is...">
+<meta name="twitter:title" content="Real-time screen region detection with OpenCV | Kaan Dinç">
+<meta name="twitter:description" content="Two Python tools that capture a chosen screen region at 60 fps, find a marker or read arrows and progress lines with OpenCV, and press keys through a hysteresis controller whose thresholds reload while it runs.">
 <meta name="twitter:image" content="https://kaandinc.com/assets/og.png">
 <link rel="icon" href="../assets/favicon.svg" type="image/svg+xml">
 <link rel="preload" href="../assets/fonts/Geist-Variable.woff2" as="font" type="font/woff2" crossorigin>
@@ -60,7 +60,8 @@
   <header class="post-head">
     <a class="post-head__back roll" href="../blog"><span class="roll__in" data-text="&amp;larr; blog">&larr; blog</span></a>
     <p class="post-head__meta" data-hero><time datetime="2025-12-01">Dec 2025</time> &nbsp;/&nbsp; 3 min read</p>
-    <h1 class="post-head__title" data-split="lines" data-hero>sixty frames a second, one rectangle</h1>
+    <h1 class="post-head__title" data-split="lines" data-hero>Real-time screen region detection with OpenCV</h1>
+    <p class="post-head__sub" data-hero>Sixty frames a second, one rectangle.</p>
   </header>
   <div class="post-layout has-toc">
     <aside class="toc" aria-label="on this page">
@@ -68,10 +69,14 @@
         <li><a href="#picking-the-region-once">Picking the region once</a></li>
         <li><a href="#tool-1-follow-a-marker">Tool 1: follow a marker</a></li>
         <li><a href="#tool-2-read-arrows-and-progress-lines">Tool 2: read arrows and progress lines</a></li>
-        <li><a href="#what-i-took-from-it">What i took from it</a></li>
+        <li><a href="#lessons-learned">Lessons learned</a></li>
       </ol>
     </aside>
     <div class="post-body">
+<aside class="brief" aria-label="project summary">
+  <p class="brief__summary">Two Python tools that capture a chosen screen region at 60 fps, find a marker or read arrows and progress lines with OpenCV, and press keys through a hysteresis controller whose thresholds reload while it runs.</p>
+  <dl class="brief__facts"><div><dt>Role</dt><dd>Solo, personal tools</dd></div><div><dt>Stack</dt><dd>Python, OpenCV, NumPy, mss, Tkinter</dd></div><div><dt>Status</dt><dd>Personal tools, source is private</dd></div></dl>
+</aside>
 <p>Two small Python tools that look at one rectangle of the screen, work out what's in it, and press keys in response. It's a control loop where a human is just a slow, noisy feedback controller. The interesting part isn't the key press, it's getting a reliable answer out of noisy pixels sixty times a second.</p>
 
       <div class="stats">
@@ -179,7 +184,7 @@ progress = active_span / total_span</code></div>
 <span class="kw">if</span> self.pending_count &gt;= TRACK_STABLE_FRAMES:         <span class="cm"># 2 frames in a row</span>
     self.stable_pattern = (mode_name, list(pattern))</code></div>
 
-      <h2 id="what-i-took-from-it">What i took from it</h2>
+      <h2 id="lessons-learned">Lessons learned</h2>
 
       <p>Color alone matches far too much, and the shape filters do the real work. A decision from one frame is noise, so require agreement over a few frames and tolerate short gaps. Anything that drives an output needs hysteresis. Thresholds should be tunable while the thing runs. And generating templates in code means there's nothing to re-capture when the display changes.</p>
 
@@ -189,11 +194,11 @@ progress = active_span / total_span</code></div>
 <nav class="post-steps" aria-label="more posts">
   <a class="post-step post-step--newer" href="ecommerce-admin-panel">
       <span class="post-step__dir">&larr; newer</span>
-      <span class="post-step__title">no cart, no checkout, one whatsapp button</span>
+      <span class="post-step__title">Product catalog and admin panel for an electrical shop</span>
     </a>
   <a class="post-step post-step--older" href="retail-desktop-apps">
       <span class="post-step__dir">older &rarr;</span>
-      <span class="post-step__title">the app that must never lose a sale</span>
+      <span class="post-step__title">Offline desktop apps for a retail shop: ledger and receipts</span>
     </a>
 </nav>
 </main>
