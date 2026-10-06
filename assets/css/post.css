@@ -67,7 +67,6 @@
 .brief__facts div { display: grid; grid-template-columns: 72px 1fr; gap: 16px; }
 .brief__facts dt { font-family: var(--font-mono); font-size: 0.76rem; line-height: 1.9; color: var(--text-dim); }
 .brief__facts dd { margin: 0; font-size: 0.9rem; line-height: 1.6; }
-.brief__facts b { font-weight: 500; color: var(--text-dim); }
 .post-body p.chain { margin: 26px 0 0; font-family: var(--font-mono); font-size: 0.82rem; color: var(--text-dim); }
 .post-body p.chain b { font-weight: 500; color: var(--accent); }
 .dim { color: var(--text-dim); }

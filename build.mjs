@@ -66,8 +66,8 @@ function loadPosts() {
       status: meta.status,
       // "label url | label url"
       links: meta.links ? meta.links.split(' | ').map((l) => { const i = l.lastIndexOf(' '); return { label: l.slice(0, i), url: l.slice(i + 1) }; }) : [],
-      series: meta.series,
-      part: meta.part,
+      // old slugs of posts merged into this one; each gets a redirect page
+      aliases: meta.aliases ? meta.aliases.split(', ') : [],
       date: meta.date,
       label: meta.label,
       html,
@@ -203,8 +203,8 @@ ${posts.filter((p) => p.date.startsWith(year)).map((p) => `        <li><a class=
 </div>`;
 }
 
-// Project brief at the top of a post: one-line summary, role, stack, status, links and the series it belongs to.
-function brief(post, posts) {
+// Project brief at the top of a post: one-line summary, role, stack, status and links.
+function brief(post) {
   const ext = (url) => url.startsWith('http') ? ' target="_blank" rel="noopener"' : '';
   const facts = [
     ['Role', post.role],
@@ -212,10 +212,6 @@ function brief(post, posts) {
     ['Status', post.status],
     ['Links', post.links.map((l) => `<a href="${l.url}"${ext(l.url)}>${l.label}</a>`).join(' · ')],
   ];
-  if (post.series) {
-    const parts = posts.filter((p) => p.series === post.series).sort((a, b) => a.part - b.part);
-    facts.push(['Series', parts.map((p) => p.slug === post.slug ? `<b>Part ${p.part}</b>` : `<a href="${p.slug}">Part ${p.part}</a>`).join(' · ')]);
-  }
   const rows = facts.filter(([, v]) => v).map(([k, v]) => `<div><dt>${k}</dt><dd>${v}</dd></div>`).join('');
   if (!post.summary && !rows) return '';
   return `<aside class="brief" aria-label="project summary">
@@ -249,7 +245,7 @@ ${post.toc.map((t) => `        <li><a href="#${t.id}">${t.text}</a></li>`).join(
   </header>
   <div class="post-layout${toc ? ' has-toc' : ''}">${toc}
     <div class="post-body">
-${brief(post, posts)}
+${brief(post)}
 ${post.html}
     </div>
   </div>
@@ -298,6 +294,15 @@ for (const post of posts) {
     main: postMain(post, posts),
   }));
   urls.push(`${SITE}/posts/${post.slug}`);
+  for (const old of post.aliases) {
+    write(`posts/${old}.html`, `<!doctype html>
+<meta charset="utf-8">
+<title>${esc(post.title)}</title>
+<link rel="canonical" href="${SITE}/posts/${post.slug}">
+<meta http-equiv="refresh" content="0; url=${post.slug}">
+<a href="${post.slug}">${post.title}</a>
+`);
+  }
 }
 
 write('sitemap.xml', `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${urls.map((u) => `  <url><loc>${u}</loc></url>`).join('\n')}\n</urlset>\n`);
