@@ -1,30 +1,31 @@
 ---
-title: Ridecast part 1: route weather for the time you arrive
-subtitle: Weather for the moment you get there.
-summary: A web app for motorcycle riders that builds an arrival timeline along a route from speed, road type and breaks, matches every point to the hourly forecast for that time, and rates rain, wind, fog, ice and darkness along the way.
+title: Ridecast: route weather for the time you arrive
+subtitle: Weather for the moment you get there, from a route plan to a ride screen.
+summary: A web app for motorcycle riders that builds an arrival timeline along a route, matches every point to the forecast for that time, and turns it into decisions: the safer road, the best departure, what to wear, and a live ride screen that re-plans from GPS.
 role: Solo, personal project
-stack: TypeScript, Vite, Leaflet, Open-Meteo, OSRM, Vitest
+stack: TypeScript, Vite, Leaflet, Open-Meteo, OSRM, Valhalla, Vitest
 status: Live; the map has since moved from Leaflet to MapLibre
 links: live app https://kaandinc.com/ridecast/ | source https://github.com/kaan0d/ridecast
-series: ridecast
-part: 1
+aliases: ridecast-part-2, ridecast-part-3, ridecast-part-4
 date: 2026-09-23
 label: Sep 2026
 ---
-<p>Every weather app answers the wrong question for a motorcycle ride. It tells me what the sky is doing in Eskişehir now, when what I need to know is what it will be doing at 11:24, when I get there, and what it did on the pass I cross at 09:30. ridecast is a web app that answers that: I give it a route, a speed, breaks and a departure time, and it puts the forecast for my arrival time on every point along the line. This post grows with every stage of the build, so it is a work log more than a summary.</p>
+<p>Every weather app answers the wrong question for a motorcycle ride. It tells me what the sky is doing in Eskişehir now, when what I need to know is what it will be doing at 11:24, when I get there, and what it did on the pass I cross at 09:30. ridecast is a web app that answers that: I give it a route, a speed, breaks and a departure time, and it puts the forecast for my arrival time on every point along the line.</p>
 
-<p>The reason is simple: I ride a motorcycle, and about twice a month I take it on a long trip. Before every one of them I end up with a map in one tab and a weather app in another, guessing which town I will pass at which hour and whether the rain there will have started yet. In a car that guess costs a little comfort; on a bike it decides whether I leave at 07:00 or 10:00, which layers I pack and where I stop. I wanted one screen that does the guessing for me, so I built it.</p>
+<p>The reason is simple: I ride a motorcycle, and about twice a month I take it on a long trip. Before every one of them I end up with a map in one tab and a weather app in another, guessing which town I will pass at which hour and whether the rain there will have started yet. In a car that guess costs a little comfort; on a bike it decides whether I leave at 07:00 or 10:00, which layers I pack and where I stop. I wanted one screen that does the guessing for me, so I built it: 29 stages from a map with arrival times to a planner, and then a round of changes from using it on my phone before rides.</p>
 
       <div class="stats">
-        <div class="stat"><b>5</b><span>stages done out of 10</span></div>
-        <div class="stat"><b>34</b><span>unit tests, all in the pure core</span></div>
-        <div class="stat"><b>15</b><span>weather points on a 273 km test route, one request</span></div>
+        <div class="stat"><b>29</b><span>stages, then a round of changes from real use</span></div>
+        <div class="stat"><b>84</b><span>unit tests in the pure core</span></div>
         <div class="stat"><b>0</b><span>API keys and backend servers</span></div>
+        <div class="stat"><b>+29 min</b><span>for 92% less risk, in the rain test</span></div>
+        <div class="stat"><b>24</b><span>departure times scored from one cached forecast</span></div>
+        <div class="stat"><b>0.021°</b><span>largest error of the sun position against Open-Meteo</span></div>
       </div>
 
       <h2>The plan</h2>
 
-      <p>The app is Vite, TypeScript and Leaflet, with no backend. Every service it talks to is free and keyless: Nominatim for address search, the OSRM demo server for routes, Open-Meteo for the forecast, and later Overpass for fuel stops. The rule that shaped the code is that everything that decides something (arrival times, which forecast hour applies, later the risk score) lives in <code>src/core</code>, with no DOM, no Leaflet and no fetch, so it can move to a phone app later and so it can be tested without a browser.</p>
+      <p>The app is Vite, TypeScript and Leaflet, with no backend. Every service it talks to is free and keyless: Nominatim for address search, the OSRM demo server for routes, Open-Meteo for the forecast, and for a while Overpass for fuel stops. The rule that shaped the code is that everything that decides something (arrival times, which forecast hour applies, later the risk score) lives in <code>src/core</code>, with no DOM, no Leaflet and no fetch, so it can move to a phone app later and so it can be tested without a browser.</p>
 
       <div class="table-wrap"><table class="data roomy">
         <thead><tr><th>stage</th><th>what it added</th><th>how it was checked</th></tr></thead>
@@ -36,6 +37,8 @@ label: Sep 2026
           <tr><td class="num">5</td><td>risk levels, wind chill, wet road estimate, darkness, rain advice for breaks</td><td class="dim">14 tests; injected rain turns the route orange and the break advice matches a hand calculation</td></tr>
         </tbody>
       </table></div>
+
+      <p>That table is the first five stages; the rest are described where they come up below.</p>
 
       <h2>Which road am I on</h2>
 
@@ -89,6 +92,197 @@ label: Sep 2026
 
       <p>The redesign also had a bug that only a wide screen showed: the CSS filter that mutes the map was on the whole tile layer, and at 2560 px the browser stopped painting it past about 1,750 px. Filtering each tile instead fixed it.</p>
 
+      <h2>Which road is safer</h2>
+
+      <p>OSRM usually gives one or two alternatives to the fastest route. Stage 6 gets the forecast for each of them, one request per route, and scores it. Every sample point already has a level from none to high; the score is the average over the route, weighted by how much of the route each point stands for, with weights 0, 1, 3 and 9. The steps grow fast on purpose: 20 km of heavy rain should count for more than 100 km of a damp road.</p>
+
+      <p>The route with the lowest score gets an "en güvenli rota" badge with what it costs against the fastest one, for example "+18 dk, risk %40 daha düşük". Two rules keep the badge honest. If the safer route is less than 10% better, the fastest keeps it, because a detour for a rounding error is not advice. And if no route has any risk at all, there is no badge.</p>
+
+      <p>A dry day cannot show any of this, so I tested it the way I tested the break advice: I overrode fetch in the browser and put 3 mm/h of rain on every forecast point south of 40.6° N and west of 29.8° E. That covers the Gemlik and İznik part of the main route from Kadıköy to Eskişehir; the alternative through Sakarya and Bilecik stays outside it.</p>
+
+      <div class="table-wrap"><table class="data roomy">
+        <thead><tr><th>route, 08:00, 80 km/h, rain injected</th><th class="num">distance</th><th class="num">time</th><th class="num">risk score</th><th>worst level</th></tr></thead>
+        <tbody>
+          <tr><td>main route</td><td class="num">273 km</td><td class="num">3 h 25 min</td><td class="num">0.9</td><td>medium</td></tr>
+          <tr><td>alternative, marked safest</td><td class="num">312 km</td><td class="num">3 h 54 min</td><td class="num">0.1</td><td>low</td></tr>
+        </tbody>
+      </table></div>
+
+      <p>The badge said +29 minutes and 92% lower risk, which is 3:54 minus 3:25; the percentage comes from the unrounded scores, the table shows them rounded to one decimal. The whole comparison took two forecast requests. When I then changed the speed to 100 km/h, both routes were scored again (2 h 44 min and 3 h 7 min, +23 minutes) without a single new request, because the sample points depend only on the route and the forecast is cached by their coordinates; only the arrival times moved.</p>
+
+      <p>The score is my own weighting, and it measures the share of distance at each level, not the time spent there. A slow stretch in the rain counts the same as a fast one of the same length. Stage 18 later changed that, below.</p>
+
+      <h2>When to leave</h2>
+
+      <p>Stage 7 adds a third departure option next to "now" and a fixed time: "en iyi saat". It takes every full hour in the next 24 hours, builds the whole timeline for each one (same speed, same breaks), scores the route the same way as in stage 6, and lists the three lowest, with the arrival time and the score. Equal scores go to the earlier departure. The first one is taken automatically, and tapping another re-plans the route for that time.</p>
+
+      <p>24 candidates did not cost 24 requests. The sample points belong to the route, not to the departure, so all candidates need the forecast at the same coordinates, just for later hours. I made every forecast request ask for at least three days, which covers the last candidate's arrival, and the normal view and all 24 candidates now read one cached response. Switching to "en iyi saat" on a real route made no new request at all.</p>
+
+      <div class="table-wrap"><table class="data roomy">
+        <thead><tr><th>test on Kadıköy to Eskişehir</th><th class="num">1st (risk)</th><th class="num">2nd (risk)</th><th class="num">3rd (risk)</th></tr></thead>
+        <tbody>
+          <tr><td>real forecast, planned at night</td><td class="num">08:00 (0.0)</td><td class="num">09:00 (0.0)</td><td class="num">10:00 (0.0)</td></tr>
+          <tr><td>2 mm/h rain injected from 07:00 to 13:00</td><td class="num">15:00 (0.5)</td><td class="num">16:00 (0.5)</td><td class="num">14:00 (1.4)</td></tr>
+        </tbody>
+      </table></div>
+
+      <p>In the rain test no morning hour made the list. Even 15:00 is not clean: the wet road estimate remembers the last three hours of rain, so the start of the route still counts as wet. The real-forecast row shows a weakness too: on a calm day the three best are simply three neighbouring hours, which is correct but not very useful. Stage 18 later spread them out.</p>
+
+      <h2>What to wear</h2>
+
+      <p>Stage 8 adds a clothing list. It is a fixed table, not a model: each row names an item, the vehicles it applies to, and a condition, like a felt temperature of 8° or less, rain or a wet road, darkness, or gusts of 50 km/h. The app takes the worst value of each along the route and prints every row that matches, with the reason next to it. On a real night run nine rows matched for the motorcycle, from a wind layer to heated gloves and a reflective vest (felt -1°, 1 km of fog, dark), and none for a car. Two of the nine were visors, one for fog and one for the dark, saying almost the same thing, so they are now one item, and rows that name the same item merge their reasons instead of repeating it.</p>
+
+      <h2>A trip you can send</h2>
+
+      <p>Stage 9 puts the whole trip into the address bar and keeps it there while I edit: the stops with a short label, the breaks and their minutes, the vehicle, the speeds, the departure and which route is selected. There is no server to save anything on, so the link is the save file. A trip with three breaks, road speeds and a fixed departure came to 253 characters, and opening it in a new tab gave the same arrival to the minute, the same breaks at the same kilometres and times, and the same alternative route. The weather is not in the link on purpose: it is fetched again when the link is opened, so whoever gets it sees the forecast of that moment.</p>
+
+      <p>A link is input from outside, so the decoder checks every field and returns nothing rather than half a trip: a latitude of 95, a speed of 900, a break of zero minutes and six other broken cases each have a test. A bad link shows a message and leaves the current trip as it was. Trips are also kept in the browser as a short "son rotalar" list, which simply does not appear when the browser does not allow storage.</p>
+
+      <p>The copy button taught me something. In the automated browser I test with, the clipboard call never answered: no success, no error, the promise just stayed open, so the button did nothing visible. A real browser can do the same while it waits for a permission prompt. Now the app waits 1.5 seconds and then shows the link in a field, already selected, ready to copy by hand.</p>
+
+      <h2>Riding with it</h2>
+
+      <p>The last stage is the one meant for the bike: "yolculuğu başlat" follows the phone's GPS along the route and turns the screen into a view you can read at a glance, with the next warning and how far away it is, the time and distance left, and the weather at the next point. The arrival times do not stay those of the plan. The app compares how long the last 15 minutes of riding took with how long the plan said they would, and re-plans the rest of the trip from where I am at that pace. Every 12 minutes it asks for a fresh forecast, and a warning ahead that is new or worse raises a banner and vibrates. Three GPS fixes in a row more than 150 m off the route bring up "rotayı yeniden hesapla", which plans again from here to whatever is still ahead. The screen stays on through the Wake Lock API, and when the browser refuses that, the view says so.</p>
+
+      <p>I could not ride 273 km for a test, so the browser got a fake GPS: I replaced <code>watchPosition</code> with a stub and fed it points of the real route with made-up timestamps. 15 km in 10 minutes is 90 km/h against a plan of 80, a pace of 1.125, and the view showed 2 h 51 min left, which is the 3 h 13 min of planned riding divided by 1.125. The fake GPS found three real problems. After a reroute, the last fix of the old route was used to place me on the new one. The first forecast for the new route then flagged every warning on it as new. And warnings came back as "new" when their arrival time crossed an hour boundary, sometimes replacing a more serious alert that was still open. Each has a fix now: fixes belong to one route, a new route's first forecast is only a baseline, and a warning is news once per route unless it gets worse.</p>
+
+      <p>A smaller lesson from the same test: the automated tab was in the background, where Chrome slows timers down to about one per second, so my test scripts that waited in small steps crawled and looked frozen. Feeding the fixes without timers and waiting between steps from the outside fixed the testing, not the app.</p>
+
+      <h2>Putting it online</h2>
+
+      <p>Stage 11 was supposed to be the easy one: build, upload, done. The build part was easy. GitHub Pages serves the ridecast repository under my own domain, a workflow runs the tests and the build on every push, and a relative base path makes the same files work at /ridecast/. The first deploy still failed, because Pages has to be switched on once in the repository settings, which only I could do from my account.</p>
+
+      <p>The real work was reading the usage policies of the free services I lean on, now that strangers could use the app. Nominatim's policy says in plain words that it must not be used for search-as-you-type from a browser, which is exactly what my address field did. Suggestions moved to Photon, which is built for that; Nominatim is now only asked for the address of a point, one request per second. Photon had a quirk of its own: without a language parameter it followed my browser and turned "İstanbul, Türkiye" into "Istanbul, Turkey", so it now asks for local names.</p>
+
+      <h2>A map that behaves like Google Maps</h2>
+
+      <p>Google Maps is what most people's hands already know, so every place where ridecast behaved differently felt like a bug even when it was a choice. Stages 13 and 14 copy the parts that matter: stops reorder by dragging their dot in the list (or with the arrow keys), two stops get a swap button, a right click or a long press opens a menu with "directions from here", "directions to here", "add stop", "add a break here", "what's here?" And "measure distance", and a plain click drops a pin with an address card instead of silently making it a stop. Stop pins drag, and dragging the route line itself drops a new stop where it is released, placed before the next stop along that route. There is a layer switch with satellite and terrain maps and a rain radar, a ruler, and the usual buttons in the bottom right.</p>
+
+      <p>Every route also got a bubble with its duration, like Google's. The obvious place for a bubble is the middle of the route, but two alternatives usually share their first and last kilometres, so their middles can sit on top of each other. The bubble goes to the point in the middle 60% of the route that is furthest from every other route, which puts it on the stretch where that route is on its own. It is one small function with a test.</p>
+
+      <p>Two findings from those stages were about things I could not see. The rain radar comes from RainViewer, and above zoom level 7 their server returns an image that literally says "Zoom Level Not Supported", which a map would happily show as rain; the radar now stops at zoom 7 and scales up. And the weather capsules at the start and the end of a route sat on top of the stop pins, so the pins could not be grabbed at all. Nothing failed, the pin just never moved.</p>
+
+      <p>That pin drag was also the hardest thing to test. My browser automation runs in a background tab, where Chrome does not run animation frames, and the map library moves a dragged marker in an animation frame. From stage 13 to stage 29 the drag stayed "not verified" in my notes. The fix was a test page, kept out of the published app, that runs animation frames on ordinary timers before the map loads. Then the drag worked: the destination moved, got a new address, and the route was planned again at 263 km.</p>
+
+      <h2>No signal on the mountain</h2>
+
+      <p>The places where the weather matters most on a bike are often the places without signal. Stage 15 makes ridecast an installable app with a service worker I wrote by hand: at install it reads the page, caches every file the page links, and afterwards keeps the last 40 route and forecast responses. Network first, cache as the fallback. With the web server stopped, a reload still showed the trip with all 15 weather points. In live mode a failed forecast refresh no longer empties the screen; it keeps the last forecast, says "offline", and asks again when the connection returns. Map tiles are the exception: the tile servers' rules forbid downloading them in advance, so offline maps only show what the browser happened to keep.</p>
+
+      <h2>The right road for the vehicle</h2>
+
+      <p>Until stage 16 every vehicle got the car route; a bicycle only changed the speed. The FOSSGIS servers run the same routing engine with bike and foot profiles, so that part was a new address. The harder part was "avoid motorways, tolls and ferries", the options every map app has. I measured first: both public routing servers answer the exclude option with "Exclude flag combination is not supported". Valhalla, another open routing engine with a public server, does support it and even has a motorcycle profile, so a trip with any avoid option goes there, and its manoeuvres are translated into the steps the rest of the app already understands, including the O- and D- road numbers the road type guess reads.</p>
+
+      <div class="table-wrap"><table class="data roomy">
+        <thead><tr><th>Kadıköy to Eskişehir, motorcycle</th><th class="num">distance</th><th class="num">time</th><th>note</th></tr></thead>
+        <tbody>
+          <tr><td>plain route and its alternative</td><td class="num">273 / 312 km</td><td class="num">3 h 25 / 3 h 54</td><td class="dim">OSRM demo server</td></tr>
+          <tr><td>avoid motorways</td><td class="num">284 / 291 km</td><td class="num">4 h 6 / 4 h 11</td><td class="dim">Valhalla</td></tr>
+          <tr><td>avoid tolls, speeds by road type</td><td class="num">271 km</td><td class="num">4 h 14</td><td class="dim">takes a 25 km ferry instead of the toll bridge</td></tr>
+          <tr><td>same trip by bicycle</td><td class="num">247 / 295 km</td><td class="num">-</td><td class="dim">FOSSGIS bike profile</td></tr>
+        </tbody>
+      </table></div>
+
+      <p>The toll row looks odd and is right: avoiding the toll bridge over the gulf means the ferry, and the ferry detection counted it separately. Valhalla orders routes by its own cost, not by time, so its first route is not always the fastest.</p>
+
+      <h2>Better scores, three new warnings</h2>
+
+      <p>Stage 18 fixes the two weaknesses noted above. The route score now weighs each point by the riding time of its stretch instead of its length, so two 50 km halves, one dry at 100 km/h and one rainy at 25 km/h, score 2.4 instead of 1.5. The three best departures now have to be at least two hours apart, so a calm day lists 08:00, 10:00 and 14:00 instead of three neighbouring hours. The rain warning also carries the forecast's probability, and a high probability alone is a low warning for riders.</p>
+
+      <p>Stage 19 adds two warnings that matter on a bike. Heat stress uses the apparent temperature, which includes humidity, because riding gear traps heat long before the air feels dangerous. Sun glare needs the position of the sun at every point and arrival time, from the NOAA equations. I had no astronomy library to compare against, so I used Open-Meteo instead: at the sunrise and sunset times it publishes, the sun's centre is 0.833° below the horizon by definition.</p>
+
+      <div class="table-wrap"><table class="data roomy">
+        <thead><tr><th>Open-Meteo time</th><th class="num">expected</th><th class="num">computed</th></tr></thead>
+        <tbody>
+          <tr><td>Istanbul sunrise, 24 Sep 2026</td><td class="num">-0.833°</td><td class="num">-0.837°</td></tr>
+          <tr><td>Istanbul sunset, 24 Sep 2026</td><td class="num">-0.833°</td><td class="num">-0.843°</td></tr>
+          <tr><td>Eskişehir sunrise, 24 Sep 2026</td><td class="num">-0.833°</td><td class="num">-0.836°</td></tr>
+          <tr><td>Istanbul sunrise, 21 Jun 2025</td><td class="num">-0.833°</td><td class="num">-0.841°</td></tr>
+          <tr><td>Istanbul sunset, 21 Jun 2025</td><td class="num">-0.833°</td><td class="num">-0.817°</td></tr>
+          <tr><td>Istanbul sunrise, 21 Dec 2025</td><td class="num">-0.833°</td><td class="num">-0.854°</td></tr>
+        </tbody>
+      </table></div>
+
+      <p>Glare is then a sun at most 15° high, within 30° of the direction of travel, under a sky clear enough to see it. On the real forecast, Kadıköy to Bolu leaving at 07:00 flagged "low sun ahead" for kilometres 50 to 99, from 07:37 to 08:14, which is exactly the stretch where that road heads east into the morning. My first test of it failed, and the formula was fine: I had converted the sunrise time to UTC wrongly by 40 minutes in the test itself.</p>
+
+      <p>Stage 25 adds the warning a rider cares about more than any gust number: crosswind. It takes the part of the gusts across the direction of travel and the side it comes from. 45 km/h from the east while riding north is all crosswind and a medium warning; the same gusts head-on are only a low gust warning. When the crosswind warning is at least as serious as the gust one it takes its place, so one wind gives one row. The test routes had no strong side wind on the day, so this one has only been checked by its unit tests.</p>
+
+      <h2>Longer trips</h2>
+
+      <p>A long ride does not always fit in one day, so stage 20 turns a break into an overnight stop: instead of minutes it has a "ride on at" time, and the trip continues at the first such morning at least four hours after arriving. The summary then shows each day with its start, end and distance, and forecasts more than three days ahead are marked as uncertain. Stage 27 widens "best time" from 24 hours to the next 7 days and lists the best departure of each day. The first version listed eight: the 168-hour window ended a few hours into the eighth day, and those night hours made a fake day with a risk of 2.7.</p>
+
+      <p>Stage 21 remembers the warnings of every trip I plan. When I open the same trip again later, the first forecast is compared with the saved one and a short card lists what changed: new warnings, stronger or weaker ones, ones that start earlier or later, and ones that are gone. Planning on a Wednesday for a Saturday ride, that card is the quickest way to see whether the plan still holds.</p>
+
+      <h2>English first, and two features measured and dropped</h2>
+
+      <p>Stage 24 made English the default and Turkish an option, because most people who find this page do not read Turkish. Every text moved into two message files of the same shape, which the type checker compares. The pure core, which builds the warning texts, now gets them passed in, so it still knows nothing about languages, and its tests simply run with the Turkish texts and did not change. The two refactors of the app's main file (stages 12 and 23) happened for the same reason: every new feature had to touch it.</p>
+
+      <p>Stage 22 was meant to give rain timing to the quarter hour with Open-Meteo's 15-minute data. I checked first. In Vienna the quarters differ and add up to the hourly value, a real 15-minute model; in Istanbul the one rainy hour of the week showed the same value in all four quarters, the hourly number repeated. For Turkey it adds nothing, so it is not used; the radar layer answers "is it raining now" better. What the stage kept is a sunlight mode for the live view: black on white with darker risk colours, measured at 6.07:1 or more for every colour pair, where the normal light theme's yellow ring was only 1.87:1 on white.</p>
+
+      <h2>The map first</h2>
+
+      <p>After the 29 stages I started using ridecast the way I would before a ride, on my phone, and everything that annoyed me became the next change.</p>
+
+      <p>The app used to open with the panel already covering 42% of a phone screen. Google Maps opens on the map with a search bar, and that is what my thumb expected, so ridecast now does the same: collapsed with no route, the panel shrinks to the destination field of the trip card and nothing else. Tapping it opens the full panel with the cursor in the field. On a desktop the floating card shrinks the same way and unrolls down from the bar when it opens. With a route, the collapsed panel keeps its old height, so the arrival time is still visible. None of it is a new component: the compact bar is the existing trip card with every other row hidden.</p>
+
+      <p>The panel also got a back arrow. It clears the whole trip, meaning stops, route, breaks, weather, warnings and the link in the address bar, and goes back to the bare map. It does not touch the settings, and it leaves the map where it was, because losing my place on the map every time I start over would be worse than the clutter.</p>
+
+      <p>Two bugs came from my own changes. The settings button and the panel's "settings are open" state had the same class name, so on a desktop the panel took the button's centring and margins and jumped when I opened the settings. And on a phone the round header buttons reach 6 px above their row, but the panel's scroll area started at 78 px from the top of the screen while the buttons started at 75: 3 px of every circle were cut off. Both were one-line fixes once measured; neither was visible in the code.</p>
+
+      <p>The third one was the phone keyboard. Tapping the search bar started a 0.45 second slide up, and the keyboard opened during the slide. The phone scrolls the page so that the focused field stays above the keyboard, and it measured the field while it was still near the bottom of the screen, so the whole panel went up too far. Tapping a field now opens the panel at once, without the slide, so the field is already at the top when the keyboard asks where it is; the slide is still there when the panel is opened by its handle. On Android I also told the browser to shrink the page for the keyboard instead of scrolling it. I could not test the keyboard itself, because the headless browser I test with has none.</p>
+
+      <h2>Settings out of the way</h2>
+
+      <p>Route options, the fuel range and the speed settings are things I set once and forget, but they filled the middle of the main panel. They now live on a settings page behind a button in the panel header, with a new "clear recent routes" at the bottom, and the main panel keeps what changes from trip to trip: the stops, the vehicle, the departure and the breaks. The back arrow leaves the settings before it clears anything.</p>
+
+      <p>The rest were details my thumb found. The clear button inside the address fields sat right against the text; it now has an 8 px gap and a 44 px target. "Add stop" started 16 px left of the addresses above it, at a smaller size; it now lines up with them at the same size, with the plus sign in the column of the stop dots. And when the panel opens, its rows rise in over 0.3 seconds; with the desktop card unrolling, that is all the motion I added.</p>
+
+      <h2>One screen for the ride</h2>
+
+      <p>Live mode used to be a separate full-screen view of large numbers, with a small "map" button that shrank it to a pill over the map. On the bike I want to see where I am, so starting a ride now opens the map with a card at the bottom, and there is no other view. The map is north up, because a browser gives no reliable heading, and it follows every GPS fix at zoom 18. At Istanbul's latitude one screen pixel at that zoom is 0.45 m, so the 100 px scale bar would be 45 m and rounds down to 30 m, which is the view I asked for. Pinching or the plus and minus buttons, which normally hide on phones, change the zoom, and the next fixes keep it.</p>
+
+      <p>Like Google Maps, dragging the map stops the following. In the test the rider's dot moved from the middle of the screen to where I dragged it, the next fix moved the dot but not the map, and the "my location" button turned blue. Tapping it put the dot back in the middle, and the following went on. The card holds everything the old view had: the next warning with its distance and time, the time and distance left with the arrival, the weather here, the off-route button and the sound and sunlight switches. The dot is centred in the part of the map above the card, not in the whole screen, so the card never covers it.</p>
+
+      <p>Taking the screenshots for this post found one more bug: the dot was under the route line. The route is redrawn on every re-plan, and each new line landed on top of the dot. The position dots now have their own layer above the lines.</p>
+
+      <figure>
+        <img src="img/ridecast-ride-screen.jpg" width="1568" height="1119" alt="three phone screens of ridecast at night: the map of Turkey with only a destination field at the bottom; the settings page with route options, fuel range, speed and a clear recent routes button; and the ride screen, a close map of Kadıköy with the yellow route line, a blue position dot and a 30 metre scale bar above a card showing a light rain warning in 19 km, 3 h 25 min left, arrival 16:54 and 18 degrees." loading="lazy">
+        <figcaption>Opening the app, the settings page, and the ride screen at zoom 18 with the live card.</figcaption>
+      </figure>
+
+      <h2>A warning that came and went</h2>
+
+      <p>After a ride had started, the next warning on the card would disappear after a while. I started a ride at the start of the Kadıköy to Eskişehir route and read the card every 12 seconds. My first run showed the card going blank after two minutes, and the cause was me: I was deleting files in another window, and the development server reloaded the page. The second run used a production build that my edits could not touch.</p>
+
+      <div class="table-wrap"><table class="data roomy">
+        <thead><tr><th class="num">time</th><th>next warning on the card</th><th class="num">arrival there</th></tr></thead>
+        <tbody>
+          <tr><td class="num">13:13:39</td><td>crosswind gusts 26 km/h from the left, 234 km ahead</td><td class="num">16:09</td></tr>
+          <tr><td class="num">13:15:40</td><td>the same crosswind</td><td class="num">16:11</td></tr>
+          <tr><td class="num">13:15:52</td><td>light rain 0.1 mm/h, 3% likely, 20 km ahead</td><td class="num">13:30</td></tr>
+          <tr><td class="num">13:19:29</td><td>the same light rain</td><td class="num">13:33</td></tr>
+        </tbody>
+      </table></div>
+
+      <p>The warning list itself was right. Two things moved it. Standing still, every arrival time slides later by the minutes I wait, because live mode counts the rest of the trip from now; on a real ride that slide mostly does not happen. The second one does happen on a real ride: each point took the forecast hour closest to its arrival, so an arrival that drifted from 13:29 to 13:31 switched from the 13:00 forecast to the 14:00 one, and a warning could appear or vanish on those two minutes. That is what happened at 13:15:52.</p>
+
+      <p>An arrival time is never exact to the minute, so a point between two forecast hours now looks at both and keeps the worse one, or the closer one when they are equal. At the start of the same route, reached at 13:21, it now takes the 30 km/h crosswind of the 14:00 forecast. The planner and the departure scores use the same rule, so they show a few more warnings than before. I chose that on purpose: on a bike, a warning that turns out not to be needed costs less than one that disappears two minutes before it would have mattered.</p>
+
+      <h2>Fuel from the tank, not the map</h2>
+
+      <p>The fuel and rest stops of stage 8 came from Overpass, a public OpenStreetMap server: one query for the whole route that took 6 to 8 seconds, a list of about 35 stops on Kadıköy to Eskişehir, and a fuel range check that warned where two stations were further apart than the tank goes. Before a ride that is a lot to read, and on the bike it answers the wrong question. What I want to know while riding is when to start looking for a station, and the phone can work that out without a map of stations.</p>
+
+      <p>On a motorcycle or in a car, "start ride" now first asks for the range on a full tank and how full the tank is: full, ¾, ½ or ¼. Those are the marks on a fuel gauge, and four big buttons are easy to hit with gloves on. The range is filled in from the settings and saved back there, so it is asked once. "Start without fuel warning" skips the question, and "cancel" does not start the ride. My first version only asked when a range was already set in the settings, which are empty by default, so on my own phone it never asked at all. During the ride the app adds up the distance between GPS fixes. It uses the fixes themselves, not the route, so reroutes and detours count too. A move only counts once it is larger than the fix's accuracy and 20 m, so a phone standing still with 10 m accuracy and 11 m of jitter adds nothing. When the estimated range left drops to 20% of a full tank, an amber card says fuel looks quite low, with the km left, and that it is a good time to look for a fuel station. The phone vibrates, and it beeps if the sound is on. Like the fuel light on the bike, the card stays until I tap "filled up", and then the count starts again from a full tank.</p>
+
+      <p>In the test the range was 100 km and I picked ¼, so 25 km in the tank and a warning at 20 km. After 8 km of fake fixes the card said about 17 km left, and "filled up" took it away. What I gave up: the stop list and its map pins, the sheltered stops suggested in rain or cold, adding a stop as a break, and the gap warning in the plan. The app no longer talks to Overpass at all.</p>
+
+      <h2>Less to carry</h2>
+
+      <p>Two more features are gone: opening and saving GPX files (stage 17), and a calendar export (stage 28). Both were about moving a plan into another app, and I never used either. They took their parser, their writers, their tests and their texts with them, and the app no longer saves any file. "Copy link" became a link icon next to "start ride".</p>
+
+      <p>The browser automation I had used for testing did not connect in this round, so every check above ran in headless Chrome, driven over its debugging protocol by a small script: fake GPS positions, taps, drags and screenshots at phone and desktop sizes. It is slower to set up than clicking around, but it gave me exact numbers, like the 3 px and the 13:15:52 above, instead of impressions.</p>
+
       <h2>Limits</h2>
 
-      <p>The levels are per sample point, about every 15 minutes of driving, so a short shower between two points can slip through. The thresholds are my own starting values, not from a standard, and nothing here has been tried on a real ride yet. The rest of the build continues in <a href="ridecast-part-2">ridecast part 2: from warnings to decisions</a>.</p>
+      <p>Most of it has still not been on a real ride, and the ride screen depends on that more than anything: GPS on a phone in a mount, gloves on the zoom buttons, the keyboard fix on a real phone and a screen that has to stay on. On the web, GPS tracking is not reliable while the phone is locked or the browser is in the background, which is the real argument for moving the pure core into a native app one day.</p>
+
+      <p>The risk levels are per sample point, about every 15 minutes of driving, so a short shower between two points can slip through. The thresholds are my own starting values, not from a standard, and the road type and the wet road are guesses. The crosswind warning has not met a real windy forecast, and the worse-of-two-hours rule has been checked on one route on one day. The fuel estimate is the tank level I picked times the range, minus the distance ridden, and fixes missed while the page is in the background count as one straight line. The free servers underneath it (OSRM's demo, FOSSGIS, Valhalla, the tile servers) are made for light use, which a personal app is and a popular one would not be.</p>
