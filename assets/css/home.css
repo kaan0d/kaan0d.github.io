@@ -157,6 +157,7 @@
 .stack-card__inner::after { content: ''; position: absolute; inset: 0; border-radius: inherit; background: var(--bg); opacity: var(--dim, 0); pointer-events: none; }
 .stack-card__title { font-size: clamp(2.4rem, 5vw, 4.6rem); font-weight: 500; letter-spacing: -0.05em; line-height: 1; }
 .stack-card__kind { margin-top: 10px; font-family: var(--font-mono); font-size: 0.85rem; color: var(--accent); }
+.stack-card__facts { margin-top: 6px; font-family: var(--font-mono); font-size: 0.78rem; color: var(--text-dim); }
 .stack-card__desc { max-width: 56ch; margin: 24px 0; font-size: 0.98rem; color: var(--text-dim); }
 .stack-card__desc a { color: var(--text); text-decoration: underline; text-decoration-color: var(--accent-soft); text-underline-offset: 3px; }
 .stack-card__desc a:hover { text-decoration-color: var(--accent); }
@@ -188,6 +189,7 @@
 .more__item:hover .more__name { transform: translateX(10px); color: var(--accent); }
 .more__desc { max-width: 60ch; color: var(--text-dim); font-size: 0.95rem; }
 .more__meta { font-family: var(--font-mono); font-size: 0.8rem; color: var(--text-dim); text-align: right; }
+.more__meta a { color: var(--accent); }
 
 /* ---------- repos (horizontal pan on desktop) ---------- */
 

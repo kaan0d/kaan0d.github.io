@@ -117,9 +117,10 @@
         <div class="stack-card__text">
           <h3 class="stack-card__title">Sentinel</h3>
           <p class="stack-card__kind">Packet Analyzer / IDS</p>
-          <p class="stack-card__desc">Packet analyzer and rule-based intrusion detection system written from scratch in Python with no runtime dependencies: hand-written parsers (Ethernet/VLAN, ARP, IPv4/IPv6, TCP, UDP, ICMP, DNS, HTTP, TLS ClientHello), PCAP read/write, TCP stream reassembly, a filter language, detectors for port scans, SYN floods, ARP spoofing and DNS tunneling, and live capture on Linux and Windows. It also ran on 2.7 million packets of real traffic, including 14.6 s of a 1 Gbps backbone, where an independent tshark recount found the same 376 scanning sources; the write-up (<a href="posts/sentinel-packet-analyzer">part 1</a>, <a href="posts/sentinel-next-level">part 2</a> and <a href="posts/sentinel-real-world">part 3</a>) is on the blog.</p>
+          <p class="stack-card__facts">Solo · open source</p>
+          <p class="stack-card__desc">Packet analyzer and intrusion detection system in pure Python, with hand-written parsers from Ethernet to TLS ClientHello and no runtime dependencies. It reassembles TCP streams, filters with its own language, captures live on Linux and Windows, and detects port scans, SYN floods, ARP spoofing and DNS tunneling. On 14.6 s of a 1 Gbps backbone it found the same 376 scanning sources as an independent tshark recount.</p>
           <ul class="tags"><li>Python</li><li>pytest</li><li>CI</li></ul>
-          <p class="stack-card__links"><a class="roll" href="https://github.com/kaan0d/sentinel" target="_blank" rel="noopener"><span class="roll__in" data-text="source">source</span></a></p>
+          <p class="stack-card__links"><a class="roll" href="posts/sentinel-packet-analyzer"><span class="roll__in" data-text="part 1">part 1</span></a><a class="roll" href="posts/sentinel-next-level"><span class="roll__in" data-text="part 2">part 2</span></a><a class="roll" href="posts/sentinel-real-world"><span class="roll__in" data-text="part 3">part 3</span></a><a class="roll" href="https://github.com/kaan0d/sentinel" target="_blank" rel="noopener"><span class="roll__in" data-text="source">source</span></a></p>
         </div>
         <div class="stack-card__visual proof">
           <div class="proof__row"><span class="proof__num">942</span><span class="proof__label">tests</span></div>
@@ -135,9 +136,10 @@
         <div class="stack-card__text">
           <h3 class="stack-card__title">Impulse</h3>
           <p class="stack-card__kind">2D Physics Engine</p>
-          <p class="stack-card__desc">2D rigid body physics engine written from scratch with no libraries: circle, box, and convex polygon collision (SAT), a warm-started sequential-impulse solver with friction and restitution, sleeping, continuous collision, five joint types, and a spatial-hash broadphase about 42× faster than brute force at 4,000 bodies. Tall stacks settle and sleep (10-box towers in about 1 s instead of 7 s). Verified against analytic references with 171 unit tests and 14 browser tests, and shipped as an interactive browser demo.</p>
+          <p class="stack-card__facts">Solo · open source · live demo</p>
+          <p class="stack-card__desc">2D rigid body physics engine in TypeScript with no physics libraries: SAT collision for circles, boxes and convex polygons, a warm-started sequential-impulse solver, sleeping, continuous collision and five joint types. A spatial-hash broadphase is about 42× faster than brute force at 4,000 bodies. Verified against analytic references with 171 unit tests and 14 browser tests.</p>
           <ul class="tags"><li>TypeScript</li><li>Vitest</li><li>Playwright</li></ul>
-          <p class="stack-card__links"><a class="roll" href="posts/impulse-physics-engine"><span class="roll__in" data-text="write-up">write-up</span></a><a class="roll" href="https://github.com/kaan0d/impulse" target="_blank" rel="noopener"><span class="roll__in" data-text="source">source</span></a></p>
+          <p class="stack-card__links"><a class="roll" href="https://kaandinc.com/impulse/" target="_blank" rel="noopener"><span class="roll__in" data-text="live demo">live demo</span></a><a class="roll" href="posts/impulse-physics-engine"><span class="roll__in" data-text="part 1">part 1</span></a><a class="roll" href="posts/impulse-soft-step"><span class="roll__in" data-text="part 2">part 2</span></a><a class="roll" href="https://github.com/kaan0d/impulse" target="_blank" rel="noopener"><span class="roll__in" data-text="source">source</span></a></p>
         </div>
         <div class="stack-card__visual media">
           <img src="posts/img/impulse-pyramid.png" width="902" height="602" alt="Impulse demo: a ten-row pyramid of boxes with dim amber outlines resting stable on a dark floor." loading="lazy">
@@ -150,9 +152,10 @@
         <div class="stack-card__text">
           <h3 class="stack-card__title">Environment-Aware Pathfinding</h3>
           <p class="stack-card__kind">Game AI / Pathfinding</p>
-          <p class="stack-card__desc">Pathfinding that treats walls as a decision input, written from scratch in TypeScript. A time-cost planner prices every wall in seconds and picks the target and route by total time; groups of units share one plan and are limited by the attack positions around a wall; an event-based rollout scores each candidate plan. A deterministic simulation runs a classic AI and the new algorithm side by side in a PixiJS demo with an editor, nine maps and a debug view. Checked against the real simulation on 200 random maps: the pick is within 5% of the best plan on 199 or 200 of them, and the time estimate is off by about 1% on average.</p>
+          <p class="stack-card__facts">Solo · open source · live demo</p>
+          <p class="stack-card__desc">Game AI pathfinding that treats walls as a decision: a planner prices every wall in seconds and picks the target and route by total time, and squads share one plan limited by the attack positions around a wall. A PixiJS demo runs a classic AI and the new planner side by side, with an editor, nine maps and a debug view. On 200 random maps the pick is within 5% of the best plan on 199 or 200 of them, and the time estimate is off by about 1% on average.</p>
           <ul class="tags"><li>TypeScript</li><li>PixiJS</li><li>Vitest</li></ul>
-          <p class="stack-card__links"><a class="roll" href="posts/pathfinding-part-1"><span class="roll__in" data-text="part 1">part 1</span></a><a class="roll" href="posts/pathfinding-part-2"><span class="roll__in" data-text="part 2">part 2</span></a><a class="roll" href="posts/pathfinding-part-3"><span class="roll__in" data-text="part 3">part 3</span></a><a class="roll" href="posts/pathfinding-part-4"><span class="roll__in" data-text="part 4">part 4</span></a><a class="roll" href="https://kaandinc.com/environment-aware-pathfinding/" target="_blank" rel="noopener"><span class="roll__in" data-text="live demo">live demo</span></a><a class="roll" href="https://github.com/kaan0d/environment-aware-pathfinding" target="_blank" rel="noopener"><span class="roll__in" data-text="source">source</span></a></p>
+          <p class="stack-card__links"><a class="roll" href="https://kaandinc.com/environment-aware-pathfinding/" target="_blank" rel="noopener"><span class="roll__in" data-text="live demo">live demo</span></a><a class="roll" href="posts/pathfinding-part-1"><span class="roll__in" data-text="part 1">part 1</span></a><a class="roll" href="posts/pathfinding-part-2"><span class="roll__in" data-text="part 2">part 2</span></a><a class="roll" href="posts/pathfinding-part-3"><span class="roll__in" data-text="part 3">part 3</span></a><a class="roll" href="posts/pathfinding-part-4"><span class="roll__in" data-text="part 4">part 4</span></a><a class="roll" href="https://github.com/kaan0d/environment-aware-pathfinding" target="_blank" rel="noopener"><span class="roll__in" data-text="source">source</span></a></p>
         </div>
         <div class="stack-card__visual media">
           <img src="posts/img/pathfinding-castle.png" width="1400" height="800" alt="Two panels of the pathfinding demo on a castle map: the right panel has broken a weak gate in the wall ring and its units are inside, the left panel is still hitting a strong wall." loading="lazy">
@@ -165,8 +168,9 @@
         <div class="stack-card__text">
           <h3 class="stack-card__title">Ridecast</h3>
           <p class="stack-card__kind">Route Weather Planner</p>
-          <p class="stack-card__desc">Web app for motorcycle riders that shows the weather along a route for the moment you reach each point, not for now. It builds an ETA timeline from speed, road type and breaks, matches every sample point to the hourly forecasts around its arrival, and rates rain, gusts, fog, ice, wind chill at riding speed, a wet road estimate and darkness with per-vehicle thresholds. On top of that it marks the safest route, scores departure times from one cached forecast, warns about sun glare, heat and crosswinds, finds the best day of the week, plans multi-day tours, suggests clothing, and follows the ride with GPS on a full-screen map with a live card that also warns when the tank is getting low. Map controls work like Google Maps (a search bar over the map, drag the route, context menu, layers with rain radar, a ruler), routes can avoid motorways, tolls or ferries, and it installs as an offline-capable app in English or Turkish. No backend and no API keys; the pure core is covered by 84 unit tests. The build log is on the blog (<a href="posts/ridecast">part 1</a>, <a href="posts/ridecast-part-2">part 2</a>, <a href="posts/ridecast-part-3">part 3</a>, <a href="posts/ridecast-part-4">part 4</a>).</p>
-          <ul class="tags"><li>TypeScript</li><li>Leaflet</li><li>Vitest</li></ul>
+          <p class="stack-card__facts">Solo · open source · live</p>
+          <p class="stack-card__desc">Route weather planner for motorcycle riders. It builds an arrival timeline from speed, road type and breaks, and shows the forecast for the moment you reach each point, not for now. On top of that it picks the safest route, scores departure times, plans multi-day tours and follows the ride with GPS. An offline-capable app in English and Turkish with no backend and no API keys; the core is covered by 84 unit tests.</p>
+          <ul class="tags"><li>TypeScript</li><li>MapLibre</li><li>Vitest</li></ul>
           <p class="stack-card__links"><a class="roll" href="https://kaandinc.com/ridecast/" target="_blank" rel="noopener"><span class="roll__in" data-text="live app">live app</span></a><a class="roll" href="posts/ridecast"><span class="roll__in" data-text="part 1">part 1</span></a><a class="roll" href="posts/ridecast-part-2"><span class="roll__in" data-text="part 2">part 2</span></a><a class="roll" href="posts/ridecast-part-3"><span class="roll__in" data-text="part 3">part 3</span></a><a class="roll" href="posts/ridecast-part-4"><span class="roll__in" data-text="part 4">part 4</span></a><a class="roll" href="https://github.com/kaan0d/ridecast" target="_blank" rel="noopener"><span class="roll__in" data-text="source">source</span></a></p>
         </div>
         <div class="stack-card__visual media">
@@ -180,7 +184,8 @@
         <div class="stack-card__text">
           <h3 class="stack-card__title">Country Quiz</h3>
           <p class="stack-card__kind">World Map Game</p>
-          <p class="stack-card__desc">World map quiz in Turkish and English with six modes: find a country by name, flag or capital, name a marked one from four options or by typing it (accents, case and small typos forgiven), or click any country that borders the one asked. A wrong pick shows how many km it was off and an arrow toward the answer. Borders for 158 countries are worked out from the map's shared edges, a date-seeded daily challenge gives everyone the same ten countries with a shareable result, and an explore view tints the map by lifetime misses. Runs fully in the browser as a static export with no backend; the game rules are a pure reducer covered by unit tests. The write-up is <a href="posts/country-quiz">on the blog</a>.</p>
+          <p class="stack-card__facts">Solo · open source · live</p>
+          <p class="stack-card__desc">World map quiz in Turkish and English with six modes, from finding a country by its flag to clicking any of its neighbours. A wrong pick shows how many km it was off and in which direction. Borders for 158 countries are worked out from the map's shared edges, and a date-seeded daily challenge gives everyone the same ten countries. A static export with no backend; the game rules are a unit-tested reducer.</p>
           <ul class="tags"><li>TypeScript</li><li>Next.js</li><li>react-simple-maps</li></ul>
           <p class="stack-card__links"><a class="roll" href="https://kaandinc.com/country-quiz/" target="_blank" rel="noopener"><span class="roll__in" data-text="live app">live app</span></a><a class="roll" href="posts/country-quiz"><span class="roll__in" data-text="write-up">write-up</span></a><a class="roll" href="https://github.com/kaan0d/country-quiz" target="_blank" rel="noopener"><span class="roll__in" data-text="source">source</span></a></p>
         </div>
@@ -195,7 +200,8 @@
         <div class="stack-card__text">
           <h3 class="stack-card__title">Number Guess Battle</h3>
           <p class="stack-card__kind">Online Multiplayer Game</p>
-          <p class="stack-card__desc">Two-player number guessing game in Turkish and English: each player locks a secret number, then you take turns guessing the other's while your valid range narrows. Online games run through a room code and an 80-line WebSocket relay of my own that only forwards messages, so all game state lives in the two browsers. Each browser answers guesses against its own number, so the secret never crosses the network until the game ends; a refreshed tab rejoins its room within 30 seconds, and the score carries over to rematches. There is also a solo mode against a bot that never touches the server. The page is a static export on GitHub Pages and the relay runs on a VPS behind Cloudflare; the game rules are pure functions covered by unit tests. The write-up is <a href="posts/number-guessing">on the blog</a>.</p>
+          <p class="stack-card__facts">Solo · open source · live</p>
+          <p class="stack-card__desc">Two-player online guessing game in Turkish and English. An 80-line WebSocket relay of my own only forwards messages, so all game state lives in the two browsers and the secret number never crosses the network until the game ends. A refreshed tab rejoins its room within 30 seconds, and a solo mode plays against a bot without the server.</p>
           <ul class="tags"><li>TypeScript</li><li>Next.js</li><li>WebSocket</li></ul>
           <p class="stack-card__links"><a class="roll" href="https://kaandinc.com/number-guessing/" target="_blank" rel="noopener"><span class="roll__in" data-text="live app">live app</span></a><a class="roll" href="posts/number-guessing"><span class="roll__in" data-text="write-up">write-up</span></a><a class="roll" href="https://github.com/kaan0d/number-guessing" target="_blank" rel="noopener"><span class="roll__in" data-text="source">source</span></a></p>
         </div>
@@ -210,7 +216,8 @@
         <div class="stack-card__text">
           <h3 class="stack-card__title">tls-peek</h3>
           <p class="stack-card__kind">HTTPS Inspector for Windows</p>
-          <p class="stack-card__desc">Shows the HTTPS requests one Windows program sends (URLs, headers, tokens and bodies) in a local web UI. It is built on mitmproxy's local mode, which captures through the WinDivert driver, so it also works on programs that ignore the system proxy; you pick the program from a list and switch it live. Each capture gets its own CA that is removed again on stop. On top of the request list: intercept and rewrite rules, a Connection tab with both TLS sides, the certificate chain and timing split into connect, TLS, wait and download, 13 passive security checks, an API map that groups requests into endpoints with JSON shapes and exports OpenAPI, and raw TCP, UDP and DNS views. Exports mask credentials by name and by token shape. The UI is plain ES modules on Python's standard library HTTP server, and CI tests it on Windows and builds a single exe. The write-up is <a href="posts/tls-peek">on the blog</a>.</p>
+          <p class="stack-card__facts">Solo · open source · released</p>
+          <p class="stack-card__desc">Shows the HTTPS requests one Windows program sends, in a local web UI. Built on mitmproxy's local mode and the WinDivert driver, so it works on programs that ignore the system proxy, and each capture gets its own CA that is removed on stop. Adds intercept and rewrite rules, TLS and timing details, 13 passive security checks and an API map with OpenAPI export; CI tests it on Windows and builds a single exe.</p>
           <ul class="tags"><li>Python</li><li>mitmproxy</li><li>JavaScript</li></ul>
           <p class="stack-card__links"><a class="roll" href="posts/tls-peek"><span class="roll__in" data-text="write-up">write-up</span></a><a class="roll" href="https://github.com/kaan0d/tls-peek" target="_blank" rel="noopener"><span class="roll__in" data-text="source">source</span></a><a class="roll" href="https://github.com/kaan0d/tls-peek/releases/latest" target="_blank" rel="noopener"><span class="roll__in" data-text="download">download</span></a></p>
         </div>
@@ -225,8 +232,9 @@
         <div class="stack-card__text">
           <h3 class="stack-card__title">Invoice Application</h3>
           <p class="stack-card__kind">Desktop app for a retail business</p>
-          <p class="stack-card__desc">Desktop application for a retail business that fills PDF receipt templates, tracks payment status and customer history, and numbers receipts automatically.</p>
-          <ul class="tags"><li>Python</li><li>SQLite</li></ul>
+          <p class="stack-card__facts">Solo · client project</p>
+          <p class="stack-card__desc">Desktop receipt app for a retail shop. It fills PDF templates that grow to fit any number of items, tracks paid, partial and unpaid receipts, and spends a receipt number only after the PDF is saved. It handles Turkish casing, amounts in words and Decimal arithmetic, and ships as a folder with an exe, so the shop installs nothing.</p>
+          <ul class="tags"><li>Python</li><li>customtkinter</li><li>PyMuPDF</li><li>SQLite</li></ul>
           <p class="stack-card__links"><a class="roll" href="posts/retail-desktop-apps"><span class="roll__in" data-text="write-up">write-up</span></a></p>
         </div>
         <div class="stack-card__visual media">
@@ -240,17 +248,17 @@
     <li class="more__item" data-fade>
       <h3 class="more__name">Business Management App</h3>
       <p class="more__desc">Desktop application for a retail business handling inventory, point-of-sale (cash and credit), customer accounts and payments, daily earnings and expenses, and PDF customer statements. Layered architecture separating data, business logic and UI, with automatic backups on startup.</p>
-      <p class="more__meta">Python, SQLite</p>
+      <p class="more__meta">Python, SQLite · <a href="posts/retail-desktop-apps">write-up</a></p>
     </li>
     <li class="more__item" data-fade>
-      <h3 class="more__name">E-Commerce Website</h3>
-      <p class="more__desc">Full-stack website for a retail business: a public storefront with product catalog, categories and stock status, and a custom admin panel for products, discounts, homepage content and site settings. Built with TanStack Start, Tailwind CSS and Zod validation, on a SQL database (Cloudflare D1).</p>
-      <p class="more__meta">TypeScript, React, Cloudflare</p>
+      <h3 class="more__name">Product Catalog and Admin Panel</h3>
+      <p class="more__desc">Price-and-stock catalog for an electrical shop where every product opens a pre-written WhatsApp message instead of a cart, with a custom admin panel for products, discounts, homepage content and site settings. Built with TanStack Start, Tailwind CSS and Zod on Cloudflare Workers, D1 and R2.</p>
+      <p class="more__meta">TypeScript, React, Cloudflare · <a href="posts/ecommerce-admin-panel">write-up</a></p>
     </li>
     <li class="more__item" data-fade>
       <h3 class="more__name">Real-Time CV Automation Tool</h3>
-      <p class="more__desc">Built to automate in-game minigames: screen-region object detection with OpenCV using color and contour tracking, a sub-frame-precise pattern-recognition module, and a configurable, persisted region selector.</p>
-      <p class="more__meta">Python, OpenCV</p>
+      <p class="more__desc">Built to automate in-game minigames: two Python tools that capture a screen region at 60 fps, find a marker or read arrows and progress lines with OpenCV, and press keys through a hysteresis controller. Thresholds reload while the tool runs, and regions are picked once in a Tkinter selector.</p>
+      <p class="more__meta">Python, OpenCV · <a href="posts/screen-region-detection">write-up</a></p>
     </li>
     <li class="more__item" data-fade>
       <h3 class="more__name">Illusa (VR Game)</h3>
