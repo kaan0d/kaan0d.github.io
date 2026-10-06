@@ -59,7 +59,7 @@
 <article class="post">
   <header class="post-head">
     <a class="post-head__back roll" href="../blog"><span class="roll__in" data-text="&amp;larr; blog">&larr; blog</span></a>
-    <p class="post-head__meta" data-hero><time datetime="2026-09-16">Sep 2026</time> &nbsp;/&nbsp; 1 min read</p>
+    <p class="post-head__meta" data-hero><time datetime="2026-09-16">Sep 2026</time> &nbsp;/&nbsp; 3 min read</p>
     <h1 class="post-head__title" data-split="lines" data-hero>Simple Volume Saver: per-site volume control for Chrome</h1>
     <p class="post-head__sub" data-hero>A volume knob that remembers every site.</p>
   </header>
@@ -68,6 +68,9 @@
       <ol>
         <li><a href="#the-popup">The popup</a></li>
         <li><a href="#applying-the-level">Applying the level</a></li>
+        <li><a href="#a-visualizer-that-shows-the-real-output">A visualizer that shows the real output</a></li>
+        <li><a href="#permissions">Permissions</a></li>
+        <li><a href="#limits">Limits</a></li>
         <li><a href="#why-it-stayed">Why it stayed</a></li>
       </ol>
     </aside>
@@ -79,6 +82,15 @@
 <p>Every site handles volume differently, and half of them fight you if you try to fix it from the OS mixer. Some clamp it, some remember nothing between visits, some route audio through a custom player that ignores the system slider entirely.</p>
 
       <p>simple-volume-saver sits on top of that: pick a level per site, it remembers, and you can reset it without digging through five different players' settings. The core is a background service worker that injects a small function into the page, and a bit of <code>chrome.storage</code>, nothing that needed a framework. Saved levels are kept per site in <code>chrome.storage.sync</code>, so they follow you across signed-in devices, and a live audio-reactive visualizer, fed by <code>chrome.tabCapture</code>, shows the tab's real audio output rather than a decorative animation.</p>
+
+      <div class="stats">
+        <div class="stat"><b>1.3K</b><span>lines of JavaScript, HTML and CSS</span></div>
+        <div class="stat"><b>0</b><span>frameworks and build steps</span></div>
+        <div class="stat"><b>MV3</b><span>a service worker, no persistent background page</span></div>
+        <div class="stat"><b>1</b><span>saved level per origin, synced across devices</span></div>
+        <div class="stat"><b>5</b><span>permissions, each with one stated reason</span></div>
+        <div class="stat"><b>256</b><span>FFT size behind the visualizer</span></div>
+      </div>
 
       <h2 id="the-popup">The popup</h2>
 
@@ -116,6 +128,41 @@
   applyToAll();
   <span class="cm">// ...then a MutationObserver re-applies it to media added later</span>
 }</code></div>
+
+      <p>The function runs again on every navigation and every audio event, so it has to be idempotent. The first call sets a flag on the page and installs one <code>MutationObserver</code> and one capturing <code>play</code> listener. Later calls only update the stored level and apply it, so nothing stacks up no matter how often the worker fires. The capturing listener matters for players that create a fresh element right before playback: the level is set on the element as it starts, not one mutation later.</p>
+
+      <p>Levels are keyed by origin (<code>https://example.com</code>), not by hostname or full URL. A level saved on one video applies to every page of that site, and <code>http</code> and <code>https</code> stay separate, which is how the browser itself scopes site data. Pages the extension cannot script, such as <code>chrome://</code> pages, are filtered out by protocol before anything is injected.</p>
+
+      <h2 id="a-visualizer-that-shows-the-real-output">A visualizer that shows the real output</h2>
+
+      <p>The obvious way to draw a level meter is to inject a <code>MediaElementAudioSourceNode</code> into the page and attach an analyser to the video element. That silently fails on YouTube, Spotify and any site that already runs its own Web Audio graph, because an element can only be claimed by one such node for its whole lifetime. So the popup taps the tab's final mixed output instead: <code>chrome.tabCapture</code> gives a stream id, <code>getUserMedia</code> opens it, and an <code>AnalyserNode</code> reads the frequency bins.</p>
+
+      <div class="codeblock"><code><span class="kw">const</span> source = ctx.createMediaStreamSource(stream);
+<span class="kw">const</span> analyser = ctx.createAnalyser();
+analyser.fftSize = 256;
+source.connect(analyser);
+<span class="cm">// route the captured audio back out, or the tab goes silent while captured</span>
+source.connect(ctx.destination);</code></div>
+
+      <p>Capturing a tab mutes it by default, so the stream is connected back to the speakers. The audio is analyzed in memory and played back; nothing is recorded or sent anywhere. The stream and the audio context are closed when the popup closes.</p>
+
+      <h2 id="permissions">Permissions</h2>
+
+      <div class="table-wrap"><table class="data">
+        <thead><tr><th>permission</th><th>why</th></tr></thead>
+        <tbody>
+          <tr><td class="mono">storage</td><td>Saved levels and the theme</td></tr>
+          <tr><td class="mono">scripting, activeTab, &lt;all_urls&gt;</td><td>Reads and sets media volume, applies saved levels after navigation</td></tr>
+          <tr><td class="mono">tabs</td><td>Detects when a tab starts playing audio</td></tr>
+          <tr><td class="mono">tabCapture</td><td>Visualizer only</td></tr>
+        </tbody>
+      </table></div>
+
+      <p>The fader also works from the keyboard (arrow keys in steps of 5, Home and End), and the popup has dark and light themes that follow the system setting until one is picked.</p>
+
+      <h2 id="limits">Limits</h2>
+
+      <p>Heavily customized players that keep their own volume state may not respond, or may reset the level on their own. The visualizer does not work on internal browser pages. Volume above 100% is not supported, because it breaks fullscreen video.</p>
 
       <h2 id="why-it-stayed">Why it stayed</h2>
 
