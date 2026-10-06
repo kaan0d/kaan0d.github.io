@@ -3,9 +3,9 @@ title: pathfinding part 2: a demo you can break, with an editor, nine maps and a
 date: 2026-09-22
 label: Sep 2026
 ---
-<p>part 1 was the algorithm: a simulation, a planner that prices walls in seconds, and squads that share attack positions, checked against the real simulation on 200 random maps. this part is what sits on top of it: a two-panel PixiJS demo with a fixed time step, an editor, nine ready maps, a switch that lets attackers share a cell, a debug view that shows why a unit decided what it did, and a GitHub Pages build. one of the maps found a planner bug the tests had missed.</p>
+<p>Part 1 was the algorithm: a simulation, a planner that prices walls in seconds, and squads that share attack positions, checked against the real simulation on 200 random maps. This part is what sits on top of it: a two-panel PixiJS demo with a fixed time step, an editor, nine ready maps, a switch that lets attackers share a cell, a debug view that shows why a unit decided what it did, and a GitHub Pages build. One of the maps found a planner bug the tests had missed.</p>
 
-      <p class="links">try it: <a href="https://kaandinc.com/environment-aware-pathfinding/" target="_blank" rel="noopener">live demo</a> · <a href="https://github.com/kaan0d/environment-aware-pathfinding" target="_blank" rel="noopener">source</a> · part 1: <a href="pathfinding-part-1">the unit that walked around a wall</a> · part 3: <a href="pathfinding-part-3">the follow-up list</a> · part 4: <a href="pathfinding-part-4">a cap, a cache, a lighter editor</a></p>
+      <p class="links">Try it: <a href="https://kaandinc.com/environment-aware-pathfinding/" target="_blank" rel="noopener">live demo</a> · <a href="https://github.com/kaan0d/environment-aware-pathfinding" target="_blank" rel="noopener">source</a> · part 1: <a href="pathfinding-part-1">the unit that walked around a wall</a> · part 3: <a href="pathfinding-part-3">the follow-up list</a> · part 4: <a href="pathfinding-part-4">a cap, a cache, a lighter editor</a></p>
 
       <div class="stats">
         <div class="stat"><b>6 of 6</b><span>stages done; this part covers stages 4 to 6</span></div>
@@ -13,9 +13,9 @@ label: Sep 2026
         <div class="stat"><b>123</b><span>tests, all green, plus a strict type check and a production build</span></div>
       </div>
 
-      <h2>stage 4: making it visible</h2>
+      <h2>Stage 4: making it visible</h2>
 
-      <p>one canvas, two panels: the classic algorithm on the left, the new one on the right, same map, same units, same deploy events. the drawing code only reads the worlds, and <code>src/sim</code> still imports nothing from Pixi.</p>
+      <p>One canvas, two panels: the classic algorithm on the left, the new one on the right, same map, same units, same deploy events. The drawing code only reads the worlds, and <code>src/sim</code> still imports nothing from Pixi.</p>
 
       <div class="diagram-wrap"><svg class="diagram" viewBox="0 0 760 316" role="img" aria-label="Demo architecture: the editor changes the scenario, the session runs a classic world and a new-algorithm world in lockstep, two panel views only read them"><defs><marker id="ah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0 L10 5 L0 10 z" class="head"/></marker></defs>
 <rect class="box hot" x="0" y="100" width="140" height="70" rx="3"/><text class="t" x="70" y="131" text-anchor="middle">Scenario</text><text class="s" x="70" y="149" text-anchor="middle">map + deploys</text>
@@ -34,9 +34,9 @@ label: Sep 2026
 <line class="arrow" x1="70" y1="211" x2="70" y2="174" marker-end="url(#ah)"/>
 <text class="s" x="380" y="304" text-anchor="middle">views never write to a world; the editor only changes the scenario</text>
 </svg></div>
-      <p class="dim" style="font-size:0.8rem; font-family:var(--font-mono);">the demo: the scenario is the one source, the session runs two worlds in lockstep, the views only read.</p>
+      <p class="dim" style="font-size:0.8rem; font-family:var(--font-mono);">The demo: the scenario is the one source, the session runs two worlds in lockstep, the views only read.</p>
 
-      <p>the simulation runs on a fixed 1/30 s step. an accumulator turns the browser's variable frame time into whole steps, a speed control (0.5x to 4x) scales it, and a long frame (a background tab) is capped at 0.25 s so it cannot become a burst of steps. the leftover becomes the <code>alpha</code> the view uses to blend each unit between its previous and current position:</p>
+      <p>The simulation runs on a fixed 1/30 s step. An accumulator turns the browser's variable frame time into whole steps, a speed control (0.5x to 4x) scales it, and a long frame (a background tab) is capped at 0.25 s so it cannot become a burst of steps. The leftover becomes the <code>alpha</code> the view uses to blend each unit between its previous and current position:</p>
 
       <div class="codeblock"><code>advance(realSeconds: number): <span class="kw">void</span> {
   <span class="kw">if</span> (!<span class="kw">this</span>.playing) <span class="kw">return</span>
@@ -51,16 +51,16 @@ label: Sep 2026
   <span class="kw">if</span> (<span class="kw">this</span>.finished) <span class="kw">this</span>.accumulator = 0
 }</code></div>
 
-      <p>the acceptance test is not a picture. the same scenario runs once with frames of exactly 1/60 s and once with a mix of 0.2, 0.013, 0.1 and 0.05 s, and every event and statistic of both worlds must match as text, also after Reset. both pass. in headless Chrome, on the L-corner map (40x28, wall 22 cells long), the left panel walks around in 21.07 s, the right one breaks the wall in 13.33 s, and a banner says the new algorithm is 37% faster.</p>
+      <p>The acceptance test is not a picture. The same scenario runs once with frames of exactly 1/60 s and once with a mix of 0.2, 0.013, 0.1 and 0.05 s, and every event and statistic of both worlds must match as text, also after Reset. Both pass. In headless Chrome, on the L-corner map (40x28, wall 22 cells long), the left panel walks around in 21.07 s, the right one breaks the wall in 13.33 s, and a banner says the new algorithm is 37% faster.</p>
 
       <figure>
         <img src="img/pathfinding-l-corner-end.png" width="1400" height="800" alt="The L-corner map in two panels after the run: the classic panel counted 21.1 s and no walls broken, the new panel 13.3 s and one wall broken, the depot is gone and a banner says the new algorithm is faster." loading="lazy">
-        <figcaption>the end of the L-corner run at 4x speed. the banner compares the two finish times.</figcaption>
+        <figcaption>The end of the L-corner run at 4x speed. The banner compares the two finish times.</figcaption>
       </figure>
 
-      <h2>stage 5: an editor and nine maps</h2>
+      <h2>Stage 5: an editor and nine maps</h2>
 
-      <p>the map is one <code>Scenario</code> object and both worlds are built from it. every edit is a small pure function on it, with unit tests: paint a wall of level 1 to 5, erase, place a 1x1, 2x2 or 3x3 building where the whole footprint is free, add a spawn point, change the hit points of one wall or building. any edit resets both worlds. sliders cover unit speed, damage and hit points, squad radius, candidate count and a wall hit point multiplier, and a switch turns group behavior off.</p>
+      <p>The map is one <code>Scenario</code> object and both worlds are built from it. Every edit is a small pure function on it, with unit tests: paint a wall of level 1 to 5, erase, place a 1x1, 2x2 or 3x3 building where the whole footprint is free, add a spawn point, change the hit points of one wall or building. Any edit resets both worlds. Sliders cover unit speed, damage and hit points, squad radius, candidate count and a wall hit point multiplier, and a switch turns group behavior off.</p>
 
       <div class="codeblock"><code><span class="kw">export</span> <span class="kw">function</span> paintWall(s: Scenario, x: number, y: number, level: WallLevel): boolean {
   <span class="kw">if</span> (!inside(s, x, y) || marked(s, x, y)) <span class="kw">return</span> <span class="kw">false</span>
@@ -70,31 +70,31 @@ label: Sep 2026
 
       <figure>
         <img src="img/pathfinding-editor.png" width="1400" height="800" alt="The demo on a blank map after editing: a column of walls, a tower and a depot, a spawn marker, six units dropped, and a green preview square for the next building." loading="lazy">
-        <figcaption>a map drawn from scratch on the blank scenario: a wall, a tower, a depot, one spawn point and six dropped units. the same map appears in both panels.</figcaption>
+        <figcaption>A map drawn from scratch on the blank scenario: a wall, a tower, a depot, one spawn point and six dropped units. The same map appears in both panels.</figcaption>
       </figure>
 
-      <p>a click drops the same units on the same cell at the same simulated time in both worlds, and the event goes into the scenario's deploy list so Reset replays it. the replay test caught an off-by-one-step bug: I stamped the event with the time of the steps already run, but a world lands a unit only on the next step, so live and replay differed by one step (0.2667 s against 0.2333 s). the event is now stamped <code>(stepCount + 1) * DT</code>.</p>
+      <p>A click drops the same units on the same cell at the same simulated time in both worlds, and the event goes into the scenario's deploy list so Reset replays it. The replay test caught an off-by-one-step bug: I stamped the event with the time of the steps already run, but a world lands a unit only on the next step, so live and replay differed by one step (0.2667 s against 0.2333 s). The event is now stamped <code>(stepCount + 1) * DT</code>.</p>
 
-      <p>the nine ready maps, time to destroy every building, from the smoke test that runs each map under both algorithms with one attacker per attack position (the rule of part 1):</p>
+      <p>The nine ready maps, time to destroy every building, from the smoke test that runs each map under both algorithms with one attacker per attack position (the rule of part 1):</p>
 
       <div class="chart-wrap"><svg class="chart" viewBox="0 0 760 488" role="img" aria-labelledby="p2c1t p2c1d"><title id="p2c1t">Time to destroy every building on the nine ready-made maps</title><desc id="p2c1d">Classic against the new algorithm: 21.07 and 13.33, 43.30 and 34.50, 63.60 and 30.47, 46.90 and 29.17, 20.37 and 19.73, 47.33 and 20.13, 21.07 and 21.07, 17.00 and 14.63, 38.10 and 38.10 seconds.</desc><rect class="key-before" x="240" y="8" width="12" height="12"/><text class="lbl" x="258" y="18">classic</text><rect class="key-after" x="240" y="28" width="12" height="12"/><text class="lbl" x="258" y="38">new algorithm</text><line class="grid" x1="240" y1="46" x2="240" y2="458"/><text class="tick" x="240" y="476" text-anchor="middle">0 s</text><line class="grid" x1="355" y1="46" x2="355" y2="458"/><text class="tick" x="355" y="476" text-anchor="middle">17.5 s</text><line class="grid" x1="470" y1="46" x2="470" y2="458"/><text class="tick" x="470" y="476" text-anchor="middle">35 s</text><line class="grid" x1="585" y1="46" x2="585" y2="458"/><text class="tick" x="585" y="476" text-anchor="middle">52.5 s</text><line class="grid" x1="700" y1="46" x2="700" y2="458"/><text class="tick" x="700" y="476" text-anchor="middle">70 s</text><text class="lbl" x="228" y="74" text-anchor="end">1. L corner</text><rect class="bar-before" x="240" y="56" width="138.46" height="14"/><text class="val" x="384.46" y="67">21.07 s</text><rect class="bar-after" x="240" y="74" width="87.6" height="14"/><text class="val hot" x="333.6" y="85">13.33 s</text><text class="lbl" x="228" y="118" text-anchor="end">2. Castle</text><rect class="bar-before" x="240" y="100" width="284.54" height="14"/><text class="val" x="530.54" y="111">43.3 s</text><rect class="bar-after" x="240" y="118" width="226.71" height="14"/><text class="val hot" x="472.71" y="129">34.5 s</text><text class="lbl" x="228" y="162" text-anchor="end">3. Double layer</text><rect class="bar-before" x="240" y="144" width="417.94" height="14"/><text class="val" x="663.94" y="155">63.6 s</text><rect class="bar-after" x="240" y="162" width="200.23" height="14"/><text class="val hot" x="446.23" y="173">30.47 s</text><text class="lbl" x="228" y="206" text-anchor="end">4. Mixed levels</text><rect class="bar-before" x="240" y="188" width="308.2" height="14"/><text class="val" x="554.2" y="199">46.9 s</text><rect class="bar-after" x="240" y="206" width="191.69" height="14"/><text class="val hot" x="437.69" y="217">29.17 s</text><text class="lbl" x="228" y="250" text-anchor="end">5. No way in</text><rect class="bar-before" x="240" y="232" width="133.86" height="14"/><text class="val" x="379.86" y="243">20.37 s</text><rect class="bar-after" x="240" y="250" width="129.65" height="14"/><text class="val hot" x="375.65" y="261">19.73 s</text><text class="lbl" x="228" y="294" text-anchor="end">6. Maze</text><rect class="bar-before" x="240" y="276" width="311.03" height="14"/><text class="val" x="557.03" y="287">47.33 s</text><rect class="bar-after" x="240" y="294" width="132.28" height="14"/><text class="val hot" x="378.28" y="305">20.13 s</text><text class="lbl" x="228" y="338" text-anchor="end">7. Crowd effect (1 unit)</text><rect class="bar-before" x="240" y="320" width="138.46" height="14"/><text class="val" x="384.46" y="331">21.07 s</text><rect class="bar-after" x="240" y="338" width="138.46" height="14"/><text class="val hot" x="384.46" y="349">21.07 s</text><text class="lbl" x="228" y="382" text-anchor="end">8. Reinforcements</text><rect class="bar-before" x="240" y="364" width="111.71" height="14"/><text class="val" x="357.71" y="375">17 s</text><rect class="bar-after" x="240" y="382" width="96.14" height="14"/><text class="val hot" x="342.14" y="393">14.63 s</text><text class="lbl" x="228" y="426" text-anchor="end">9. Narrow passage</text><rect class="bar-before" x="240" y="408" width="250.37" height="14"/><text class="val" x="496.37" y="419">38.1 s</text><rect class="bar-after" x="240" y="426" width="250.37" height="14"/><text class="val hot" x="496.37" y="437">38.1 s</text></svg></div>
       <figure>
         <img src="img/pathfinding-maze.png" width="1400" height="800" alt="The maze map in two panels: four vertical barriers of purple walls with a few thin brown pieces in the middle. In the right panel the units already broke through the first barrier; in the left panel one unit is walking around the barriers." loading="lazy">
-        <figcaption>the maze about nine seconds in. the right panel breaks straight through the thin pieces, the left one is still walking the serpentine.</figcaption>
+        <figcaption>The maze about nine seconds in. The right panel breaks straight through the thin pieces, the left one is still walking the serpentine.</figcaption>
       </figure>
 
-      <p>the castle and the double layer were not first tries. my first castle, a level 2 ring, had the new algorithm 4.7% behind (21.60 s against 20.63 s). both broke almost the same wall, and the gap was the greedy building order inside. the first double layer was 1.7% behind for the same reason. I redesigned both so there is a real choice: a strong ring with one weak gate, a strong inner ring with one weak door on the far side. that is what the algorithm is for, but it is also me building a map it wins on. the ties are in the table too: 5 is close, 7 has one unit, 9 forces both through the same barrier. on the crowd map the switch from walking around to breaking happens at 3 units, not 2 as on the test map, because the walk around is shorter relative to the wall; a test pins 1 and 2 walking, 3, 4 and 6 breaking.</p>
+      <p>The castle and the double layer were not first tries. My first castle, a level 2 ring, had the new algorithm 4.7% behind (21.60 s against 20.63 s). Both broke almost the same wall, and the gap was the greedy building order inside. The first double layer was 1.7% behind for the same reason. I redesigned both so there is a real choice: a strong ring with one weak gate, a strong inner ring with one weak door on the far side. That is what the algorithm is for, but it is also me building a map it wins on. The ties are in the table too: 5 is close, 7 has one unit, 9 forces both through the same barrier. On the crowd map the switch from walking around to breaking happens at 3 units, not 2 as on the test map, because the walk around is shorter relative to the wall; a test pins 1 and 2 walking, 3, 4 and 6 breaking.</p>
 
-      <h3>the map that found a bug</h3>
+      <h3>The map that found a bug</h3>
 
-      <p>the first narrow passage was open at both ends, so both algorithms walked around the outside and it looked like a tie. closing the tunnel across the whole map made the new algorithm 23% slower: 46.93 s against 38.10 s. the estimate was fine (46.8 s predicted). the choice was bad: the debug view showed only two candidates, both through the tunnel's side walls, never through the barrier.</p>
+      <p>The first narrow passage was open at both ends, so both algorithms walked around the outside and it looked like a tie. Closing the tunnel across the whole map made the new algorithm 23% slower: 46.93 s against 38.10 s. The estimate was fine (46.8 s predicted). The choice was bad: the debug view showed only two candidates, both through the tunnel's side walls, never through the barrier.</p>
 
       <figure>
         <img src="img/pathfinding-narrow.png" width="1400" height="800" alt="The narrow passage: a one-cell tunnel of purple walls across the whole map with a small crowd of units standing in a line behind a two-cell barrier of grey walls in the middle, and a crate at the far right end." loading="lazy">
-        <figcaption>the closed tunnel. twenty units queue behind the two-cell barrier and only one of them can hit it at a time.</figcaption>
+        <figcaption>The closed tunnel. Twenty units queue behind the two-cell barrier and only one of them can hit it at a time.</figcaption>
       </figure>
 
-      <p>the cause was the first wall price. it counted free cells among all eight neighbors as attack positions. a level 5 side wall has three free cells inside and three outside, so it was priced for six attackers (6.7 s for 2,000 hit points) when only the three on the near side can reach it (13.3 s). the barrier cells were priced correctly at 10 s each, so the wrong walls looked cheaper and the barrier route was never generated. the fix counts only the best single side:</p>
+      <p>The cause was the first wall price. It counted free cells among all eight neighbors as attack positions. A level 5 side wall has three free cells inside and three outside, so it was priced for six attackers (6.7 s for 2,000 hit points) when only the three on the near side can reach it (13.3 s). The barrier cells were priced correctly at 10 s each, so the wrong walls looked cheaper and the barrier route was never generated. The fix counts only the best single side:</p>
 
       <div class="codeblock"><code><span class="cm">// Free cells on the best side of the cell (west, east, north or south line of three).</span>
 <span class="kw">for</span> (<span class="kw">let</span> d = -1; d &lt;= 1; d++) {
@@ -105,18 +105,18 @@ label: Sep 2026
 }
 <span class="kw">return</span> Math.max(west, east, north, south)</code></div>
 
-      <p>both algorithms now finish in 38.10 s and every other map kept its exact time. the oracle went from 200 of 200 picks within 5% to 199 of 200 (worst pick 1.052 instead of 1.021), and 199 on both fresh map sets. I relaxed its bound to "at least 198 of 200 within 5%, none more than 10% behind", which the measured numbers support. a correct rule with an honest bound beats a tighter number that only held because of the bug.</p>
+      <p>Both algorithms now finish in 38.10 s and every other map kept its exact time. The oracle went from 200 of 200 picks within 5% to 199 of 200 (worst pick 1.052 instead of 1.021), and 199 on both fresh map sets. I relaxed its bound to "at least 198 of 200 within 5%, none more than 10% behind", which the measured numbers support. A correct rule with an honest bound beats a tighter number that only held because of the bug.</p>
 
-      <h2>a switch: attackers inside each other</h2>
+      <h2>A switch: attackers inside each other</h2>
 
-      <p>in most games of this kind units do not queue for a spot. they stand inside each other and all hit the wall. the one-attacker-per-cell rule had shaped everything since stage 1: attack positions, slot search, waiting, queues. it is now a switch, <strong>attackers can share a cell</strong>, on by default. in the simulation it is one flag on the world: a troop that reaches its target starts hitting from where it stands, with nothing reserved:</p>
+      <p>In most games of this kind units do not queue for a spot. They stand inside each other and all hit the wall. The one-attacker-per-cell rule had shaped everything since stage 1: attack positions, slot search, waiting, queues. It is now a switch, <strong>attackers can share a cell</strong>, on by default. In the simulation it is one flag on the world: a troop that reaches its target starts hitting from where it stands, with nothing reserved:</p>
 
       <div class="codeblock"><code><span class="kw">if</span> (<span class="kw">this</span>.stackAttackers) {
   troop.state = 'attacking' <span class="cm">// no position is reserved, everyone hits from where they stand</span>
   <span class="kw">return</span>
 }</code></div>
 
-      <p>the planner needed two changes: the rollout adds each unit's damage from its arrival on, with no positions handed out, and the first wall price counts the whole squad's damage. a wall in a one-cell corridor fell in 22.03 s for 8 troops with the rule and falls in 4.53 s without it. the nine maps again:</p>
+      <p>The planner needed two changes: the rollout adds each unit's damage from its arrival on, with no positions handed out, and the first wall price counts the whole squad's damage. A wall in a one-cell corridor fell in 22.03 s for 8 troops with the rule and falls in 4.53 s without it. The nine maps again:</p>
 
       <div class="table-wrap"><table class="data roomy">
         <thead><tr><th>map</th><th class="num">classic</th><th class="num">new</th><th class="num">difference</th><th class="num">with one attacker per position</th></tr></thead>
@@ -133,7 +133,7 @@ label: Sep 2026
         </tbody>
       </table></div>
 
-      <p>the new algorithm still wins or ties everywhere, so part 1's result does not depend on the rule. its lead moves: the double layer drops from 52% to 26%, because classic's slow break through the strong ring is much faster with the whole crowd hitting; reinforcements grows from 14% to 33%, because late arrivals add damage the moment they arrive. the planner is also more accurate with the rule off, since there is nothing to guess about who stands where. the part 1 oracle in both settings:</p>
+      <p>The new algorithm still wins or ties everywhere, so part 1's result does not depend on the rule. Its lead moves: the double layer drops from 52% to 26%, because classic's slow break through the strong ring is much faster with the whole crowd hitting; reinforcements grows from 14% to 33%, because late arrivals add damage the moment they arrive. The planner is also more accurate with the rule off, since there is nothing to guess about who stands where. The part 1 oracle in both settings:</p>
 
       <div class="table-wrap"><table class="data roomy">
         <thead><tr><th>setting</th><th class="num">maps within 5% of the best plan</th><th class="num">worst pick</th><th class="num">mean estimate error</th></tr></thead>
@@ -145,33 +145,33 @@ label: Sep 2026
         </tbody>
       </table></div>
 
-      <p>the slot-rule tests from parts 1 and 2 now switch the rule off explicitly. new tests cover the default, the corridor wall (4.53 s against 22.03 s), no waiting or reserving, determinism, and the demo switch rebuilding both worlds. the suite is 123 tests.</p>
+      <p>The slot-rule tests from parts 1 and 2 now switch the rule off explicitly. New tests cover the default, the corridor wall (4.53 s against 22.03 s), no waiting or reserving, determinism, and the demo switch rebuilding both worlds. The suite is 123 tests.</p>
 
-      <h2>stage 6: cartoon style and a debug view</h2>
+      <h2>Stage 6: cartoon style and a debug view</h2>
 
-      <p>everything is drawn in code, no image files: wall posts that join their neighbors, five wall levels (wood, stone, iron, gold, obsidian), cracks at 75%, 50% and 25% hit points, three round characters that hop, squash and lunge. hits throw sparks and falling walls throw dust. particles live in a fixed pool of typed arrays capped at 360, with their own random generator, so decoration cannot touch the simulation.</p>
+      <p>Everything is drawn in code, no image files: wall posts that join their neighbors, five wall levels (wood, stone, iron, gold, obsidian), cracks at 75%, 50% and 25% hit points, three round characters that hop, squash and lunge. Hits throw sparks and falling walls throw dust. Particles live in a fixed pool of typed arrays capped at 360, with their own random generator, so decoration cannot touch the simulation.</p>
 
-      <p>the debug view follows the first active unit (or a clicked one) and shows, with no extra clicking:</p>
+      <p>The debug view follows the first active unit (or a clicked one) and shows, with no extra clicking:</p>
 
       <ul>
-        <li>a heat map of the flow field for that unit type, in seconds to finish.</li>
-        <li>its route: blue where it walks, green where it breaks, an X on the wall.</li>
-        <li>rings around units that share a plan, and the squad radius around the followed one.</li>
-        <li>wall hit point bars, and a table of walls per level.</li>
-        <li>the squad's candidates: goal, estimated time, walls, attack positions per stage, and the one in use.</li>
-        <li>best walk-around time against best break-through time, estimate against the real time, and the planning time of the last decision.</li>
+        <li>A heat map of the flow field for that unit type, in seconds to finish.</li>
+        <li>Its route: blue where it walks, green where it breaks, an X on the wall.</li>
+        <li>Rings around units that share a plan, and the squad radius around the followed one.</li>
+        <li>Wall hit point bars, and a table of walls per level.</li>
+        <li>The squad's candidates: goal, estimated time, walls, attack positions per stage, and the one in use.</li>
+        <li>Best walk-around time against best break-through time, estimate against the real time, and the planning time of the last decision.</li>
       </ul>
 
       <figure>
         <img src="img/pathfinding-debug-maze.png" width="1400" height="800" alt="The maze map with the debug view: the right panel is colored from red on the left to green near the tower, a blue line runs straight through four barriers with white crosses on the thin wall pieces, and a panel on the right lists candidate plans." loading="lazy">
-        <figcaption>the maze with debug on. walking all the way around would take 36.0 s, breaking through the three thin spots 15.3 s. the table lists the candidates with their walls and slots.</figcaption>
+        <figcaption>The maze with debug on. Walking all the way around would take 36.0 s, breaking through the three thin spots 15.3 s. The table lists the candidates with their walls and slots.</figcaption>
       </figure>
 
-      <p>two bugs on the way. the candidate list showed "never" for a group already hitting, because asking the planner while units hold the positions answers a different question (the same effect as in the oracle). a group that has started hitting now shows that it keeps its plan. and the heat map (a thousand squares) was repainted every frame; it now repaints only when the field changes, at most twice a second. candidates come from a private planner per panel, so asking never disturbs the one that runs the world.</p>
+      <p>Two bugs on the way. The candidate list showed "never" for a group already hitting, because asking the planner while units hold the positions answers a different question (the same effect as in the oracle). A group that has started hitting now shows that it keeps its plan. And the heat map (a thousand squares) was repainted every frame; it now repaints only when the field changes, at most twice a second. Candidates come from a private planner per panel, so asking never disturbs the one that runs the world.</p>
 
-      <h2>frame time</h2>
+      <h2>Frame time</h2>
 
-      <p>the goal was close to 60 fps with 30 units in both panels. measured in headless Chrome with software WebGL, 1400x800:</p>
+      <p>The goal was close to 60 fps with 30 units in both panels. Measured in headless Chrome with software WebGL, 1400x800:</p>
 
       <div class="table-wrap"><table class="data roomy">
         <thead><tr><th>version</th><th class="num">time per frame</th><th class="num">frames per second</th><th class="num">JavaScript in the frame</th></tr></thead>
@@ -182,21 +182,21 @@ label: Sep 2026
         </tbody>
       </table></div>
 
-      <p>my code (simulation steps and draw calls) is under 1 ms. the rest is the software rasterizer filling pixels. a real GPU should do much better, but I did not measure one, so I cannot claim 60 fps. walls redraw only when one falls, and cracks only for hurt walls.</p>
+      <p>My code (simulation steps and draw calls) is under 1 ms. The rest is the software rasterizer filling pixels. A real GPU should do much better, but I did not measure one, so I cannot claim 60 fps. Walls redraw only when one falls, and cracks only for hurt walls.</p>
 
-      <h2>publishing</h2>
+      <h2>Publishing</h2>
 
-      <p>the build uses relative asset paths so it works from any sub-path. a GitHub Actions workflow runs <code>npm ci</code>, the tests and the build on every push to <code>main</code> and publishes to Pages; a failing test stops the publish. the production build is checked locally in Chrome, including a 700 px window where nothing overflows sideways.</p>
+      <p>The build uses relative asset paths so it works from any sub-path. A GitHub Actions workflow runs <code>npm ci</code>, the tests and the build on every push to <code>main</code> and publishes to Pages; a failing test stops the publish. The production build is checked locally in Chrome, including a 700 px window where nothing overflows sideways.</p>
 
       <figure>
         <img src="img/pathfinding-small-window.png" width="700" height="760" alt="The demo in a 700 pixel wide window: the top bar, two narrow panels with the castle map and their readouts, and the scenario and editor controls below them." loading="lazy">
-        <figcaption>the same page at 700 pixels wide. nothing overflows sideways, the controls move below the maps, and the readout sits close to the top of the map.</figcaption>
+        <figcaption>The same page at 700 pixels wide. Nothing overflows sideways, the controls move below the maps, and the readout sits close to the top of the map.</figcaption>
       </figure>
 
-      <h2>still open</h2>
+      <h2>Still open</h2>
 
       <ul>
-        <li>building order inside a target area is still greedy.</li>
-        <li>a full planning round for ten squads takes about 25 ms against a 3 ms goal.</li>
-        <li>attack positions for walls in a row treat earlier walls as gone and cannot know what other squads will occupy.</li>
+        <li>Building order inside a target area is still greedy.</li>
+        <li>A full planning round for ten squads takes about 25 ms against a 3 ms goal.</li>
+        <li>Attack positions for walls in a row treat earlier walls as gone and cannot know what other squads will occupy.</li>
       </ul>

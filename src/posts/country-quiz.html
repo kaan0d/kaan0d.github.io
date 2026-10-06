@@ -3,9 +3,9 @@ title: country quiz: a world map that tells you how wrong you were
 date: 2026-04-20
 label: Apr 2026
 ---
-<p>country quiz is a world map game in Turkish and English. a country's name shows up and you click it on the map, or the map marks one and you name it. there are six ways to play: by name, by flag, by capital, a reverse mode with four options, a typed mode, and a neighbours mode where any country that shares a border is the right answer. it runs entirely in the browser with no backend, and it's live at <a href="https://kaandinc.com/country-quiz/" target="_blank" rel="noopener">kaandinc.com/country-quiz</a>.</p>
+<p>Country quiz is a world map game in Turkish and English. A country's name shows up and you click it on the map, or the map marks one and you name it. There are six ways to play: by name, by flag, by capital, a reverse mode with four options, a typed mode, and a neighbours mode where any country that shares a border is the right answer. It runs entirely in the browser with no backend, and it's live at <a href="https://kaandinc.com/country-quiz/" target="_blank" rel="noopener">kaandinc.com/country-quiz</a>.</p>
 
-      <p>the stack is Next.js 16 with React 19, Tailwind 4 and react-simple-maps, built as a static export. the map shapes (world-atlas at 1:50m) and all the flags are served from the same folder as the page, so after the first load nothing else is fetched.</p>
+      <p>The stack is Next.js 16 with React 19, Tailwind 4 and react-simple-maps, built as a static export. The map shapes (world-atlas at 1:50m) and all the flags are served from the same folder as the page, so after the first load nothing else is fetched.</p>
 
       <div class="stats">
         <div class="stat"><b>202</b><span>playable countries</span></div>
@@ -18,23 +18,23 @@ label: Apr 2026
 
       <figure>
         <img src="img/country-quiz-game.webp" width="1400" height="800" alt="country quiz mid-game: Vietnam is asked, most of the world is already green, Thailand is red after a wrong click, and the strip under the title reads 'Thailand, try again, 762 km' with an arrow pointing right." loading="lazy">
-        <figcaption>a wrong pick turns red and the strip says how far off it was and which way to look.</figcaption>
+        <figcaption>A wrong pick turns red and the strip says how far off it was and which way to look.</figcaption>
       </figure>
 
-      <h2>the game is a reducer</h2>
+      <h2>The game is a reducer</h2>
 
-      <p>all the rules live in one pure function. the queue holds ISO alpha-3 codes and <code>queue[0]</code> is the country being asked. a correct answer moves it to <code>done</code>; three misses on the same country (a hint counts as one) reveal it in yellow and send it to the back of the queue. skipping rotates the queue, and a timed run just ends when the clock does. because the reducer never touches the DOM, the whole thing is tested with plain <code>node --test</code>, with no browser and no test framework.</p>
+      <p>All the rules live in one pure function. The queue holds ISO alpha-3 codes and <code>queue[0]</code> is the country being asked. A correct answer moves it to <code>done</code>; three misses on the same country (a hint counts as one) reveal it in yellow and send it to the back of the queue. Skipping rotates the queue, and a timed run just ends when the clock does. Because the reducer never touches the DOM, the whole thing is tested with plain <code>node --test</code>, with no browser and no test framework.</p>
 
       <div class="codeblock"><code><span class="kw">case</span> "answer":
   <span class="kw">if</span> (a.code === s.queue[0]) <span class="kw">return</span> { ...s, score: s.score + 1, attempts: s.attempts + 1, phase: "correct" };
   <span class="kw">if</span> (s.wrong.includes(a.code)) <span class="kw">return</span> s;   <span class="cm">// the same wrong country only counts once</span>
   <span class="kw">return</span> miss(s, { wrong: [...s.wrong, a.code] });</code></div>
 
-      <p>the component around it handles everything that isn't a rule: the pause after an answer, the countdown, sound, keyboard shortcuts, and saving the unfinished game to <code>localStorage</code> on every change. lifetime misses per country are kept there too, and a practice round asks only the 20 countries you miss most. a clean find takes one off that country's count, so the list gets shorter as you learn.</p>
+      <p>The component around it handles everything that isn't a rule: the pause after an answer, the countdown, sound, keyboard shortcuts, and saving the unfinished game to <code>localStorage</code> on every change. Lifetime misses per country are kept there too, and a practice round asks only the 20 countries you miss most. A clean find takes one off that country's count, so the list gets shorter as you learn.</p>
 
-      <h2>a miss that points somewhere</h2>
+      <h2>A miss that points somewhere</h2>
 
-      <p>the first version only said "wrong, try again". that's true but useless: if you click Thailand looking for Vietnam, you were close, and if you click Peru you weren't. now a wrong pick shows the distance from the clicked country to the answer and an arrow toward it.</p>
+      <p>The first version only said "wrong, try again". That's true but useless: if you click Thailand looking for Vietnam, you were close, and if you click Peru you weren't. Now a wrong pick shows the distance from the clicked country to the answer and an arrow toward it.</p>
 
       <div class="codeblock"><code><span class="kw">export</span> <span class="kw">function</span> offBy(from: [number, number], to: [number, number]) {
   <span class="kw">const</span> [lng1, lat1, lng2, lat2] = [...from, ...to].map((d) =&gt; (d * Math.PI) / 180);
@@ -44,36 +44,36 @@ label: Apr 2026
   <span class="kw">return</span> { km: Math.round(km), deg: (deg + 360) % 360 };
 }</code></div>
 
-      <p>the distance is the real great-circle distance, but the direction is deliberately not the great-circle bearing. the map is equirectangular, so lines of latitude are straight. if you click France while looking for Japan, the shortest path on the globe leaves France heading north-east (a bearing of about 34°), because it bends up over Siberia. on the screen, Japan is almost straight east (about 94°). the arrow is there to tell you where to look on the map in front of you, so it uses the flat map's angle. the map also doesn't wrap around, so from Japan to the US the arrow points west across the whole map, not east over the Pacific. the test pins a short case: Paris to Istanbul comes out at about 2,250 km, with the arrow between east and south-east.</p>
+      <p>The distance is the real great-circle distance, but the direction is deliberately not the great-circle bearing. The map is equirectangular, so lines of latitude are straight. If you click France while looking for Japan, the shortest path on the globe leaves France heading north-east (a bearing of about 34°), because it bends up over Siberia. On the screen, Japan is almost straight east (about 94°). The arrow is there to tell you where to look on the map in front of you, so it uses the flat map's angle. The map also doesn't wrap around, so from Japan to the US the arrow points west across the whole map, not east over the Pacific. The test pins a short case: Paris to Istanbul comes out at about 2,250 km, with the arrow between east and south-east.</p>
 
-      <h2>typing a name</h2>
+      <h2>Typing a name</h2>
 
-      <p>the reverse mode gives four options, and after a while you learn to eliminate instead of remembering. the typed mode marks a country and gives you a text box. the hard part is deciding what counts as right. "Côte d'Ivoire", "cote divoire" and "Fildişi Sahili" should all work, and so should "argentna". "Pera" shouldn't count as Peru.</p>
+      <p>The reverse mode gives four options, and after a while you learn to eliminate instead of remembering. The typed mode marks a country and gives you a text box. The hard part is deciding what counts as right. "Côte d'Ivoire", "cote divoire" and "Fildişi Sahili" should all work, and so should "argentna". "Pera" shouldn't count as Peru.</p>
 
       <div class="codeblock"><code><span class="kw">export</span> <span class="kw">const</span> normalize = (s: string) =&gt;
   s.normalize("NFD").replace(/\p{M}/gu, "").toLowerCase().replace(/ı/g, "i").replace(/[^a-z0-9]/g, "");</code></div>
 
-      <p>everything is normalized first: decompose, drop the accent marks, lowercase, and map the dotless Turkish ı to i, because NFD leaves it alone. then the input is compared to the answer's Turkish and English names with an edit distance. the allowance grows with length: no typos under five letters, one up to seven, two from eight. short names get none, because one letter is the whole difference between Iran and Iraq. if the input isn't close to the answer but is exactly another country's name, it counts as a wrong pick and that country turns red on the map. if it matches nothing, it's ignored, so a typo in the middle of a name doesn't cost a miss.</p>
+      <p>Everything is normalized first: decompose, drop the accent marks, lowercase, and map the dotless Turkish ı to i, because NFD leaves it alone. Then the input is compared to the answer's Turkish and English names with an edit distance. The allowance grows with length: no typos under five letters, one up to seven, two from eight. Short names get none, because one letter is the whole difference between Iran and Iraq. If the input isn't close to the answer but is exactly another country's name, it counts as a wrong pick and that country turns red on the map. If it matches nothing, it's ignored, so a typo in the middle of a name doesn't cost a miss.</p>
 
-      <h2>neighbours from the map itself</h2>
+      <h2>Neighbours from the map itself</h2>
 
-      <p>the neighbours mode needed a border list, and I didn't want to type 158 of them by hand. the map file already knows: it's TopoJSON, where two countries that share a border share the same arcs. <code>topojson-client</code> (already installed as a dependency of react-simple-maps) has a <code>neighbors()</code> function that returns exactly that, so a 30-line script reads the map once and writes <code>lib/neighbors.ts</code>.</p>
+      <p>The neighbours mode needed a border list, and I didn't want to type 158 of them by hand. The map file already knows: it's TopoJSON, where two countries that share a border share the same arcs. <code>topojson-client</code> (already installed as a dependency of react-simple-maps) has a <code>neighbors()</code> function that returns exactly that, so a 30-line script reads the map once and writes <code>lib/neighbors.ts</code>.</p>
 
-      <p>two shapes needed care. Somaliland and Northern Cyprus are drawn separately in the atlas but aren't playable, and if they're skipped, Somalia loses its border with Djibouti, which runs through Somaliland. the script counts them as Somalia and Cyprus. the honest limit is that the borders come from the 1:50m shapes, so anything the map doesn't draw doesn't exist: Spain and Morocco share land borders at Ceuta and Melilla, but the map doesn't, so neither does the game.</p>
+      <p>Two shapes needed care. Somaliland and Northern Cyprus are drawn separately in the atlas but aren't playable, and if they're skipped, Somalia loses its border with Djibouti, which runs through Somaliland. The script counts them as Somalia and Cyprus. The honest limit is that the borders come from the 1:50m shapes, so anything the map doesn't draw doesn't exist: Spain and Morocco share land borders at Ceuta and Melilla, but the map doesn't, so neither does the game.</p>
 
-      <h2>the same ten countries for everyone</h2>
+      <h2>The same ten countries for everyone</h2>
 
-      <p>the daily challenge picks ten countries from the date, so everyone playing on the same day gets the same set. <code>Math.random</code> can't be seeded, so the date string is hashed and fed into mulberry32, a tiny 32-bit generator, which drives an ordinary Fisher-Yates shuffle. small islands are left out to keep it fair, and in neighbours mode only countries with a land border are picked. at the end, the result is one square per country in the day's order: green first try, yellow found after a miss, red revealed. it copies to the clipboard as text, so it pastes anywhere.</p>
+      <p>The daily challenge picks ten countries from the date, so everyone playing on the same day gets the same set. <code>Math.random</code> can't be seeded, so the date string is hashed and fed into mulberry32, a tiny 32-bit generator, which drives an ordinary Fisher-Yates shuffle. Small islands are left out to keep it fair, and in neighbours mode only countries with a land border are picked. At the end, the result is one square per country in the day's order: green first try, yellow found after a miss, red revealed. It copies to the clipboard as text, so it pastes anywhere.</p>
 
-      <h2>where you keep missing</h2>
+      <h2>Where you keep missing</h2>
 
       <figure>
         <img src="img/country-quiz-explore.webp" width="1400" height="800" alt="The explore view: a dark world map where West Africa, Central Asia, the Balkans and parts of Central America are tinted red, Ghana is highlighted in yellow, and a card at the bottom shows Ghana's flag, Accra, Africa and 'No misses'." loading="lazy">
-        <figcaption>the explore view tints every country by how often you've missed it. tapping one shows its flag, capital and miss count.</figcaption>
+        <figcaption>The explore view tints every country by how often you've missed it. Tapping one shows its flag, capital and miss count.</figcaption>
       </figure>
 
-      <p>the lifetime misses were already being saved for the practice round, so the explore view just paints them. no colour scale library: each country's fill is <code>color-mix(in srgb, #ef4444 N%, #334155)</code>, with five or more misses fully red. the picture it gives is usually more honest than you'd like. West Africa and Central Asia light up fast.</p>
+      <p>The lifetime misses were already being saved for the practice round, so the explore view just paints them. No colour scale library: each country's fill is <code>color-mix(in srgb, #ef4444 N%, #334155)</code>, with five or more misses fully red. The picture it gives is usually more honest than you'd like. West Africa and Central Asia light up fast.</p>
 
-      <h2>living under /country-quiz</h2>
+      <h2>Living under /country-quiz</h2>
 
-      <p>the site is a GitHub Pages project, so it's served from a sub-path instead of the domain root. Next's <code>basePath</code> handles its own scripts and links, but not plain <code>&lt;img&gt;</code> tags or URLs passed to <code>fetch</code>, and the flags and the map file are exactly those. the base path is defined once in the config, exposed as an environment variable, and every flag URL goes through one small helper. a GitHub Actions workflow runs the tests, builds the static export and deploys it on every push to main. the installable manifest also needed the prefix on its start URL and icon, or the installed app would open the site root instead of the game.</p>
+      <p>The site is a GitHub Pages project, so it's served from a sub-path instead of the domain root. Next's <code>basePath</code> handles its own scripts and links, but not plain <code>&lt;img&gt;</code> tags or URLs passed to <code>fetch</code>, and the flags and the map file are exactly those. The base path is defined once in the config, exposed as an environment variable, and every flag URL goes through one small helper. A GitHub Actions workflow runs the tests, builds the static export and deploys it on every push to main. The installable manifest also needed the prefix on its start URL and icon, or the installed app would open the site root instead of the game.</p>

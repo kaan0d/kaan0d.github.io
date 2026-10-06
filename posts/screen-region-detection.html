@@ -4,12 +4,12 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>sixty frames a second, one rectangle | Kaan Dinç</title>
-<meta name="description" content="two small Python tools that look at one rectangle of the screen, work out what's in it, and press keys in response. it's a control loop where a human is...">
+<meta name="description" content="Two small Python tools that look at one rectangle of the screen, work out what's in it, and press keys in response. It's a control loop where a human is...">
 <meta name="theme-color" content="#0a0a09">
 <link rel="canonical" href="https://kaandinc.com/posts/screen-region-detection">
 <meta property="og:type" content="article">
 <meta property="og:title" content="sixty frames a second, one rectangle | Kaan Dinç">
-<meta property="og:description" content="two small Python tools that look at one rectangle of the screen, work out what's in it, and press keys in response. it's a control loop where a human is...">
+<meta property="og:description" content="Two small Python tools that look at one rectangle of the screen, work out what's in it, and press keys in response. It's a control loop where a human is...">
 <meta property="og:url" content="https://kaandinc.com/posts/screen-region-detection">
 <meta property="og:site_name" content="Kaan Dinç">
 <meta property="og:image" content="https://kaandinc.com/assets/og.png">
@@ -18,7 +18,7 @@
 <meta property="og:image:alt" content="Kaan Dinç, computer engineer. K logo beside 3D solids in amber on black.">
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:title" content="sixty frames a second, one rectangle | Kaan Dinç">
-<meta name="twitter:description" content="two small Python tools that look at one rectangle of the screen, work out what's in it, and press keys in response. it's a control loop where a human is...">
+<meta name="twitter:description" content="Two small Python tools that look at one rectangle of the screen, work out what's in it, and press keys in response. It's a control loop where a human is...">
 <meta name="twitter:image" content="https://kaandinc.com/assets/og.png">
 <link rel="icon" href="../assets/favicon.svg" type="image/svg+xml">
 <link rel="preload" href="../assets/fonts/Geist-Variable.woff2" as="font" type="font/woff2" crossorigin>
@@ -65,14 +65,14 @@
   <div class="post-layout has-toc">
     <aside class="toc" aria-label="on this page">
       <ol>
-        <li><a href="#picking-the-region-once">picking the region once</a></li>
-        <li><a href="#tool-1-follow-a-marker">tool 1: follow a marker</a></li>
-        <li><a href="#tool-2-read-arrows-and-progress-lines">tool 2: read arrows and progress lines</a></li>
-        <li><a href="#what-i-took-from-it">what i took from it</a></li>
+        <li><a href="#picking-the-region-once">Picking the region once</a></li>
+        <li><a href="#tool-1-follow-a-marker">Tool 1: follow a marker</a></li>
+        <li><a href="#tool-2-read-arrows-and-progress-lines">Tool 2: read arrows and progress lines</a></li>
+        <li><a href="#what-i-took-from-it">What i took from it</a></li>
       </ol>
     </aside>
     <div class="post-body">
-<p>two small Python tools that look at one rectangle of the screen, work out what's in it, and press keys in response. it's a control loop where a human is just a slow, noisy feedback controller. the interesting part isn't the key press, it's getting a reliable answer out of noisy pixels sixty times a second.</p>
+<p>Two small Python tools that look at one rectangle of the screen, work out what's in it, and press keys in response. It's a control loop where a human is just a slow, noisy feedback controller. The interesting part isn't the key press, it's getting a reliable answer out of noisy pixels sixty times a second.</p>
 
       <div class="stats">
         <div class="stat"><b>60 fps</b><span>capture target</span></div>
@@ -83,13 +83,13 @@
         <div class="stat"><b>0.5 s</b><span>config reload interval</span></div>
       </div>
 
-      <h2 id="picking-the-region-once">picking the region once</h2>
+      <h2 id="picking-the-region-once">Picking the region once</h2>
 
-      <p>both tools start from a region selector built in Tkinter. it grabs a screenshot, you draw rectangles on it (zoom with the wheel, pan, undo the last one), and it saves them to a JSON file the trackers load on the next start. it can also sample a color by clicking a pixel, which is how the second tool learns what "green" means on this particular screen. capturing only the selected region with <code>mss</code> keeps every frame small enough to process at 60fps.</p>
+      <p>Both tools start from a region selector built in Tkinter. It grabs a screenshot, you draw rectangles on it (zoom with the wheel, pan, undo the last one), and it saves them to a JSON file the trackers load on the next start. It can also sample a color by clicking a pixel, which is how the second tool learns what "green" means on this particular screen. Capturing only the selected region with <code>mss</code> keeps every frame small enough to process at 60fps.</p>
 
-      <h2 id="tool-1-follow-a-marker">tool 1: follow a marker</h2>
+      <h2 id="tool-1-follow-a-marker">Tool 1: follow a marker</h2>
 
-      <p>the first tracker follows one bright marker sliding along a thin strip and keeps it aligned with a target. detection is a stack of filters. first only near-pure-white pixels survive: a narrow HSV band, every channel above 245, and channels within 8 of each other, so tinted "almost white" is rejected. then morphological opening and closing remove specks and heal holes.</p>
+      <p>The first tracker follows one bright marker sliding along a thin strip and keeps it aligned with a target. Detection is a stack of filters. First only near-pure-white pixels survive: a narrow HSV band, every channel above 245, and channels within 8 of each other, so tinted "almost white" is rejected. Then morphological opening and closing remove specks and heal holes.</p>
 
       <div class="codeblock"><code>hsv_mask    = cv2.inRange(hsv, MARKER_LOWER, MARKER_UPPER)                    <span class="cm"># bright, unsaturated</span>
 bright_mask = (min_ch &gt;= WHITE_MIN_CHANNEL).astype(np.uint8) * 255            <span class="cm"># every channel high</span>
@@ -101,12 +101,12 @@ mask = cv2.morphologyEx(mask, cv2.MORPH_CLOSE, CLOSE_KERNEL, iterations=2)    <s
 
       <figure>
         <img src="img/screen-marker-pipeline.png" width="1254" height="684" alt="Three stacked panels of a synthetic strip: the frame with a white marker and three distractors, the white mask, and the frame with the accepted contour boxed." loading="lazy">
-        <figcaption>the real detector on a synthetic frame, not a capture. the tiny speck survives the mask but is thrown out by the size filters, the tinted patch never makes the mask, the thin rule is erased by the opening, and the marker is the one contour left.</figcaption>
+        <figcaption>The real detector on a synthetic frame, not a capture. The tiny speck survives the mask but is thrown out by the size filters, the tinted patch never makes the mask, the thin rule is erased by the opening, and the marker is the one contour left.</figcaption>
       </figure>
 
-      <p>the remaining contours are filtered by absolute size, share of the frame, aspect ratio and solidity (area against convex hull), and whatever survives is scored on solidity, fill and squareness. color finds the candidates, shape decides which one is real.</p>
+      <p>The remaining contours are filtered by absolute size, share of the frame, aspect ratio and solidity (area against convex hull), and whatever survives is scored on solidity, fill and squareness. Color finds the candidates, shape decides which one is real.</p>
 
-      <p>raw detections flicker, so a small tracker smooths the box with an exponential blend and bridges up to six missed frames before giving up.</p>
+      <p>Raw detections flicker, so a small tracker smooths the box with an exponential blend and bridges up to six missed frames before giving up.</p>
 
       <div class="codeblock"><code>a = SMOOTHING_ALPHA                                   <span class="cm"># 0.5</span>
 self.smoothed = tuple(a * r + (1 - a) * s <span class="kw">for</span> r, s <span class="kw">in</span> zip(raw_box, self.smoothed))
@@ -115,13 +115,13 @@ self.missed += 1
 <span class="kw">if</span> self.missed &gt; MAX_MISSED_FRAMES:                   <span class="cm"># 6</span>
     self.smoothed = <span class="kw">None</span></code></div>
 
-      <p>the target is the marker's position when it first appears, locked only after three stable frames so a single bright speck can't set it, and cleared the moment the marker disappears.</p>
+      <p>The target is the marker's position when it first appears, locked only after three stable frames so a single bright speck can't set it, and cleared the moment the marker disappears.</p>
 
-      <p>the controller is the piece i'm happiest with, because it uses hysteresis. it starts correcting only when the error leaves an outer tolerance (7 pixels, scaled up for bigger markers) and stops only when it's back inside a much tighter inner zone, holding the key instead of tapping it. with a single threshold the output chatters around the target; with two, it settles.</p>
+      <p>The controller is the piece I'm happiest with, because it uses hysteresis. It starts correcting only when the error leaves an outer tolerance (7 pixels, scaled up for bigger markers) and stops only when it's back inside a much tighter inner zone, holding the key instead of tapping it. With a single threshold the output chatters around the target; with two, it settles.</p>
 
       <figure>
         <div class="diagram-wrap"><svg class="diagram" viewBox="0 0 760 170" role="img" aria-label="two zones around the target: start correcting outside 7 pixels, release inside 2 pixels"><defs><marker id="ah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0 L10 5 L0 10 z" class="head"/></marker></defs><rect x="100" y="50" width="560" height="50" class="box"/><rect x="289" y="50" width="182" height="50" class="fill"/><rect x="354" y="50" width="52" height="50" fill="rgba(232,150,63,0.30)"/><line class="hotLine" x1="380" y1="36" x2="380" y2="114"/><text class="t" x="380" y="28" text-anchor="middle">target</text><line class="dash" x1="289" y1="44" x2="289" y2="120"/><line class="dash" x1="471" y1="44" x2="471" y2="120"/><line class="dash" x1="354" y1="44" x2="354" y2="120"/><line class="dash" x1="406" y1="44" x2="406" y2="120"/><text class="hotT" x="380" y="80" text-anchor="middle">release</text><text class="s" x="289" y="138" text-anchor="middle">-7 px</text><text class="s" x="471" y="138" text-anchor="middle">+7 px</text><text class="s" x="354" y="154" text-anchor="middle">-2 px</text><text class="s" x="406" y="154" text-anchor="middle">+2 px</text><text class="s" x="195" y="80" text-anchor="middle">hold key: correct</text><text class="s" x="565" y="80" text-anchor="middle">hold key: correct</text><text class="s" x="322" y="80" text-anchor="middle">as is</text><text class="s" x="438" y="80" text-anchor="middle">as is</text></svg></div>
-        <figcaption>outside 7 px the key goes down and stays down. it only comes up inside 2 px. in between, the controller keeps doing whatever it was already doing.</figcaption>
+        <figcaption>Outside 7 px the key goes down and stays down. It only comes up inside 2 px. In between, the controller keeps doing whatever it was already doing.</figcaption>
       </figure>
 
       <div class="codeblock"><code><span class="cm"># condensed from the controller (key names changed)</span>
@@ -135,14 +135,14 @@ release_zone = 2                                           <span class="cm"># in
     <span class="kw">return</span> <span class="kw">None</span>
 self._hold_key("left" <span class="kw">if</span> diff &gt; 0 <span class="kw">else</span> "right")</code></div>
 
-      <p>every threshold lives in a separate config module that the tracker reloads while it runs, checking the file's modified time twice a second. tuning means editing a number and watching the overlay, not restarting.</p>
+      <p>Every threshold lives in a separate config module that the tracker reloads while it runs, checking the file's modified time twice a second. Tuning means editing a number and watching the overlay, not restarting.</p>
 
       <div class="codeblock"><code><span class="kw">if</span> os.path.getmtime(CONFIG_PATH) &gt; self.last_mtime:
     apply_config(importlib.reload(self.module_ref))    <span class="cm"># new numbers, same process</span></code></div>
 
-      <h2 id="tool-2-read-arrows-and-progress-lines">tool 2: read arrows and progress lines</h2>
+      <h2 id="tool-2-read-arrows-and-progress-lines">Tool 2: read arrows and progress lines</h2>
 
-      <p>the second tool reads a row of up to five or eight arrows, each with a progress line. every arrow slot is a small region. the white blob inside it is cropped, resized to 64×64 and compared with four templates (up, down, left, right) that the code draws itself with OpenCV, using cosine similarity. it only accepts an answer when the best match clearly beats the runner-up.</p>
+      <p>The second tool reads a row of up to five or eight arrows, each with a progress line. Every arrow slot is a small region. The white blob inside it is cropped, resized to 64×64 and compared with four templates (up, down, left, right) that the code draws itself with OpenCV, using cosine similarity. It only accepts an answer when the best match clearly beats the runner-up.</p>
 
       <div class="codeblock"><code>normalized = cv2.resize(crop, (64, 64), interpolation=cv2.INTER_NEAREST)
 normalized = cv2.GaussianBlur(normalized, (5, 5), 0).astype(np.float32) / 255.0
@@ -156,10 +156,10 @@ confidence = best_score - second
 
       <figure>
         <img src="img/screen-arrow-templates.png" width="1024" height="256" alt="A blurry thresholded up arrow next to the four generated templates with their cosine scores: up 0.57, down 0.49, left 0.21, right 0.22." loading="lazy">
-        <figcaption>the real matcher on a synthetic, noisy up arrow. up wins with 0.57 against 0.49 for down. a blurrier crop would shrink that gap below the threshold, and the tool would answer nothing.</figcaption>
+        <figcaption>The real matcher on a synthetic, noisy up arrow. Up wins with 0.57 against 0.49 for down. A blurrier crop would shrink that gap below the threshold, and the tool would answer nothing.</figcaption>
       </figure>
 
-      <p>progress lines are trickier because they can be horizontal, vertical or diagonal. the tool picks out the pixels matching the sampled green, fits their principal axis, and measures how far the green stretches along that axis compared with the region's full length. that gives a 0 to 1 progress value without caring about orientation.</p>
+      <p>Progress lines are trickier because they can be horizontal, vertical or diagonal. The tool picks out the pixels matching the sampled green, fits their principal axis, and measures how far the green stretches along that axis compared with the region's full length. That gives a 0 to 1 progress value without caring about orientation.</p>
 
       <div class="codeblock"><code>points = np.column_stack(np.where(green_mask &gt; 0))[:, ::-1].astype(np.float32)       <span class="cm"># x, y of green pixels</span>
 eigenvalues, eigenvectors = np.linalg.eigh(np.cov((points - points.mean(axis=0)).T))
@@ -169,7 +169,7 @@ active_span = np.ptp(points @ axis)                   <span class="cm"># how far
 total_span  = np.ptp(corners @ axis)                  <span class="cm"># the region's full length on the same axis</span>
 progress = active_span / total_span</code></div>
 
-      <p>a stability layer sits on top: a pattern has to be seen in two consecutive frames before it counts, and it survives up to three frames of dropout. the tool evaluates both layouts (five and eight arrows), keeps whichever explains the frame better, and returns nothing if they tie. when a line's progress passes a threshold, it sends the matching key.</p>
+      <p>A stability layer sits on top: a pattern has to be seen in two consecutive frames before it counts, and it survives up to three frames of dropout. The tool evaluates both layouts (five and eight arrows), keeps whichever explains the frame better, and returns nothing if they tie. When a line's progress passes a threshold, it sends the matching key.</p>
 
       <div class="codeblock"><code><span class="kw">if</span> key == self.pending_key:
     self.pending_count += 1
@@ -179,9 +179,9 @@ progress = active_span / total_span</code></div>
 <span class="kw">if</span> self.pending_count &gt;= TRACK_STABLE_FRAMES:         <span class="cm"># 2 frames in a row</span>
     self.stable_pattern = (mode_name, list(pattern))</code></div>
 
-      <h2 id="what-i-took-from-it">what i took from it</h2>
+      <h2 id="what-i-took-from-it">What i took from it</h2>
 
-      <p>color alone matches far too much, and the shape filters do the real work. a decision from one frame is noise, so require agreement over a few frames and tolerate short gaps. anything that drives an output needs hysteresis. thresholds should be tunable while the thing runs. and generating templates in code means there's nothing to re-capture when the display changes.</p>
+      <p>Color alone matches far too much, and the shape filters do the real work. A decision from one frame is noise, so require agreement over a few frames and tolerate short gaps. Anything that drives an output needs hysteresis. Thresholds should be tunable while the thing runs. And generating templates in code means there's nothing to re-capture when the display changes.</p>
 
     </div>
   </div>

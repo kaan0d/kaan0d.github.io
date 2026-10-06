@@ -3,9 +3,9 @@ title: sentinel part 3: traffic I didn't make
 date: 2026-09-20
 label: Sep 2026
 ---
-<p>the <a href="sentinel-next-level">last post</a> ended with the honest top of the limits list: almost everything in Sentinel had been tested on traffic I made myself or on a handful of small public files, and hardly at all on a busy real network. this post is that test. I took real captures, some of them attacks made by other people and some of them ordinary traffic that nobody has labelled, and ran the detectors over them. I did not change a line of the program. the rules are the ones it ships with.</p>
+<p>The <a href="sentinel-next-level">last post</a> ended with the honest top of the limits list: almost everything in Sentinel had been tested on traffic I made myself or on a handful of small public files, and hardly at all on a busy real network. This post is that test. I took real captures, some of them attacks made by other people and some of them ordinary traffic that nobody has labelled, and ran the detectors over them. I did not change a line of the program. The rules are the ones it ships with.</p>
 
-      <p>it is a different kind of stage from the others, because there is nothing to build and the interesting part is what I am allowed to conclude. so most of this post is about that.</p>
+      <p>It is a different kind of stage from the others, because there is nothing to build and the interesting part is what I am allowed to conclude. So most of this post is about that.</p>
 
       <div class="stats">
         <div class="stat"><b>2,716,636</b><span>packets in 7 real captures made by other people (211 MB), none of them in the repository</span></div>
@@ -16,11 +16,11 @@ label: Sep 2026
         <div class="stat"><b>0</b><span>lines of the program changed: the 942 tests, 405 breaks and fuzz runs of stage 12 still stand</span></div>
       </div>
 
-      <h2>finding real traffic</h2>
+      <h2>Finding real traffic</h2>
 
-      <p>this took longer than the measuring. what I wanted was labelled data, where someone says which packets are the attack, and the well-known datasets have it. they are also big. CIC-IDS2017 is about 50 GB and asks for a registration form. Kitsune has labels for every packet, including ARP spoofing and SYN floods, and its page lists files of 2 GB, but those are feature tables and not captures; the captures are 147 to 334 MB. the only way to get them is one zip of 19 GB, and the server answers a request for a part of a file with the whole file, so I could not take six files out of it. CTU-13 has captures that hold only the botnet's own traffic. on a slow connection, that was three ways of not getting it.</p>
+      <p>This took longer than the measuring. What I wanted was labelled data, where someone says which packets are the attack, and the well-known datasets have it. They are also big. CIC-IDS2017 is about 50 GB and asks for a registration form. Kitsune has labels for every packet, including ARP spoofing and SYN floods, and its page lists files of 2 GB, but those are feature tables and not captures; the captures are 147 to 334 MB. The only way to get them is one zip of 19 GB, and the server answers a request for a part of a file with the whole file, so I could not take six files out of it. CTU-13 has captures that hold only the botnet's own traffic. On a slow connection, that was three ways of not getting it.</p>
 
-      <p>what I used instead is small, and I wrote each file down with its source before I fetched it:</p>
+      <p>What I used instead is small, and I wrote each file down with its source before I fetched it:</p>
 
       <div class="table-wrap"><table class="data">
         <thead><tr><th>capture</th><th>what it is</th><th>source</th><th class="num">packets</th></tr></thead>
@@ -35,11 +35,11 @@ label: Sep 2026
         </tbody>
       </table></div>
 
-      <p>7 files, 2,716,636 packets. two of them needed a trick. the backbone trace of MAWI is 3.9 GB compressed for 15 minutes, but that server does answer a request for a part of a file, and a gzip cut in the middle still opens up to the cut, so I took the first 60 MiB and got 2,163,268 packets, the last one cut in half. the file of the web server is a zip with a password, and the password is on the site's about page, as a picture.</p>
+      <p>7 files, 2,716,636 packets. Two of them needed a trick. The backbone trace of MAWI is 3.9 GB compressed for 15 minutes, but that server does answer a request for a part of a file, and a gzip cut in the middle still opens up to the cut, so I took the first 60 MiB and got 2,163,268 packets, the last one cut in half. The file of the web server is a zip with a password, and the password is on the site's about page, as a picture.</p>
 
-      <p>one file I did not trust. the two cs3 captures come from a course repository that does not say where they come from, so before using them I looked inside with <code>tshark</code>: in the ARP file one MAC address (7c:d1:c3:94:9e:b8) answers for both the gateway and another host, which is what ARP spoofing looks like, and in the other 192.168.0.100 sends SYNs to 1,000 different ports of 192.168.0.101, which is what nmap's default scan looks like. they are what their names say. where they come from is still not known, and this post says so again at the end.</p>
+      <p>One file I did not trust. The two cs3 captures come from a course repository that does not say where they come from, so before using them I looked inside with <code>tshark</code>: in the ARP file one MAC address (7c:d1:c3:94:9e:b8) answers for both the gateway and another host, which is what ARP spoofing looks like, and in the other 192.168.0.100 sends SYNs to 1,000 different ports of 192.168.0.101, which is what nmap's default scan looks like. They are what their names say. Where they come from is still not known, and this post says so again at the end.</p>
 
-      <h2>do the detectors fire on real attacks?</h2>
+      <h2>Do the detectors fire on real attacks?</h2>
 
       <div class="table-wrap"><table class="data">
         <thead><tr><th>capture</th><th>alerts</th><th class="num">time</th></tr></thead>
@@ -52,7 +52,7 @@ label: Sep 2026
         </tbody>
       </table></div>
 
-      <p>yes, all five, and each raised only the alert it should. this is what the port scan and the ARP spoofing look like from the command line, the real output:</p>
+      <p>Yes, all five, and each raised only the alert it should. This is what the port scan and the ARP spoofing look like from the command line, the real output:</p>
 
       <div class="term"><pre><span class="pr">$ python -m sentinel ids --format text portscan.pcap
 </span>2014-02-25T05:11:20.956948Z [medium] port-scan: 192.168.0.100 probed 15 ports on 192.168.0.101 in 0.1s
@@ -63,46 +63,46 @@ label: Sep 2026
 2014-02-25T06:11:15.399497Z [high] arp-spoof: 192.168.0.1 moved from 7c:d1:c3:94:9e:b8 to f8:1a:67:cd:57:6e
 2014-02-25T06:14:03.123374Z [high] arp-spoof: ARP says 192.168.0.103 is at d8:96:95:01:a5:c9, but the frame came from 7c:d1:c3:94:9e:b8</pre></div>
 
-      <p>in the ARP file the alerts include 7c:d1:c3:94:9e:b8, the address that <code>tshark</code> showed claiming two hosts. the labels of these files are one per file, "this is a SYN flood", so the honest reading is small: on one real example of each attack the detector for it fires. the two StopDDoS files have nothing but attack traffic in them, so they cannot show a false alarm, and one file of each kind says nothing about how many attacks would be missed.</p>
+      <p>In the ARP file the alerts include 7c:d1:c3:94:9e:b8, the address that <code>tshark</code> showed claiming two hosts. The labels of these files are one per file, "this is a SYN flood", so the honest reading is small: on one real example of each attack the detector for it fires. The two StopDDoS files have nothing but attack traffic in them, so they cannot show a false alarm, and one file of each kind says nothing about how many attacks would be missed.</p>
 
-      <h2>traffic that nobody labelled</h2>
+      <h2>Traffic that nobody labelled</h2>
 
-      <p>the other two captures are the ones I was afraid of: a week of what reaches a web server on the internet, and 14.6 seconds of a link that carries a gigabit. nobody can say which of their packets are attacks, so I cannot score the alerts as right or wrong. I asked <code>tshark</code> two things that I can check without trusting Sentinel. is what an alert says true: a port-scan alert says a source probed 30 hosts on one port within 10 seconds, so I count the SYNs again from <code>tshark</code>'s own output. and does an independent recount of the same rule find scanners that Sentinel did not report.</p>
+      <p>The other two captures are the ones I was afraid of: a week of what reaches a web server on the internet, and 14.6 seconds of a link that carries a gigabit. Nobody can say which of their packets are attacks, so I cannot score the alerts as right or wrong. I asked <code>tshark</code> two things that I can check without trusting Sentinel. Is what an alert says true: a port-scan alert says a source probed 30 hosts on one port within 10 seconds, so I count the SYNs again from <code>tshark</code>'s own output. And does an independent recount of the same rule find scanners that Sentinel did not report.</p>
 
-      <h3 class="sub">a week at a web server</h3>
+      <h3 class="sub">A week at a web server</h3>
 
-      <p>27 port-scan alerts and 1 DNS alert in 500,923 packets. <code>tshark</code> counts the same number of ports for all 27 of the alerts, and the recount finds 16 scanning sources, the same 16 that Sentinel reported. none missed, none extra. the one DNS alert is a random-looking name under icann.org, which I did not look into.</p>
+      <p>27 port-scan alerts and 1 DNS alert in 500,923 packets. <code>tshark</code> counts the same number of ports for all 27 of the alerts, and the recount finds 16 scanning sources, the same 16 that Sentinel reported. None missed, none extra. The one DNS alert is a random-looking name under icann.org, which I did not look into.</p>
 
-      <h3 class="sub">a gigabit for fourteen seconds</h3>
+      <h3 class="sub">A gigabit for fourteen seconds</h3>
 
       <p>2,163,268 packets and 795 alerts: 627 port scans, 165 DNS tunnels and 3 SYN floods.</p>
 
-      <p><b>the port scans.</b> 624 of them are one source probing one port on 30 or more hosts. they come from 376 sources, and the recount finds the same 376. all 626 alerts that can be counted again reach the threshold in <code>tshark</code>'s count, 551 of them with exactly the number in the alert. in the others the recount is higher, and that fits something I could see in the code: a window holds at most four times the threshold in events, so the number in an alert is between 30 and 120, and 443 say exactly 30, whatever the size of the sweep. the alert is true, and it understates a fast sweep. the ports that were probed most were 4117, 23, 22, 80, 443, 34567, 8080, 2222: mostly telnet, ssh and web ports, and a few odd ones such as 4117 and 34567.</p>
+      <p><b>The port scans.</b> 624 of them are one source probing one port on 30 or more hosts. They come from 376 sources, and the recount finds the same 376. All 626 alerts that can be counted again reach the threshold in <code>tshark</code>'s count, 551 of them with exactly the number in the alert. In the others the recount is higher, and that fits something I could see in the code: a window holds at most four times the threshold in events, so the number in an alert is between 30 and 120, and 443 say exactly 30, whatever the size of the sweep. The alert is true, and it understates a fast sweep. The ports that were probed most were 4117, 23, 22, 80, 443, 34567, 8080, 2222: mostly telnet, ssh and web ports, and a few odd ones such as 4117 and 34567.</p>
 
-      <p><b>the state limit.</b> the last port-scan alert is not a scan:</p>
+      <p><b>The state limit.</b> The last port-scan alert is not a scan:</p>
 
       <div class="codeblock"><code>19629 packets were not tracked: the detector's state limit was reached</code></div>
 
-      <p>every detector keeps bounded state, and reports it when it has to forget something. one table of the port-scan detector, the sources it is following, reached its 100,000 entries. that took fourteen seconds on this link. Sentinel said so, as it was written to in stage 5, and the recount found no scanning source that it had failed to report, so the limit did not hide a scanner from this slice. on a longer one it could.</p>
+      <p>Every detector keeps bounded state, and reports it when it has to forget something. One table of the port-scan detector, the sources it is following, reached its 100,000 entries. That took fourteen seconds on this link. Sentinel said so, as it was written to in stage 5, and the recount found no scanning source that it had failed to report, so the limit did not hide a scanner from this slice. On a longer one it could.</p>
 
-      <p><b>the DNS alerts.</b> all 165 come from one check: twenty "no such name" answers to one client within a minute. <code>tshark</code> confirms all 165, and shows 31,006 such answers to 1,815 clients in those 14.6 seconds, one client with 757. none of the other signals, a long name, a random-looking name or many different subdomains, fired once. so these are not tunnels, I think: on a backbone a client is often a resolver or a gateway that asks for many names for many people, and a threshold made for one client fires at once. I cannot prove it, because nobody labelled it.</p>
+      <p><b>The DNS alerts.</b> All 165 come from one check: twenty "no such name" answers to one client within a minute. <code>tshark</code> confirms all 165, and shows 31,006 such answers to 1,815 clients in those 14.6 seconds, one client with 757. None of the other signals, a long name, a random-looking name or many different subdomains, fired once. So these are not tunnels, I think: on a backbone a client is often a resolver or a gateway that asks for many names for many people, and a threshold made for one client fires at once. I cannot prove it, because nobody labelled it.</p>
 
-      <p><b>the SYN floods.</b> three alerts, all for one address and one port, 131.112.115.241:993 (IMAPS): 100 SYNs from 16, 18 and 22 addresses within a second, and <code>tshark</code> counts the same. over the whole slice 844 SYNs from 110 addresses went to that port, and no SYN-ACK from it was captured. that could be an attack, or clients trying again and again against a mail server that is down. the capture cannot tell me which. the link does not help: only 5.3% of the SYNs on it have a SYN-ACK in the capture (57.5% for port 443), because a backbone carries only some of the return paths.</p>
+      <p><b>The SYN floods.</b> Three alerts, all for one address and one port, 131.112.115.241:993 (IMAPS): 100 SYNs from 16, 18 and 22 addresses within a second, and <code>tshark</code> counts the same. Over the whole slice 844 SYNs from 110 addresses went to that port, and no SYN-ACK from it was captured. That could be an attack, or clients trying again and again against a mail server that is down. The capture cannot tell me which. The link does not help: only 5.3% of the SYNs on it have a SYN-ACK in the capture (57.5% for port 443), because a backbone carries only some of the return paths.</p>
 
-      <h3 class="sub">a mistake of mine</h3>
+      <h3 class="sub">A mistake of mine</h3>
 
-      <p>the first recount told me Sentinel had missed a scanner. 202.121.34.125 looked like a source of SYNs to 30 hosts within 10 seconds, and Sentinel had not reported it. I looked at its packets: they were <code>ip:icmp:ip:tcp</code>. it was a router. what it sent were ICMP errors that quote the packet they refuse, and my <code>tshark</code> filter counted the SYN inside the quote as if the router had sent it. Sentinel ignores those, and it was right. I fixed the filter, and with it, and IPv6 counted, the two lists of sources are the same. it would have been easy to write "one scanner missed" and move on, and the number would have looked like a finding.</p>
+      <p>The first recount told me Sentinel had missed a scanner. 202.121.34.125 looked like a source of SYNs to 30 hosts within 10 seconds, and Sentinel had not reported it. I looked at its packets: they were <code>ip:icmp:ip:tcp</code>. It was a router. What it sent were ICMP errors that quote the packet they refuse, and my <code>tshark</code> filter counted the SYN inside the quote as if the router had sent it. Sentinel ignores those, and it was right. I fixed the filter, and with it, and IPv6 counted, the two lists of sources are the same. It would have been easy to write "one scanner missed" and move on, and the number would have looked like a finding.</p>
 
-      <h3 class="sub">speed</h3>
+      <h3 class="sub">Speed</h3>
 
-      <p>50,394 packets a second through the detectors on the backbone slice (35,073 on the week at the web server, 30,618 on the SYN flood), on the same machine as the benchmark of stage 7. the link carried about 148,000 packets a second, so Sentinel ran at a third of real time. pure Python on one core. for a gigabit link that is a limit, and the README says so.</p>
+      <p>50,394 packets a second through the detectors on the backbone slice (35,073 on the week at the web server, 30,618 on the SYN flood), on the same machine as the benchmark of stage 7. The link carried about 148,000 packets a second, so Sentinel ran at a third of real time. Pure Python on one core. For a gigabit link that is a limit, and the README says so.</p>
 
-      <h2>what this does not show</h2>
+      <h2>What this does not show</h2>
 
-      <p>how many packets of an attack Sentinel got right, and a false alarm rate. the labels are per file, and the two big captures have none, so what I checked is that what the alerts say is true, and not that each one is an attack. it is one slice of one link and one week at one server. the backbone is not symmetric, so "unanswered" cannot be read as "a scan", and a detector that waits for a handshake sees half of it. there is one ARP spoofing file, one iodine capture, and no SYN flood with ordinary traffic in it. where the cs3 files come from is not known.</p>
+      <p>How many packets of an attack Sentinel got right, and a false alarm rate. The labels are per file, and the two big captures have none, so what I checked is that what the alerts say is true, and not that each one is an attack. It is one slice of one link and one week at one server. The backbone is not symmetric, so "unanswered" cannot be read as "a scan", and a detector that waits for a handshake sees half of it. There is one ARP spoofing file, one iodine capture, and no SYN flood with ordinary traffic in it. Where the cs3 files come from is not known.</p>
 
-      <p>and I changed nothing. what I found is three limits: a DNS check whose threshold suits one client and not a backbone, a state limit that a backbone reaches in fourteen seconds, and a count in a port-scan alert that stops at four times the threshold. I could turn a number down until this slice looked clean, but that would only tune Sentinel to fourteen seconds of one link. they are in the limits list of the README, where the next person will find them.</p>
+      <p>And I changed nothing. What I found is three limits: a DNS check whose threshold suits one client and not a backbone, a state limit that a backbone reaches in fourteen seconds, and a count in a port-scan alert that stops at four times the threshold. I could turn a number down until this slice looked clean, but that would only tune Sentinel to fourteen seconds of one link. They are in the limits list of the README, where the next person will find them.</p>
 
-      <h2>where this goes</h2>
+      <h2>Where this goes</h2>
 
-      <p>there is no stage 14 planned. what would make this stronger is data with a label for every packet, so that "fires" can become "gets right, this many times". Kitsune has it, and it is 19 GB behind a server that will not hand over a part. if I find a mirror that does, that is the next measurement.</p>
+      <p>There is no stage 14 planned. What would make this stronger is data with a label for every packet, so that "fires" can become "gets right, this many times". Kitsune has it, and it is 19 GB behind a server that will not hand over a part. If I find a mirror that does, that is the next measurement.</p>

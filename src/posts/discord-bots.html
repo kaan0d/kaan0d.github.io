@@ -3,9 +3,9 @@ title: rejs: a moderation bot that can undo itself
 date: 2026-09-29
 label: Sep 2026
 ---
-<p>rejs is a Discord moderation and automation bot with a FiveM server monitor built in. it began as a game server watcher, took over the jobs of an older bot of mine, and is now one slash-command bot. the game server monitor is one feature among about thirty, and the part I like most is a command I did not plan at the start: <code>/undo</code>. this is what rejs is, and what changed in how I think about a bot that can delete things.</p>
+<p>rejs is a Discord moderation and automation bot with a FiveM server monitor built in. It began as a game server watcher, took over the jobs of an older bot of mine, and is now one slash-command bot. The game server monitor is one feature among about thirty, and the part I like most is a command I did not plan at the start: <code>/undo</code>. This is what rejs is, and what changed in how I think about a bot that can delete things.</p>
 
-      <p class="links">source: <a href="https://github.com/kaan0d/rejs" target="_blank" rel="noopener">rejs</a></p>
+      <p class="links">Source: <a href="https://github.com/kaan0d/rejs" target="_blank" rel="noopener">rejs</a></p>
 
       <div class="stats">
         <div class="stat"><b>1</b><span>bot, with moderation, tickets, protection and a game server monitor in it</span></div>
@@ -16,17 +16,17 @@ label: Sep 2026
         <div class="stat"><b>43</b><span>tests, run with Node's built-in runner</span></div>
       </div>
 
-      <h2>where it came from</h2>
+      <h2>Where it came from</h2>
 
-      <p>rejs started in 2024 as a small Node bot: poll the game server once a second, compare the player list with the last one, post joins and leaves. in September 2026 I rewrote it as a slash-command bot and moved everything my older leveling bot did into it, so one community runs one token, one host and one database. I dropped the thank-you XP on the way. it was fun, but it made the server about the bot instead of the people, and a moderation bot needs to be boring in the right way.</p>
+      <p>rejs started in 2024 as a small Node bot: poll the game server once a second, compare the player list with the last one, post joins and leaves. In September 2026 I rewrote it as a slash-command bot and moved everything my older leveling bot did into it, so one community runs one token, one host and one database. I dropped the thank-you XP on the way. It was fun, but it made the server about the bot instead of the people, and a moderation bot needs to be boring in the right way.</p>
 
-      <p>what stayed is one loop: watch something, remember what changed, tell the right channel. anti-raid watches joins, anti-nuke watches destructive actions, the monitor watches the game server. the loop is the same and only the thing being watched changes.</p>
+      <p>What stayed is one loop: watch something, remember what changed, tell the right channel. Anti-raid watches joins, anti-nuke watches destructive actions, the monitor watches the game server. The loop is the same and only the thing being watched changes.</p>
 
-      <h2>moderation with a paper trail</h2>
+      <h2>Moderation with a paper trail</h2>
 
-      <p>every action (warn, timeout, kick, ban, softban) becomes a numbered case, posted to a mod log and to Discord's own audit log, and the member gets a DM when possible. <code>/history</code> shows everything for one person, including private staff notes. a moderator cannot act on someone with an equal or higher role, and that check is one function with its own test, because it is the one that must never be wrong.</p>
+      <p>Every action (warn, timeout, kick, ban, softban) becomes a numbered case, posted to a mod log and to Discord's own audit log, and the member gets a DM when possible. <code>/history</code> shows everything for one person, including private staff notes. A moderator cannot act on someone with an equal or higher role, and that check is one function with its own test, because it is the one that must never be wrong.</p>
 
-      <p>bans can have a duration. the unban is stored in the database, not in a timer, so a restart cannot make a temporary ban permanent. ban DMs carry an Appeal button: it opens a form, the appeal lands in a staff channel with Accept and Deny, and an accepted member gets a single-use invite back.</p>
+      <p>Bans can have a duration. The unban is stored in the database, not in a timer, so a restart cannot make a temporary ban permanent. Ban DMs carry an Appeal button: it opens a form, the appeal lands in a staff channel with Accept and Deny, and an accepted member gets a single-use invite back.</p>
 
       <div class="table-wrap"><table class="data">
         <thead><tr><th>layer</th><th>watches</th><th>does</th></tr></thead>
@@ -38,29 +38,29 @@ label: Sep 2026
         </tbody>
       </table></div>
 
-      <p>anti-nuke is the one I would defend hardest. a hijacked admin account is the worst case for a Discord server, and the account already has permission to do everything, so permission checks cannot stop it. counting is what can: too many bans, kicks or deleted channels in a short window and the bot takes its roles away. only the server owner can change that setting, because an admin who could switch it off would be exactly the account it exists for.</p>
+      <p>Anti-nuke is the one I would defend hardest. A hijacked admin account is the worst case for a Discord server, and the account already has permission to do everything, so permission checks cannot stop it. Counting is what can: too many bans, kicks or deleted channels in a short window and the bot takes its roles away. Only the server owner can change that setting, because an admin who could switch it off would be exactly the account it exists for.</p>
 
-      <h2>undo</h2>
+      <h2>Undo</h2>
 
-      <p>a bot with ban and delete permissions will eventually do something you did not mean, through a typo, a wrong ID or a bulk command with the wrong list. so every staff command and staff button runs inside a journal entry, and <code>/undo</code> lists the entries from the last 7 days and reverses the one you pick.</p>
+      <p>A bot with ban and delete permissions will eventually do something you did not mean, through a typo, a wrong ID or a bulk command with the wrong list. So every staff command and staff button runs inside a journal entry, and <code>/undo</code> lists the entries from the last 7 days and reverses the one you pick.</p>
 
       <figure>
         <div class="diagram-wrap"><svg class="diagram" viewBox="0 0 760 112" role="img" aria-label="command, journal, undo"><defs><marker id="ah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0 L10 5 L0 10 z" class="head"/></marker></defs><rect class="box" x="0" y="20" width="200" height="70" rx="3"/><text class="t" x="100" y="52" text-anchor="middle">command runs</text><text class="s" x="100" y="72" text-anchor="middle">inside one journal entry</text><line class="arrow" x1="206" y1="55" x2="272" y2="55" marker-end="url(#ah)"/><rect class="box hot" x="280" y="20" width="200" height="70" rx="3"/><text class="t" x="380" y="52" text-anchor="middle">journal</text><text class="s" x="380" y="72" text-anchor="middle">old rows + reverse steps</text><line class="arrow" x1="486" y1="55" x2="552" y2="55" marker-end="url(#ah)"/><rect class="box" x="560" y="20" width="200" height="70" rx="3"/><text class="t" x="660" y="52" text-anchor="middle">/undo</text><text class="s" x="660" y="72" text-anchor="middle">replays newest first</text></svg></div>
-        <figcaption>two kinds of change need two kinds of record: the database and Discord itself.</figcaption>
+        <figcaption>Two kinds of change need two kinds of record: the database and Discord itself.</figcaption>
       </figure>
 
-      <p>database changes are captured without any command knowing about it. every table gets three SQLite triggers, and while a journal entry is open they copy the old row into an undo table. a new command that saves a setting is undoable the day it is written, with no extra code.</p>
+      <p>Database changes are captured without any command knowing about it. Every table gets three SQLite triggers, and while a journal entry is open they copy the old row into an undo table. A new command that saves a setting is undoable the day it is written, with no extra code.</p>
 
       <div class="codeblock"><code><span class="cm">-- generated for every table: while an entry is open, keep the old row</span>
 CREATE TRIGGER undo_&lt;table&gt;_update AFTER UPDATE ON &lt;table&gt;
   WHEN (SELECT tx FROM undo_state) IS NOT NULL
   BEGIN INSERT INTO undo_rows (tx, tbl, op, row_id, old) VALUES ((SELECT tx FROM undo_state), '&lt;table&gt;', 'update', OLD.rowid, &lt;old row as json&gt;); END;</code></div>
 
-      <p>Discord changes cannot be captured that way, so a command records a step next to the change: how to reverse it. "I created this channel, delete it." "I changed this overwrite, here is what it was." the journal knows which entry it is in through Node's <code>AsyncLocalStorage</code>, which is why two commands running at the same moment keep separate entries and there is a test for exactly that. the entry row is only created on the first change, so read-only commands leave nothing behind.</p>
+      <p>Discord changes cannot be captured that way, so a command records a step next to the change: how to reverse it. "I created this channel, delete it." "I changed this overwrite, here is what it was." The journal knows which entry it is in through Node's <code>AsyncLocalStorage</code>, which is why two commands running at the same moment keep separate entries and there is a test for exactly that. The entry row is only created on the first change, so read-only commands leave nothing behind.</p>
 
-      <p>some things cannot be taken back: a kick, a deleted message. the command says so at the time it happens, and <code>/undo</code> shows that list before it does anything, next to what it can reverse. a tool that promises "undo" and then quietly skips half of it is worse than none.</p>
+      <p>Some things cannot be taken back: a kick, a deleted message. The command says so at the time it happens, and <code>/undo</code> shows that list before it does anything, next to what it can reverse. A tool that promises "undo" and then quietly skips half of it is worse than none.</p>
 
-      <p>the hardest case was deleting a channel or a category. it comes back with a new ID, and the log channel, sticky messages, schedules and older undo entries all pointed at the old one. so after recreating it the bot rewrites every text column that mentions the old ID, in every table that has a <code>guild_id</code>:</p>
+      <p>The hardest case was deleting a channel or a category. It comes back with a new ID, and the log channel, sticky messages, schedules and older undo entries all pointed at the old one. So after recreating it the bot rewrites every text column that mentions the old ID, in every table that has a <code>guild_id</code>:</p>
 
       <div class="codeblock"><code><span class="kw">for</span> (<span class="kw">const</span> { name, type } <span class="kw">of</span> columns) {
   <span class="kw">if</span> (type !== 'TEXT' || name === 'guild_id') <span class="kw">continue</span>;
@@ -68,38 +68,38 @@ CREATE TRIGGER undo_&lt;table&gt;_update AFTER UPDATE ON &lt;table&gt;
     .run(oldId, newId, guildId, oldId);
 }</code></div>
 
-      <p>it is blunt, and it works because Discord IDs are long enough that a false match is not a real risk. I would not do it with short IDs. roles are harder still: a deleted role comes back with its members and its channel permissions, and permission overwrites for roles that are gone for good are dropped, because Discord refuses the whole channel if one of them points at nothing.</p>
+      <p>It is blunt, and it works because Discord IDs are long enough that a false match is not a real risk. I would not do it with short IDs. Roles are harder still: a deleted role comes back with its members and its channel permissions, and permission overwrites for roles that are gone for good are dropped, because Discord refuses the whole channel if one of them points at nothing.</p>
 
-      <h2>when undo is not enough</h2>
+      <h2>When undo is not enough</h2>
 
-      <p>undo covers a mistake. it does not cover someone who deletes fifty roles and channels on purpose, and then the journal is not the tool. every day the bot saves a snapshot of each server's roles, with who had them, and of every channel with its settings and permissions, keeping the last 7. <code>/restore</code> compares the newest snapshot with the server, shows what is missing, and rebuilds it: roles first, then categories, then channels inside them, then gives members their roles back.</p>
+      <p>Undo covers a mistake. It does not cover someone who deletes fifty roles and channels on purpose, and then the journal is not the tool. Every day the bot saves a snapshot of each server's roles, with who had them, and of every channel with its settings and permissions, keeping the last 7. <code>/restore</code> compares the newest snapshot with the server, shows what is missing, and rebuilds it: roles first, then categories, then channels inside them, then gives members their roles back.</p>
 
-      <p>the order matters more than anything else in that command. a channel can have a permission overwrite for a role, and a role can only be given to a member after it exists, so each step waits for the one before it and each recreated thing gets a new ID that the next step has to use. the snapshot also asks for every member of the server once a day, and I marked that in the code as a limit: fine up to about 100,000 members, and something to rethink beyond that. the database itself is copied to <code>backups/</code> every day, last 7 kept, for the day the file is the problem.</p>
+      <p>The order matters more than anything else in that command. A channel can have a permission overwrite for a role, and a role can only be given to a member after it exists, so each step waits for the one before it and each recreated thing gets a new ID that the next step has to use. The snapshot also asks for every member of the server once a day, and I marked that in the code as a limit: fine up to about 100,000 members, and something to rethink beyond that. The database itself is copied to <code>backups/</code> every day, last 7 kept, for the day the file is the problem.</p>
 
-      <h2>one look for every message</h2>
+      <h2>One look for every message</h2>
 
-      <p>the last big change was visual. every message the bot sends, replies, DMs, logs and panels, is now a Components V2 card: an accent color for the outcome (green done, red error, orange warning), headings, avatar thumbnails and buttons inside the card. the commands did not change to get there. they still build ordinary text, embeds and buttons, and one function converts them right before they reach Discord.</p>
+      <p>The last big change was visual. Every message the bot sends, replies, DMs, logs and panels, is now a Components V2 card: an accent color for the outcome (green done, red error, orange warning), headings, avatar thumbnails and buttons inside the card. The commands did not change to get there. They still build ordinary text, embeds and buttons, and one function converts them right before they reach Discord.</p>
 
       <div class="codeblock"><code><span class="cm">// commands still write "✅ Done"; the marker picks the color and is removed from the text</span>
 <span class="kw">const</span> MARKERS = [['✅', Colors.Green], ['❌', Colors.Red], ['⛔', Colors.Red], ['⚠️', Colors.Orange]];</code></div>
 
-      <p>that made the look one decision in one file, and it made the commit that removed the decorative emojis almost mechanical: the color already says whether it worked. the cost is Discord's limit of 4,000 characters of text per card message, so long content is shortened, longest text first, and there is a test for that too.</p>
+      <p>That made the look one decision in one file, and it made the commit that removed the decorative emojis almost mechanical: the color already says whether it worked. The cost is Discord's limit of 4,000 characters of text per card message, so long content is shortened, longest text first, and there is a test for that too.</p>
 
-      <h2>the game server monitor, again</h2>
+      <h2>The game server monitor, again</h2>
 
-      <p>the monitor is still there, and it fixed what the first version got wrong. the retry counters were module-level globals; they are now one small state object per Discord server, and a server counts as offline only after 3 failed polls in a row, because a single miss is usually a hiccup. the hard-coded restart windows are gone: the bot posts once when the server goes offline, once when it comes back, and marks everyone as left in between.</p>
+      <p>The monitor is still there, and it fixed what the first version got wrong. The retry counters were module-level globals; they are now one small state object per Discord server, and a server counts as offline only after 3 failed polls in a row, because a single miss is usually a hiccup. The hard-coded restart windows are gone: the bot posts once when the server goes offline, once when it comes back, and marks everyone as left in between.</p>
 
-      <p>the other problem was identity. FiveM reuses server IDs, so a player who leaves and one who joins can have the same number a minute apart. sessions are now keyed by the license identifier, with the name only as a fallback:</p>
+      <p>The other problem was identity. FiveM reuses server IDs, so a player who leaves and one who joins can have the same number a minute apart. Sessions are now keyed by the license identifier, with the name only as a fallback:</p>
 
       <div class="codeblock"><code><span class="cm">// FiveM server ids get reused, the license identifier does not.</span>
 <span class="kw">const</span> playerKey = (p) =&gt; p.identifiers?.find((id) =&gt; id.startsWith('license:')) ?? `name:${p.name}`;</code></div>
 
-      <p>joins and leaves come in one card per update, with how long each player stayed, instead of a line each. the bot's status and an optional voice channel name show the live count (Discord allows two renames per 10 minutes, so that one is throttled). <code>/server</code> draws the last 24 hours as a text sparkline with the peak, <code>/playtime</code> ranks players from the recorded sessions, and <code>/watchlist</code> pings staff when a chosen player joins. the poll went from 1 s to 10 s: nobody reads a join message that fast, and a public bot polling every community's server once a second was not going to scale.</p>
+      <p>Joins and leaves come in one card per update, with how long each player stayed, instead of a line each. The bot's status and an optional voice channel name show the live count (Discord allows two renames per 10 minutes, so that one is throttled). <code>/server</code> draws the last 24 hours as a text sparkline with the peak, <code>/playtime</code> ranks players from the recorded sessions, and <code>/watchlist</code> pings staff when a chosen player joins. The poll went from 1 s to 10 s: nobody reads a join message that fast, and a public bot polling every community's server once a second was not going to scale.</p>
 
-      <p>one shortcut is still marked in the code: a session left open by a bot restart counts the downtime as playtime. it needs a "bot was down" marker, and it has not been worth it yet.</p>
+      <p>One shortcut is still marked in the code: a session left open by a bot restart counts the downtime as playtime. It needs a "bot was down" marker, and it has not been worth it yet.</p>
 
-      <h2>what I learned</h2>
+      <h2>What I learned</h2>
 
-      <p>the useful design question for a bot with power is not "what can it do" but "what happens after it does the wrong thing". undo, snapshots, confirmation buttons on every bulk action, a role hierarchy check and an owner-only anti-nuke are all answers to that. the features people ask for are the small part; the safety net around them is where the time went.</p>
+      <p>The useful design question for a bot with power is not "what can it do" but "what happens after it does the wrong thing". Undo, snapshots, confirmation buttons on every bulk action, a role hierarchy check and an owner-only anti-nuke are all answers to that. The features people ask for are the small part; the safety net around them is where the time went.</p>
 
-      <p>and the rewrite showed me what rejs really is: a database file, a command loader and a habit of telling a channel what changed. SQLite in one file, no dashboard, on your own PC or a VPS kept alive by pm2. chat is the interface people already have open.</p>
+      <p>And the rewrite showed me what rejs really is: a database file, a command loader and a habit of telling a channel what changed. SQLite in one file, no dashboard, on your own PC or a VPS kept alive by pm2. Chat is the interface people already have open.</p>

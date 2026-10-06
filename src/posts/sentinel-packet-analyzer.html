@@ -3,7 +3,7 @@ title: sentinel part 1: reading the wire, one byte at a time
 date: 2026-09-18
 label: Sep 2026
 ---
-<p>Sentinel is a packet analyzer and rule-based intrusion detection system written from scratch in Python. the protocol parsers are hand-written with <code>struct</code>: no Scapy, no dpkt, no pyshark, and no runtime dependencies. it reads pcap files and live Linux interfaces, prints tcpdump-style lines, reassembles TCP streams, filters with its own language, and raises JSON alerts for port scans, SYN floods, ARP spoofing and DNS tunneling. this post covers all seven stages, with the focus on what the parsers do with bad input and how I tried to prove they are right.</p>
+<p>Sentinel is a packet analyzer and rule-based intrusion detection system written from scratch in Python. The protocol parsers are hand-written with <code>struct</code>: no Scapy, no dpkt, no pyshark, and no runtime dependencies. It reads pcap files and live Linux interfaces, prints tcpdump-style lines, reassembles TCP streams, filters with its own language, and raises JSON alerts for port scans, SYN floods, ARP spoofing and DNS tunneling. This post covers all seven stages, with the focus on what the parsers do with bad input and how I tried to prove they are right.</p>
 
       <div class="stats">
         <div class="stat"><b>0</b><span>runtime dependencies</span></div>
@@ -14,9 +14,9 @@ label: Sep 2026
         <div class="stat"><b>196 of 196</b><span>deliberate one-line breaks caught by the tests</span></div>
       </div>
 
-      <h2>stage 1: a parser never raises</h2>
+      <h2>Stage 1: a parser never raises</h2>
 
-      <p>a packet analyzer reads bytes anyone on the network can send. so no parser raises on bad input: not on a truncated packet, a header that lies about its length, or random bytes. every parser returns a frozen dataclass with three shared fields:</p>
+      <p>A packet analyzer reads bytes anyone on the network can send. So no parser raises on bad input: not on a truncated packet, a header that lies about its length, or random bytes. Every parser returns a frozen dataclass with three shared fields:</p>
 
       <div class="codeblock"><code>@dataclass(frozen=<span class="kw">True</span>, slots=<span class="kw">True</span>, kw_only=<span class="kw">True</span>)
 <span class="kw">class</span> Layer:
@@ -24,13 +24,13 @@ label: Sep 2026
     error: str | <span class="kw">None</span> = <span class="kw">None</span>            <span class="cm"># header unusable; other fields mean nothing</span>
     anomalies: tuple[str, ...] = ()   <span class="cm"># parsed, but something is off</span></code></div>
 
-      <p>an <code>error</code> means the header cannot be trusted: too short, wrong IP version, a TCP data offset below 5. an <code>anomaly</code> means it parsed but something is off, like a bad checksum. the packet is kept, because the IDS wants to see oddities, not lose them. TCP and UDP checksums are only verified when the whole segment was captured, otherwise a snap-length cut would look like a bad checksum.</p>
+      <p>An <code>error</code> means the header cannot be trusted: too short, wrong IP version, a TCP data offset below 5. An <code>anomaly</code> means it parsed but something is off, like a bad checksum. The packet is kept, because the IDS wants to see oddities, not lose them. TCP and UDP checksums are only verified when the whole segment was captured, otherwise a snap-length cut would look like a bad checksum.</p>
 
       <div class="term"><pre><span class="pr">$ python -m sentinel read demo.pcap    # 2 of 19 lines
 </span><span class="ts">2023-11-14 22:13:20.005000</span> IP 10.0.0.1.40000 &gt; 10.0.0.2.80: <span class="fl">Flags [S]</span>, seq 1000, win 64240, options [mss 1460,sackOK,TS val 1000 ecr 0,nop,wscale 7], <span class="dim">length 0</span>
 <span class="ts">2023-11-14 22:13:20.018000</span> IP 10.0.0.1.43000 &gt; 10.0.0.2.443: <span class="fl">Flags [P.]</span>, seq 1, ack 1, win 64240, <span class="dim">length 161</span><span class="fl">: TLS ClientHello, sni example.com, versions [TLS 1.3, TLS 1.2], ciphers (15) [TLS_AES_128_GCM_SHA256, TLS_AES_256_GCM_SHA384, TLS_CHACHA20_POLY1305_SHA256, +12 more]</span></pre></div>
 
-      <p>the SYN above is 74 bytes. each parser reads its own header, checks every length before reading, and passes the rest on. <code>decode()</code> stops at the first layer with an error:</p>
+      <p>The SYN above is 74 bytes. Each parser reads its own header, checks every length before reading, and passes the rest on. <code>decode()</code> stops at the first layer with an error:</p>
 
       <div class="sizebar" role="img" aria-label="The frame is 14 bytes of Ethernet, 20 bytes of IPv4, 20 bytes of TCP and 20 bytes of TCP options.">
         <span style="flex:14;background:#8b8983">14</span>
@@ -45,15 +45,15 @@ label: Sep 2026
         <div class="layer" style="--c:#a5652a"><div class="layer-title"><b>tcp options</b><span>20 bytes: kind, length, data</span></div><div class="fields"><div class="fld"><span class="by">02 04 05 b4</span><span class="lb">kind 2</span><span class="vl">mss 1460</span></div><div class="fld"><span class="by">04 02</span><span class="lb">kind 4</span><span class="vl">sack permitted</span></div><div class="fld"><span class="by">08 0a 00 00 03 e8 00 00 00 00</span><span class="lb">kind 8</span><span class="vl">timestamps</span></div><div class="fld"><span class="by">01</span><span class="lb">kind 1</span><span class="vl">nop</span></div><div class="fld"><span class="by">03 03 07</span><span class="lb">kind 3</span><span class="vl">window scale 7</span></div></div></div>
 
       <p class="chain">decode(frame) returns <b>(Ethernet, IPv4, Tcp)</b></p>
-      <p class="dim" style="font-size:0.76rem; font-family:var(--font-mono); margin-top:8px;">every byte is copied from the generated packet. the checksums read "valid" because the parsers verified them.</p>
+      <p class="dim" style="font-size:0.76rem; font-family:var(--font-mono); margin-top:8px;">Every byte is copied from the generated packet. The checksums read "valid" because the parsers verified them.</p>
 
-      <p>the pcap reader handles all four magic numbers, keeps timestamps as integer nanoseconds, and caps each record at 262,144 bytes before reading. it is the one place that raises, because a broken file is not a packet.</p>
+      <p>The pcap reader handles all four magic numbers, keeps timestamps as integer nanoseconds, and caps each record at 262,144 bytes before reading. It is the one place that raises, because a broken file is not a packet.</p>
 
-      <h2>stage 2: what the payload says</h2>
+      <h2>Stage 2: what the payload says</h2>
 
-      <p>DNS is found by port 53; HTTP and TLS by content (<code>HTTP/1.</code> or a method, <code>16 03</code> plus a ClientHello), so HTTP on 8080 still works. every application parser works on one segment; stage 3 handles streams.</p>
+      <p>DNS is found by port 53; HTTP and TLS by content (<code>HTTP/1.</code> or a method, <code>16 03</code> plus a ClientHello), so HTTP on 8080 still works. Every application parser works on one segment; stage 3 handles streams.</p>
 
-      <p><strong>DNS compression pointers.</strong> a name can end in a pointer to an earlier name. a pointer to itself, or two pointing at each other, loops forever. so a pointer must point backward into the message body, a name may follow at most 32 pointers, and a name is at most 255 bytes. the record counts in the header (up to 65,535) are untrusted too; parsing stops at the first missing record:</p>
+      <p><strong>DNS compression pointers.</strong> A name can end in a pointer to an earlier name. A pointer to itself, or two pointing at each other, loops forever. So a pointer must point backward into the message body, a name may follow at most 32 pointers, and a name is at most 255 bytes. The record counts in the header (up to 65,535) are untrusted too; parsing stops at the first missing record:</p>
 
       <div class="codeblock"><code><span class="kw">if</span> <span class="kw">not</span> _HEADER_LEN &lt;= target &lt; pos:
     <span class="kw">raise</span> _Malformed("compression pointer does not point backward into the message")
@@ -61,88 +61,88 @@ label: Sep 2026
 <span class="cm"># a header that claims 65,535 records in each section, and nothing after it</span>
 parse_dns(header).anomalies == ('truncated dns message: question 1 of 65535 is missing',)</code></div>
 
-      <p>HTTP/1.x parsing is size-capped and flags conflicting <code>Content-Length</code> values (a request smuggling sign). the TLS ClientHello gives the SNI, versions and cipher suites, with GREASE values hidden in the printed line.</p>
+      <p>HTTP/1.x parsing is size-capped and flags conflicting <code>Content-Length</code> values (a request smuggling sign). The TLS ClientHello gives the SNI, versions and cipher suites, with GREASE values hidden in the printed line.</p>
 
-      <p><strong>printing what the network sends.</strong> a terminal escape sequence inside a hostname would run in the analyst's terminal. parsers escape control characters as <code>\xNN</code> at parse time, so filters and JSON alerts get the same safe strings.</p>
+      <p><strong>Printing what the network sends.</strong> A terminal escape sequence inside a hostname would run in the analyst's terminal. Parsers escape control characters as <code>\xNN</code> at parse time, so filters and JSON alerts get the same safe strings.</p>
 
-      <h2>stage 3: from packets to conversations</h2>
+      <h2>Stage 3: from packets to conversations</h2>
 
-      <p>a flow is a protocol and two endpoints; the client is whoever sent the SYN. each direction of a TCP connection is reassembled into one byte stream. this is a POST split into three segments, out of order with one duplicate, replayed through the real reassembler:</p>
+      <p>A flow is a protocol and two endpoints; the client is whoever sent the SYN. Each direction of a TCP connection is reassembled into one byte stream. This is a POST split into three segments, out of order with one duplicate, replayed through the real reassembler:</p>
 
       <div class="reasm"><div class="rrow"><span class="rl">arrival 1</span><div class="rtrack"><div class="rbar" style="left:31.250%;width:34.375%"></div></div><span class="rn">bytes 30 to 63: ahead of a gap, held until the gap is filled. contiguous so far: 0 of 96</span></div><div class="rrow"><span class="rl">arrival 2</span><div class="rtrack"><div class="rbar" style="left:0.000%;width:31.250%"></div></div><span class="rn">bytes 0 to 30: fills the gap. contiguous so far: 63 of 96</span></div><div class="rrow"><span class="rl">arrival 3</span><div class="rtrack"><div class="rbar" style="left:65.625%;width:34.375%"></div></div><span class="rn">bytes 63 to 96: in order. contiguous so far: 96 of 96</span></div><div class="rrow"><span class="rl">arrival 4</span><div class="rtrack"><div class="rbar dup" style="left:31.250%;width:34.375%"></div></div><span class="rn">bytes 30 to 63: a repeat: these bytes are already held. contiguous so far: 96 of 96</span></div><div class="rrow"><span class="rl">result</span><div class="rtrack"><div class="rbar done" style="left:0;width:100%"></div></div><span class="rn">96 bytes, in order, once. the request line and headers are whole, so the HTTP parser reads one POST.</span></div></div>
 
-      <p>when two copies of the same bytes overlap, the first one wins, and different bytes in the later copy count as a conflict. sending different bytes for the same position is how an attacker confuses an IDS, and a capture does not say which OS receives the data, so reporting beats guessing. only bytes contiguous from the stream start are handed out; a gap is never filled with zeros. positions are signed offsets from the first sequence number seen, so 2<sup>32</sup> wrap needs no special case.</p>
+      <p>When two copies of the same bytes overlap, the first one wins, and different bytes in the later copy count as a conflict. Sending different bytes for the same position is how an attacker confuses an IDS, and a capture does not say which OS receives the data, so reporting beats guessing. Only bytes contiguous from the stream start are handed out; a gap is never filled with zeros. Positions are signed offsets from the first sequence number seen, so 2<sup>32</sup> wrap needs no special case.</p>
 
-      <p>this fixes what per-packet reading gets wrong. the demo capture has a POST body with text that looks like a request line at the start of its own segment, and a ClientHello split in two with the second half first. <code>read</code> prints a request nobody made and a half hello with no server name. <code>flows</code> jumps over the body with <code>Content-Length</code>, finds one POST, and reads the hello from the whole stream:</p>
+      <p>This fixes what per-packet reading gets wrong. The demo capture has a POST body with text that looks like a request line at the start of its own segment, and a ClientHello split in two with the second half first. <code>read</code> prints a request nobody made and a half hello with no server name. <code>flows</code> jumps over the body with <code>Content-Length</code>, finds one POST, and reads the hello from the whole stream:</p>
 
       <div class="term"><pre><span class="pr">$ python -m sentinel flows streams.pcap    # 1 of 6 flows
 </span>tcp 10.0.0.1:45000 &gt; 10.0.0.2:8443: established, pkts 4/1, bytes 161/0, 0.004000s <span class="fl">[1 out-of-order client segment]</span><span class="dim"> | -&gt; </span>TLS ClientHello, sni example.com, versions <span class="fl">[TLS 1.3, TLS 1.2]</span>, ciphers (15) <span class="fl">[TLS_AES_128_GCM_SHA256, TLS_AES_256_GCM_SHA384, TLS_CHACHA20_POLY1305_SHA256, +12 more]</span></pre></div>
 
-      <p><code>read</code> stays stateless on purpose: constant memory, and a line never depends on the rest of the capture. everything that grows is capped and counted: 1 MiB per stream, 4,096 byte ranges per stream, 256 MiB in total, 200,000 flows.</p>
+      <p><code>read</code> stays stateless on purpose: constant memory, and a line never depends on the rest of the capture. Everything that grows is capped and counted: 1 MiB per stream, 4,096 byte ranges per stream, 256 MiB in total, 200,000 flows.</p>
 
-      <h2>stage 4: a filter language</h2>
+      <h2>Stage 4: a filter language</h2>
 
-      <p>a lexer, a parser and an evaluator, no library. <code>not</code> binds tighter than <code>and</code>, <code>and</code> tighter than <code>or</code>, and <code>tcp port 80</code> means <code>tcp and port 80</code> as in tcpdump. <code>and</code>/<code>or</code> keep their operands in one flat node, so a thousand-term chain is not a thousand levels of recursion.</p>
+      <p>A lexer, a parser and an evaluator, no library. <code>not</code> binds tighter than <code>and</code>, <code>and</code> tighter than <code>or</code>, and <code>tcp port 80</code> means <code>tcp and port 80</code> as in tcpdump. <code>and</code>/<code>or</code> keep their operands in one flat node, so a thousand-term chain is not a thousand levels of recursion.</p>
 
-      <p>a protocol word matches even if that layer has an error (a broken TCP header is still TCP), but <code>host</code>, <code>net</code> and <code>port</code> need an intact header, so the zeros an error leaves behind never match <code>port 0</code>. a filter comes from a person, so a typo is an answer, not a traceback: <code>parse_filter</code> returns an error and a position, and the command exits with 2 before opening the file.</p>
+      <p>A protocol word matches even if that layer has an error (a broken TCP header is still TCP), but <code>host</code>, <code>net</code> and <code>port</code> need an intact header, so the zeros an error leaves behind never match <code>port 0</code>. A filter comes from a person, so a typo is an answer, not a traceback: <code>parse_filter</code> returns an error and a position, and the command exits with 2 before opening the file.</p>
 
       <div class="term"><pre><span class="pr">$ python -m sentinel read demo.pcap -f "tcp and port http"    # exit code 2
 </span>sentinel: invalid filter: expected a port number (0-65535), got 'http'
   tcp and port http
                ^</pre></div>
 
-      <p>Python's <code>int()</code> raises on very long digit strings, so numbers are capped at ten digits. the evaluator is checked against 34 hand-written predicates over 80 packets; the parser against 25,000 random texts that must not raise.</p>
+      <p>Python's <code>int()</code> raises on very long digit strings, so numbers are capped at ten digits. The evaluator is checked against 34 hand-written predicates over 80 packets; the parser against 25,000 random texts that must not raise.</p>
 
-      <h2>stage 5: raising the alarm</h2>
+      <h2>Stage 5: raising the alarm</h2>
 
-      <p>four detectors, each counting something simple over a sliding window and saying what it counted:</p>
+      <p>Four detectors, each counting something simple over a sliding window and saying what it counted:</p>
 
       <div class="table-wrap"><table class="data">
         <thead><tr><th>detector</th><th>what it looks for</th><th>default</th></tr></thead>
         <tbody><tr><td><code>port_scan</code></td><td>one source probing many ports of one host, or one port of many hosts (SYN and stealth scans)</td><td>15 ports or 30 hosts in 10 s</td></tr><tr><td><code>syn_flood</code></td><td>many SYNs to one service, few completed by the handshake's ACK</td><td>100 SYNs in 1 s, at most 30% completed</td></tr><tr><td><code>arp_spoof</code></td><td>an IP moving to another MAC, or an ARP sender that is not the Ethernet source</td><td>any change</td></tr><tr><td><code>dns_tunnel</code></td><td>long names, random-looking subdomains, many subdomains of one domain, bursts of NXDOMAIN</td><td>100 / 50 chars, 4.2 bits, 50 subdomains, 20 answers</td></tr></tbody>
       </table></div>
 
-      <p>every detector needs a test in both directions. a harmless capture kept just below every threshold (647 packets) gives no output; the attack capture gives exactly 13 alerts:</p>
+      <p>Every detector needs a test in both directions. A harmless capture kept just below every threshold (647 packets) gives no output; the attack capture gives exactly 13 alerts:</p>
 
       <div class="term"><pre><span class="pr">$ python -m sentinel ids attacks.pcap --format text    # 3 of 13
 </span>2023-11-14T22:13:20.140000Z [medium] port-scan: 10.9.9.1 probed 15 ports on 10.0.0.30 in 0.1s
 2023-11-14T22:13:32.099000Z [high] syn-flood: 100 SYNs to 10.0.0.2:80 in 0.1s from 100 sources, 20 completed
 2023-11-14T22:13:50.000000Z [medium] dns-tunnel: 10.0.5.5 asked for a random-looking name under evil-cdn.test</pre></div>
 
-      <p><strong>a busy server is not a flood.</strong> a SYN rate alone flags any busy server. what differs is what comes next: a real client answers the SYN-ACK with an ACK, a spoofed source never does. the detector matches ACKs to SYNs by 4-tuple. a busy server with 150 SYNs in a second, all completed, stays quiet; a flood of 400 SYNs in 0.4 s with 20 completed alerts at the hundredth SYN.</p>
+      <p><strong>A busy server is not a flood.</strong> A SYN rate alone flags any busy server. What differs is what comes next: a real client answers the SYN-ACK with an ACK, a spoofed source never does. The detector matches ACKs to SYNs by 4-tuple. A busy server with 150 SYNs in a second, all completed, stays quiet; a flood of 400 SYNs in 0.4 s with 20 completed alerts at the hundredth SYN.</p>
 
-      <p><strong>measure before choosing a threshold.</strong> my first entropy threshold was a guess, and wrong. measured on 40-character subdomains: base32 is above 4.2 bits in 290 of 300 samples, base64 in 300 of 300, hex never (it tops out at 4), and readable made-up hostnames reach 4.10. so the default is 4.2, only names of 40+ characters are judged, and entropy is one of four signals. hex tunnels are missed.</p>
+      <p><strong>Measure before choosing a threshold.</strong> My first entropy threshold was a guess, and wrong. Measured on 40-character subdomains: base32 is above 4.2 bits in 290 of 300 samples, base64 in 300 of 300, hex never (it tops out at 4), and readable made-up hostnames reach 4.10. So the default is 4.2, only names of 40+ characters are judged, and entropy is one of four signals. Hex tunnels are missed.</p>
 
-      <p>thresholds come from TOML rule files (standard library). a rule can carry a stage 4 filter, so one rule can watch SSH more closely than the rest. an unknown key is an error, so a typo cannot silently keep a default. exit codes: 0 when the capture was read, alerts or not; 1 for an unreadable capture; 2 for bad rules.</p>
+      <p>Thresholds come from TOML rule files (standard library). A rule can carry a stage 4 filter, so one rule can watch SSH more closely than the rest. An unknown key is an error, so a typo cannot silently keep a default. Exit codes: 0 when the capture was read, alerts or not; 1 for an unreadable capture; 2 for bad rules.</p>
 
-      <h2>stage 6: a real network</h2>
+      <h2>Stage 6: a real network</h2>
 
-      <p><code>live</code> reads Ethernet frames from one Linux interface through an <code>AF_PACKET</code> socket and feeds the same decode, filter, print, detect and write steps. it only listens and does not enable promiscuous mode. I develop on Windows, so the socket layer is as thin as possible and a stand-in socket replays the generated captures. the strongest test: <code>live</code> on the attack capture must print exactly the 13 alerts <code>ids</code> prints, each one as it is raised. output and <code>--write</code> flush after every packet, so a pipe shows lines at once and a killed capture leaves a readable file.</p>
+      <p><code>live</code> reads Ethernet frames from one Linux interface through an <code>AF_PACKET</code> socket and feeds the same decode, filter, print, detect and write steps. It only listens and does not enable promiscuous mode. I develop on Windows, so the socket layer is as thin as possible and a stand-in socket replays the generated captures. The strongest test: <code>live</code> on the attack capture must print exactly the 13 alerts <code>ids</code> prints, each one as it is raised. Output and <code>--write</code> flush after every packet, so a pipe shows lines at once and a killed capture leaves a readable file.</p>
 
-      <p>filters and rules are checked before the interface opens, so a typo never needs root, and interface names are validated so <code>../eth0</code> cannot escape <code>/sys/class/net</code>.</p>
+      <p>Filters and rules are checked before the interface opens, so a typo never needs root, and interface names are validated so <code>../eth0</code> cannot escape <code>/sys/class/net</code>.</p>
 
-      <p>asking what changes when input never ends found a stage 5 bug: detectors never forgot a source, and past 100,000 keys they stopped tracking new ones, so a busy network would go blind within days. tables now drop keys idle longer than the window, whose window is empty anyway. in a replay of 150,000 sources followed by a real scan, the old table missed the scan; the new one stays near 5,000 keys and finds it.</p>
+      <p>Asking what changes when input never ends found a stage 5 bug: detectors never forgot a source, and past 100,000 keys they stopped tracking new ones, so a busy network would go blind within days. Tables now drop keys idle longer than the window, whose window is empty anyway. In a replay of 150,000 sources followed by a real scan, the old table missed the scan; the new one stays near 5,000 keys and finds it.</p>
 
-      <h2>stage 7: measuring it</h2>
+      <h2>Stage 7: measuring it</h2>
 
-      <p><code>python -m tools.bench</code> runs every stage over the same 100,000 generated packets (about 65 bytes each), three times, fastest run kept. on one core (Windows 11, Python 3.13.5): pcap read 1,564,676 packets per second, write 2,567,763, decode 98,710, <code>read</code> 44,135, <code>ids</code> 42,033. a profile of decoding shows no single hot spot: the biggest share is 13%, the rest is spread over parsers, checksums and <code>ipaddress</code> objects. the live loop runs 27,635 to 37,716 packets per second, about 2 MB/s at 65 bytes a packet. a busy network will make the kernel drop packets; the summary line says how many.</p>
+      <p><code>python -m tools.bench</code> runs every stage over the same 100,000 generated packets (about 65 bytes each), three times, fastest run kept. On one core (Windows 11, Python 3.13.5): pcap read 1,564,676 packets per second, write 2,567,763, decode 98,710, <code>read</code> 44,135, <code>ids</code> 42,033. A profile of decoding shows no single hot spot: the biggest share is 13%, the rest is spread over parsers, checksums and <code>ipaddress</code> objects. The live loop runs 27,635 to 37,716 packets per second, about 2 MB/s at 65 bytes a packet. A busy network will make the kernel drop packets; the summary line says how many.</p>
 
-      <p><code>python -m tools.fuzz</code> damages generated packets and small pcap files (bit flips, extreme lengths, cuts, splices) and sends them through the decoder, the summary, eight filters, a flow table and the detectors, all keeping state. a failure is an exception, a non-printable summary line, or an alert that is not one line of JSON. 3,000,000 inputs found nothing. against the 148 deliberate breaks of stages 1 to 6, the fuzzer alone caught 2 and the tests all 148: it finds crashes, not wrong answers that look fine.</p>
+      <p><code>python -m tools.fuzz</code> damages generated packets and small pcap files (bit flips, extreme lengths, cuts, splices) and sends them through the decoder, the summary, eight filters, a flow table and the detectors, all keeping state. A failure is an exception, a non-printable summary line, or an alert that is not one line of JSON. 3,000,000 inputs found nothing. Against the 148 deliberate breaks of stages 1 to 6, the fuzzer alone caught 2 and the tests all 148: it finds crashes, not wrong answers that look fine.</p>
 
-      <p>CI runs ruff, strict mypy, the tests, 200,000 fuzz inputs and a benchmark on Python 3.12 and 3.13, Linux and Windows, plus a root job on Linux that runs the real packet socket on loopback and fails if those tests were skipped. it took four pushes: an unquoted step name with a colon that YAML read as a new key, then a float tolerance that only failed on Python 3.12 on Windows. the fourth run was green, and the real socket captured, decoded and saved a UDP datagram on loopback. the kernel delivers each loopback packet twice; like libpcap, <code>live</code> drops the outgoing copy, and CI confirmed two copies with that filter off and one with it on.</p>
+      <p>CI runs ruff, strict mypy, the tests, 200,000 fuzz inputs and a benchmark on Python 3.12 and 3.13, Linux and Windows, plus a root job on Linux that runs the real packet socket on loopback and fails if those tests were skipped. It took four pushes: an unquoted step name with a colon that YAML read as a new key, then a float tolerance that only failed on Python 3.12 on Windows. The fourth run was green, and the real socket captured, decoded and saved a UDP datagram on loopback. The kernel delivers each loopback packet twice; like libpcap, <code>live</code> drops the outgoing copy, and CI confirmed two copies with that filter off and one with it on.</p>
 
-      <h2>how I checked it's right</h2>
+      <h2>How I checked it's right</h2>
 
-      <p>the generator uses the same checksum function as the parsers, so a bug there would cancel itself out. wherever possible, tests compare against something written separately: a textbook IPv4 header with a known checksum, a hand-built TCP pseudo-header, one hand-written hex packet per protocol, a big-endian pcap built with <code>struct</code>, and 300 random payloads cut into overlapping, shuffled pieces near the 32-bit wrap that must reassemble exactly.</p>
+      <p>The generator uses the same checksum function as the parsers, so a bug there would cancel itself out. Wherever possible, tests compare against something written separately: a textbook IPv4 header with a known checksum, a hand-built TCP pseudo-header, one hand-written hex packet per protocol, a big-endian pcap built with <code>struct</code>, and 300 random payloads cut into overlapping, shuffled pieces near the 32-bit wrap that must reassemble exactly.</p>
 
-      <p>then I broke the code on purpose, one line at a time: 196 breaks across all stages, all caught. 110 of them are caught by a single test, so coverage is not deep.</p>
+      <p>Then I broke the code on purpose, one line at a time: 196 breaks across all stages, all caught. 110 of them are caught by a single test, so coverage is not deep.</p>
 
-      <h2>limits</h2>
+      <h2>Limits</h2>
 
       <ul>
-        <li><strong>protocols:</strong> IPv6 fixed header only (no extension headers, no ICMPv6), no IP fragment reassembly, HTTP/1.x only, TLS ClientHello only.</li>
-        <li><strong>streams:</strong> offline only, first megabyte per stream, first copy wins on overlaps.</li>
-        <li><strong>filters:</strong> no host names, no byte offsets like <code>tcp[13]</code>, no TCP flag words; <code>flows --filter</code> filters packets, not flows.</li>
-        <li><strong>detectors:</strong> tuned on generated traffic only, never on a real network. scans slower than the window or spread over many sources are missed, and hex tunnels pass the entropy test.</li>
-        <li><strong>live:</strong> Linux and root only, and about 35,000 packets per second through the loop. the real socket is tested only on a CI runner's loopback, not a real network card.</li>
+        <li><strong>Protocols:</strong> IPv6 fixed header only (no extension headers, no ICMPv6), no IP fragment reassembly, HTTP/1.x only, TLS ClientHello only.</li>
+        <li><strong>Streams:</strong> offline only, first megabyte per stream, first copy wins on overlaps.</li>
+        <li><strong>Filters:</strong> no host names, no byte offsets like <code>tcp[13]</code>, no TCP flag words; <code>flows --filter</code> filters packets, not flows.</li>
+        <li><strong>Detectors:</strong> tuned on generated traffic only, never on a real network. Scans slower than the window or spread over many sources are missed, and hex tunnels pass the entropy test.</li>
+        <li><strong>Live:</strong> Linux and root only, and about 35,000 packets per second through the loop. The real socket is tested only on a CI runner's loopback, not a real network card.</li>
         </ul>

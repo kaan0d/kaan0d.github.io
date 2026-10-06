@@ -4,12 +4,12 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>sentinel part 2: leaving the lab | Kaan Dinç</title>
-<meta name="description" content="the first post ended with seven finished stages and a &quot;what it still can't do&quot; list: Sentinel had only seen traffic I generated, and could not open the...">
+<meta name="description" content="The first post ended with seven finished stages and a &quot;what it still can't do&quot; list: Sentinel had only seen traffic I generated, and could not open the...">
 <meta name="theme-color" content="#0a0a09">
 <link rel="canonical" href="https://kaandinc.com/posts/sentinel-next-level">
 <meta property="og:type" content="article">
 <meta property="og:title" content="sentinel part 2: leaving the lab | Kaan Dinç">
-<meta property="og:description" content="the first post ended with seven finished stages and a &quot;what it still can't do&quot; list: Sentinel had only seen traffic I generated, and could not open the...">
+<meta property="og:description" content="The first post ended with seven finished stages and a &quot;what it still can't do&quot; list: Sentinel had only seen traffic I generated, and could not open the...">
 <meta property="og:url" content="https://kaandinc.com/posts/sentinel-next-level">
 <meta property="og:site_name" content="Kaan Dinç">
 <meta property="og:image" content="https://kaandinc.com/assets/og.png">
@@ -18,7 +18,7 @@
 <meta property="og:image:alt" content="Kaan Dinç, computer engineer. K logo beside 3D solids in amber on black.">
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:title" content="sentinel part 2: leaving the lab | Kaan Dinç">
-<meta name="twitter:description" content="the first post ended with seven finished stages and a &quot;what it still can't do&quot; list: Sentinel had only seen traffic I generated, and could not open the...">
+<meta name="twitter:description" content="The first post ended with seven finished stages and a &quot;what it still can't do&quot; list: Sentinel had only seen traffic I generated, and could not open the...">
 <meta name="twitter:image" content="https://kaandinc.com/assets/og.png">
 <link rel="icon" href="../assets/favicon.svg" type="image/svg+xml">
 <link rel="preload" href="../assets/fonts/Geist-Variable.woff2" as="font" type="font/woff2" crossorigin>
@@ -65,16 +65,16 @@
   <div class="post-layout has-toc">
     <aside class="toc" aria-label="on this page">
       <ol>
-        <li><a href="#stage-8-the-file-people-actually-have">stage 8: the file people actually have</a></li>
-        <li><a href="#stage-9-comparing-with-tshark">stage 9: comparing with tshark</a></li>
-        <li><a href="#stage-10-two-more-detectors">stage 10: two more detectors</a></li>
-        <li><a href="#stage-11-ja3-fingerprints">stage 11: JA3 fingerprints</a></li>
-        <li><a href="#stage-12-capture-on-windows">stage 12: capture on Windows</a></li>
-        <li><a href="#limits">limits</a></li>
+        <li><a href="#stage-8-the-file-people-actually-have">Stage 8: the file people actually have</a></li>
+        <li><a href="#stage-9-comparing-with-tshark">Stage 9: comparing with tshark</a></li>
+        <li><a href="#stage-10-two-more-detectors">Stage 10: two more detectors</a></li>
+        <li><a href="#stage-11-ja3-fingerprints">Stage 11: JA3 fingerprints</a></li>
+        <li><a href="#stage-12-capture-on-windows">Stage 12: capture on Windows</a></li>
+        <li><a href="#limits">Limits</a></li>
       </ol>
     </aside>
     <div class="post-body">
-<p>the <a href="sentinel-packet-analyzer">first post</a> ended with seven finished stages and a "what it still can't do" list: Sentinel had only seen traffic I generated, and could not open the files people actually have. this post takes five items from that list, most important first: a pcapng reader, a field-by-field comparison with Wireshark's tshark, two new detectors, JA3 TLS fingerprints, and live capture on Windows. same rules as before: one stage at a time, tests, ruff and strict mypy clean, a sabotage run, and a plain note on what I could not check.</p>
+<p>The <a href="sentinel-packet-analyzer">first post</a> ended with seven finished stages and a "what it still can't do" list: Sentinel had only seen traffic I generated, and could not open the files people actually have. This post takes five items from that list, most important first: a pcapng reader, a field-by-field comparison with Wireshark's tshark, two new detectors, JA3 TLS fingerprints, and live capture on Windows. Same rules as before: one stage at a time, tests, ruff and strict mypy clean, a sabotage run, and a plain note on what I could not check.</p>
 
       <div class="stats">
         <div class="stat"><b>6</b><span>detectors, two new (SSH brute force, ICMP tunneling); 2 capture formats read</span></div>
@@ -85,43 +85,43 @@
         <div class="stat"><b>3</b><span>bugs found by other people's captures, and fixed</span></div>
       </div>
 
-      <h2 id="stage-8-the-file-people-actually-have">stage 8: the file people actually have</h2>
+      <h2 id="stage-8-the-file-people-actually-have">Stage 8: the file people actually have</h2>
 
       <p>Wireshark has saved pcapng by default for years, and the stage 1 reader only knew classic pcap:</p>
 
       <div class="term"><pre><span class="pr">$ python -m sentinel read demo.pcapng
 </span>sentinel: demo.pcapng: not a pcap file: bad magic 0a0d0d0a</pre></div>
 
-      <p>true and useless. now the same command prints exactly what it prints for the classic file. the reader is 183 lines in <code>sentinel/pcap/pcapng.py</code>, and <code>open_reader</code> picks the format for <code>read</code>, <code>flows</code> and <code>ids</code>.</p>
+      <p>True and useless. Now the same command prints exactly what it prints for the classic file. The reader is 183 lines in <code>sentinel/pcap/pcapng.py</code>, and <code>open_reader</code> picks the format for <code>read</code>, <code>flows</code> and <code>ids</code>.</p>
 
-      <p>a pcapng file is a list of blocks. each starts with a type and total length, ends with the length again, and is a multiple of four bytes, so a reader can skip any block it does not understand. a section header gives the byte order, an interface description gives the link type and timestamp resolution, and each packet is an enhanced packet block. the same 19 packets are 1,948 bytes as pcap and 2,312 as pcapng.</p>
+      <p>A pcapng file is a list of blocks. Each starts with a type and total length, ends with the length again, and is a multiple of four bytes, so a reader can skip any block it does not understand. A section header gives the byte order, an interface description gives the link type and timestamp resolution, and each packet is an enhanced packet block. The same 19 packets are 1,948 bytes as pcap and 2,312 as pcapng.</p>
 
-      <p>format detection is four bytes. the section header type <code>0a 0d 0d 0a</code> is a palindrome, so it reads the same in either byte order, and it can never be a classic pcap magic:</p>
+      <p>Format detection is four bytes. The section header type <code>0a 0d 0d 0a</code> is a palindrome, so it reads the same in either byte order, and it can never be a classic pcap magic:</p>
 
       <div class="codeblock"><code>magic = fp.read(4)
 fp.seek(-len(magic), io.SEEK_CUR)
 <span class="kw">return</span> PcapngReader(fp) <span class="kw">if</span> magic == SHB_BYTES <span class="kw">else</span> PcapReader(fp)</code></div>
 
-      <p>byte order is kept per section, because two appended captures can differ, and the interface list resets at each section. timestamps are 64-bit counts in units set per interface by <code>if_tsresol</code> (10<sup>-n</sup> or 2<sup>-n</sup> seconds, microseconds if missing), plus an optional <code>if_tsoffset</code>. the reader converts them to integer nanoseconds with integer arithmetic only. a float keeps 53 bits, and a current timestamp in nanoseconds needs 61, so floats would round every packet to 256 ns steps:</p>
+      <p>Byte order is kept per section, because two appended captures can differ, and the interface list resets at each section. Timestamps are 64-bit counts in units set per interface by <code>if_tsresol</code> (10<sup>-n</sup> or 2<sup>-n</sup> seconds, microseconds if missing), plus an optional <code>if_tsoffset</code>. The reader converts them to integer nanoseconds with integer arithmetic only. A float keeps 53 bits, and a current timestamp in nanoseconds needs 61, so floats would round every packet to 256 ns steps:</p>
 
       <div class="codeblock"><code>ts_ns = (high &lt;&lt; 32 | low) * 1_000_000_000 // interface.ticks_per_second
 ts_ns += interface.offset_ns
 <span class="kw">if</span> <span class="kw">not</span> 0 &lt;= ts_ns &lt;= MAX_TS_NS:
     <span class="kw">raise</span> PcapError(f"pcapng timestamp {ts_ns} ns is out of range")</code></div>
 
-      <p>the range check exists because of a mistake I almost made. with whole-second resolution, a 64-bit count reaches 585 billion years, but <code>datetime</code> stops at year 9999, so a hostile timestamp would have made <code>read</code> raise <code>OverflowError</code> while printing. timestamps outside 1970 to 9999 are now refused.</p>
+      <p>The range check exists because of a mistake I almost made. With whole-second resolution, a 64-bit count reaches 585 billion years, but <code>datetime</code> stops at year 9999, so a hostile timestamp would have made <code>read</code> raise <code>OverflowError</code> while printing. Timestamps outside 1970 to 9999 are now refused.</p>
 
-      <p>name resolution, statistics, decryption secrets and custom blocks are skipped by length. the reader refuses, with a <code>PcapError</code> after yielding every good packet: a bad or unrepeated block length, a cut block, a version other than 1, a packet for an undescribed interface, an oversized captured length, a malformed option. a packet on a non-Ethernet interface stops the read with a message instead of being decoded as Ethernet by mistake.</p>
+      <p>Name resolution, statistics, decryption secrets and custom blocks are skipped by length. The reader refuses, with a <code>PcapError</code> after yielding every good packet: a bad or unrepeated block length, a cut block, a version other than 1, a packet for an undescribed interface, an oversized captured length, a malformed option. A packet on a non-Ethernet interface stops the read with a message instead of being decoded as Ethernet by mistake.</p>
 
-      <p>my tests build files by hand from the spec, not with my generator. I also checked against <code>python-pcapng</code>, a package someone else wrote, installed only in a scratch folder: their writer to my reader agreed on 66 packets across both byte orders and six resolutions, my writer to their reader on 2,190. the fuzzer now sends half of its damaged files as pcapng, some spliced with classic headers: 3,000,000 inputs, 0 failures.</p>
+      <p>My tests build files by hand from the spec, not with my generator. I also checked against <code>python-pcapng</code>, a package someone else wrote, installed only in a scratch folder: their writer to my reader agreed on 66 packets across both byte orders and six resolutions, my writer to their reader on 2,190. The fuzzer now sends half of its damaged files as pcapng, some spliced with classic headers: 3,000,000 inputs, 0 failures.</p>
 
-      <p>the sabotage run had 57 new breaks, all caught, but the first run hung on three. they broke timestamps, so a test comparing the 647-line pcap and pcapng outputs failed, and pytest spent minutes building a diff of two long texts. the test now reports the first differing line number instead, and fails in six seconds.</p>
+      <p>The sabotage run had 57 new breaks, all caught, but the first run hung on three. They broke timestamps, so a test comparing the 647-line pcap and pcapng outputs failed, and pytest spent minutes building a diff of two long texts. The test now reports the first differing line number instead, and fails in six seconds.</p>
 
-      <h2 id="stage-9-comparing-with-tshark">stage 9: comparing with tshark</h2>
+      <h2 id="stage-9-comparing-with-tshark">Stage 9: comparing with tshark</h2>
 
-      <p>everything so far was checked against my own reading of the protocols, so a misreading could sit in both code and tests. tshark was written by other people and has read far more traffic. <code>tools/compare_tshark.py</code> (a dev tool, not a dependency) runs tshark with reassembly off and checksums verified, asks for about 75 fields per packet, translates them into Sentinel's form, and compares. most of the work was defining "equal": tshark prints 12-bit TCP flags where Sentinel keeps nine, counts fragment offsets in 8-byte units, and prints scaled windows. each translation has a test. TCP and UDP conversations are compared too.</p>
+      <p>Everything so far was checked against my own reading of the protocols, so a misreading could sit in both code and tests. tshark was written by other people and has read far more traffic. <code>tools/compare_tshark.py</code> (a dev tool, not a dependency) runs tshark with reassembly off and checksums verified, asks for about 75 fields per packet, translates them into Sentinel's form, and compares. Most of the work was defining "equal": tshark prints 12-bit TCP flags where Sentinel keeps nine, counts fragment offsets in 8-byte units, and prints scaled windows. Each translation has a test. TCP and UDP conversations are compared too.</p>
 
-      <p>four captures are generated, six are public Wireshark sample captures (1,245 packets, about 110 KB), downloaded with permission and kept out of the repository. one, <code>win_scale</code>, is a pcapng that Wireshark itself wrote. tshark 4.6.8:</p>
+      <p>Four captures are generated, six are public Wireshark sample captures (1,245 packets, about 110 KB), downloaded with permission and kept out of the repository. One, <code>win_scale</code>, is a pcapng that Wireshark itself wrote. tshark 4.6.8:</p>
 
       <div class="table-wrap"><table class="data">
         <thead><tr><th>capture</th><th class="num">packets</th><th class="num">values compared</th><th class="num">differences</th><th class="num">explained</th></tr></thead>
@@ -139,27 +139,27 @@ ts_ns += interface.offset_ns
         </tbody>
       </table></div>
 
-      <p>zero differences, but only after three real fixes. the first run on the public captures disagreed.</p>
+      <p>Zero differences, but only after three real fixes. The first run on the public captures disagreed.</p>
 
-      <h3>three bugs other people's traffic found</h3>
+      <h3>Three bugs other people's traffic found</h3>
 
-      <p><strong>checksum offload.</strong> <code>win_scale</code> was recorded on the sending machine, where the network card completes the TCP checksum after the capture point. the field holds only the uncomplemented pseudo-header sum. Sentinel flagged 14 of 26 TCP packets as bad; tshark says "matches partial checksum, likely caused by TCP checksum offload". this was the known false positive from part 1. for the first packet, the pseudo-header words fold to <code>0x1215</code>, exactly the field value. a checksum equal to the partial sum is no longer flagged, for TCP and UDP over IPv4 and IPv6. tests check that the partial sum ±1, complemented, or with the top bit flipped are still flagged:</p>
+      <p><strong>Checksum offload.</strong> <code>win_scale</code> was recorded on the sending machine, where the network card completes the TCP checksum after the capture point. The field holds only the uncomplemented pseudo-header sum. Sentinel flagged 14 of 26 TCP packets as bad; tshark says "matches partial checksum, likely caused by TCP checksum offload". This was the known false positive from part 1. For the first packet, the pseudo-header words fold to <code>0x1215</code>, exactly the field value. A checksum equal to the partial sum is no longer flagged, for TCP and UDP over IPv4 and IPv6. Tests check that the partial sum ±1, complemented, or with the top bit flipped are still flagged:</p>
 
       <div class="term"><pre><span class="pr">$ python -m sentinel read win_scale.pcapng
 </span><span class="dim">before:</span> <span class="ts">20:22:25.360596 IP</span> 192.168.200.135.6711 &gt; 192.168.200.21.2000: <span class="fl">Flags [S]</span> [bad tcp checksum]
 <span class="dim">after: </span> <span class="ts">20:22:25.360596 IP</span> 192.168.200.135.6711 &gt; 192.168.200.21.2000: <span class="fl">Flags [S]</span></pre></div>
 
-      <p><strong>the first fragment.</strong> <code>decode</code> stopped at the IP header of every fragment, but the first fragment carries the transport header. in <code>ipv4frags.pcap</code> the echo request printed as <code>ip-proto-1</code>. the first fragment is now decoded (checksum not verified, since the message is incomplete), and filters and flows follow.</p>
+      <p><strong>The first fragment.</strong> <code>decode</code> stopped at the IP header of every fragment, but the first fragment carries the transport header. In <code>ipv4frags.pcap</code> the echo request printed as <code>ip-proto-1</code>. The first fragment is now decoded (checksum not verified, since the message is incomplete), and filters and flows follow.</p>
 
-      <p><strong>a length that looked like an ethertype.</strong> a type field below 0x0600 is an 802.3 length with LLC behind it. <code>vlan.cap</code> has many, and <code>read</code> printed <code>ethertype 0x00a6</code>. that was a wrong statement, not a missing feature, so it now prints <code>802.3</code>.</p>
+      <p><strong>A length that looked like an ethertype.</strong> A type field below 0x0600 is an 802.3 length with LLC behind it. <code>vlan.cap</code> has many, and <code>read</code> printed <code>ethertype 0x00a6</code>. That was a wrong statement, not a missing feature, so it now prints <code>802.3</code>.</p>
 
-      <h3>differences that are not disagreements</h3>
+      <h3>Differences that are not disagreements</h3>
 
-      <p>744 field differences remain, and each has a rule with a reason. the report counts them by reason instead of hiding them, and tests check that a rule cannot explain a different kind of difference. 618 are DNS flags that tshark omits from queries. 76 are headers quoted inside ICMP errors, which tshark decodes and Sentinel does not. 25 are LLC frames. 21 are DNS-over-TCP messages split across segments. to prove the tool can notice anything, a test runs real tshark with every Sentinel TCP window changed to 1, and the tool must report exactly that field on exactly the nine TCP segments.</p>
+      <p>744 field differences remain, and each has a rule with a reason. The report counts them by reason instead of hiding them, and tests check that a rule cannot explain a different kind of difference. 618 are DNS flags that tshark omits from queries. 76 are headers quoted inside ICMP errors, which tshark decodes and Sentinel does not. 25 are LLC frames. 21 are DNS-over-TCP messages split across segments. To prove the tool can notice anything, a test runs real tshark with every Sentinel TCP window changed to 1, and the tool must report exactly that field on exactly the nine TCP segments.</p>
 
-      <p>seven of the 46 sabotage breaks for this stage survived the first run, all in the tool's own tests (a rule that explained too much, a packet count checked in only one direction). I tightened them. Wireshark's <code>editcap</code> also converted 9 captures to pcapng, and the reader returned the same 2,961 packets, timestamps included.</p>
+      <p>Seven of the 46 sabotage breaks for this stage survived the first run, all in the tool's own tests (a rule that explained too much, a packet count checked in only one direction). I tightened them. Wireshark's <code>editcap</code> also converted 9 captures to pcapng, and the reader returned the same 2,961 packets, timestamps included.</p>
 
-      <h2 id="stage-10-two-more-detectors">stage 10: two more detectors</h2>
+      <h2 id="stage-10-two-more-detectors">Stage 10: two more detectors</h2>
 
       <div class="table-wrap"><table class="data">
         <thead><tr><th>detector</th><th>looks for</th><th>default</th></tr></thead>
@@ -169,55 +169,55 @@ ts_ns += interface.offset_ns
         </tbody>
       </table></div>
 
-      <p><strong>SSH</strong> is encrypted, so failed logins are invisible; connection rate is not. only completed handshakes count, because SYNs without answers are scans, and those already have a detector. a retransmitted SYN is still one connection, and later ACKs on the same connection do not count again.</p>
+      <p><strong>SSH</strong> is encrypted, so failed logins are invisible; connection rate is not. Only completed handshakes count, because SYNs without answers are scans, and those already have a detector. A retransmitted SYN is still one connection, and later ACKs on the same connection do not count again.</p>
 
-      <p><strong>ICMP.</strong> a real ping sends 56 bytes (Linux) or 32 (Windows) and gets them back unchanged. a tunnel sends more and gets different data back. to compare a reply with its request, the detector keeps an 8-byte digest of the request data, not the data. a hundred thousand 64 KB requests would otherwise be six gigabytes. messages cut by the snap length are ignored, since a cut request looks small and a cut reply looks changed.</p>
+      <p><strong>ICMP.</strong> A real ping sends 56 bytes (Linux) or 32 (Windows) and gets them back unchanged. A tunnel sends more and gets different data back. To compare a reply with its request, the detector keeps an 8-byte digest of the request data, not the data. A hundred thousand 64 KB requests would otherwise be six gigabytes. Messages cut by the snap length are ignored, since a cut request looks small and a cut reply looks changed.</p>
 
-      <p>the thresholds are guesses: I had no capture of real SSH guessing or a real tunnel. the harmless capture sits exactly one below each threshold (9 SSH connections, 9 large pings answered correctly, 4 rewritten replies), and tests lower each threshold by one to prove it is at the edge. on the six public captures neither new detector fired, but an old one did: <code>dns.cap</code> raised a <code>dns-tunnel</code> alert for an Active Directory lookup with a GUID label (<code>_ldap._tcp.05b5292b-…._msdcs.utelsystems.local</code>). the entropy test reads a GUID as random, which it is. the fix is recognizing the GUID shape, not moving the threshold; it is in the README limits.</p>
+      <p>The thresholds are guesses: I had no capture of real SSH guessing or a real tunnel. The harmless capture sits exactly one below each threshold (9 SSH connections, 9 large pings answered correctly, 4 rewritten replies), and tests lower each threshold by one to prove it is at the edge. On the six public captures neither new detector fired, but an old one did: <code>dns.cap</code> raised a <code>dns-tunnel</code> alert for an Active Directory lookup with a GUID label (<code>_ldap._tcp.05b5292b-…._msdcs.utelsystems.local</code>). The entropy test reads a GUID as random, which it is. The fix is recognizing the GUID shape, not moving the threshold; it is in the README limits.</p>
 
-      <p>one sabotage break survived: a message that printed the threshold instead of the count. the first alert of a burst always has exactly threshold connections, so the text looked the same. the test for a later alert now checks the count in the message.</p>
+      <p>One sabotage break survived: a message that printed the threshold instead of the count. The first alert of a burst always has exactly threshold connections, so the text looked the same. The test for a later alert now checks the count in the message.</p>
 
-      <h2 id="stage-11-ja3-fingerprints">stage 11: JA3 fingerprints</h2>
+      <h2 id="stage-11-ja3-fingerprints">Stage 11: JA3 fingerprints</h2>
 
-      <p>the server name says who a client talks to. the TLS library decides which ciphers and extensions it offers and in what order, so the ClientHello also says what is talking. JA3 is an MD5 of five fields in decimal, lists joined with dashes and fields with commas: version, ciphers, extension types, curves, point formats. <code>read</code> and <code>flows</code> print it, and the filter language gained <code>ja3 HASH</code>:</p>
+      <p>The server name says who a client talks to. The TLS library decides which ciphers and extensions it offers and in what order, so the ClientHello also says what is talking. JA3 is an MD5 of five fields in decimal, lists joined with dashes and fields with commas: version, ciphers, extension types, curves, point formats. <code>read</code> and <code>flows</code> print it, and the filter language gained <code>ja3 HASH</code>:</p>
 
       <div class="term"><pre><span class="pr">$ python -m sentinel read sample.pcap --filter "ja3 61279becc80ab0e3aca57f5913c3e1a0"
 </span><span class="ts">2023-11-14 22:13:20.018000</span> IP 10.0.0.1.43000 &gt; 10.0.0.2.443: <span class="fl">Flags [P.]</span>, seq 1, ack 1, win 64240, <span class="dim">length 161</span><span class="fl">: TLS ClientHello, sni example.com, versions [TLS 1.3, TLS 1.2], ciphers (15) [TLS_AES_128_GCM_SHA256, TLS_AES_256_GCM_SHA384, TLS_CHACHA20_POLY1305_SHA256, +12 more], ja3 61279becc80ab0e3aca57f5913c3e1a0</span></pre></div>
 
-      <p>GREASE values (<code>0x0a0a</code> to <code>0xfafa</code>) change on every connection, so JA3 drops them from every list. a test draws GREASE twice and gets the same hash, while look-alikes such as <code>0x0a1a</code> are real values and stay.</p>
+      <p>GREASE values (<code>0x0a0a</code> to <code>0xfafa</code>) change on every connection, so JA3 drops them from every list. A test draws GREASE twice and gets the same hash, while look-alikes such as <code>0x0a1a</code> are real values and stay.</p>
 
-      <p>a fingerprint of half a hello is worse than none, because it is a valid-looking hash that belongs to no client. the stage 2 parser keeps whatever it can read from a damaged hello, which is right for a summary line. so <code>TlsClientHello</code> now has a <code>complete</code> flag, and <code>ja3</code> is empty unless every length checks out. a test cuts a good hello at every position and checks that no prefix gets a fingerprint. in the demo capture, <code>read</code> sees a split hello in two pieces and prints no JA3; <code>flows</code> reassembles it and does.</p>
+      <p>A fingerprint of half a hello is worse than none, because it is a valid-looking hash that belongs to no client. The stage 2 parser keeps whatever it can read from a damaged hello, which is right for a summary line. So <code>TlsClientHello</code> now has a <code>complete</code> flag, and <code>ja3</code> is empty unless every length checks out. A test cuts a good hello at every position and checks that no prefix gets a fingerprint. In the demo capture, <code>read</code> sees a split hello in two pieces and prints no JA3; <code>flows</code> reassembles it and does.</p>
 
-      <p>the spec's own example (<code>769,47-53-5-10-…,0-10-11,23-24-25,0</code>) gives <code>ada70206e40642a3e4461f35503241d5</code> as required, and tshark's JA3 agrees on 203 field values. two sabotage survivors turned out to be a dead branch, which I deleted, and two were real: an extensions block whose inner lengths lie was taken as complete. cutting a hello cannot produce those cases, so they got their own tests. computing JA3 costs 4.56 µs and only runs when asked.</p>
+      <p>The spec's own example (<code>769,47-53-5-10-…,0-10-11,23-24-25,0</code>) gives <code>ada70206e40642a3e4461f35503241d5</code> as required, and tshark's JA3 agrees on 203 field values. Two sabotage survivors turned out to be a dead branch, which I deleted, and two were real: an extensions block whose inner lengths lie was taken as complete. Cutting a hello cannot produce those cases, so they got their own tests. Computing JA3 costs 4.56 µs and only runs when asked.</p>
 
-      <h2 id="stage-12-capture-on-windows">stage 12: capture on Windows</h2>
+      <h2 id="stage-12-capture-on-windows">Stage 12: capture on Windows</h2>
 
-      <p>Windows has no <code>AF_PACKET</code>. the options are Npcap, which would be a dependency in a project with none, or a raw socket with <code>SIO_RCVALL</code>, which needs Administrator and sees less. before writing code, I opened one and probed it. whole IP packets arrive with no Ethernet header, each once, including loopback (Linux gives two). outgoing TCP checksums are offload partial sums, which stage 9 already handles. IPv6 gave nothing, and Windows reports no drop count.</p>
+      <p>Windows has no <code>AF_PACKET</code>. The options are Npcap, which would be a dependency in a project with none, or a raw socket with <code>SIO_RCVALL</code>, which needs Administrator and sees less. Before writing code, I opened one and probed it. Whole IP packets arrive with no Ethernet header, each once, including loopback (Linux gives two). Outgoing TCP checksums are offload partial sums, which stage 9 already handles. IPv6 gave nothing, and Windows reports no drop count.</p>
 
-      <p>one thing is wrong: in all seven TCP connections I recorded, the handshake's ACK arrives before the SYN-ACK it answers:</p>
+      <p>One thing is wrong: in all seven TCP connections I recorded, the handshake's ACK arrives before the SYN-ACK it answers:</p>
 
       <div class="term"><pre><span class="pr">$ python -m sentinel live 192.168.1.136 --write out.pcap --duration 5
 </span><span class="ts">2026-09-20 02:55:55.363998</span> IP 192.168.1.136.51293 &gt; 192.168.1.1.80: <span class="fl">Flags [S]</span>, seq 944683354, win 65535, <span class="dim">length 0</span>
 <span class="ts">2026-09-20 02:55:55.364504</span> IP 192.168.1.136.51293 &gt; 192.168.1.1.80: <span class="fl">Flags [.]</span>, seq 944683355, ack 2354516038, win 255, <span class="dim">length 0</span>
 <span class="ts">2026-09-20 02:55:55.364588</span> IP 192.168.1.1.80 &gt; 192.168.1.136.51293: <span class="fl">Flags [S.]</span>, seq 2354516037, ack 944683355, win 42340, <span class="dim">length 0</span></pre></div>
 
-      <p>timestamps are read times, so they cannot fix the order, and there is nothing honest to repair it with. it is documented. the detectors are unaffected: 150 handshakes in this order raise no SYN-flood alert, and the same SYNs without ACKs do.</p>
+      <p>Timestamps are read times, so they cannot fix the order, and there is nothing honest to repair it with. It is documented. The detectors are unaffected: 150 handshakes in this order raise no SYN-flood alert, and the same SYNs without ACKs do.</p>
 
-      <p><code>Capture</code> only ever needed <code>recvfrom</code>, <code>settimeout</code>, <code>getsockopt</code> and <code>close</code>, so Windows is one more socket. <code>IpSocket</code> prepends a 14-byte Ethernet header with zero addresses (an invented MAC would look like data) and the ethertype from the version nibble, for 0.274 µs a packet. interfaces are named by IPv4 address. a real 5-second run captured 87 packets; <code>read</code> printed the same 87 lines, <code>flows</code> saw two closed connections, and <code>ids</code> was silent.</p>
+      <p><code>Capture</code> only ever needed <code>recvfrom</code>, <code>settimeout</code>, <code>getsockopt</code> and <code>close</code>, so Windows is one more socket. <code>IpSocket</code> prepends a 14-byte Ethernet header with zero addresses (an invented MAC would look like data) and the ethertype from the version nibble, for 0.274 µs a packet. Interfaces are named by IPv4 address. A real 5-second run captured 87 packets; <code>read</code> printed the same 87 lines, <code>flows</code> saw two closed connections, and <code>ids</code> was silent.</p>
 
-      <p>45 tests use a stand-in socket; 5 run only as Administrator on the real one. a new CI job runs those as Administrator and fails if they were skipped. on the first run one failed: the runner leaves the loopback IPv4 header checksum at 0 for the card to fill in, which my machine never did. the test now accepts exactly that anomaly, and all six jobs pass. one machine had told me everything was fine; that is what the job is for. the sabotage run also exposed an old gap: a stage 7 break removing Windows from the CI matrix survived, because its test only searched for <code>windows-latest</code>, which the new job also contains. it now checks the matrix line itself.</p>
+      <p>45 tests use a stand-in socket; 5 run only as Administrator on the real one. A new CI job runs those as Administrator and fails if they were skipped. On the first run one failed: the runner leaves the loopback IPv4 header checksum at 0 for the card to fill in, which my machine never did. The test now accepts exactly that anomaly, and all six jobs pass. One machine had told me everything was fine; that is what the job is for. The sabotage run also exposed an old gap: a stage 7 break removing Windows from the CI matrix survived, because its test only searched for <code>windows-latest</code>, which the new job also contains. It now checks the matrix line itself.</p>
 
-      <h2 id="limits">limits</h2>
+      <h2 id="limits">Limits</h2>
 
       <ul>
         <li><strong>pcapng:</strong> name resolution, statistics, comments and packet flags are skipped; <code>.pcapng.gz</code> is not opened; there is no pcapng writer, and <code>live --write</code> saves classic pcap.</li>
-        <li><strong>tshark comparison:</strong> header fields and packet counts only, not reassembled bytes. one tshark version, six small public captures (two from 1999). not run in CI.</li>
-        <li><strong>detectors:</strong> SSH and ICMP thresholds are untested on real attacks; backups and MTU tests will trigger them. the DNS entropy test flags GUIDs.</li>
-        <li><strong>JA3:</strong> client side only, no JA3S or JA4. clients that shuffle extensions get a new JA3 per connection.</li>
-        <li><strong>Windows capture:</strong> IPv4 only, no MAC addresses, no drop count, handshake ACKs reordered. tested on one machine, for five seconds.</li>
+        <li><strong>tshark comparison:</strong> header fields and packet counts only, not reassembled bytes. One tshark version, six small public captures (two from 1999). Not run in CI.</li>
+        <li><strong>Detectors:</strong> SSH and ICMP thresholds are untested on real attacks; backups and MTU tests will trigger them. The DNS entropy test flags GUIDs.</li>
+        <li><strong>JA3:</strong> client side only, no JA3S or JA4. Clients that shuffle extensions get a new JA3 per connection.</li>
+        <li><strong>Windows capture:</strong> IPv4 only, no MAC addresses, no drop count, handshake ACKs reordered. Tested on one machine, for five seconds.</li>
       </ul>
 
-      <p>the top of the remaining list was that almost everything here ran on traffic I made or a handful of public files. that became <a href="sentinel-real-world">part 3</a>.</p>
+      <p>The top of the remaining list was that almost everything here ran on traffic I made or a handful of public files. That became <a href="sentinel-real-world">part 3</a>.</p>
 
     </div>
   </div>

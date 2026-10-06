@@ -4,12 +4,12 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>tls-peek: reading what one Windows program says over HTTPS | Kaan Dinç</title>
-<meta name="description" content="tls-peek shows the HTTPS requests one Windows desktop program sends: URLs, headers, tokens and bodies, in a local web UI. you pick the program from a...">
+<meta name="description" content="tls-peek shows the HTTPS requests one Windows desktop program sends: URLs, headers, tokens and bodies, in a local web UI. You pick the program from a...">
 <meta name="theme-color" content="#0a0a09">
 <link rel="canonical" href="https://kaandinc.com/posts/tls-peek">
 <meta property="og:type" content="article">
 <meta property="og:title" content="tls-peek: reading what one Windows program says over HTTPS | Kaan Dinç">
-<meta property="og:description" content="tls-peek shows the HTTPS requests one Windows desktop program sends: URLs, headers, tokens and bodies, in a local web UI. you pick the program from a...">
+<meta property="og:description" content="tls-peek shows the HTTPS requests one Windows desktop program sends: URLs, headers, tokens and bodies, in a local web UI. You pick the program from a...">
 <meta property="og:url" content="https://kaandinc.com/posts/tls-peek">
 <meta property="og:site_name" content="Kaan Dinç">
 <meta property="og:image" content="https://kaandinc.com/assets/og.png">
@@ -18,7 +18,7 @@
 <meta property="og:image:alt" content="Kaan Dinç, computer engineer. K logo beside 3D solids in amber on black.">
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:title" content="tls-peek: reading what one Windows program says over HTTPS | Kaan Dinç">
-<meta name="twitter:description" content="tls-peek shows the HTTPS requests one Windows desktop program sends: URLs, headers, tokens and bodies, in a local web UI. you pick the program from a...">
+<meta name="twitter:description" content="tls-peek shows the HTTPS requests one Windows desktop program sends: URLs, headers, tokens and bodies, in a local web UI. You pick the program from a...">
 <meta name="twitter:image" content="https://kaandinc.com/assets/og.png">
 <link rel="icon" href="../assets/favicon.svg" type="image/svg+xml">
 <link rel="preload" href="../assets/fonts/Geist-Variable.woff2" as="font" type="font/woff2" crossorigin>
@@ -65,20 +65,20 @@
   <div class="post-layout has-toc">
     <aside class="toc" aria-label="on this page">
       <ol>
-        <li><a href="#one-program-not-the-whole-machine">one program, not the whole machine</a></li>
-        <li><a href="#a-certificate-that-doesn-t-outlive-the-capture">a certificate that doesn't outlive the capture</a></li>
-        <li><a href="#a-ui-on-the-standard-library">a UI on the standard library</a></li>
-        <li><a href="#changing-traffic-on-purpose">changing traffic on purpose</a></li>
-        <li><a href="#more-than-headers">more than headers</a></li>
-        <li><a href="#sharing-without-leaking">sharing without leaking</a></li>
-        <li><a href="#testing-a-tool-that-needs-admin">testing a tool that needs admin</a></li>
-        <li><a href="#what-it-can-t-do">what it can't do</a></li>
+        <li><a href="#one-program-not-the-whole-machine">One program, not the whole machine</a></li>
+        <li><a href="#a-certificate-that-doesn-t-outlive-the-capture">A certificate that doesn't outlive the capture</a></li>
+        <li><a href="#a-ui-on-the-standard-library">A UI on the standard library</a></li>
+        <li><a href="#changing-traffic-on-purpose">Changing traffic on purpose</a></li>
+        <li><a href="#more-than-headers">More than headers</a></li>
+        <li><a href="#sharing-without-leaking">Sharing without leaking</a></li>
+        <li><a href="#testing-a-tool-that-needs-admin">Testing a tool that needs admin</a></li>
+        <li><a href="#what-it-can-t-do">What it can't do</a></li>
       </ol>
     </aside>
     <div class="post-body">
-<p>tls-peek shows the HTTPS requests one Windows desktop program sends: URLs, headers, tokens and bodies, in a local web UI. you pick the program from a list, use it as usual, and its traffic shows up live. it's built on mitmproxy's <code>local</code> mode, which captures traffic through the WinDivert driver instead of a proxy setting, so it also works on programs that ignore the system proxy. that covers a lot of desktop software: Electron apps, game launchers and anything with its own HTTP stack.</p>
+<p>tls-peek shows the HTTPS requests one Windows desktop program sends: URLs, headers, tokens and bodies, in a local web UI. You pick the program from a list, use it as usual, and its traffic shows up live. It's built on mitmproxy's <code>local</code> mode, which captures traffic through the WinDivert driver instead of a proxy setting, so it also works on programs that ignore the system proxy. That covers a lot of desktop software: Electron apps, game launchers and anything with its own HTTP stack.</p>
 
-      <p>it started as a small mitmproxy addon and a batch file. five days later it's a Python app with its own UI, a tray icon, intercept, rewrite rules, TLS and timing details, passive security checks, an API map with OpenAPI export, and raw TCP, UDP and DNS views. the source is on <a href="https://github.com/kaan0d/tls-peek" target="_blank" rel="noopener">GitHub</a>, and every release has a single <code>tlspeek.exe</code> that needs no Python.</p>
+      <p>It started as a small mitmproxy addon and a batch file. Five days later it's a Python app with its own UI, a tray icon, intercept, rewrite rules, TLS and timing details, passive security checks, an API map with OpenAPI export, and raw TCP, UDP and DNS views. The source is on <a href="https://github.com/kaan0d/tls-peek" target="_blank" rel="noopener">GitHub</a>, and every release has a single <code>tlspeek.exe</code> that needs no Python.</p>
 
       <div class="stats">
         <div class="stat"><b>4.3K</b><span>lines of Python, JS, HTML and CSS</span></div>
@@ -91,73 +91,73 @@
 
       <figure>
         <img src="img/tls-peek-connection.webp" width="1400" height="800" alt="The tls-peek capture UI: a list of requests to api.github.com, jsonplaceholder, google.com, httpbin and example.com on the left; on the right the Connection tab of the google.com request with a timing bar split into TCP connect 41 ms, TLS handshake 62.4 ms, waiting 412.1 ms and download 43.2 ms, the TLS 1.3 cipher and ALPN, and the server certificate issued by Google Trust Services." loading="lazy">
-        <figcaption>the request list and the Connection tab: timing by phase, both TLS sides and the server's certificate chain.</figcaption>
+        <figcaption>The request list and the Connection tab: timing by phase, both TLS sides and the server's certificate chain.</figcaption>
       </figure>
 
-      <h2 id="one-program-not-the-whole-machine">one program, not the whole machine</h2>
+      <h2 id="one-program-not-the-whole-machine">One program, not the whole machine</h2>
 
-      <p>a normal intercepting proxy sees whatever is configured to use it. that's the wrong shape for this job: half the programs I wanted to look at never read the proxy setting, and the ones that do drown in browser noise. local mode solves both. it redirects only the connections of processes you name, at the driver level, and the program doesn't know.</p>
+      <p>A normal intercepting proxy sees whatever is configured to use it. That's the wrong shape for this job: half the programs I wanted to look at never read the proxy setting, and the ones that do drown in browser noise. Local mode solves both. It redirects only the connections of processes you name, at the driver level, and the program doesn't know.</p>
 
-      <p>the program picker lists running apps with their icons, so you choose by name instead of typing <code>.exe</code> names. switching is live: the addon just updates mitmproxy's options, and the next connection goes to the new target. pause works the same way, by pointing local mode at a program name that can't exist.</p>
+      <p>The program picker lists running apps with their icons, so you choose by name instead of typing <code>.exe</code> names. Switching is live: the addon just updates mitmproxy's options, and the next connection goes to the new target. Pause works the same way, by pointing local mode at a program name that can't exist.</p>
 
       <div class="codeblock"><code>ctx.options.update(
     mode=[f"local:{NO_PROGRAM <span class="kw">if</span> self.paused <span class="kw">or not</span> program <span class="kw">else</span> program}"],
     allow_hosts=[host_regex(host_filter)] <span class="kw">if</span> host_filter <span class="kw">else</span> [],
 )</code></div>
 
-      <p>one catch shaped the whole first-run experience: WinDivert only sees new connections, so the program has to be restarted after the capture starts. the UI says so in the empty state, and it asks which program to capture as soon as a capture begins, with the last one offered first.</p>
+      <p>One catch shaped the whole first-run experience: WinDivert only sees new connections, so the program has to be restarted after the capture starts. The UI says so in the empty state, and it asks which program to capture as soon as a capture begins, with the last one offered first.</p>
 
-      <h2 id="a-certificate-that-doesn-t-outlive-the-capture">a certificate that doesn't outlive the capture</h2>
+      <h2 id="a-certificate-that-doesn-t-outlive-the-capture">A certificate that doesn't outlive the capture</h2>
 
-      <p>decrypting HTTPS means the program has to trust a certificate authority I control, and a trusted root CA left behind on a machine is a real risk. so every capture makes a fresh CA, trusts it for that session only, and removes it again: when you press stop, when the window is closed, and at the next start in case the last one crashed. the start page shows whether a capture certificate is still trusted and has a button to remove it.</p>
+      <p>Decrypting HTTPS means the program has to trust a certificate authority I control, and a trusted root CA left behind on a machine is a real risk. So every capture makes a fresh CA, trusts it for that session only, and removes it again: when you press stop, when the window is closed, and at the next start in case the last one crashed. The start page shows whether a capture certificate is still trusted and has a button to remove it.</p>
 
-      <p>some programs pin their certificates and refuse the CA anyway. mitmproxy reports those failed handshakes, and tls-peek groups them by host in one bar, as "certificate rejected" or "closed during handshake", so a quiet list has an explanation instead of looking broken.</p>
+      <p>Some programs pin their certificates and refuse the CA anyway. mitmproxy reports those failed handshakes, and tls-peek groups them by host in one bar, as "certificate rejected" or "closed during handshake", so a quiet list has an explanation instead of looking broken.</p>
 
-      <h2 id="a-ui-on-the-standard-library">a UI on the standard library</h2>
+      <h2 id="a-ui-on-the-standard-library">A UI on the standard library</h2>
 
-      <p>the UI is plain ES modules served by Python's <code>http.server</code>, running in a thread next to mitmproxy's event loop. every change to a flow bumps a counter, and the page asks for changes since the last counter it saw once a second, so a busy capture sends only the rows that changed. anything that touches flows from the UI thread is handed to the event loop and waited on, which keeps mitmproxy's state single-threaded.</p>
+      <p>The UI is plain ES modules served by Python's <code>http.server</code>, running in a thread next to mitmproxy's event loop. Every change to a flow bumps a counter, and the page asks for changes since the last counter it saw once a second, so a busy capture sends only the rows that changed. Anything that touches flows from the UI thread is handed to the event loop and waited on, which keeps mitmproxy's state single-threaded.</p>
 
-      <p>it only listens on 127.0.0.1, but a local server still needs two guards. requests must be addressed to its own host and port, which blocks DNS rebinding, and every POST must send <code>application/json</code>, which forces a CORS preflight, so other sites can't post to it. HTML previews of response bodies run in a sandboxed frame with a CSP that blocks every external load.</p>
+      <p>It only listens on 127.0.0.1, but a local server still needs two guards. Requests must be addressed to its own host and port, which blocks DNS rebinding, and every POST must send <code>application/json</code>, which forces a CORS preflight, so other sites can't post to it. HTML previews of response bodies run in a sandboxed frame with a CSP that blocks every external load.</p>
 
-      <p>closing the last tab stops the capture after 10 seconds, so nothing keeps decrypting in the background after you've left. a tab that's merely asleep gets a longer grace period. the same rule ends the start page when nothing is running.</p>
+      <p>Closing the last tab stops the capture after 10 seconds, so nothing keeps decrypting in the background after you've left. A tab that's merely asleep gets a longer grace period. The same rule ends the start page when nothing is running.</p>
 
-      <h2 id="changing-traffic-on-purpose">changing traffic on purpose</h2>
+      <h2 id="changing-traffic-on-purpose">Changing traffic on purpose</h2>
 
-      <p>intercept holds requests or responses that match a URL and method, so you can edit them before the program or the server sees them. it's the most direct tool and also the most disruptive one: the program waits while something is held, and some give up after a timeout. for repeatable changes there are rewrite rules: set or remove a header, find and replace in the URL or body, or answer with a fixed response without contacting the server. "new rule" on any request starts one from its host, path and method, with the captured response already filled in, so mocking a call is one edit.</p>
+      <p>Intercept holds requests or responses that match a URL and method, so you can edit them before the program or the server sees them. It's the most direct tool and also the most disruptive one: the program waits while something is held, and some give up after a timeout. For repeatable changes there are rewrite rules: set or remove a header, find and replace in the URL or body, or answer with a fixed response without contacting the server. "New rule" on any request starts one from its host, path and method, with the captured response already filled in, so mocking a call is one edit.</p>
 
-      <h2 id="more-than-headers">more than headers</h2>
+      <h2 id="more-than-headers">More than headers</h2>
 
-      <p>once requests were visible, the interesting questions were about everything around them. the Connection tab shows both TLS sides (program to tls-peek, tls-peek to the server) with version, cipher, ALPN and SNI, the server's real certificate chain, and the request's time split into connect, TLS, send, waiting and download. the waterfall draws the same phases, and a reused connection shows no connect or TLS time, which makes connection pooling easy to spot.</p>
+      <p>Once requests were visible, the interesting questions were about everything around them. The Connection tab shows both TLS sides (program to tls-peek, tls-peek to the server) with version, cipher, ALPN and SNI, the server's real certificate chain, and the request's time split into connect, TLS, send, waiting and download. The waterfall draws the same phases, and a reused connection shows no connect or TLS time, which makes connection pooling easy to spot.</p>
 
       <figure>
         <img src="img/tls-peek-findings.webp" width="1400" height="800" alt="The Findings panel: counts of 1 high, 1 medium, 5 low and 5 info, then cards for a credential named session in a neverssl.com URL, unencrypted HTTP, cookies without Secure, HttpOnly or SameSite on httpbin.org and google.com, and CORS open to every origin on api.github.com, each linking to its requests." loading="lazy">
-        <figcaption>findings from a short test capture, each linked to the requests it was seen in.</figcaption>
+        <figcaption>Findings from a short test capture, each linked to the requests it was seen in.</figcaption>
       </figure>
 
-      <p>the findings panel runs 13 checks over the captured traffic without sending anything: credentials in URLs, plain HTTP, Basic auth, JWTs with <code>alg: none</code>, no expiry or still accepted after expiring, CORS that allows credentials from any origin, missing cookie flags, old TLS versions, expired certificates, missing HSTS and version numbers in server headers. an early version of the cookie check searched the raw header text for "secure", so a cookie named <code>__Secure-id</code> counted as having the flag. it now parses the attributes, and a test covers that case.</p>
+      <p>The findings panel runs 13 checks over the captured traffic without sending anything: credentials in URLs, plain HTTP, Basic auth, JWTs with <code>alg: none</code>, no expiry or still accepted after expiring, CORS that allows credentials from any origin, missing cookie flags, old TLS versions, expired certificates, missing HSTS and version numbers in server headers. An early version of the cookie check searched the raw header text for "secure", so a cookie named <code>__Secure-id</code> counted as having the flag. It now parses the attributes, and a test covers that case.</p>
 
-      <p>the API map groups requests into endpoints. numbers, UUIDs, hashes and long tokens in a path become parameters, so <code>/posts/1</code> and <code>/posts/2</code> are one endpoint. names are harder: <code>/users/octocat</code> looks like any other path segment. the trick is to compare the answers. paths with the same shape whose JSON responses have the same keys merge into <code>/users/{name}</code>, and <code>/users/settings</code>, which answers differently, stays separate. each endpoint shows its calls, statuses, median time and a type sketch of its request and response bodies, and a host's endpoints download as an OpenAPI 3 skeleton.</p>
+      <p>The API map groups requests into endpoints. Numbers, UUIDs, hashes and long tokens in a path become parameters, so <code>/posts/1</code> and <code>/posts/2</code> are one endpoint. Names are harder: <code>/users/octocat</code> looks like any other path segment. The trick is to compare the answers. Paths with the same shape whose JSON responses have the same keys merge into <code>/users/{name}</code>, and <code>/users/settings</code>, which answers differently, stays separate. Each endpoint shows its calls, statuses, median time and a type sketch of its request and response bodies, and a host's endpoints download as an OpenAPI 3 skeleton.</p>
 
       <figure>
         <img src="img/tls-peek-api-map.webp" width="1400" height="800" alt="The API map for jsonplaceholder.typicode.com: POST /posts, GET /posts/{id} with 2 calls, GET /posts/{id}/comments and GET /users/{id}, with the /posts/{id} row expanded to show the id path parameter and the response shape userId integer, id integer, title string, body string." loading="lazy">
-        <figcaption>two calls to /posts/1 and /posts/2 become one endpoint with a typed response shape.</figcaption>
+        <figcaption>Two calls to /posts/1 and /posts/2 become one endpoint with a typed response shape.</figcaption>
       </figure>
 
-      <p>local mode also captures traffic that isn't HTTP, which the first versions dropped. TCP and UDP streams now show each message as text and hex, DNS lookups show their question, answers and flags, and every HTTP request has a Raw tab with the message as it looks on the wire and its header and body byte counts.</p>
+      <p>Local mode also captures traffic that isn't HTTP, which the first versions dropped. TCP and UDP streams now show each message as text and hex, DNS lookups show their question, answers and flags, and every HTTP request has a Raw tab with the message as it looks on the wire and its header and body byte counts.</p>
 
-      <h2 id="sharing-without-leaking">sharing without leaking</h2>
+      <h2 id="sharing-without-leaking">Sharing without leaking</h2>
 
-      <p>captures are full of credentials, so exports mask them by default. field names are split into words (<code>X-Api-Key</code> becomes x, api, key; <code>accessToken</code> becomes access, token), and a field is masked when one of its words is on a list. that catches most things, but a token in a field called <code>data</code> slips through, so JWTs and bearer tokens are also masked by value, wherever they appear. HAR and Postman exports both go through the same masking, and every stopped capture leaves a masked HAR next to the session file.</p>
+      <p>Captures are full of credentials, so exports mask them by default. Field names are split into words (<code>X-Api-Key</code> becomes x, api, key; <code>accessToken</code> becomes access, token), and a field is masked when one of its words is on a list. That catches most things, but a token in a field called <code>data</code> slips through, so JWTs and bearer tokens are also masked by value, wherever they appear. HAR and Postman exports both go through the same masking, and every stopped capture leaves a masked HAR next to the session file.</p>
 
-      <h2 id="testing-a-tool-that-needs-admin">testing a tool that needs admin</h2>
+      <h2 id="testing-a-tool-that-needs-admin">Testing a tool that needs admin</h2>
 
-      <p>local mode needs administrator rights, which a CI runner doesn't have. so the tests start mitmproxy in regular proxy mode with the same addon, point real HTTP calls at it, and drive the UI's API: a held request makes the caller wait, gets edited and continues; a rule rewrites a body; stop and auto-stop end the process; a capture dies with the process that started it. the parts that don't need a server (masking, findings, endpoint grouping) are checked directly. a GitHub Actions job runs all of it on Windows on every push and builds the exe, and a version tag publishes it as a release.</p>
+      <p>Local mode needs administrator rights, which a CI runner doesn't have. So the tests start mitmproxy in regular proxy mode with the same addon, point real HTTP calls at it, and drive the UI's API: a held request makes the caller wait, gets edited and continues; a rule rewrites a body; stop and auto-stop end the process; a capture dies with the process that started it. The parts that don't need a server (masking, findings, endpoint grouping) are checked directly. A GitHub Actions job runs all of it on Windows on every push and builds the exe, and a version tag publishes it as a release.</p>
 
-      <p>CI also caught a real bug on its first day. a request counted as done as soon as its response headers arrived, while the body was still loading, and a test read it in that gap on a slower runner. it now stays pending until the response ends.</p>
+      <p>CI also caught a real bug on its first day. A request counted as done as soon as its response headers arrived, while the body was still loading, and a test read it in that gap on a slower runner. It now stays pending until the response ends.</p>
 
-      <h2 id="what-it-can-t-do">what it can't do</h2>
+      <h2 id="what-it-can-t-do">What it can't do</h2>
 
-      <p>pinned hosts can't be decrypted, and only show up in the rejected-certificate bar. local mode needs admin and only sees connections opened after the capture starts. bodies over 5 MB are streamed through and not stored, and the UI keeps the last 5,000 requests while the session file keeps everything. WebSocket, TCP, UDP and DNS flows can be read but not edited or resent. masking works on names and token shapes, so other personal data in free text isn't masked, and exports are worth a look before they leave the machine.</p>
+      <p>Pinned hosts can't be decrypted, and only show up in the rejected-certificate bar. Local mode needs admin and only sees connections opened after the capture starts. Bodies over 5 MB are streamed through and not stored, and the UI keeps the last 5,000 requests while the session file keeps everything. WebSocket, TCP, UDP and DNS flows can be read but not edited or resent. Masking works on names and token shapes, so other personal data in free text isn't masked, and exports are worth a look before they leave the machine.</p>
 
     </div>
   </div>
