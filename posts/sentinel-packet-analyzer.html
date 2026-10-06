@@ -3,13 +3,13 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Sentinel part 1: a packet analyzer and IDS from scratch in Python | Kaan Dinç</title>
-<meta name="description" content="Hand-written protocol parsers with no runtime dependencies, pcap reading and writing, TCP stream reassembly, a filter language, and detectors for port scans, SYN floods, ARP spoofing and DNS tunneling, checked with fuzzing, benchmarks and strict typing.">
+<title>Sentinel: a packet analyzer and IDS from scratch in Python | Kaan Dinç</title>
+<meta name="description" content="Hand-written protocol parsers with no runtime dependencies, pcap and pcapng reading, TCP stream reassembly, a filter language, six detectors and JA3 fingerprints, checked against Wireshark's tshark and run unchanged on 2.7 million packets of real traffic.">
 <meta name="theme-color" content="#0a0a09">
 <link rel="canonical" href="https://kaandinc.com/posts/sentinel-packet-analyzer">
 <meta property="og:type" content="article">
-<meta property="og:title" content="Sentinel part 1: a packet analyzer and IDS from scratch in Python | Kaan Dinç">
-<meta property="og:description" content="Hand-written protocol parsers with no runtime dependencies, pcap reading and writing, TCP stream reassembly, a filter language, and detectors for port scans, SYN floods, ARP spoofing and DNS tunneling, checked with fuzzing, benchmarks and strict typing.">
+<meta property="og:title" content="Sentinel: a packet analyzer and IDS from scratch in Python | Kaan Dinç">
+<meta property="og:description" content="Hand-written protocol parsers with no runtime dependencies, pcap and pcapng reading, TCP stream reassembly, a filter language, six detectors and JA3 fingerprints, checked against Wireshark's tshark and run unchanged on 2.7 million packets of real traffic.">
 <meta property="og:url" content="https://kaandinc.com/posts/sentinel-packet-analyzer">
 <meta property="og:site_name" content="Kaan Dinç">
 <meta property="og:image" content="https://kaandinc.com/assets/og.png">
@@ -17,8 +17,8 @@
 <meta property="og:image:height" content="630">
 <meta property="og:image:alt" content="Kaan Dinç, computer engineer. K logo beside 3D solids in amber on black.">
 <meta name="twitter:card" content="summary_large_image">
-<meta name="twitter:title" content="Sentinel part 1: a packet analyzer and IDS from scratch in Python | Kaan Dinç">
-<meta name="twitter:description" content="Hand-written protocol parsers with no runtime dependencies, pcap reading and writing, TCP stream reassembly, a filter language, and detectors for port scans, SYN floods, ARP spoofing and DNS tunneling, checked with fuzzing, benchmarks and strict typing.">
+<meta name="twitter:title" content="Sentinel: a packet analyzer and IDS from scratch in Python | Kaan Dinç">
+<meta name="twitter:description" content="Hand-written protocol parsers with no runtime dependencies, pcap and pcapng reading, TCP stream reassembly, a filter language, six detectors and JA3 fingerprints, checked against Wireshark's tshark and run unchanged on 2.7 million packets of real traffic.">
 <meta name="twitter:image" content="https://kaandinc.com/assets/og.png">
 <link rel="icon" href="../assets/favicon.svg" type="image/svg+xml">
 <link rel="preload" href="../assets/fonts/Geist-Variable.woff2" as="font" type="font/woff2" crossorigin>
@@ -59,9 +59,9 @@
 <article class="post">
   <header class="post-head">
     <a class="post-head__back roll" href="../blog"><span class="roll__in" data-text="&amp;larr; blog">&larr; blog</span></a>
-    <p class="post-head__meta" data-hero><time datetime="2026-09-18">Sep 2026</time> &nbsp;/&nbsp; 9 min read</p>
-    <h1 class="post-head__title" data-split="lines" data-hero>Sentinel part 1: a packet analyzer and IDS from scratch in Python</h1>
-    <p class="post-head__sub" data-hero>Reading the wire, one byte at a time.</p>
+    <p class="post-head__meta" data-hero><time datetime="2026-09-19">Sep 2026</time> &nbsp;/&nbsp; 25 min read</p>
+    <h1 class="post-head__title" data-split="lines" data-hero>Sentinel: a packet analyzer and IDS from scratch in Python</h1>
+    <p class="post-head__sub" data-hero>Reading the wire one byte at a time, then checking it against tshark and real traffic.</p>
   </header>
   <div class="post-layout has-toc">
     <aside class="toc" aria-label="on this page">
@@ -74,23 +74,34 @@
         <li><a href="#a-real-network">A real network</a></li>
         <li><a href="#measuring-it">Measuring it</a></li>
         <li><a href="#verification">Verification</a></li>
+        <li><a href="#the-file-people-actually-have">The file people actually have</a></li>
+        <li><a href="#comparing-with-tshark">Comparing with tshark</a></li>
+        <li><a href="#two-more-detectors">Two more detectors</a></li>
+        <li><a href="#ja3-fingerprints">JA3 fingerprints</a></li>
+        <li><a href="#capture-on-windows">Capture on Windows</a></li>
+        <li><a href="#finding-real-traffic">Finding real traffic</a></li>
+        <li><a href="#do-the-detectors-fire-on-real-attacks">Do the detectors fire on real attacks?</a></li>
+        <li><a href="#traffic-that-nobody-labelled">Traffic that nobody labelled</a></li>
         <li><a href="#limits">Limits</a></li>
+        <li><a href="#next-steps">Next steps</a></li>
       </ol>
     </aside>
     <div class="post-body">
 <aside class="brief" aria-label="project summary">
-  <p class="brief__summary">Hand-written protocol parsers with no runtime dependencies, pcap reading and writing, TCP stream reassembly, a filter language, and detectors for port scans, SYN floods, ARP spoofing and DNS tunneling, checked with fuzzing, benchmarks and strict typing.</p>
+  <p class="brief__summary">Hand-written protocol parsers with no runtime dependencies, pcap and pcapng reading, TCP stream reassembly, a filter language, six detectors and JA3 fingerprints, checked against Wireshark's tshark and run unchanged on 2.7 million packets of real traffic.</p>
   <dl class="brief__facts"><div><dt>Role</dt><dd>Solo, personal project</dd></div><div><dt>Stack</dt><dd>Python, struct, ruff, mypy (strict), pytest</dd></div><div><dt>Status</dt><dd>Open source</dd></div><div><dt>Links</dt><dd><a href="https://github.com/kaan0d/sentinel" target="_blank" rel="noopener">source</a></dd></div></dl>
 </aside>
-<p>Sentinel is a packet analyzer and rule-based intrusion detection system written from scratch in Python. The protocol parsers are hand-written with <code>struct</code>: no Scapy, no dpkt, no pyshark, and no runtime dependencies. It reads pcap files and live Linux interfaces, prints tcpdump-style lines, reassembles TCP streams, filters with its own language, and raises JSON alerts for port scans, SYN floods, ARP spoofing and DNS tunneling. This post covers all seven stages, with the focus on what the parsers do with bad input and how I tried to prove they are right.</p>
+<p>Sentinel is a packet analyzer and rule-based intrusion detection system written from scratch in Python. The protocol parsers are hand-written with <code>struct</code>: no Scapy, no dpkt, no pyshark, and no runtime dependencies. It reads pcap and pcapng files and live interfaces on Linux and Windows, prints tcpdump-style lines, reassembles TCP streams, filters with its own language, prints JA3 fingerprints, and raises JSON alerts for port scans, SYN floods, ARP spoofing, DNS and ICMP tunneling and SSH brute force.</p>
+
+      <p>It was built in 13 stages. The first seven built the core, with the focus on what the parsers do with bad input and how to prove they are right. The next five left the lab: files people actually have, a field-by-field comparison with Wireshark's tshark, more detectors and Windows capture. The last one built nothing: it ran the unchanged detectors on 2.7 million packets of real traffic made by other people, and asked what that allows me to conclude.</p>
 
       <div class="stats">
         <div class="stat"><b>0</b><span>runtime dependencies</span></div>
-        <div class="stat"><b>7 of 7</b><span>stages finished</span></div>
-        <div class="stat"><b>620</b><span>tests (6 more need Linux and root), ruff and strict mypy clean</span></div>
-        <div class="stat"><b>3,012,427</b><span>broken packets and files through the fuzz tests and the fuzzer, 0 failures</span></div>
-        <div class="stat"><b>98,710</b><span>packets per second to decode, on one core</span></div>
-        <div class="stat"><b>196 of 196</b><span>deliberate one-line breaks caught by the tests</span></div>
+        <div class="stat"><b>942</b><span>tests, ruff and strict mypy clean</span></div>
+        <div class="stat"><b>405 of 405</b><span>deliberate one-line breaks caught by the tests</span></div>
+        <div class="stat"><b>18M</b><span>damaged packets and capture files through the fuzzer, 0 failures</span></div>
+        <div class="stat"><b>68,756</b><span>field values compared with tshark, no difference left unexplained</span></div>
+        <div class="stat"><b>376</b><span>scanning sources on a 1 Gbps backbone slice, the same 376 as an independent tshark recount</span></div>
       </div>
 
       <h2 id="a-parser-never-raises">A parser never raises</h2>
@@ -216,23 +227,241 @@ parse_dns(header).anomalies == ('truncated dns message: question 1 of 65535 is m
 
       <p>Then I broke the code on purpose, one line at a time: 196 breaks across all stages, all caught. 110 of them are caught by a single test, so coverage is not deep.</p>
 
+      <h2 id="the-file-people-actually-have">The file people actually have</h2>
+
+      <p>After seven stages Sentinel had only seen traffic I generated, and could not open the files people actually have. The next five stages took the most important items from that limits list, under the same rules: one stage at a time, tests, ruff and strict mypy clean, a sabotage run, and a plain note on what I could not check.</p>
+
+      <p>Wireshark has saved pcapng by default for years, and the stage 1 reader only knew classic pcap:</p>
+
+      <div class="term"><pre><span class="pr">$ python -m sentinel read demo.pcapng
+</span>sentinel: demo.pcapng: not a pcap file: bad magic 0a0d0d0a</pre></div>
+
+      <p>True and useless. Now the same command prints exactly what it prints for the classic file. The reader is 183 lines in <code>sentinel/pcap/pcapng.py</code>, and <code>open_reader</code> picks the format for <code>read</code>, <code>flows</code> and <code>ids</code>.</p>
+
+      <p>A pcapng file is a list of blocks. Each starts with a type and total length, ends with the length again, and is a multiple of four bytes, so a reader can skip any block it does not understand. A section header gives the byte order, an interface description gives the link type and timestamp resolution, and each packet is an enhanced packet block. The same 19 packets are 1,948 bytes as pcap and 2,312 as pcapng.</p>
+
+      <p>Format detection is four bytes. The section header type <code>0a 0d 0d 0a</code> is a palindrome, so it reads the same in either byte order, and it can never be a classic pcap magic:</p>
+
+      <div class="codeblock"><code>magic = fp.read(4)
+fp.seek(-len(magic), io.SEEK_CUR)
+<span class="kw">return</span> PcapngReader(fp) <span class="kw">if</span> magic == SHB_BYTES <span class="kw">else</span> PcapReader(fp)</code></div>
+
+      <p>Byte order is kept per section, because two appended captures can differ, and the interface list resets at each section. Timestamps are 64-bit counts in units set per interface by <code>if_tsresol</code> (10<sup>-n</sup> or 2<sup>-n</sup> seconds, microseconds if missing), plus an optional <code>if_tsoffset</code>. The reader converts them to integer nanoseconds with integer arithmetic only. A float keeps 53 bits, and a current timestamp in nanoseconds needs 61, so floats would round every packet to 256 ns steps:</p>
+
+      <div class="codeblock"><code>ts_ns = (high &lt;&lt; 32 | low) * 1_000_000_000 // interface.ticks_per_second
+ts_ns += interface.offset_ns
+<span class="kw">if</span> <span class="kw">not</span> 0 &lt;= ts_ns &lt;= MAX_TS_NS:
+    <span class="kw">raise</span> PcapError(f"pcapng timestamp {ts_ns} ns is out of range")</code></div>
+
+      <p>The range check exists because of a mistake I almost made. With whole-second resolution, a 64-bit count reaches 585 billion years, but <code>datetime</code> stops at year 9999, so a hostile timestamp would have made <code>read</code> raise <code>OverflowError</code> while printing. Timestamps outside 1970 to 9999 are now refused.</p>
+
+      <p>Name resolution, statistics, decryption secrets and custom blocks are skipped by length. The reader refuses, with a <code>PcapError</code> after yielding every good packet: a bad or unrepeated block length, a cut block, a version other than 1, a packet for an undescribed interface, an oversized captured length, a malformed option. A packet on a non-Ethernet interface stops the read with a message instead of being decoded as Ethernet by mistake.</p>
+
+      <p>My tests build files by hand from the spec, not with my generator. I also checked against <code>python-pcapng</code>, a package someone else wrote, installed only in a scratch folder: their writer to my reader agreed on 66 packets across both byte orders and six resolutions, my writer to their reader on 2,190. The fuzzer now sends half of its damaged files as pcapng, some spliced with classic headers: 3,000,000 inputs, 0 failures.</p>
+
+      <p>The sabotage run had 57 new breaks, all caught, but the first run hung on three. They broke timestamps, so a test comparing the 647-line pcap and pcapng outputs failed, and pytest spent minutes building a diff of two long texts. The test now reports the first differing line number instead, and fails in six seconds.</p>
+
+      <h2 id="comparing-with-tshark">Comparing with tshark</h2>
+
+      <p>Everything so far was checked against my own reading of the protocols, so a misreading could sit in both code and tests. tshark was written by other people and has read far more traffic. <code>tools/compare_tshark.py</code> (a dev tool, not a dependency) runs tshark with reassembly off and checksums verified, asks for about 75 fields per packet, translates them into Sentinel's form, and compares. Most of the work was defining "equal": tshark prints 12-bit TCP flags where Sentinel keeps nine, counts fragment offsets in 8-byte units, and prints scaled windows. Each translation has a test. TCP and UDP conversations are compared too.</p>
+
+      <p>Four captures are generated, six are public Wireshark sample captures (1,245 packets, about 110 KB), downloaded with permission and kept out of the repository. One, <code>win_scale</code>, is a pcapng that Wireshark itself wrote. tshark 4.6.8:</p>
+
+      <div class="table-wrap"><table class="data">
+        <thead><tr><th>capture</th><th class="num">packets</th><th class="num">values compared</th><th class="num">differences</th><th class="num">explained</th></tr></thead>
+        <tbody>
+          <tr><td><code>sample.pcap</code> <span class="dim">(generated)</span></td><td class="num">19</td><td class="num">529</td><td class="num">0</td><td class="num">20</td></tr>
+          <tr><td><code>streams.pcap</code> <span class="dim">(generated)</span></td><td class="num">32</td><td class="num">892</td><td class="num">0</td><td class="num">27</td></tr>
+          <tr><td><code>benign.pcap</code> <span class="dim">(generated)</span></td><td class="num">647</td><td class="num">17,906</td><td class="num">0</td><td class="num">156</td></tr>
+          <tr><td><code>attacks.pcap</code> <span class="dim">(generated)</span></td><td class="num">1,044</td><td class="num">29,884</td><td class="num">0</td><td class="num">333</td></tr>
+          <tr><td><code>dns.cap</code> <span class="dim">(DNS over UDP)</span></td><td class="num">38</td><td class="num">1,356</td><td class="num">0</td><td class="num">57</td></tr>
+          <tr><td><code>ipv4frags.pcap</code> <span class="dim">(fragmented ICMP)</span></td><td class="num">3</td><td class="num">57</td><td class="num">0</td><td class="num">0</td></tr>
+          <tr><td><code>win_scale.pcapng</code> <span class="dim">(written by Wireshark)</span></td><td class="num">26</td><td class="num">719</td><td class="num">0</td><td class="num">0</td></tr>
+          <tr><td><code>v6.pcap</code> <span class="dim">(IPv6, 1999)</span></td><td class="num">161</td><td class="num">3,548</td><td class="num">0</td><td class="num">126</td></tr>
+          <tr><td><code>vlan.cap</code> <span class="dim">(802.1Q, 1999)</span></td><td class="num">395</td><td class="num">7,645</td><td class="num">0</td><td class="num">25</td></tr>
+          <tr><td><code>arp-storm.pcap</code></td><td class="num">622</td><td class="num">6,220</td><td class="num">0</td><td class="num">0</td></tr>
+        </tbody>
+      </table></div>
+
+      <p>Zero differences, but only after three real fixes. The first run on the public captures disagreed.</p>
+
+      <h3>Three bugs other people's traffic found</h3>
+
+      <p><strong>Checksum offload.</strong> <code>win_scale</code> was recorded on the sending machine, where the network card completes the TCP checksum after the capture point. The field holds only the uncomplemented pseudo-header sum. Sentinel flagged 14 of 26 TCP packets as bad; tshark says "matches partial checksum, likely caused by TCP checksum offload". This was a false positive I already knew about. For the first packet, the pseudo-header words fold to <code>0x1215</code>, exactly the field value. A checksum equal to the partial sum is no longer flagged, for TCP and UDP over IPv4 and IPv6. Tests check that the partial sum ±1, complemented, or with the top bit flipped are still flagged:</p>
+
+      <div class="term"><pre><span class="pr">$ python -m sentinel read win_scale.pcapng
+</span><span class="dim">before:</span> <span class="ts">20:22:25.360596 IP</span> 192.168.200.135.6711 &gt; 192.168.200.21.2000: <span class="fl">Flags [S]</span> [bad tcp checksum]
+<span class="dim">after: </span> <span class="ts">20:22:25.360596 IP</span> 192.168.200.135.6711 &gt; 192.168.200.21.2000: <span class="fl">Flags [S]</span></pre></div>
+
+      <p><strong>The first fragment.</strong> <code>decode</code> stopped at the IP header of every fragment, but the first fragment carries the transport header. In <code>ipv4frags.pcap</code> the echo request printed as <code>ip-proto-1</code>. The first fragment is now decoded (checksum not verified, since the message is incomplete), and filters and flows follow.</p>
+
+      <p><strong>A length that looked like an ethertype.</strong> A type field below 0x0600 is an 802.3 length with LLC behind it. <code>vlan.cap</code> has many, and <code>read</code> printed <code>ethertype 0x00a6</code>. That was a wrong statement, not a missing feature, so it now prints <code>802.3</code>.</p>
+
+      <h3>Differences that are not disagreements</h3>
+
+      <p>744 field differences remain, and each has a rule with a reason. The report counts them by reason instead of hiding them, and tests check that a rule cannot explain a different kind of difference. 618 are DNS flags that tshark omits from queries. 76 are headers quoted inside ICMP errors, which tshark decodes and Sentinel does not. 25 are LLC frames. 21 are DNS-over-TCP messages split across segments. To prove the tool can notice anything, a test runs real tshark with every Sentinel TCP window changed to 1, and the tool must report exactly that field on exactly the nine TCP segments.</p>
+
+      <p>Seven of the 46 sabotage breaks for this stage survived the first run, all in the tool's own tests (a rule that explained too much, a packet count checked in only one direction). I tightened them. Wireshark's <code>editcap</code> also converted 9 captures to pcapng, and the reader returned the same 2,961 packets, timestamps included.</p>
+
+      <h2 id="two-more-detectors">Two more detectors</h2>
+
+      <div class="table-wrap"><table class="data">
+        <thead><tr><th>detector</th><th>looks for</th><th>default</th></tr></thead>
+        <tbody>
+          <tr><td><code>ssh_brute_force</code></td><td>one client completing many TCP connections to one server's SSH port</td><td>10 in 60 s</td></tr>
+          <tr><td><code>icmp_tunnel</code></td><td>echo requests of 512+ bytes, and replies that do not repeat their request's data (IPv4)</td><td>10 large, or 5 changed, in 60 s</td></tr>
+        </tbody>
+      </table></div>
+
+      <p><strong>SSH</strong> is encrypted, so failed logins are invisible; connection rate is not. Only completed handshakes count, because SYNs without answers are scans, and those already have a detector. A retransmitted SYN is still one connection, and later ACKs on the same connection do not count again.</p>
+
+      <p><strong>ICMP.</strong> A real ping sends 56 bytes (Linux) or 32 (Windows) and gets them back unchanged. A tunnel sends more and gets different data back. To compare a reply with its request, the detector keeps an 8-byte digest of the request data, not the data. A hundred thousand 64 KB requests would otherwise be six gigabytes. Messages cut by the snap length are ignored, since a cut request looks small and a cut reply looks changed.</p>
+
+      <p>The thresholds are guesses: I had no capture of real SSH guessing or a real tunnel. The harmless capture sits exactly one below each threshold (9 SSH connections, 9 large pings answered correctly, 4 rewritten replies), and tests lower each threshold by one to prove it is at the edge. On the six public captures neither new detector fired, but an old one did: <code>dns.cap</code> raised a <code>dns-tunnel</code> alert for an Active Directory lookup with a GUID label (<code>_ldap._tcp.05b5292b-…._msdcs.utelsystems.local</code>). The entropy test reads a GUID as random, which it is. The fix is recognizing the GUID shape, not moving the threshold; it is in the README limits.</p>
+
+      <p>One sabotage break survived: a message that printed the threshold instead of the count. The first alert of a burst always has exactly threshold connections, so the text looked the same. The test for a later alert now checks the count in the message.</p>
+
+      <h2 id="ja3-fingerprints">JA3 fingerprints</h2>
+
+      <p>The server name says who a client talks to. The TLS library decides which ciphers and extensions it offers and in what order, so the ClientHello also says what is talking. JA3 is an MD5 of five fields in decimal, lists joined with dashes and fields with commas: version, ciphers, extension types, curves, point formats. <code>read</code> and <code>flows</code> print it, and the filter language gained <code>ja3 HASH</code>:</p>
+
+      <div class="term"><pre><span class="pr">$ python -m sentinel read sample.pcap --filter "ja3 61279becc80ab0e3aca57f5913c3e1a0"
+</span><span class="ts">2023-11-14 22:13:20.018000</span> IP 10.0.0.1.43000 &gt; 10.0.0.2.443: <span class="fl">Flags [P.]</span>, seq 1, ack 1, win 64240, <span class="dim">length 161</span><span class="fl">: TLS ClientHello, sni example.com, versions [TLS 1.3, TLS 1.2], ciphers (15) [TLS_AES_128_GCM_SHA256, TLS_AES_256_GCM_SHA384, TLS_CHACHA20_POLY1305_SHA256, +12 more], ja3 61279becc80ab0e3aca57f5913c3e1a0</span></pre></div>
+
+      <p>GREASE values (<code>0x0a0a</code> to <code>0xfafa</code>) change on every connection, so JA3 drops them from every list. A test draws GREASE twice and gets the same hash, while look-alikes such as <code>0x0a1a</code> are real values and stay.</p>
+
+      <p>A fingerprint of half a hello is worse than none, because it is a valid-looking hash that belongs to no client. The stage 2 parser keeps whatever it can read from a damaged hello, which is right for a summary line. So <code>TlsClientHello</code> now has a <code>complete</code> flag, and <code>ja3</code> is empty unless every length checks out. A test cuts a good hello at every position and checks that no prefix gets a fingerprint. In the demo capture, <code>read</code> sees a split hello in two pieces and prints no JA3; <code>flows</code> reassembles it and does.</p>
+
+      <p>The spec's own example (<code>769,47-53-5-10-…,0-10-11,23-24-25,0</code>) gives <code>ada70206e40642a3e4461f35503241d5</code> as required, and tshark's JA3 agrees on 203 field values. Two sabotage survivors turned out to be a dead branch, which I deleted, and two were real: an extensions block whose inner lengths lie was taken as complete. Cutting a hello cannot produce those cases, so they got their own tests. Computing JA3 costs 4.56 µs and only runs when asked.</p>
+
+      <h2 id="capture-on-windows">Capture on Windows</h2>
+
+      <p>Windows has no <code>AF_PACKET</code>. The options are Npcap, which would be a dependency in a project with none, or a raw socket with <code>SIO_RCVALL</code>, which needs Administrator and sees less. Before writing code, I opened one and probed it. Whole IP packets arrive with no Ethernet header, each once, including loopback (Linux gives two). Outgoing TCP checksums are offload partial sums, which stage 9 already handles. IPv6 gave nothing, and Windows reports no drop count.</p>
+
+      <p>One thing is wrong: in all seven TCP connections I recorded, the handshake's ACK arrives before the SYN-ACK it answers:</p>
+
+      <div class="term"><pre><span class="pr">$ python -m sentinel live 192.168.1.136 --write out.pcap --duration 5
+</span><span class="ts">2026-09-20 02:55:55.363998</span> IP 192.168.1.136.51293 &gt; 192.168.1.1.80: <span class="fl">Flags [S]</span>, seq 944683354, win 65535, <span class="dim">length 0</span>
+<span class="ts">2026-09-20 02:55:55.364504</span> IP 192.168.1.136.51293 &gt; 192.168.1.1.80: <span class="fl">Flags [.]</span>, seq 944683355, ack 2354516038, win 255, <span class="dim">length 0</span>
+<span class="ts">2026-09-20 02:55:55.364588</span> IP 192.168.1.1.80 &gt; 192.168.1.136.51293: <span class="fl">Flags [S.]</span>, seq 2354516037, ack 944683355, win 42340, <span class="dim">length 0</span></pre></div>
+
+      <p>Timestamps are read times, so they cannot fix the order, and there is nothing honest to repair it with. It is documented. The detectors are unaffected: 150 handshakes in this order raise no SYN-flood alert, and the same SYNs without ACKs do.</p>
+
+      <p><code>Capture</code> only ever needed <code>recvfrom</code>, <code>settimeout</code>, <code>getsockopt</code> and <code>close</code>, so Windows is one more socket. <code>IpSocket</code> prepends a 14-byte Ethernet header with zero addresses (an invented MAC would look like data) and the ethertype from the version nibble, for 0.274 µs a packet. Interfaces are named by IPv4 address. A real 5-second run captured 87 packets; <code>read</code> printed the same 87 lines, <code>flows</code> saw two closed connections, and <code>ids</code> was silent.</p>
+
+      <p>45 tests use a stand-in socket; 5 run only as Administrator on the real one. A new CI job runs those as Administrator and fails if they were skipped. On the first run one failed: the runner leaves the loopback IPv4 header checksum at 0 for the card to fill in, which my machine never did. The test now accepts exactly that anomaly, and all six jobs pass. One machine had told me everything was fine; that is what the job is for. The sabotage run also exposed an old gap: a stage 7 break removing Windows from the CI matrix survived, because its test only searched for <code>windows-latest</code>, which the new job also contains. It now checks the matrix line itself.</p>
+
+      <h2 id="finding-real-traffic">Finding real traffic</h2>
+
+      <p>After stage 12 almost everything in Sentinel had been tested on traffic I made myself or on a handful of small public files, and hardly at all on a busy real network. Stage 13 is that test. I took real captures, some of them attacks made by other people and some of them ordinary traffic that nobody has labelled, and ran the detectors over them without changing a line of the program; the rules are the ones it ships with. There is nothing to build in this stage, and the interesting part is what I am allowed to conclude.</p>
+
+      <p>This took longer than the measuring. What I wanted was labelled data, where someone says which packets are the attack, and the well-known datasets have it. They are also big. CIC-IDS2017 is about 50 GB and asks for a registration form. Kitsune has labels for every packet, including ARP spoofing and SYN floods, and its page lists files of 2 GB, but those are feature tables and not captures; the captures are 147 to 334 MB. The only way to get them is one zip of 19 GB, and the server answers a request for a part of a file with the whole file, so I could not take six files out of it. CTU-13 has captures that hold only the botnet's own traffic. On a slow connection, that was three ways of not getting it.</p>
+
+      <p>What I used instead is small, and I wrote each file down with its source before I fetched it:</p>
+
+      <div class="table-wrap"><table class="data">
+        <thead><tr><th>capture</th><th>what it is</th><th>source</th><th class="num">packets</th></tr></thead>
+        <tbody>
+<tr><td><code>pkt.TCP.synflood.spoofed</code></td><td>a spoofed SYN flood: only SYNs, from 37,623 different addresses, in 23.7 s</td><td><a href="https://github.com/StopDDoS/packet-captures">StopDDoS</a></td><td class="num">37,841</td></tr>
+<tr><td><code>pkt.TCP.DOMINATE.syn.ecn.cwr</code></td><td>a SYN flood with the ECN and CWR flags set</td><td>StopDDoS</td><td class="num">9,878</td></tr>
+<tr><td><code>arpspoofing</code></td><td>ARP spoofing on a small LAN</td><td><a href="https://github.com/vivekseth/cs3">cs3</a> (a course repository)</td><td class="num">1,887</td></tr>
+<tr><td><code>portscan</code></td><td>one host sends 1,365 SYNs to 1,000 ports of another</td><td>cs3</td><td class="num">2,401</td></tr>
+<tr><td><code>dns-tunnel-iodine</code></td><td>a DNS tunnel made by iodine</td><td><a href="https://github.com/elastic/examples">Elastic examples</a></td><td class="num">438</td></tr>
+<tr><td><code>2026-08-07</code></td><td>seven days of scans and probes at a web server</td><td><a href="https://www.malware-traffic-analysis.net/2026/08/07/index.html">malware-traffic-analysis.net</a></td><td class="num">500,923</td></tr>
+<tr><td><code>MAWI 2025-01-01 14:00</code></td><td>the first 14.6 s of a 1 Gbps backbone link, packets cut to 96 bytes</td><td><a href="https://mawi.wide.ad.jp/mawi/">MAWI (WIDE project)</a></td><td class="num">2,163,268</td></tr>
+        </tbody>
+      </table></div>
+
+      <p>7 files, 2,716,636 packets. Two of them needed a trick. The backbone trace of MAWI is 3.9 GB compressed for 15 minutes, but that server does answer a request for a part of a file, and a gzip cut in the middle still opens up to the cut, so I took the first 60 MiB and got 2,163,268 packets, the last one cut in half. The file of the web server is a zip with a password, and the password is on the site's about page, as a picture.</p>
+
+      <p>One file I did not trust. The two cs3 captures come from a course repository that does not say where they come from, so before using them I looked inside with <code>tshark</code>: in the ARP file one MAC address (7c:d1:c3:94:9e:b8) answers for both the gateway and another host, which is what ARP spoofing looks like, and in the other 192.168.0.100 sends SYNs to 1,000 different ports of 192.168.0.101, which is what nmap's default scan looks like. They are what their names say. Where they come from is still not known, and this post says so again at the end.</p>
+
+      <h2 id="do-the-detectors-fire-on-real-attacks">Do the detectors fire on real attacks?</h2>
+
+      <div class="table-wrap"><table class="data">
+        <thead><tr><th>capture</th><th>alerts</th><th class="num">time</th></tr></thead>
+        <tbody>
+<tr><td>spoofed SYN flood</td><td>4 <code>syn-flood</code></td><td class="num">1.236 s</td></tr>
+<tr><td>SYN flood with ECN and CWR</td><td>1 <code>syn-flood</code></td><td class="num">0.307 s</td></tr>
+<tr><td>ARP spoofing</td><td>5 <code>arp-spoof</code></td><td class="num">0.049 s</td></tr>
+<tr><td>port scan</td><td>5 <code>port-scan</code></td><td class="num">0.062 s</td></tr>
+<tr><td>iodine tunnel</td><td>3 <code>dns-tunnel</code></td><td class="num">0.02 s</td></tr>
+        </tbody>
+      </table></div>
+
+      <p>Yes, all five, and each raised only the alert it should. This is what the port scan and the ARP spoofing look like from the command line, the real output:</p>
+
+      <div class="term"><pre><span class="pr">$ python -m sentinel ids --format text portscan.pcap
+</span>2014-02-25T05:11:20.956948Z [medium] port-scan: 192.168.0.100 probed 15 ports on 192.168.0.101 in 0.1s
+2014-02-25T05:11:30.974438Z [medium] port-scan: 192.168.0.100 probed 46 ports on 192.168.0.101 in 1.4s
+2014-02-25T05:11:41.015451Z [medium] port-scan: 192.168.0.100 probed 64 ports on 192.168.0.101 in 2.7s</pre></div>
+      <div class="term"><pre><span class="pr">$ python -m sentinel ids --format text arpspoofing.pcap
+</span>2014-02-25T06:11:11.070534Z [high] arp-spoof: 192.168.0.1 moved from f8:1a:67:cd:57:6e to 7c:d1:c3:94:9e:b8
+2014-02-25T06:11:15.399497Z [high] arp-spoof: 192.168.0.1 moved from 7c:d1:c3:94:9e:b8 to f8:1a:67:cd:57:6e
+2014-02-25T06:14:03.123374Z [high] arp-spoof: ARP says 192.168.0.103 is at d8:96:95:01:a5:c9, but the frame came from 7c:d1:c3:94:9e:b8</pre></div>
+
+      <p>In the ARP file the alerts include 7c:d1:c3:94:9e:b8, the address that <code>tshark</code> showed claiming two hosts. The labels of these files are one per file, "this is a SYN flood", so the honest reading is small: on one real example of each attack the detector for it fires. The two StopDDoS files have nothing but attack traffic in them, so they cannot show a false alarm, and one file of each kind says nothing about how many attacks would be missed.</p>
+
+      <h2 id="traffic-that-nobody-labelled">Traffic that nobody labelled</h2>
+
+      <p>The other two captures are the ones I was afraid of: a week of what reaches a web server on the internet, and 14.6 seconds of a link that carries a gigabit. Nobody can say which of their packets are attacks, so I cannot score the alerts as right or wrong. I asked <code>tshark</code> two things that I can check without trusting Sentinel. Is what an alert says true: a port-scan alert says a source probed 30 hosts on one port within 10 seconds, so I count the SYNs again from <code>tshark</code>'s own output. And does an independent recount of the same rule find scanners that Sentinel did not report.</p>
+
+      <h3 class="sub">A week at a web server</h3>
+
+      <p>27 port-scan alerts and 1 DNS alert in 500,923 packets. <code>tshark</code> counts the same number of ports for all 27 of the alerts, and the recount finds 16 scanning sources, the same 16 that Sentinel reported. None missed, none extra. The one DNS alert is a random-looking name under icann.org, which I did not look into.</p>
+
+      <h3 class="sub">A gigabit for fourteen seconds</h3>
+
+      <p>2,163,268 packets and 795 alerts: 627 port scans, 165 DNS tunnels and 3 SYN floods.</p>
+
+      <p><b>The port scans.</b> 624 of them are one source probing one port on 30 or more hosts. They come from 376 sources, and the recount finds the same 376. All 626 alerts that can be counted again reach the threshold in <code>tshark</code>'s count, 551 of them with exactly the number in the alert. In the others the recount is higher, and that fits something I could see in the code: a window holds at most four times the threshold in events, so the number in an alert is between 30 and 120, and 443 say exactly 30, whatever the size of the sweep. The alert is true, and it understates a fast sweep. The ports that were probed most were 4117, 23, 22, 80, 443, 34567, 8080, 2222: mostly telnet, ssh and web ports, and a few odd ones such as 4117 and 34567.</p>
+
+      <p><b>The state limit.</b> The last port-scan alert is not a scan:</p>
+
+      <div class="codeblock"><code>19629 packets were not tracked: the detector's state limit was reached</code></div>
+
+      <p>Every detector keeps bounded state, and reports it when it has to forget something. One table of the port-scan detector, the sources it is following, reached its 100,000 entries. That took fourteen seconds on this link. Sentinel said so, as it was written to in stage 5, and the recount found no scanning source that it had failed to report, so the limit did not hide a scanner from this slice. On a longer one it could.</p>
+
+      <p><b>The DNS alerts.</b> All 165 come from one check: twenty "no such name" answers to one client within a minute. <code>tshark</code> confirms all 165, and shows 31,006 such answers to 1,815 clients in those 14.6 seconds, one client with 757. None of the other signals, a long name, a random-looking name or many different subdomains, fired once. So these are not tunnels, I think: on a backbone a client is often a resolver or a gateway that asks for many names for many people, and a threshold made for one client fires at once. I cannot prove it, because nobody labelled it.</p>
+
+      <p><b>The SYN floods.</b> Three alerts, all for one address and one port, 131.112.115.241:993 (IMAPS): 100 SYNs from 16, 18 and 22 addresses within a second, and <code>tshark</code> counts the same. Over the whole slice 844 SYNs from 110 addresses went to that port, and no SYN-ACK from it was captured. That could be an attack, or clients trying again and again against a mail server that is down. The capture cannot tell me which. The link does not help: only 5.3% of the SYNs on it have a SYN-ACK in the capture (57.5% for port 443), because a backbone carries only some of the return paths.</p>
+
+      <h3 class="sub">A mistake of mine</h3>
+
+      <p>The first recount told me Sentinel had missed a scanner. 202.121.34.125 looked like a source of SYNs to 30 hosts within 10 seconds, and Sentinel had not reported it. I looked at its packets: they were <code>ip:icmp:ip:tcp</code>. It was a router. What it sent were ICMP errors that quote the packet they refuse, and my <code>tshark</code> filter counted the SYN inside the quote as if the router had sent it. Sentinel ignores those, and it was right. I fixed the filter, and with it, and IPv6 counted, the two lists of sources are the same. It would have been easy to write "one scanner missed" and move on, and the number would have looked like a finding.</p>
+
+      <h3 class="sub">Speed</h3>
+
+      <p>50,394 packets a second through the detectors on the backbone slice (35,073 on the week at the web server, 30,618 on the SYN flood), on the same machine as the benchmark above. The link carried about 148,000 packets a second, so Sentinel ran at a third of real time. Pure Python on one core. For a gigabit link that is a limit, and the README says so.</p>
+
       <h2 id="limits">Limits</h2>
 
       <ul>
         <li><strong>Protocols:</strong> IPv6 fixed header only (no extension headers, no ICMPv6), no IP fragment reassembly, HTTP/1.x only, TLS ClientHello only.</li>
         <li><strong>Streams:</strong> offline only, first megabyte per stream, first copy wins on overlaps.</li>
         <li><strong>Filters:</strong> no host names, no byte offsets like <code>tcp[13]</code>, no TCP flag words; <code>flows --filter</code> filters packets, not flows.</li>
-        <li><strong>Detectors:</strong> tuned on generated traffic only, never on a real network. Scans slower than the window or spread over many sources are missed, and hex tunnels pass the entropy test.</li>
-        <li><strong>Live:</strong> Linux and root only, and about 35,000 packets per second through the loop. The real socket is tested only on a CI runner's loopback, not a real network card.</li>
-        </ul>
+        <li><strong>pcapng:</strong> name resolution, statistics, comments and packet flags are skipped; <code>.pcapng.gz</code> is not opened; there is no pcapng writer, and <code>live --write</code> saves classic pcap.</li>
+        <li><strong>Live capture:</strong> about 35,000 packets per second through the loop. Linux needs root and is tested only on a CI runner's loopback. Windows needs Administrator, sees IPv4 only, with no MAC addresses, no drop count and handshake ACKs reordered, and was tested on one machine for five seconds.</li>
+        <li><strong>tshark comparison:</strong> header fields and packet counts only, not reassembled bytes. One tshark version, six small public captures (two from 1999). Not run in CI.</li>
+        <li><strong>Detectors:</strong> each fired on one real example of its attack, which says nothing about how many attacks would be missed. SSH and ICMP thresholds are untested on real attacks, and backups and MTU tests will trigger them. Scans slower than the window or spread over many sources are missed, and a port-scan alert's count stops at four times the threshold. The DNS entropy test flags GUIDs and passes hex tunnels, and its NXDOMAIN check fires on busy resolvers. The port-scan state limit is reached in fourteen seconds on a backbone.</li>
+        <li><strong>JA3:</strong> client side only, no JA3S or JA4. Clients that shuffle extensions get a new JA3 per connection.</li>
+        <li><strong>Real traffic:</strong> labels are per file and the two big captures have none, so what I checked is that what the alerts say is true, not that each one is an attack. One slice of one link and one week at one server; where the cs3 files come from is not known.</li>
+        <li><strong>Speed:</strong> pure Python on one core runs at about a third of a gigabit link's packet rate.</li>
+      </ul>
+
+      <p>I could turn a number down until the backbone slice looked clean, but that would only tune Sentinel to fourteen seconds of one link, so these stay in the README's limits list, where the next person will find them.</p>
+
+      <h2 id="next-steps">Next steps</h2>
+
+      <p>There is no stage 14 planned. What would make this stronger is data with a label for every packet, so that "fires" can become "gets right, this many times". Kitsune has it, and it is 19 GB behind a server that will not hand over a part. If I find a mirror that does, that is the next measurement.</p>
 
     </div>
   </div>
 </article>
 <nav class="post-steps" aria-label="more posts">
-  <a class="post-step post-step--newer" href="sentinel-next-level">
+  <a class="post-step post-step--newer" href="pathfinding-part-1">
       <span class="post-step__dir">&larr; newer</span>
-      <span class="post-step__title">Sentinel part 2: pcapng, tshark comparison, JA3 and Windows capture</span>
+      <span class="post-step__title">Pathfinding part 1: deciding when to break a wall instead of walking around it</span>
     </a>
   <a class="post-step post-step--older" href="impulse-physics-engine">
       <span class="post-step__dir">older &rarr;</span>
