@@ -59,7 +59,7 @@
 <article class="post">
   <header class="post-head">
     <a class="post-head__back roll" href="../blog"><span class="roll__in" data-text="&amp;larr; blog">&larr; blog</span></a>
-    <p class="post-head__meta" data-hero><time datetime="2026-10-05">Oct 2026</time> &nbsp;/&nbsp; 10 min read</p>
+    <p class="post-head__meta" data-hero><time datetime="2026-10-05">Oct 2026</time> &nbsp;/&nbsp; 12 min read</p>
     <h1 class="post-head__title" data-split="lines" data-hero>tls-peek: HTTPS inspection for a single Windows program</h1>
     <p class="post-head__sub" data-hero>Reading what one Windows program says over HTTPS.</p>
   </header>
@@ -72,6 +72,7 @@
         <li><a href="#a-ui-on-the-standard-library">A UI on the standard library</a></li>
         <li><a href="#one-bad-flow-an-empty-list">One bad flow, an empty list</a></li>
         <li><a href="#changing-traffic-on-purpose">Changing traffic on purpose</a></li>
+        <li><a href="#sending-your-own-requests">Sending your own requests</a></li>
         <li><a href="#more-than-headers">More than headers</a></li>
         <li><a href="#live-streams-that-hold-still">Live streams that hold still</a></li>
         <li><a href="#sharing-without-leaking">Sharing without leaking</a></li>
@@ -83,7 +84,7 @@
     <div class="post-body">
 <aside class="brief" aria-label="project summary">
   <p class="brief__summary">A Python tool that decrypts the HTTPS traffic of one chosen Windows program through mitmproxy's local mode, with a per-capture CA that is removed on stop, pass-through for hosts that refuse it, 13 passive security checks, an API map with OpenAPI export, and a single verifiable exe built by CI.</p>
-  <dl class="brief__facts"><div><dt>Role</dt><dd>Solo, personal project</dd></div><div><dt>Stack</dt><dd>Python, mitmproxy, WinDivert, JavaScript (ES modules), GitHub Actions</dd></div><div><dt>Status</dt><dd>Released as a single exe on GitHub (v1.2.1)</dd></div><div><dt>Links</dt><dd><a href="https://github.com/kaan0d/tls-peek" target="_blank" rel="noopener">source</a> · <a href="https://github.com/kaan0d/tls-peek/releases/latest" target="_blank" rel="noopener">download</a></dd></div></dl>
+  <dl class="brief__facts"><div><dt>Role</dt><dd>Solo, personal project</dd></div><div><dt>Stack</dt><dd>Python, mitmproxy, WinDivert, JavaScript (ES modules), GitHub Actions</dd></div><div><dt>Status</dt><dd>Released as a single exe on GitHub (v1.2.2)</dd></div><div><dt>Links</dt><dd><a href="https://github.com/kaan0d/tls-peek" target="_blank" rel="noopener">source</a> · <a href="https://github.com/kaan0d/tls-peek/releases/latest" target="_blank" rel="noopener">download</a></dd></div></dl>
 </aside>
 <p>tls-peek shows the HTTPS requests one Windows desktop program sends: URLs, headers, tokens and bodies, in a local web UI. You pick the program from a list, use it as usual, and its traffic shows up live. It's built on mitmproxy's <code>local</code> mode, which captures traffic through the WinDivert driver instead of a proxy setting, so it also works on programs that ignore the system proxy. That covers a lot of desktop software: Electron apps, game launchers and anything with its own HTTP stack.</p>
 
@@ -144,6 +145,8 @@
 
       <p>Closing the last tab stops the capture after 10 seconds, so nothing keeps decrypting in the background after you've left. A tab that's merely asleep gets a longer grace period. The same rule ends the start page when nothing is running.</p>
 
+      <p>Polling has a side effect that is easy to miss: a list rebuilt every 1.5 seconds also throws away any state its buttons carried. Delete on the start page needs two clicks, and the first one marked the button as armed. The next refresh replaced the button with a fresh one, so the first click often seemed to do nothing. The armed session now lives in page state, and every redraw keeps it armed.</p>
+
       <h2 id="one-bad-flow-an-empty-list">One bad flow, an empty list</h2>
 
       <p>The worst bug after the first release looked like a crash of the whole UI. The page said Disconnected and showed nothing. The cause was one DNS answer: browsers look up HTTPS records, whose answer data is a dict and not a string, and building the row text for it threw an exception. The list endpoint sent every changed flow in one response, so one bad row failed the response and the UI lost everything.</p>
@@ -161,6 +164,14 @@
       <h2 id="changing-traffic-on-purpose">Changing traffic on purpose</h2>
 
       <p>Intercept holds requests or responses that match a URL and method, so you can edit them before the program or the server sees them. It's the most direct tool and also the most disruptive one: the program waits while something is held, and some give up after a timeout. For repeatable changes there are rewrite rules: set or remove a header, find and replace in the URL or body, or answer with a fixed response without contacting the server. "New rule" on any request starts one from its host, path and method, with the captured response already filled in, so mocking a call is one edit.</p>
+
+      <h2 id="sending-your-own-requests">Sending your own requests</h2>
+
+      <p>Edit and resend was the first way to send something yourself, but it always started from a captured request. Version 1.2.2 adds a request composer. You can write a request from scratch, or paste a cURL command copied from a browser's dev tools and have the method, URL, headers and body filled in. Duplicate sends a captured request again unchanged. A request sent this way remembers which request it came from, so Compare with original shows the two side by side, response included.</p>
+
+      <p>Pasted commands come in two dialects. Browsers on Windows offer cURL in bash form and in cmd form, and the cmd form escapes quotes, braces and line ends with <code>^</code>. Bodies with special characters come in bash's <code>$'...'</code> quoting with C escapes. The parser handles both forms and is the one part of the UI with its own Node test, which CI runs on every push.</p>
+
+      <p>Requests worth keeping can be saved to <code>captures\saved-requests.json</code> and sent again later, as they are or after an edit. They keep their tokens and cookies as written, in plain text, like the session files next to them. The Copy menu also gained fetch, HTTPie and the raw request text.</p>
 
       <h2 id="more-than-headers">More than headers</h2>
 
