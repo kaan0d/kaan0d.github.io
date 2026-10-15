@@ -13,4 +13,4 @@ Personal portfolio website of **Kaan Dinç**, published at [kaandinc.com](https:
 - **Generated files are overwritten.** `index.html`, `blog.html`, and everything in `posts/*.html` are produced by the build. Edits made to them directly will be lost.
 - **This is a live personal site.** Nothing here is meant to be forked, deployed, or run as a starting point for another person's site.
 
-Permission requests: kaan.dnc.7505@gmail.com
+Permission requests: me@kaandinc.com

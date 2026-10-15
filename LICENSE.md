@@ -18,4 +18,4 @@ Third-party components bundled in this repository (GSAP, Lenis, Three.js, and
 the Geist fonts) are not covered by this notice. They remain the property of
 their respective authors and are used under their own licenses.
 
-Permission requests: kaan.dnc.7505@gmail.com
+Permission requests: me@kaandinc.com
