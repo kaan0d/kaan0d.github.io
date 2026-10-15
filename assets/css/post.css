@@ -21,6 +21,13 @@
   text-wrap: balance;
 }
 
+/* Standalone pages (privacy, support): centered header, no post metadata. */
+.post--page .post-head { text-align: center; padding-bottom: clamp(32px, 5vw, 56px); }
+.post--page .post-head__title { margin: 0 auto; font-size: clamp(2.2rem, 5vw, 4rem); }
+.post--page .post-head__sub { margin: 20px auto 0; }
+.post--page .post-body ul { margin: 0 0 1.25em; padding-left: 1.2em; }
+.post--page .post-body li { margin-bottom: 0.6em; }
+
 /* ---------- layout ---------- */
 
 .post-layout {

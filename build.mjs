@@ -267,11 +267,10 @@ function loadPages() {
 
 function pageMain(page) {
   return `<div class="progress" aria-hidden="true"><span></span></div>
-<article class="post">
+<article class="post post--page">
   <header class="post-head">
-    <a class="post-head__back roll" href="${'../'.repeat(page.path.split('/').length - 1) || './'}">${roll('&larr; home')}</a>
-    <p class="post-head__meta" data-hero><time datetime="${page.date}">${page.label}</time></p>
     <h1 class="post-head__title" data-split="lines" data-hero>${page.title}</h1>
+    <p class="post-head__sub" data-hero>${page.summary}</p>
   </header>
   <div class="post-layout">
     <div class="post-body">
