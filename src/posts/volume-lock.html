@@ -1,0 +1,74 @@
+---
+title: Volume Lock: per-site volume, boost and equalizer for Chrome
+subtitle: A volume knob that remembers every site.
+summary: A Manifest V3 Chrome extension in TypeScript that saves a volume level per site, applies it before media starts, boosts up to 600% behind a limiter, adds an equalizer and night mode, and shows the tab's real audio on a knob ring. 81 browser tests, no network requests.
+role: Solo, personal project
+stack: TypeScript, Chrome Extensions (Manifest V3), Web Audio API, Vite, Playwright
+status: Open source
+links: source https://github.com/kaan0d/volume-lock
+aliases: volume-extension
+date: 2026-10-15
+label: Oct 2026
+---
+<p>Every site handles volume differently, and half of them fight you if you try to fix it from the OS mixer. Some clamp it, some remember nothing between visits, some route audio through a custom player that ignores the system slider entirely.</p>
+
+      <p>Volume Lock started as Simple Volume Saver, a one-screen slider that saved a level per site. It is now a full extension: a rotary knob in the popup, levels that apply at <code>document_start</code> so there is no loud first second, boost up to 600%, a five-band equalizer, a night mode, autoplay blocking and an options page. Saved levels live in <code>chrome.storage.sync</code> and follow you across signed-in devices. It makes no network requests.</p>
+
+      <div class="stats">
+        <div class="stat"><b>5.1K</b><span>lines of TypeScript, HTML and CSS, tests included</span></div>
+        <div class="stat"><b>81</b><span>Playwright tests against the built extension</span></div>
+        <div class="stat"><b>600%</b><span>highest boost, behind a limiter</span></div>
+        <div class="stat"><b>5</b><span>equalizer bands, 60 Hz to 14 kHz</span></div>
+        <div class="stat"><b>0</b><span>network requests</span></div>
+        <div class="stat"><b>MV3</b><span>a service worker, no persistent background page</span></div>
+      </div>
+
+      <h2>The popup</h2>
+
+      <figure>
+        <img src="img/volume-lock.webp" width="420" height="576" alt="The Volume Lock popup in the dark theme: a rotary knob at 50% with a blue ring, presets 25, 50 and 100, a Boost switch, a Bass boost equalizer preset, a Night button, an Unsave button and two mute buttons." loading="lazy">
+        <figcaption>The popup on a saved wildcard site. Turn the knob, press Save, done.</figcaption>
+      </figure>
+
+      <p>The knob takes drag, the mouse wheel and the keyboard, and Shift gives 1% steps. Three presets cover the common levels, and the ring around the knob shows the tab's live audio. Saving stores the level for the whole domain as a wildcard, so <code>example.com</code> also covers <code>music.example.com</code>. On a saved site the knob keeps the stored level up to date.</p>
+
+      <h2>Which level wins</h2>
+
+      <p>A page can have an exact-URL level, a domain level, a default level or a rule that says never touch it. The order is fixed: an excluded site beats everything, an exact origin beats a wildcard, and a wildcard beats the default.</p>
+
+      <h2>Taking over the page's volume</h2>
+
+      <p>Setting <code>media.volume</code> from an extension is the easy part. Players read it back, write it again and fight you. So a script in the page's own world virtualizes the <code>volume</code> property: the page reads back the value it wrote, while the real level is ours. When the level changes from the extension, the page's own slider moves with it, which is how YouTube's slider follows the knob. It also covers <code>new Audio()</code> elements that never enter the DOM and closed shadow roots.</p>
+
+      <h2>Boost without clipping</h2>
+
+      <p>Above 100% the signal goes through a Web Audio gain node, and a limiter keeps loud peaks from distorting. The nodes in the chain exist and are wired only while they have a job, so a site with no boost and no equalizer is not routed through an audio graph at all. The equalizer, the leveler for night mode and the mono and balance settings use the same chain.</p>
+
+      <p>Plain media can be routed through Web Audio once the page is allowed to start audio. Media the page cannot reach, such as another origin without CORS or protected media, cannot be boosted in the page. For those the extension falls back to <code>chrome.tabCapture</code>, which taps the tab's final output instead. It starts when the popup is opened on that tab.</p>
+
+      <h2>Permissions</h2>
+
+      <div class="table-wrap"><table class="data">
+        <thead><tr><th>permission</th><th>why</th></tr></thead>
+        <tbody>
+          <tr><td class="mono">storage</td><td>Saved levels, rules and settings</td></tr>
+          <tr><td class="mono">tabs</td><td>Reads the active tab's URL, mutes tabs, updates the badge</td></tr>
+          <tr><td class="mono">scripting</td><td>Injects the scripts into tabs that were open at install or update</td></tr>
+          <tr><td class="mono">tabCapture, offscreen</td><td>The level ring and the boost fallback; audio is analyzed in memory and played back</td></tr>
+          <tr><td class="mono">&lt;all_urls&gt;</td><td>Applies a saved level before media starts, on any site</td></tr>
+        </tbody>
+      </table></div>
+
+      <p>The extension has a <a href="../volume-lock/privacy">privacy policy</a> and a <a href="../volume-lock/support">support page</a>, both on this site.</p>
+
+      <h2>Testing</h2>
+
+      <p>81 Playwright tests load the built extension into Chromium and run it against local pages with media: apply at <code>document_start</code>, media added later, detached elements, shadow DOM, iframes, boost, the knob, the options page, the badge, shortcuts, and the capture and offscreen lifecycle. No network access is needed.</p>
+
+      <h2>Limits</h2>
+
+      <p>Cross-origin media without CORS and DRM media can only be boosted after the popup is opened on that tab, and the DRM case has not been verified. Audio contexts created before the extension was injected need a page reload. Nothing works on <code>chrome://</code> pages or the Chrome Web Store.</p>
+
+      <h2>Why it stayed</h2>
+
+      <p>It is the kind of tool I actually reach for every day, which is more than I can say for most of what I've shipped. That is why a one-screen slider grew into this.</p>

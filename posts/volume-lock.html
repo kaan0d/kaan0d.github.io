@@ -1,0 +1,174 @@
+<!doctype html>
+<html lang="en" data-page="post">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Volume Lock: per-site volume, boost and equalizer for Chrome | Kaan Dinç</title>
+<meta name="description" content="A Manifest V3 Chrome extension in TypeScript that saves a volume level per site, applies it before media starts, boosts up to 600% behind a limiter, adds an equalizer and night mode, and shows the tab's real audio on a knob ring. 81 browser tests, no network requests.">
+<meta name="theme-color" content="#0a0a09">
+<link rel="canonical" href="https://kaandinc.com/posts/volume-lock">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Volume Lock: per-site volume, boost and equalizer for Chrome | Kaan Dinç">
+<meta property="og:description" content="A Manifest V3 Chrome extension in TypeScript that saves a volume level per site, applies it before media starts, boosts up to 600% behind a limiter, adds an equalizer and night mode, and shows the tab's real audio on a knob ring. 81 browser tests, no network requests.">
+<meta property="og:url" content="https://kaandinc.com/posts/volume-lock">
+<meta property="og:site_name" content="Kaan Dinç">
+<meta property="og:image" content="https://kaandinc.com/assets/og.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="Kaan Dinç, computer engineer. K logo beside 3D solids in amber on black.">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Volume Lock: per-site volume, boost and equalizer for Chrome | Kaan Dinç">
+<meta name="twitter:description" content="A Manifest V3 Chrome extension in TypeScript that saves a volume level per site, applies it before media starts, boosts up to 600% behind a limiter, adds an equalizer and night mode, and shows the tab's real audio on a knob ring. 81 browser tests, no network requests.">
+<meta name="twitter:image" content="https://kaandinc.com/assets/og.png">
+<link rel="icon" href="../assets/favicon.svg" type="image/svg+xml">
+<link rel="preload" href="../assets/fonts/Geist-Variable.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="stylesheet" href="../assets/css/base.css">
+<link rel="stylesheet" href="../assets/css/post.css">
+<script>
+(function (d) {
+  d.classList.add('js');
+  if (matchMedia('(prefers-reduced-motion: reduce)').matches) d.classList.add('reduce');
+  // Safety net: reveal content if the animation scripts never report ready.
+  setTimeout(function () { if (!d.classList.contains('ready')) d.classList.add('no-anim'); }, 4000);
+})(document.documentElement);
+</script>
+
+</head>
+<body>
+<a class="skip" href="#main">skip to content</a>
+
+<header class="site-header">
+  <div class="site-header__left">
+    <a class="site-header__brand" href="../" aria-label="Kaan Dinç, home"><img src="../assets/favicon.svg" width="32" height="32" alt=""><span>Kaan Dinç</span></a>
+    <a class="btn btn--cv btn--sm" href="https://drive.google.com/file/d/1M5Ri6U8PAwSgwr31EN4JDeT90P7OuCPo/view" target="_blank" rel="noopener"><span>view my cv</span><span class="btn__arrow" aria-hidden="true">&nearr;</span></a>
+  </div>
+  <nav class="site-nav" aria-label="primary">
+    <a class="roll" href="../" data-spy="top"><span class="roll__in" data-text="home">home</span></a>
+    <a class="roll" href="../#about" data-spy="about"><span class="roll__in" data-text="about">about</span></a>
+    <a class="roll" href="../#projects" data-spy="projects"><span class="roll__in" data-text="projects">projects</span></a>
+    <a class="roll" href="../#experience" data-spy="experience"><span class="roll__in" data-text="experience">experience</span></a>
+    <a class="roll" href="../#skills" data-spy="skills"><span class="roll__in" data-text="skills">skills</span></a>
+    <a class="roll" href="../#education" data-spy="education"><span class="roll__in" data-text="education">education</span></a>
+    <a class="roll" href="../#repos" data-spy="repos"><span class="roll__in" data-text="repos">repos</span></a>
+    <a class="roll is-active" href="../blog" aria-current="page"><span class="roll__in" data-text="blog">blog</span></a>
+  </nav>
+</header>
+
+<main id="main">
+<div class="progress" aria-hidden="true"><span></span></div>
+<article class="post">
+  <header class="post-head">
+    <a class="post-head__back roll" href="../blog"><span class="roll__in" data-text="&amp;larr; blog">&larr; blog</span></a>
+    <p class="post-head__meta" data-hero><time datetime="2026-10-15">Oct 2026</time> &nbsp;/&nbsp; 3 min read</p>
+    <h1 class="post-head__title" data-split="lines" data-hero>Volume Lock: per-site volume, boost and equalizer for Chrome</h1>
+    <p class="post-head__sub" data-hero>A volume knob that remembers every site.</p>
+  </header>
+  <div class="post-layout has-toc">
+    <aside class="toc" aria-label="on this page">
+      <ol>
+        <li><a href="#the-popup">The popup</a></li>
+        <li><a href="#which-level-wins">Which level wins</a></li>
+        <li><a href="#taking-over-the-page-s-volume">Taking over the page's volume</a></li>
+        <li><a href="#boost-without-clipping">Boost without clipping</a></li>
+        <li><a href="#permissions">Permissions</a></li>
+        <li><a href="#testing">Testing</a></li>
+        <li><a href="#limits">Limits</a></li>
+        <li><a href="#why-it-stayed">Why it stayed</a></li>
+      </ol>
+    </aside>
+    <div class="post-body">
+<aside class="brief" aria-label="project summary">
+  <p class="brief__summary">A Manifest V3 Chrome extension in TypeScript that saves a volume level per site, applies it before media starts, boosts up to 600% behind a limiter, adds an equalizer and night mode, and shows the tab's real audio on a knob ring. 81 browser tests, no network requests.</p>
+  <dl class="brief__facts"><div><dt>Role</dt><dd>Solo, personal project</dd></div><div><dt>Stack</dt><dd>TypeScript, Chrome Extensions (Manifest V3), Web Audio API, Vite, Playwright</dd></div><div><dt>Status</dt><dd>Open source</dd></div><div><dt>Links</dt><dd><a href="https://github.com/kaan0d/volume-lock" target="_blank" rel="noopener">source</a></dd></div></dl>
+</aside>
+<p>Every site handles volume differently, and half of them fight you if you try to fix it from the OS mixer. Some clamp it, some remember nothing between visits, some route audio through a custom player that ignores the system slider entirely.</p>
+
+      <p>Volume Lock started as Simple Volume Saver, a one-screen slider that saved a level per site. It is now a full extension: a rotary knob in the popup, levels that apply at <code>document_start</code> so there is no loud first second, boost up to 600%, a five-band equalizer, a night mode, autoplay blocking and an options page. Saved levels live in <code>chrome.storage.sync</code> and follow you across signed-in devices. It makes no network requests.</p>
+
+      <div class="stats">
+        <div class="stat"><b>5.1K</b><span>lines of TypeScript, HTML and CSS, tests included</span></div>
+        <div class="stat"><b>81</b><span>Playwright tests against the built extension</span></div>
+        <div class="stat"><b>600%</b><span>highest boost, behind a limiter</span></div>
+        <div class="stat"><b>5</b><span>equalizer bands, 60 Hz to 14 kHz</span></div>
+        <div class="stat"><b>0</b><span>network requests</span></div>
+        <div class="stat"><b>MV3</b><span>a service worker, no persistent background page</span></div>
+      </div>
+
+      <h2 id="the-popup">The popup</h2>
+
+      <figure>
+        <img src="img/volume-lock.webp" width="420" height="576" alt="The Volume Lock popup in the dark theme: a rotary knob at 50% with a blue ring, presets 25, 50 and 100, a Boost switch, a Bass boost equalizer preset, a Night button, an Unsave button and two mute buttons." loading="lazy">
+        <figcaption>The popup on a saved wildcard site. Turn the knob, press Save, done.</figcaption>
+      </figure>
+
+      <p>The knob takes drag, the mouse wheel and the keyboard, and Shift gives 1% steps. Three presets cover the common levels, and the ring around the knob shows the tab's live audio. Saving stores the level for the whole domain as a wildcard, so <code>example.com</code> also covers <code>music.example.com</code>. On a saved site the knob keeps the stored level up to date.</p>
+
+      <h2 id="which-level-wins">Which level wins</h2>
+
+      <p>A page can have an exact-URL level, a domain level, a default level or a rule that says never touch it. The order is fixed: an excluded site beats everything, an exact origin beats a wildcard, and a wildcard beats the default.</p>
+
+      <h2 id="taking-over-the-page-s-volume">Taking over the page's volume</h2>
+
+      <p>Setting <code>media.volume</code> from an extension is the easy part. Players read it back, write it again and fight you. So a script in the page's own world virtualizes the <code>volume</code> property: the page reads back the value it wrote, while the real level is ours. When the level changes from the extension, the page's own slider moves with it, which is how YouTube's slider follows the knob. It also covers <code>new Audio()</code> elements that never enter the DOM and closed shadow roots.</p>
+
+      <h2 id="boost-without-clipping">Boost without clipping</h2>
+
+      <p>Above 100% the signal goes through a Web Audio gain node, and a limiter keeps loud peaks from distorting. The nodes in the chain exist and are wired only while they have a job, so a site with no boost and no equalizer is not routed through an audio graph at all. The equalizer, the leveler for night mode and the mono and balance settings use the same chain.</p>
+
+      <p>Plain media can be routed through Web Audio once the page is allowed to start audio. Media the page cannot reach, such as another origin without CORS or protected media, cannot be boosted in the page. For those the extension falls back to <code>chrome.tabCapture</code>, which taps the tab's final output instead. It starts when the popup is opened on that tab.</p>
+
+      <h2 id="permissions">Permissions</h2>
+
+      <div class="table-wrap"><table class="data">
+        <thead><tr><th>permission</th><th>why</th></tr></thead>
+        <tbody>
+          <tr><td class="mono">storage</td><td>Saved levels, rules and settings</td></tr>
+          <tr><td class="mono">tabs</td><td>Reads the active tab's URL, mutes tabs, updates the badge</td></tr>
+          <tr><td class="mono">scripting</td><td>Injects the scripts into tabs that were open at install or update</td></tr>
+          <tr><td class="mono">tabCapture, offscreen</td><td>The level ring and the boost fallback; audio is analyzed in memory and played back</td></tr>
+          <tr><td class="mono">&lt;all_urls&gt;</td><td>Applies a saved level before media starts, on any site</td></tr>
+        </tbody>
+      </table></div>
+
+      <p>The extension has a <a href="../volume-lock/privacy">privacy policy</a> and a <a href="../volume-lock/support">support page</a>, both on this site.</p>
+
+      <h2 id="testing">Testing</h2>
+
+      <p>81 Playwright tests load the built extension into Chromium and run it against local pages with media: apply at <code>document_start</code>, media added later, detached elements, shadow DOM, iframes, boost, the knob, the options page, the badge, shortcuts, and the capture and offscreen lifecycle. No network access is needed.</p>
+
+      <h2 id="limits">Limits</h2>
+
+      <p>Cross-origin media without CORS and DRM media can only be boosted after the popup is opened on that tab, and the DRM case has not been verified. Audio contexts created before the extension was injected need a page reload. Nothing works on <code>chrome://</code> pages or the Chrome Web Store.</p>
+
+      <h2 id="why-it-stayed">Why it stayed</h2>
+
+      <p>It is the kind of tool I actually reach for every day, which is more than I can say for most of what I've shipped. That is why a one-screen slider grew into this.</p>
+
+    </div>
+  </div>
+</article>
+<nav class="post-steps" aria-label="more posts">
+  <span></span>
+  <a class="post-step post-step--older" href="rafliyo">
+      <span class="post-step__dir">older &rarr;</span>
+      <span class="post-step__title">Raflıyo: a shop app sold by subscription</span>
+    </a>
+</nav>
+</main>
+
+<footer class="site-footer">
+  <span>&copy; 2026 Kaan Dinç. All rights reserved.</span>
+  <span>Çanakkale, Turkey</span>
+  <button class="roll" type="button" data-top><span class="roll__in" data-text="back to top">back to top</span></button>
+</footer>
+
+<button class="scroll-cue is-hidden" type="button" aria-label="scroll down"><span></span></button>
+
+<script defer src="../assets/vendor/gsap.min.js"></script>
+<script defer src="../assets/vendor/ScrollTrigger.min.js"></script>
+<script defer src="../assets/vendor/SplitText.min.js"></script>
+<script defer src="../assets/vendor/lenis.min.js"></script>
+<script defer src="../assets/js/core.js"></script>
+<script defer src="../assets/js/post.js"></script>
+</body>
+</html>
