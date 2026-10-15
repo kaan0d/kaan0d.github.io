@@ -5,8 +5,8 @@ summary: A Manifest V3 Chrome extension in TypeScript that saves a volume level 
 role: Solo, personal project
 stack: TypeScript, Chrome Extensions (Manifest V3), Web Audio API, Vite, Playwright
 status: In use
-date: 2026-10-15
-label: Oct 2026
+date: 2026-09-16
+label: Sep 2026
 ---
 <p>Every site handles volume differently, and half of them fight you if you try to fix it from the OS mixer. Some clamp it, some remember nothing between visits, some route audio through a custom player that ignores the system slider entirely.</p>
 
@@ -24,8 +24,8 @@ label: Oct 2026
       <h2>The popup</h2>
 
       <figure>
-        <img src="img/volume-lock.webp" width="420" height="576" alt="The Volume Lock popup in the dark theme: a rotary knob at 50% with a blue ring, presets 25, 50 and 100, a Boost switch, a Bass boost equalizer preset, a Night button, an Unsave button and two mute buttons." loading="lazy">
-        <figcaption>The popup on a saved wildcard site. Turn the knob, press Save, done.</figcaption>
+        <img src="img/volume-lock.webp" width="1400" height="560" alt="Volume Lock promo: the V dial logo and the tagline Set the volume once, every site remembers it, next to the dark popup with a knob at 50%, presets, a Boost switch, an equalizer preset and mute buttons." loading="lazy">
+        <figcaption>Volume Lock and its popup on a saved wildcard site. Turn the knob, press Save, done.</figcaption>
       </figure>
 
       <p>The knob takes drag, the mouse wheel and the keyboard, and Shift gives 1% steps. Three presets cover the common levels, and the ring around the knob shows the tab's live audio. Saving stores the level for the whole domain as a wildcard, so <code>example.com</code> also covers <code>music.example.com</code>. On a saved site the knob keeps the stored level up to date.</p>
