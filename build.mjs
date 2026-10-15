@@ -256,6 +256,31 @@ ${post.html}
 </nav>`;
 }
 
+// Standalone pages (privacy, support): same frontmatter as posts, no blog index, no contents list.
+function loadPages() {
+  const dir = 'src/pages';
+  return fs.readdirSync(dir).filter((f) => f.endsWith('.html')).map((file) => {
+    const { meta, body } = parseFrontmatter(fs.readFileSync(path.join(dir, file), 'utf8'));
+    return { ...meta, html: body.replace(/<h2>([\s\S]*?)<\/h2>/g, (_, inner) => `<h2 id="${slugify(inner)}">${inner}</h2>`) };
+  });
+}
+
+function pageMain(page) {
+  return `<div class="progress" aria-hidden="true"><span></span></div>
+<article class="post">
+  <header class="post-head">
+    <a class="post-head__back roll" href="${'../'.repeat(page.path.split('/').length - 1) || './'}">${roll('&larr; home')}</a>
+    <p class="post-head__meta" data-hero><time datetime="${page.date}">${page.label}</time></p>
+    <h1 class="post-head__title" data-split="lines" data-hero>${page.title}</h1>
+  </header>
+  <div class="post-layout">
+    <div class="post-body">
+${page.html}
+    </div>
+  </div>
+</article>`;
+}
+
 // ---------- run ----------
 
 for (const [from, to] of Object.entries(VENDOR)) {
@@ -303,6 +328,11 @@ for (const post of posts) {
 <a href="${post.slug}">${post.title}</a>
 `);
   }
+}
+
+for (const page of loadPages()) {
+  write(`${page.path}.html`, shell({ file: `${page.path}.html`, kind: 'post', title: page.title, description: page.summary, main: pageMain(page) }));
+  urls.push(`${SITE}/${page.path}`);
 }
 
 write('sitemap.xml', `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${urls.map((u) => `  <url><loc>${u}</loc></url>`).join('\n')}\n</urlset>\n`);

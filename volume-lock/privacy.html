@@ -1,0 +1,115 @@
+<!doctype html>
+<html lang="en" data-page="post">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Volume Lock privacy policy | Kaan Dinç</title>
+<meta name="description" content="Volume Lock collects nothing, sends nothing and has no servers. This page says what it stores on your device and why it asks for each permission.">
+<meta name="theme-color" content="#0a0a09">
+<link rel="canonical" href="https://kaandinc.com/volume-lock/privacy">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Volume Lock privacy policy | Kaan Dinç">
+<meta property="og:description" content="Volume Lock collects nothing, sends nothing and has no servers. This page says what it stores on your device and why it asks for each permission.">
+<meta property="og:url" content="https://kaandinc.com/volume-lock/privacy">
+<meta property="og:site_name" content="Kaan Dinç">
+<meta property="og:image" content="https://kaandinc.com/assets/og.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="Kaan Dinç, computer engineer. K logo beside 3D solids in amber on black.">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Volume Lock privacy policy | Kaan Dinç">
+<meta name="twitter:description" content="Volume Lock collects nothing, sends nothing and has no servers. This page says what it stores on your device and why it asks for each permission.">
+<meta name="twitter:image" content="https://kaandinc.com/assets/og.png">
+<link rel="icon" href="../assets/favicon.svg" type="image/svg+xml">
+<link rel="preload" href="../assets/fonts/Geist-Variable.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="stylesheet" href="../assets/css/base.css">
+<link rel="stylesheet" href="../assets/css/post.css">
+<script>
+(function (d) {
+  d.classList.add('js');
+  if (matchMedia('(prefers-reduced-motion: reduce)').matches) d.classList.add('reduce');
+  // Safety net: reveal content if the animation scripts never report ready.
+  setTimeout(function () { if (!d.classList.contains('ready')) d.classList.add('no-anim'); }, 4000);
+})(document.documentElement);
+</script>
+
+</head>
+<body>
+<a class="skip" href="#main">skip to content</a>
+
+<header class="site-header">
+  <div class="site-header__left">
+    <a class="site-header__brand" href="../" aria-label="Kaan Dinç, home"><img src="../assets/favicon.svg" width="32" height="32" alt=""><span>Kaan Dinç</span></a>
+    <a class="btn btn--cv btn--sm" href="https://drive.google.com/file/d/1M5Ri6U8PAwSgwr31EN4JDeT90P7OuCPo/view" target="_blank" rel="noopener"><span>view my cv</span><span class="btn__arrow" aria-hidden="true">&nearr;</span></a>
+  </div>
+  <nav class="site-nav" aria-label="primary">
+    <a class="roll" href="../" data-spy="top"><span class="roll__in" data-text="home">home</span></a>
+    <a class="roll" href="../#about" data-spy="about"><span class="roll__in" data-text="about">about</span></a>
+    <a class="roll" href="../#projects" data-spy="projects"><span class="roll__in" data-text="projects">projects</span></a>
+    <a class="roll" href="../#experience" data-spy="experience"><span class="roll__in" data-text="experience">experience</span></a>
+    <a class="roll" href="../#skills" data-spy="skills"><span class="roll__in" data-text="skills">skills</span></a>
+    <a class="roll" href="../#education" data-spy="education"><span class="roll__in" data-text="education">education</span></a>
+    <a class="roll" href="../#repos" data-spy="repos"><span class="roll__in" data-text="repos">repos</span></a>
+    <a class="roll is-active" href="../blog" aria-current="page"><span class="roll__in" data-text="blog">blog</span></a>
+  </nav>
+</header>
+
+<main id="main">
+<div class="progress" aria-hidden="true"><span></span></div>
+<article class="post">
+  <header class="post-head">
+    <a class="post-head__back roll" href="../"><span class="roll__in" data-text="&amp;larr; home">&larr; home</span></a>
+    <p class="post-head__meta" data-hero><time datetime="2026-10-15">Oct 2026</time></p>
+    <h1 class="post-head__title" data-split="lines" data-hero>Volume Lock privacy policy</h1>
+  </header>
+  <div class="post-layout">
+    <div class="post-body">
+<p>Volume Lock is a Chrome extension that sets and remembers the volume of each site. It collects no personal data, runs no servers, has no analytics and makes no network requests.</p>
+
+<h2 id="what-it-stores">What it stores</h2>
+<p>The extension keeps your settings in the browser's own storage: the volume level you saved for each site, your rules (default level, sites to leave alone, sites that block autoplay), the equalizer and sound settings, and the theme. Saved levels and rules use Chrome's sync storage, so they follow your signed-in Google account between your devices. Chrome handles that sync. The developer never receives the data and cannot read it. The theme choice and a one-time first-run hint stay on the device.</p>
+<p>You can export all settings to a file, import them again, or delete everything from the options page.</p>
+
+<h2 id="what-it-does-not-do">What it does not do</h2>
+<p>It does not read, record, store or send the content of the pages you visit, your browsing history, passwords, form data or cookies. It does not sell or share data with anyone, because it has no data to share. Audio shown in the level ring around the knob is analyzed in memory and played back unchanged. It is never recorded or sent anywhere.</p>
+
+<h2 id="why-it-asks-for-each-permission">Why it asks for each permission</h2>
+<p>Each permission is used only for the volume features, and only inside your browser.</p>
+<ul>
+  <li><b>Storage:</b> to keep your saved levels and settings.</li>
+  <li><b>Tabs:</b> to read the address of the active tab so a saved level can be matched to the site, to mute tabs, to find tabs that are playing sound for "mute other tabs", and to show the saved level on the toolbar badge.</li>
+  <li><b>Scripting:</b> to add the extension's scripts to tabs that were already open when it was installed or updated, so their saved levels apply without a reload.</li>
+  <li><b>Tab capture and offscreen documents:</b> to measure and boost audio that page scripts cannot reach (for example another origin without CORS, or protected media) and to draw the live level ring. The audio stays in the browser.</li>
+  <li><b>Access to all sites:</b> the scripts run on pages as they load so that a saved volume applies before media starts. Any site can have a saved level, so the list of sites cannot be fixed in advance. The scripts only change the volume of media elements and Web Audio output.</li>
+</ul>
+
+<h2 id="children">Children</h2>
+<p>The extension collects no data from anyone, including children.</p>
+
+<h2 id="changes">Changes</h2>
+<p>If this policy changes, the new version is published on this page with a new date. The current version is from October 15, 2026.</p>
+
+<h2 id="contact">Contact</h2>
+<p>Questions about this policy: <a href="mailto:kaan.dnc.7505@gmail.com">kaan.dnc.7505@gmail.com</a>. See also <a href="support">support</a>.</p>
+
+    </div>
+  </div>
+</article>
+</main>
+
+<footer class="site-footer">
+  <span>&copy; 2026 Kaan Dinç. All rights reserved.</span>
+  <span>Çanakkale, Turkey</span>
+  <button class="roll" type="button" data-top><span class="roll__in" data-text="back to top">back to top</span></button>
+</footer>
+
+<button class="scroll-cue is-hidden" type="button" aria-label="scroll down"><span></span></button>
+
+<script defer src="../assets/vendor/gsap.min.js"></script>
+<script defer src="../assets/vendor/ScrollTrigger.min.js"></script>
+<script defer src="../assets/vendor/SplitText.min.js"></script>
+<script defer src="../assets/vendor/lenis.min.js"></script>
+<script defer src="../assets/js/core.js"></script>
+<script defer src="../assets/js/post.js"></script>
+</body>
+</html>
