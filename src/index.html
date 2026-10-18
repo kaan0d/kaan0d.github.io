@@ -74,6 +74,38 @@
     <article class="stack-card" style="--i:2">
       <div class="stack-card__inner">
         <div class="stack-card__text">
+          <h3 class="stack-card__title">Volume Lock</h3>
+          <p class="stack-card__kind">Chrome Extension</p>
+          <p class="stack-card__facts">Solo · personal project</p>
+          <p class="stack-card__desc">Manifest V3 extension that sets and remembers the volume of each site. A rotary knob, levels applied before media starts, boost up to 600% behind a limiter, a five-band equalizer, night mode, autoplay blocking and a live level ring from tab capture. It makes no network requests, and 81 Playwright tests run the built extension in Chromium.</p>
+          <ul class="tags"><li>TypeScript</li><li>Web Audio</li><li>Vite</li><li>Playwright</li></ul>
+          <p class="stack-card__links"><a class="roll" href="https://chromewebstore.google.com/detail/volume-lock/hfpdohjhnfgkhnangkecmkhochllhifb" target="_blank" rel="noopener">${ROLL}chrome web store</a><a class="roll" href="posts/volume-lock">${ROLL}write-up</a></p>
+        </div>
+        <div class="stack-card__visual media">
+          <img src="posts/img/volume-lock-card.webp" width="440" height="280" alt="Volume Lock logo, a V dial, with the tagline Your volume, per site." loading="lazy">
+        </div>
+      </div>
+    </article>
+
+    <article class="stack-card" style="--i:3">
+      <div class="stack-card__inner">
+        <div class="stack-card__text">
+          <h3 class="stack-card__title">tls-peek</h3>
+          <p class="stack-card__kind">HTTPS Inspector for Windows</p>
+          <p class="stack-card__facts">Solo · open source · released</p>
+          <p class="stack-card__desc">Shows the HTTPS requests one Windows program sends, in a local web UI. Built on mitmproxy's local mode and the WinDivert driver, so it works on programs that ignore the system proxy, and each capture gets its own CA that is removed on stop; hosts that refuse it pass through so the program keeps working. Adds intercept and rewrite rules, TLS and timing details, 13 passive security checks and an API map with OpenAPI export; CI tests it on Windows and builds a single exe.</p>
+          <ul class="tags"><li>Python</li><li>mitmproxy</li><li>JavaScript</li></ul>
+          <p class="stack-card__links"><a class="roll" href="posts/tls-peek">${ROLL}write-up</a><a class="roll" href="https://github.com/kaan0d/tls-peek" target="_blank" rel="noopener">${ROLL}source</a><a class="roll" href="https://github.com/kaan0d/tls-peek/releases/latest" target="_blank" rel="noopener">${ROLL}download</a></p>
+        </div>
+        <div class="stack-card__visual media">
+          <img src="posts/img/tls-peek-connection.webp" width="1400" height="800" alt="tls-peek capture UI: a list of HTTPS requests and the Connection tab of one request, with a timing bar split into connect, TLS, waiting and download, TLS 1.3 details and the server certificate." loading="lazy">
+        </div>
+      </div>
+    </article>
+
+    <article class="stack-card" style="--i:4">
+      <div class="stack-card__inner">
+        <div class="stack-card__text">
           <h3 class="stack-card__title">Sentinel</h3>
           <p class="stack-card__kind">Packet Analyzer / IDS</p>
           <p class="stack-card__facts">Solo · open source</p>
@@ -86,38 +118,6 @@
           <div class="proof__row"><span class="proof__num">405</span><span class="proof__label">deliberate code mutations, all caught</span></div>
           <div class="proof__row"><span class="proof__num">18M</span><span class="proof__label">fuzzer inputs</span></div>
           <div class="proof__row"><span class="proof__num">0</span><span class="proof__label">unexplained differences against Wireshark's tshark across 68,756 field values</span></div>
-        </div>
-      </div>
-    </article>
-
-    <article class="stack-card" style="--i:3">
-      <div class="stack-card__inner">
-        <div class="stack-card__text">
-          <h3 class="stack-card__title">Impulse</h3>
-          <p class="stack-card__kind">2D Physics Engine</p>
-          <p class="stack-card__facts">Solo · open source · live demo</p>
-          <p class="stack-card__desc">2D rigid body physics engine in TypeScript with no physics libraries: SAT collision for circles, boxes and convex polygons, a warm-started sequential-impulse solver, sleeping, continuous collision and five joint types. A spatial-hash broadphase is about 42× faster than brute force at 4,000 bodies. Verified against analytic references with 171 unit tests and 14 browser tests.</p>
-          <ul class="tags"><li>TypeScript</li><li>Vitest</li><li>Playwright</li></ul>
-          <p class="stack-card__links"><a class="roll" href="https://kaandinc.com/impulse/" target="_blank" rel="noopener">${ROLL}live demo</a><a class="roll" href="posts/impulse-physics-engine">${ROLL}write-up</a><a class="roll" href="https://github.com/kaan0d/impulse" target="_blank" rel="noopener">${ROLL}source</a></p>
-        </div>
-        <div class="stack-card__visual media">
-          <img src="posts/img/impulse-pyramid.png" width="902" height="602" alt="Impulse demo: a ten-row pyramid of boxes with dim amber outlines resting stable on a dark floor." loading="lazy">
-        </div>
-      </div>
-    </article>
-
-    <article class="stack-card" style="--i:4">
-      <div class="stack-card__inner">
-        <div class="stack-card__text">
-          <h3 class="stack-card__title">Environment-Aware Pathfinding</h3>
-          <p class="stack-card__kind">Game AI / Pathfinding</p>
-          <p class="stack-card__facts">Solo · open source · live demo</p>
-          <p class="stack-card__desc">Game AI pathfinding that treats walls as a decision: a planner prices every wall in seconds and picks the target and route by total time, and squads share one plan limited by the attack positions around a wall. A PixiJS demo runs a classic AI and the new planner side by side, with an editor, nine maps and a debug view. On 200 random maps the pick is within 5% of the best plan on 199 or 200 of them, and the time estimate is off by about 1% on average.</p>
-          <ul class="tags"><li>TypeScript</li><li>PixiJS</li><li>Vitest</li></ul>
-          <p class="stack-card__links"><a class="roll" href="https://kaandinc.com/environment-aware-pathfinding/" target="_blank" rel="noopener">${ROLL}live demo</a><a class="roll" href="posts/pathfinding">${ROLL}write-up</a><a class="roll" href="https://github.com/kaan0d/environment-aware-pathfinding" target="_blank" rel="noopener">${ROLL}source</a></p>
-        </div>
-        <div class="stack-card__visual media">
-          <img src="posts/img/pathfinding-castle.png" width="1400" height="800" alt="Two panels of the pathfinding demo on a castle map: the right panel has broken a weak gate in the wall ring and its units are inside, the left panel is still hitting a strong wall." loading="lazy">
         </div>
       </div>
     </article>
@@ -141,15 +141,15 @@
     <article class="stack-card" style="--i:6">
       <div class="stack-card__inner">
         <div class="stack-card__text">
-          <h3 class="stack-card__title">Volume Lock</h3>
-          <p class="stack-card__kind">Chrome Extension</p>
-          <p class="stack-card__facts">Solo · personal project</p>
-          <p class="stack-card__desc">Manifest V3 extension that sets and remembers the volume of each site. A rotary knob, levels applied before media starts, boost up to 600% behind a limiter, a five-band equalizer, night mode, autoplay blocking and a live level ring from tab capture. It makes no network requests, and 81 Playwright tests run the built extension in Chromium.</p>
-          <ul class="tags"><li>TypeScript</li><li>Web Audio</li><li>Vite</li><li>Playwright</li></ul>
-          <p class="stack-card__links"><a class="roll" href="posts/volume-lock">${ROLL}write-up</a></p>
+          <h3 class="stack-card__title">Environment-Aware Pathfinding</h3>
+          <p class="stack-card__kind">Game AI / Pathfinding</p>
+          <p class="stack-card__facts">Solo · open source · live demo</p>
+          <p class="stack-card__desc">Game AI pathfinding that treats walls as a decision: a planner prices every wall in seconds and picks the target and route by total time, and squads share one plan limited by the attack positions around a wall. A PixiJS demo runs a classic AI and the new planner side by side, with an editor, nine maps and a debug view. On 200 random maps the pick is within 5% of the best plan on 199 or 200 of them, and the time estimate is off by about 1% on average.</p>
+          <ul class="tags"><li>TypeScript</li><li>PixiJS</li><li>Vitest</li></ul>
+          <p class="stack-card__links"><a class="roll" href="https://kaandinc.com/environment-aware-pathfinding/" target="_blank" rel="noopener">${ROLL}live demo</a><a class="roll" href="posts/pathfinding">${ROLL}write-up</a><a class="roll" href="https://github.com/kaan0d/environment-aware-pathfinding" target="_blank" rel="noopener">${ROLL}source</a></p>
         </div>
         <div class="stack-card__visual media">
-          <img src="posts/img/volume-lock-card.webp" width="440" height="280" alt="Volume Lock logo, a V dial, with the tagline Your volume, per site." loading="lazy">
+          <img src="posts/img/pathfinding-castle.png" width="1400" height="800" alt="Two panels of the pathfinding demo on a castle map: the right panel has broken a weak gate in the wall ring and its units are inside, the left panel is still hitting a strong wall." loading="lazy">
         </div>
       </div>
     </article>
@@ -157,15 +157,15 @@
     <article class="stack-card" style="--i:7">
       <div class="stack-card__inner">
         <div class="stack-card__text">
-          <h3 class="stack-card__title">Country Quiz</h3>
-          <p class="stack-card__kind">World Map Game</p>
-          <p class="stack-card__facts">Solo · open source · live</p>
-          <p class="stack-card__desc">World map quiz in Turkish and English with six modes, from finding a country by its flag to clicking any of its neighbours. A wrong pick shows how many km it was off and in which direction. Borders for 158 countries are worked out from the map's shared edges, and a date-seeded daily challenge gives everyone the same ten countries. A static export with no backend; the game rules are a unit-tested reducer.</p>
-          <ul class="tags"><li>TypeScript</li><li>Next.js</li><li>react-simple-maps</li></ul>
-          <p class="stack-card__links"><a class="roll" href="https://kaandinc.com/country-quiz/" target="_blank" rel="noopener">${ROLL}live app</a><a class="roll" href="posts/country-quiz">${ROLL}write-up</a><a class="roll" href="https://github.com/kaan0d/country-quiz" target="_blank" rel="noopener">${ROLL}source</a></p>
+          <h3 class="stack-card__title">Impulse</h3>
+          <p class="stack-card__kind">2D Physics Engine</p>
+          <p class="stack-card__facts">Solo · open source · live demo</p>
+          <p class="stack-card__desc">2D rigid body physics engine in TypeScript with no physics libraries: SAT collision for circles, boxes and convex polygons, a warm-started sequential-impulse solver, sleeping, continuous collision and five joint types. A spatial-hash broadphase is about 42× faster than brute force at 4,000 bodies. Verified against analytic references with 171 unit tests and 14 browser tests.</p>
+          <ul class="tags"><li>TypeScript</li><li>Vitest</li><li>Playwright</li></ul>
+          <p class="stack-card__links"><a class="roll" href="https://kaandinc.com/impulse/" target="_blank" rel="noopener">${ROLL}live demo</a><a class="roll" href="posts/impulse-physics-engine">${ROLL}write-up</a><a class="roll" href="https://github.com/kaan0d/impulse" target="_blank" rel="noopener">${ROLL}source</a></p>
         </div>
         <div class="stack-card__visual media">
-          <img src="posts/img/country-quiz-game.webp" width="1400" height="800" alt="Country quiz mid-game: Vietnam is asked, most of the world is green, Thailand is red after a wrong click and the strip reads 762 km with an arrow pointing right." loading="lazy">
+          <img src="posts/img/impulse-pyramid.png" width="902" height="602" alt="Impulse demo: a ten-row pyramid of boxes with dim amber outlines resting stable on a dark floor." loading="lazy">
         </div>
       </div>
     </article>
@@ -189,58 +189,19 @@
     <article class="stack-card" style="--i:9">
       <div class="stack-card__inner">
         <div class="stack-card__text">
-          <h3 class="stack-card__title">tls-peek</h3>
-          <p class="stack-card__kind">HTTPS Inspector for Windows</p>
-          <p class="stack-card__facts">Solo · open source · released</p>
-          <p class="stack-card__desc">Shows the HTTPS requests one Windows program sends, in a local web UI. Built on mitmproxy's local mode and the WinDivert driver, so it works on programs that ignore the system proxy, and each capture gets its own CA that is removed on stop; hosts that refuse it pass through so the program keeps working. Adds intercept and rewrite rules, TLS and timing details, 13 passive security checks and an API map with OpenAPI export; CI tests it on Windows and builds a single exe.</p>
-          <ul class="tags"><li>Python</li><li>mitmproxy</li><li>JavaScript</li></ul>
-          <p class="stack-card__links"><a class="roll" href="posts/tls-peek">${ROLL}write-up</a><a class="roll" href="https://github.com/kaan0d/tls-peek" target="_blank" rel="noopener">${ROLL}source</a><a class="roll" href="https://github.com/kaan0d/tls-peek/releases/latest" target="_blank" rel="noopener">${ROLL}download</a></p>
+          <h3 class="stack-card__title">Country Quiz</h3>
+          <p class="stack-card__kind">World Map Game</p>
+          <p class="stack-card__facts">Solo · open source · live</p>
+          <p class="stack-card__desc">World map quiz in Turkish and English with six modes, from finding a country by its flag to clicking any of its neighbours. A wrong pick shows how many km it was off and in which direction. Borders for 158 countries are worked out from the map's shared edges, and a date-seeded daily challenge gives everyone the same ten countries. A static export with no backend; the game rules are a unit-tested reducer.</p>
+          <ul class="tags"><li>TypeScript</li><li>Next.js</li><li>react-simple-maps</li></ul>
+          <p class="stack-card__links"><a class="roll" href="https://kaandinc.com/country-quiz/" target="_blank" rel="noopener">${ROLL}live app</a><a class="roll" href="posts/country-quiz">${ROLL}write-up</a><a class="roll" href="https://github.com/kaan0d/country-quiz" target="_blank" rel="noopener">${ROLL}source</a></p>
         </div>
         <div class="stack-card__visual media">
-          <img src="posts/img/tls-peek-connection.webp" width="1400" height="800" alt="tls-peek capture UI: a list of HTTPS requests and the Connection tab of one request, with a timing bar split into connect, TLS, waiting and download, TLS 1.3 details and the server certificate." loading="lazy">
-        </div>
-      </div>
-    </article>
-
-    <article class="stack-card" style="--i:10">
-      <div class="stack-card__inner">
-        <div class="stack-card__text">
-          <h3 class="stack-card__title">Invoice Application</h3>
-          <p class="stack-card__kind">Desktop app for a retail business</p>
-          <p class="stack-card__facts">Solo · client project</p>
-          <p class="stack-card__desc">Desktop receipt app for a retail shop. It fills PDF templates that grow to fit any number of items, tracks paid, partial and unpaid receipts, and spends a receipt number only after the PDF is saved. It handles Turkish casing, amounts in words and Decimal arithmetic, and ships as a folder with an exe, so the shop installs nothing.</p>
-          <ul class="tags"><li>Python</li><li>customtkinter</li><li>PyMuPDF</li><li>SQLite</li></ul>
-          <p class="stack-card__links"><a class="roll" href="posts/retail-desktop-apps">${ROLL}write-up</a></p>
-        </div>
-        <div class="stack-card__visual media">
-          <img src="posts/img/receipt-new.webp" width="1489" height="830" alt="Invoice app screen for creating a receipt: customer fields, line items, and a save-as-PDF button." loading="lazy">
+          <img src="posts/img/country-quiz-game.webp" width="1400" height="800" alt="Country quiz mid-game: Vietnam is asked, most of the world is green, Thailand is red after a wrong click and the strip reads 762 km with an arrow pointing right." loading="lazy">
         </div>
       </div>
     </article>
   </div>
-
-  <ul class="more">
-    <li class="more__item" data-fade>
-      <h3 class="more__name">Business Management App</h3>
-      <p class="more__desc">Desktop application for a retail business handling inventory, point-of-sale (cash and credit), customer accounts and payments, daily earnings and expenses, and PDF customer statements. Layered architecture separating data, business logic and UI, with automatic backups on startup.</p>
-      <p class="more__meta">Python, SQLite · <a href="posts/retail-desktop-apps">write-up</a></p>
-    </li>
-    <li class="more__item" data-fade>
-      <h3 class="more__name">Product Catalog and Admin Panel</h3>
-      <p class="more__desc">Price-and-stock catalog for an electrical shop where every product opens a pre-written WhatsApp message instead of a cart, with a custom admin panel for products, discounts, homepage content and site settings. Built with TanStack Start, Tailwind CSS and Zod on Cloudflare Workers, D1 and R2.</p>
-      <p class="more__meta">TypeScript, React, Cloudflare · <a href="posts/ecommerce-admin-panel">write-up</a></p>
-    </li>
-    <li class="more__item" data-fade>
-      <h3 class="more__name">Real-Time CV Automation Tool</h3>
-      <p class="more__desc">Built to automate in-game minigames: two Python tools that capture a screen region at 60 fps, find a marker or read arrows and progress lines with OpenCV, and press keys through a hysteresis controller. Thresholds reload while the tool runs, and regions are picked once in a Tkinter selector.</p>
-      <p class="more__meta">Python, OpenCV · <a href="posts/screen-region-detection">write-up</a></p>
-    </li>
-    <li class="more__item" data-fade>
-      <h3 class="more__name">Illusa (VR Game)</h3>
-      <p class="more__desc">Gameplay programmer and level designer on a VR headset game: built the physics and movement behind its flight mechanics and custom gameplay systems from scratch.</p>
-      <p class="more__meta">Gameplay and level design</p>
-    </li>
-  </ul>
 </section>
 
 <section class="section experience" id="experience">
@@ -383,6 +344,11 @@
       <div class="repos__intro">
         <h2 class="section-title" data-split="lines">repos</h2>
       </div>
+      <a class="repo-card" href="https://github.com/kaan0d/volume-lock" target="_blank" rel="noopener">
+        <h3 class="repo-card__name">volume-lock</h3>
+        <p class="repo-card__desc">Chrome extension that saves a volume level per site and applies it before media starts. A rotary knob, boost up to 600% behind a limiter, a five-band equalizer, night mode and autoplay blocking, with no network requests and 81 Playwright tests.</p>
+        <p class="repo-card__meta">TypeScript</p>
+      </a>
       <a class="repo-card" href="https://github.com/kaan0d/sentinel" target="_blank" rel="noopener">
         <h3 class="repo-card__name">sentinel</h3>
         <p class="repo-card__desc">Packet analyzer and rule-based IDS in pure Python with no runtime dependencies. Hand-written protocol parsers, PCAP I/O, TCP stream reassembly, and detection of port scans, SYN floods, ARP spoofing, and DNS tunneling, with live capture on Linux and Windows.</p>
