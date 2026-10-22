@@ -1,0 +1,200 @@
+<!doctype html>
+<html lang="en" data-page="post">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Tessera: a free file converter in the Windows right-click menu | Kaan Dinç</title>
+<meta name="description" content="A free, open-source Windows converter in Rust and Tauri 2 that lives in the Explorer right-click menu. Images, audio, video and PDF, size targets like &quot;under 10 MB&quot;, presets, a command line, and one exe that is its own installer. No account, no ads, no telemetry, no admin rights.">
+<meta name="theme-color" content="#0a0a09">
+<link rel="canonical" href="https://kaandinc.com/posts/tessera">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Tessera: a free file converter in the Windows right-click menu | Kaan Dinç">
+<meta property="og:description" content="A free, open-source Windows converter in Rust and Tauri 2 that lives in the Explorer right-click menu. Images, audio, video and PDF, size targets like &quot;under 10 MB&quot;, presets, a command line, and one exe that is its own installer. No account, no ads, no telemetry, no admin rights.">
+<meta property="og:url" content="https://kaandinc.com/posts/tessera">
+<meta property="og:site_name" content="Kaan Dinç">
+<meta property="og:image" content="https://kaandinc.com/assets/og.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="Kaan Dinç, computer engineer. K logo beside 3D solids in amber on black.">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Tessera: a free file converter in the Windows right-click menu | Kaan Dinç">
+<meta name="twitter:description" content="A free, open-source Windows converter in Rust and Tauri 2 that lives in the Explorer right-click menu. Images, audio, video and PDF, size targets like &quot;under 10 MB&quot;, presets, a command line, and one exe that is its own installer. No account, no ads, no telemetry, no admin rights.">
+<meta name="twitter:image" content="https://kaandinc.com/assets/og.png">
+<link rel="icon" href="../assets/favicon.svg" type="image/svg+xml">
+<link rel="preload" href="../assets/fonts/Geist-Variable.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="stylesheet" href="../assets/css/base.css">
+<link rel="stylesheet" href="../assets/css/post.css">
+<script>
+(function (d) {
+  d.classList.add('js');
+  if (matchMedia('(prefers-reduced-motion: reduce)').matches) d.classList.add('reduce');
+  // Safety net: reveal content if the animation scripts never report ready.
+  setTimeout(function () { if (!d.classList.contains('ready')) d.classList.add('no-anim'); }, 4000);
+})(document.documentElement);
+</script>
+
+</head>
+<body>
+<a class="skip" href="#main">skip to content</a>
+
+<header class="site-header">
+  <div class="site-header__left">
+    <a class="site-header__brand" href="../" aria-label="Kaan Dinç, home"><img src="../assets/favicon.svg" width="32" height="32" alt=""><span>Kaan Dinç</span></a>
+    <a class="btn btn--cv btn--sm" href="https://drive.google.com/file/d/1M5Ri6U8PAwSgwr31EN4JDeT90P7OuCPo/view" target="_blank" rel="noopener"><span>view my cv</span><span class="btn__arrow" aria-hidden="true">&nearr;</span></a>
+  </div>
+  <nav class="site-nav" aria-label="primary">
+    <a class="roll" href="../" data-spy="top"><span class="roll__in" data-text="home">home</span></a>
+    <a class="roll" href="../#about" data-spy="about"><span class="roll__in" data-text="about">about</span></a>
+    <a class="roll" href="../#projects" data-spy="projects"><span class="roll__in" data-text="projects">projects</span></a>
+    <a class="roll" href="../#experience" data-spy="experience"><span class="roll__in" data-text="experience">experience</span></a>
+    <a class="roll" href="../#skills" data-spy="skills"><span class="roll__in" data-text="skills">skills</span></a>
+    <a class="roll" href="../#education" data-spy="education"><span class="roll__in" data-text="education">education</span></a>
+    <a class="roll" href="../#repos" data-spy="repos"><span class="roll__in" data-text="repos">repos</span></a>
+    <a class="roll is-active" href="../blog" aria-current="page"><span class="roll__in" data-text="blog">blog</span></a>
+  </nav>
+</header>
+
+<main id="main">
+<div class="progress" aria-hidden="true"><span></span></div>
+<article class="post">
+  <header class="post-head">
+    <a class="post-head__back roll" href="../blog"><span class="roll__in" data-text="&amp;larr; blog">&larr; blog</span></a>
+    <p class="post-head__meta" data-hero><time datetime="2026-10-22">Oct 2026</time> &nbsp;/&nbsp; 4 min read</p>
+    <h1 class="post-head__title" data-split="lines" data-hero>Tessera: a free file converter in the Windows right-click menu</h1>
+    <p class="post-head__sub" data-hero>Right-click, pick a format, done.</p>
+  </header>
+  <div class="post-layout has-toc">
+    <aside class="toc" aria-label="on this page">
+      <ol>
+        <li><a href="#the-menu">The menu</a></li>
+        <li><a href="#converting">Converting</a></li>
+        <li><a href="#results-that-never-grow">Results that never grow</a></li>
+        <li><a href="#presets-and-the-chooser">Presets and the chooser</a></li>
+        <li><a href="#one-exe-is-the-installer">One exe is the installer</a></li>
+        <li><a href="#the-interface">The interface</a></li>
+        <li><a href="#the-command-line">The command line</a></li>
+        <li><a href="#testing">Testing</a></li>
+        <li><a href="#limits">Limits</a></li>
+        <li><a href="#why-i-built-it">Why I built it</a></li>
+      </ol>
+    </aside>
+    <div class="post-body">
+<aside class="brief" aria-label="project summary">
+  <p class="brief__summary">A free, open-source Windows converter in Rust and Tauri 2 that lives in the Explorer right-click menu. Images, audio, video and PDF, size targets like "under 10 MB", presets, a command line, and one exe that is its own installer. No account, no ads, no telemetry, no admin rights.</p>
+  <dl class="brief__facts"><div><dt>Role</dt><dd>Solo, personal project</dd></div><div><dt>Stack</dt><dd>Rust, Tauri 2, JavaScript, ffmpeg (optional), Windows shell and registry</dd></div><div><dt>Status</dt><dd>In use</dd></div><div><dt>Links</dt><dd><a href="https://github.com/kaan0d/Tessera" target="_blank" rel="noopener">source</a></dd></div></dl>
+</aside>
+<p>Converting a file should take as long as renaming it. In practice it means searching for a converter, skipping the ads, uploading a private photo to a stranger's server, or installing a suite that wants an account. Tessera is the version I wanted: you right-click the file, pick a format, and the result appears next to it. It is free, open source, and nothing leaves the computer.</p>
+
+      <p>It handles photos, audio, video and PDFs, and it is built around the things people actually ask for: "make this smaller for email", "turn this iPhone photo into a JPG", "cut the first minute off this recording". The whole app is one 22 MB exe.</p>
+
+      <figure>
+        <img src="img/tessera.webp" width="1400" height="700" alt="Tessera promo: the arch logo, the tagline Right-click any file, pick a format, done, three pills reading 100% free, modern interface and open source, next to the settings window, the chooser and the progress panel." loading="lazy">
+        <figcaption>Tessera: free, with a modern interface, in the right-click menu.</figcaption>
+      </figure>
+
+      <div class="stats">
+        <div class="stat"><b>20.6K</b><span>lines of Rust, JavaScript, CSS and HTML</span></div>
+        <div class="stat"><b>19</b><span>formats it can write, from PNG to MKV</span></div>
+        <div class="stat"><b>230</b><span>automated tests</span></div>
+        <div class="stat"><b>22 MB</b><span>one exe, which is also the installer</span></div>
+        <div class="stat"><b>2</b><span>languages, English and Turkish, light and dark</span></div>
+        <div class="stat"><b>0</b><span>accounts, ads or telemetry events</span></div>
+      </div>
+
+      <h2 id="the-menu">The menu</h2>
+
+      <p>Tessera adds a cascading menu to Explorer for each file type and for folders. It is not a shell extension DLL, which is the usual way to crash Explorer. It is plain registry verbs under the current user, each one a command line that starts the exe with the file path. That keeps it small, needs no administrator rights and makes uninstalling exact: delete the keys and nothing is left.</p>
+
+      <p>Every verb has an icon, drawn per kind of file, and the labels follow the Windows language. Choosing a verb starts a small progress panel in the corner of the screen. It lists each file with its own progress, and a finished row has Undo and Open folder buttons.</p>
+
+      <h2 id="converting">Converting</h2>
+
+      <p>Images, audio and PDFs are converted in pure Rust, so a fresh install already handles them. Video, MP3, OGG, AAC and HEIC go through ffmpeg, which the installer can download as one pinned LGPL build and check against a SHA-256. Nothing else is downloaded, apart from an update check that is off until you turn it on.</p>
+
+      <p>The part that took the most care is size targets. "Under 10 MB" is not a quality setting, so for images the encoder searches for the best quality that fits and then shrinks the picture in steps if even the lowest quality is too big. For video and audio it works out the bitrate from the clip length and the byte budget. Targets that would make the result useless, such as 1 KB for a photo, fail with a message instead of producing a thumbnail.</p>
+
+      <h2 id="results-that-never-grow">Results that never grow</h2>
+
+      <p>A converter that makes a file bigger when you asked for smaller is worse than none. Three rules came out of testing:</p>
+
+      <ul>
+        <li>A JPEG that only has to lose its metadata is copied without a second lossy pass, so stripping location data does not change the picture or the size.</li>
+        <li>A video that is re-encoded never gets more bits than its source had, so a small clip stays small.</li>
+        <li>A file that already fits the size limit and keeps its format is copied as it is. PDF pages built from lossless images use PNG row prediction, which brings them back to roughly PNG size.</li>
+      </ul>
+
+      <h2 id="presets-and-the-chooser">Presets and the chooser</h2>
+
+      <figure>
+        <img src="img/tessera-chooser.webp" width="700" height="904" alt="The Tessera chooser for one photo: format buttons for PNG, JPG, WEBP, GIF, AVIF and PDF, then presets such as Shrink for web and For WhatsApp with their exact settings written out." loading="lazy">
+        <figcaption>The chooser. Every preset says exactly what it will do.</figcaption>
+      </figure>
+
+      <p>There are ten built-in presets (web, WhatsApp, email under 10 MB, Discord, strip location data, PDF, WebP, icon, Instagram and a mono podcast MP3) and any custom setting can be saved as a new one. The icon preset writes a real favicon with 16, 32, 48 and 256 pixel entries. Files can also be dropped on the window, folders get their own menu, and watch folders convert whatever lands in them by a rule.</p>
+
+      <h2 id="one-exe-is-the-installer">One exe is the installer</h2>
+
+      <p>I did not want a setup wizard, so the release exe opens its own installer when it is run from anywhere but its installed folder. It copies itself, registers the menu, adds a Start menu shortcut and an uninstall entry, and downloads ffmpeg with a live percentage. Updating is the same window, and it notices that ffmpeg is already there. Uninstalling opens the same window again and removes everything, including settings if you ask for it.</p>
+
+      <figure>
+        <img src="img/tessera-installer.webp" width="1400" height="1015" alt="The Tessera installer window: an arch built of stones on the left, and on the right the install folder, three checkboxes and an Install button." loading="lazy">
+        <figcaption>The installer. The arch fills as the install runs.</figcaption>
+      </figure>
+
+      <p>The logo is a Roman arch, a tessera being one of the stones of a mosaic, and the keystone is the coral one. It reappears as the progress meter: each stone fills as its share of the work is done and the keystone goes in last.</p>
+
+      <h2 id="the-interface">The interface</h2>
+
+      <figure>
+        <img src="img/tessera-settings.webp" width="1400" height="1089" alt="The Tessera settings window in the dark theme, on the Formats tab: profile cards, and chips for the formats the right-click menu offers." loading="lazy">
+        <figcaption>Settings: choose what the right-click menu offers.</figcaption>
+      </figure>
+
+      <p>The windows are frameless with their own title controls, and the whole app uses one set of colors in dark and light. The front end is plain HTML, CSS and JavaScript with no framework and no bundler, hosted by Tauri and the WebView2 that Windows already has. That is why the exe stays small. The accessibility checker finds no violations on any window, and nothing in the UI is smaller than 12 pixels.</p>
+
+      <h2 id="the-command-line">The command line</h2>
+
+      <p>Everything the menu does is also a command: <code>tessera-cli convert clip.mov --to mp4 --max-size 8MB</code>, presets, merging images into one PDF, folders, patterns, <code>--dry-run</code> and <code>--json</code>. A GUI exe has no console, so the installer writes a second file, <code>tessera-cli.exe</code>, which is a copy of the first with one flag in its PE header changed from GUI to console. PowerShell then waits for it and sees the exit code.</p>
+
+      <h2 id="testing">Testing</h2>
+
+      <p>Around 230 tests cover the converters (round trips between every image format, size targets, cuts, merges), the registry code, the installer's PATH handling and the command-line parser. A browser test suite drives the real UI files with a mocked backend.</p>
+
+      <p>Late in the project I had fifty AI personas try it, among them a grandmother, a blind keyboard user, an IT administrator and a security researcher. They could read the README, look at screenshots of every window and run the command line on sample files. Some of what they reported came from demo data in the screenshots, and I checked each claim before changing anything. The real findings were useful: presets that made files bigger, a dry run that showed the wrong output name, and error messages that did not say what to do next. All of them are fixed.</p>
+
+      <h2 id="limits">Limits</h2>
+
+      <p>Windows 11 puts classic menus under "Show more options", so Tessera lives there. The exe is not code-signed yet, so SmartScreen asks once. RAW files use their embedded JPEG preview rather than a full demosaic, and a full-screen exclusive game hides the progress panel.</p>
+
+      <h2 id="why-i-built-it">Why I built it</h2>
+
+      <p>I convert files all the time and kept hitting the same wall of ads and upsells for something a computer does in a second. A converter should be a menu entry, not a business model. So this one is free, small and quiet, and the code is open.</p>
+
+    </div>
+  </div>
+</article>
+<nav class="post-steps" aria-label="more posts">
+  <span></span>
+  <a class="post-step post-step--older" href="rafliyo">
+      <span class="post-step__dir">older &rarr;</span>
+      <span class="post-step__title">Raflıyo: a shop app sold by subscription</span>
+    </a>
+</nav>
+</main>
+
+<footer class="site-footer">
+  <span>&copy; 2026 Kaan Dinç. All rights reserved.</span>
+  <span>Çanakkale, Turkey</span>
+  <button class="roll" type="button" data-top><span class="roll__in" data-text="back to top">back to top</span></button>
+</footer>
+
+<button class="scroll-cue is-hidden" type="button" aria-label="scroll down"><span></span></button>
+
+<script defer src="../assets/vendor/gsap.min.js"></script>
+<script defer src="../assets/vendor/ScrollTrigger.min.js"></script>
+<script defer src="../assets/vendor/SplitText.min.js"></script>
+<script defer src="../assets/vendor/lenis.min.js"></script>
+<script defer src="../assets/js/core.js"></script>
+<script defer src="../assets/js/post.js"></script>
+</body>
+</html>
