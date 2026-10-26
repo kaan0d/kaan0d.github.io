@@ -224,3 +224,8 @@ main > section { background: transparent; }
   text-shadow: 0 0 12px oklch(0.12 0.01 255), 0 0 26px oklch(0.12 0.01 255 / 0.8);
 }
 .film__desc, .entry__list, .edu__note { color: oklch(0.8 0.012 255); }
+
+/* the shadows must not push the page wider than the screen */
+@media (max-width: 899px) {
+  .film__text::before, .entry__main::before, .edu__row > div::before, .about__line::before, .skills__line::before { inset: -26px -14px; }
+}
