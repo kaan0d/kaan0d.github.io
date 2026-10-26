@@ -156,8 +156,8 @@
 
   // Top-of-page content: header, then each [data-hero] element in document order.
   function intro() {
-    // On the home page the headline waits until the eye has opened.
-    const wait = root.dataset.page === 'home' ? 1.1 : 0;
+    // On the home page the headline waits a beat for the background to fade in.
+    const wait = root.dataset.page === 'home' ? 0.4 : 0;
     gsap.from($$('.site-header > *'), { opacity: 0, y: -14, duration: 1, stagger: 0.08, ease: 'expo.out' });
     $$('[data-hero]').forEach((el, i) => {
       if (el.hasAttribute('data-split')) {
