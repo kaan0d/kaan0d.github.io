@@ -92,6 +92,11 @@
       if (img) {
         gsap.fromTo(img, { scale: 1.3 }, { scale: 1, duration: 1.8, ease: 'expo.out', scrollTrigger: { trigger: frame, start: 'top 85%', once: true } });
       }
+      frame.addEventListener('pointermove', (e) => {
+        const r = frame.getBoundingClientRect();
+        frame.style.setProperty('--mx', `${e.clientX - r.left}px`);
+        frame.style.setProperty('--my', `${e.clientY - r.top}px`);
+      }, { passive: true });
     });
   }
 
