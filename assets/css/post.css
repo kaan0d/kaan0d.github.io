@@ -146,7 +146,6 @@ table.data.roomy td.num.dim { font-family: var(--font-sans); font-size: 0.88rem;
 .diagram .hotT { font-family: var(--font-mono); font-size: 11px; fill: var(--accent); }
 .diagram .arrow { stroke: var(--accent-dim); stroke-width: 1.5; fill: none; }
 .diagram .head { fill: var(--accent-dim); }
-.diagram .axis { stroke: var(--text-dim); stroke-width: 1; }
 .diagram .dash { stroke: var(--text-dim); stroke-width: 1; stroke-dasharray: 4 3; }
 .diagram .hotLine { stroke: var(--accent); stroke-width: 1.5; }
 
@@ -167,27 +166,12 @@ table.data.roomy td.num.dim { font-family: var(--font-sans); font-size: 0.88rem;
 .chart .dot-hash { fill: var(--accent); }
 .chart .key-line-brute { stroke: #b9b5ad; stroke-width: 2; }
 .chart .key-line-hash { stroke: var(--accent); stroke-width: 2; }
-.chart .key-line-dash { stroke: var(--text-dim); stroke-width: 2; stroke-dasharray: 4 3; }
-.chart .dash-brute { fill: none; stroke: #b9b5ad; stroke-width: 2; stroke-dasharray: 5 4; }
-.chart .dash-hash { fill: none; stroke: var(--accent); stroke-width: 2; stroke-dasharray: 5 4; }
-.chart .tickmark { stroke: #b9b5ad; stroke-width: 1.5; opacity: 0.45; }
-.chart .tickmark.hot { stroke: var(--accent); }
-.chart .tickmark.alarm { stroke: #e0e0e0; }
 .chart .box { fill: rgba(255, 255, 255, 0.03); stroke: var(--line); stroke-width: 1.5; }
 .chart .box.hot { stroke: var(--accent); }
 .chart .arrow { fill: none; stroke: var(--text-dim); stroke-width: 1.5; }
 .chart .head { fill: var(--text-dim); }
-.chart text.nt { fill: var(--text); font-family: var(--font-mono); font-size: 12.5px; text-anchor: middle; }
-.chart text.nt.hotlabel { fill: var(--accent); }
-.chart text.nd { fill: var(--text-dim); font-family: var(--font-mono); font-size: 10.5px; text-anchor: middle; }
-.chart .hollow { fill: none; stroke: #b9b5ad; stroke-width: 2; }
-.chart .stem { stroke: #b9b5ad; stroke-width: 1.5; opacity: 0.5; }
-.chart .stem.hot { stroke: var(--accent); opacity: 0.7; }
-.chart .dot-plain { fill: #b9b5ad; }
-.chart .b7 { fill: var(--accent); }
-.chart .b7g { fill: #b9b5ad; }
 
-/* ---------- packet layers, bars, matrices (Sentinel posts) ---------- */
+/* ---------- packet layers and bars (Sentinel posts) ---------- */
 
 .sizebar { display: flex; height: 30px; margin: 24px 0 8px; font-family: var(--font-mono); font-size: 0.74rem; }
 .sizebar span { display: block; padding: 0 10px; line-height: 30px; color: var(--bg); white-space: nowrap; overflow: hidden; }
@@ -200,14 +184,6 @@ table.data.roomy td.num.dim { font-family: var(--font-sans); font-size: 0.88rem;
 .fld .by { padding: 6px 8px; border: 1px solid var(--c); border-radius: 3px; background: rgba(255, 255, 255, 0.03); font-family: var(--font-mono); font-size: 0.8rem; color: var(--text); overflow-wrap: anywhere; }
 .fld .lb { font-family: var(--font-mono); font-size: 0.66rem; letter-spacing: 0.06em; text-transform: uppercase; color: var(--text-dim); }
 .fld .vl { font-family: var(--font-mono); font-size: 0.72rem; color: var(--c); }
-
-.matrix { display: grid; gap: 6px; margin: 24px 0 8px; overflow-x: auto; }
-.mrow { display: grid; grid-template-columns: 230px minmax(340px, 1fr) 28px; align-items: center; gap: 12px; min-width: 620px; font-family: var(--font-mono); font-size: 0.72rem; }
-.ml { color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.cells { display: grid; grid-template-columns: repeat(19, 1fr); gap: 3px; }
-.cells i { display: block; height: 14px; background: rgba(255, 255, 255, 0.05); border: 1px solid var(--line); }
-.cells i.on { background: var(--accent); border-color: var(--accent); }
-.mc { text-align: right; color: var(--text-dim); }
 
 .reasm { display: grid; gap: 12px; margin: 24px 0 8px; }
 .rrow { display: grid; grid-template-columns: 72px 1fr; gap: 4px 12px; align-items: center; font-family: var(--font-mono); font-size: 0.72rem; }

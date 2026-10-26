@@ -1,6 +1,5 @@
 /* Home page, scene by scene. */
 
-:root { interpolate-size: allow-keywords; }
 main > section { background: transparent; }
 
 /* ---------- hero: title card ---------- */

@@ -12,7 +12,6 @@
   color-scheme: dark;
   --bg: oklch(0.145 0.012 255);
   --bg-2: oklch(0.185 0.014 255);
-  --bg-3: oklch(0.225 0.016 255);
   --text: oklch(0.945 0.012 85);
   --text-dim: oklch(0.72 0.015 255);
   --line: oklch(0.28 0.016 255);
@@ -20,7 +19,6 @@
   --accent: oklch(0.76 0.145 62);
   --accent-dim: oklch(0.6 0.125 58);
   --accent-soft: oklch(0.42 0.075 58);
-  --cool: oklch(0.74 0.09 215);
   --on-accent: oklch(0.16 0.01 255);
 
   --font-sans: 'Geist', system-ui, -apple-system, 'Segoe UI', sans-serif;
@@ -35,8 +33,7 @@
   --z-vignette: 40;
   --z-grain: 80;
   --z-header: 70;
-  --z-menu: 75;
-    --z-curtain: 95;
+  --z-curtain: 95;
   --z-skip: 100;
 }
 

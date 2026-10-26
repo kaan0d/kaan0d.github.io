@@ -271,7 +271,6 @@ void main() {
       return { ch, s };
     }).sort((a, b) => a.s - b.s);
     const glyphs = [...ink.map((e) => e.ch), '-', '|', '/', '\\'];
-    const ramp = ink.map((e) => e.ch);
     const c = document.createElement('canvas');
     c.width = gw * glyphs.length;
     c.height = gh;
@@ -284,7 +283,6 @@ void main() {
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
-    window.site = Object.assign(window.site || {}, { asciiRamp: ramp.join('') });
   }
   buildAtlas();
   (document.fonts?.load('600 40px "Geist Mono"') || Promise.resolve()).then(() => { buildAtlas(); draw(); }).catch(() => {});
@@ -397,7 +395,6 @@ void main() {
   if (!reduce) requestAnimationFrame(frame);
 
   window.site = Object.assign(window.site || {}, {
-    sceneGL: { canvas },
     // Section calls this when it takes over the screen.
     grade: (name) => { tintTarget = GRADES[name] || GRADES.cold; if (reduce) { tint.splice(0, 3, ...tintTarget); draw(); } },
   });

@@ -153,7 +153,6 @@ ${kind === 'home' ? PERSON_LD : ''}
 <body>
 <a class="skip" href="#main">skip to content</a>
 
-<svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false"><filter id="liquid" x="-10%" y="-10%" width="120%" height="120%"><feTurbulence type="fractalNoise" baseFrequency="0.011 0.03" numOctaves="2" seed="7" result="n"/><feDisplacementMap in="SourceGraphic" in2="n" scale="34" xChannelSelector="R" yChannelSelector="G"/></filter></svg>
 <div class="curtain" aria-hidden="true"><i class="curtain__half curtain__half--top"></i><i class="curtain__half curtain__half--bottom"></i><span class="curtain__count">00</span><span class="curtain__label">${NAME}</span></div>
 ${kind === 'post' ? '' : '<canvas class="scene-gl" aria-hidden="true"></canvas>'}
 <div class="vignette" aria-hidden="true"></div>
