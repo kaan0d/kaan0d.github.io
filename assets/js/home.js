@@ -1,4 +1,4 @@
-// Home page motion: scenes (grade, nav), hero, about scrub, timeline, project reveals, shapes.
+// Home page motion: scenes (grade, nav), hero, about scrub, timeline, project reveals, terminal cards.
 (() => {
   const { $, $$, reduce, ready, opened } = window.site || {};
   if (!ready) return;
@@ -10,7 +10,7 @@
     aboutScrub();
     timeline();
     films();
-    shapes();
+    terminals();
     ScrollTrigger.refresh();
   });
 
@@ -76,16 +76,29 @@
     });
   }
 
-  // The line drawings turn with the scroll; the contact rings pulse outward on their own.
-  function shapes() {
-    $$('.shape').forEach((svg) => {
-      const section = svg.parentElement;
-      const trigger = { trigger: section, start: 'top bottom', end: 'bottom top', scrub: true };
-      $$('.spin', svg).forEach((el) => gsap.to(el, { rotation: 140, svgOrigin: '0 0', ease: 'none', scrollTrigger: trigger }));
-      $$('.orbit', svg).forEach((el) => gsap.to(el, { rotation: 360, svgOrigin: '0 0', ease: 'none', scrollTrigger: trigger }));
-      $$('.pulse', svg).forEach((el, i) => {
-        gsap.fromTo(el, { attr: { r: 24 }, opacity: 0.9 }, { attr: { r: 130 }, opacity: 0, duration: 4.5, ease: 'power1.out', repeat: -1, delay: i * 1.5 });
+  // Each terminal card types its command and prints the output lines when it scrolls in.
+  function terminals() {
+    $$('.term').forEach((term) => {
+      const lines = $$('.term__line', term);
+      const cursor = $('.term__cursor', term);
+      gsap.set(lines, { autoAlpha: 0 });
+      gsap.set(cursor, { autoAlpha: 0 });
+      const tl = gsap.timeline({ paused: true, delay: 0.3 });
+      lines.forEach((line) => {
+        const typed = line.hasAttribute('data-type') ? $('.t', line) : null;
+        if (typed) {
+          const text = typed.textContent;
+          const n = { c: 0 };
+          typed.textContent = '';
+          tl.set(line, { autoAlpha: 1 })
+            .to(n, { c: text.length, duration: Math.max(0.5, text.length * 0.045), ease: 'none', onUpdate: () => { typed.textContent = text.slice(0, Math.round(n.c)); } })
+            .to({}, { duration: 0.25 });
+        } else {
+          tl.fromTo(line, { autoAlpha: 0, y: 6 }, { autoAlpha: 1, y: 0, duration: 0.35, ease: 'power2.out' }, '>+0.08');
+        }
       });
+      tl.set(cursor, { autoAlpha: 1 });
+      ScrollTrigger.create({ trigger: term, start: 'top 90%', once: true, onEnter: () => tl.play() });
     });
   }
 
