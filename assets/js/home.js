@@ -1,4 +1,4 @@
-// Home page motion: scenes (grade, HUD, nav), hero, counters, marquee, about scrub, timeline, project reveals, repo reel.
+// Home page motion: scenes (grade, HUD, nav), hero, about scrub, timeline, project reveals.
 (() => {
   const { $, $$, reduce, ready, opened } = window.site || {};
   if (!ready) return;
@@ -7,12 +7,9 @@
     scenes();
     if (reduce) return;
 
-    counters();
-    marquee();
     aboutScrub();
     timeline();
     films();
-    repoPan();
     ScrollTrigger.refresh();
   });
 
@@ -58,41 +55,6 @@
       }
     };
     ScrollTrigger.create({ start: 0, end: 'max', onUpdate: update, onRefresh: update });
-  }
-
-  function counters() {
-    $$('[data-count]').forEach((el) => {
-      const end = Number(el.dataset.count);
-      const decimals = Number(el.dataset.decimals || 0);
-      const format = (v) => v.toLocaleString('en-US', { minimumFractionDigits: decimals, maximumFractionDigits: decimals });
-      const state = { value: 0 };
-      el.textContent = format(0);
-      ScrollTrigger.create({
-        trigger: el,
-        start: 'top 92%',
-        once: true,
-        onEnter: () => gsap.to(state, { value: end, duration: 2.2, ease: 'expo.out', onUpdate: () => { el.textContent = format(state.value); } }),
-      });
-    });
-  }
-
-  // Skill names run on their own and speed up with scroll velocity, reversing with direction.
-  function marquee() {
-    const loop = gsap.to('.marquee__track', { xPercent: -50, duration: 45, ease: 'none', repeat: -1 });
-    let settle;
-    ScrollTrigger.create({
-      trigger: '.marquee',
-      start: 'top bottom',
-      end: 'bottom top',
-      onToggle: (self) => loop[self.isActive ? 'play' : 'pause'](),
-      onUpdate: (self) => {
-        const speed = 1 + Math.min(Math.abs(self.getVelocity()) / 250, 6);
-        settle?.kill();
-        settle = gsap.timeline()
-          .to(loop, { timeScale: self.direction * speed, duration: 0.2 })
-          .to(loop, { timeScale: 1, duration: 1.4, ease: 'power2.out' });
-      },
-    });
   }
 
   // Words light up as the reader scrolls through the statement.
@@ -143,16 +105,4 @@
     });
   }
 
-  // Vertical scroll drives a horizontal track while the section is pinned.
-  function repoPan() {
-    gsap.matchMedia().add('(min-width: 900px)', () => {
-      const track = $('.repos__track');
-      const distance = () => track.scrollWidth - window.innerWidth;
-      gsap.to(track, {
-        x: () => -distance(),
-        ease: 'none',
-        scrollTrigger: { trigger: '.repos', start: 'top top', end: () => `+=${distance()}`, pin: true, scrub: 0.6, invalidateOnRefresh: true },
-      });
-    });
-  }
 })();

@@ -89,7 +89,7 @@ function loadPosts() {
 const CV_URL = 'https://drive.google.com/file/d/1M5Ri6U8PAwSgwr31EN4JDeT90P7OuCPo/view';
 
 // Header links in reading order. 'top' is the hero, so "home" lights up while it is on screen.
-const SECTIONS = ['about', 'projects', 'experience', 'skills', 'education', 'repos'];
+const SECTIONS = ['about', 'projects', 'experience', 'skills', 'education'];
 
 const PERSON_LD = `<script type="application/ld+json">${JSON.stringify({
   '@context': 'https://schema.org',
