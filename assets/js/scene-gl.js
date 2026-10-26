@@ -35,6 +35,8 @@ uniform float uOpen;      // eyelids, 0 shut, 1 open
 uniform float uSpeed;     // how fast the camera is moving, for motion blur
 uniform float uJourney;   // 0 until the galaxy fills the frame, then 0 to 4.7 through five places
 uniform vec2 uMouse;
+uniform vec2 uGaze;       // where the eye looks, sprung and jumpy
+uniform float uPupil;     // pupil size, breathing and reacting
 out vec4 outColor;
 
 float hash(vec2 p) { p = fract(p * vec2(123.34, 456.21)); p += dot(p, p + 45.32); return fract(p.x * p.y); }
@@ -60,12 +62,12 @@ vec3 eye(vec2 q, float t, out float pupilMask) {
   float inside = smoothstep(0.0, 0.014, upper - q.y) * smoothstep(0.0, 0.014, q.y + lower);
 
   // Where the eye looks: the iris follows the cursor a little.
-  vec2 ic = (uMouse - 0.5) * vec2(0.16, 0.07) * (1.0 - smoothstep(0.0, 0.5, uZoom));
+  vec2 ic = uGaze * vec2(0.2, 0.09) * (1.0 - smoothstep(0.0, 0.5, uZoom));
   vec2 d = q - ic;
   float r = length(d), a = atan(d.y, d.x);
 
   float ri = 0.30;
-  float rp = 0.105 + 0.014 * sin(t * 0.6) + 0.07 * smoothstep(0.15, 0.55, uZoom);   // the pupil opens as we fall in
+  float rp = (0.105 + 0.07 * smoothstep(0.15, 0.55, uZoom)) * uPupil + 0.006 * noise(vec2(a * 4.0, t * 0.9));   // it breathes, reacts, and opens as we fall in
 
   // sclera: grey white, veined from the corners, shaded by the lids
   float vein = fbm(vec2(atan(q.y, q.x + sign(q.x) * 1.4) * 6.0, length(q) * 8.0) + 3.0);
@@ -76,17 +78,29 @@ vec3 eye(vec2 q, float t, out float pupilMask) {
   sclera += vec3(0.7, 0.3, 0.3) * 0.5 * exp(-dot(q - vec2(-sign(q.x) * 0.97, -0.01), q - vec2(-sign(q.x) * 0.97, -0.01)) * 500.0) * step(q.x, -0.8);
 
   // iris: radial fibres, crypts, a bright collarette and a dark limbal ring
-  float fibres = fbm(vec2(a * 16.0, r * 8.0 - t * 0.03));
-  float fine = noise(vec2(a * 55.0, r * 4.0));
-  float crypts = smoothstep(0.62, 0.8, fbm(vec2(a * 7.0, r * 18.0) + 9.0)) * smoothstep(rp + 0.03, rp + 0.12, r);
-  vec3 irisLo = vec3(0.09, 0.035, 0.012);
-  vec3 irisHi = vec3(0.46, 0.22, 0.08);
-  vec3 iris = mix(irisLo, irisHi, clamp(fibres * 1.2 + fine * 0.25, 0.0, 1.0));
-  float collar = smoothstep(rp + 0.02, rp + 0.075, r) * (1.0 - smoothstep(rp + 0.075, rp + 0.13, r));
-  iris = mix(iris, vec3(0.6, 0.34, 0.15), collar * 0.5);
-  iris *= 1.0 - 0.55 * crypts;
-  iris *= mix(1.0, 0.28, smoothstep(ri - 0.06, ri, r));
-  iris *= 0.45 + 0.55 * smoothstep(-0.05, 0.28, upper - q.y);     // the upper lid shades the iris
+  // iris: it turns slowly; fibres run from the pupil to the rim, with rust spokes, green-gold flecks,
+  // a golden ring round the pupil and a dark ring at the edge
+  float ar = a + t * 0.035;
+  float warpA = fbm(vec2(ar * 3.0, r * 6.0)) * 2.2;
+  float fibres = fbm(vec2(ar * 24.0 + warpA, r * 9.0 - t * 0.02));
+  float rays = pow(noise(vec2(ar * 70.0, r * 1.5)), 2.0);
+  float spokes = smoothstep(0.55, 0.9, noise(vec2(ar * 13.0 + warpA, 1.7)));
+  float flecks = smoothstep(0.64, 0.8, fbm(vec2(ar * 9.0, r * 26.0) + 5.0));
+  float crypts = smoothstep(0.62, 0.8, fbm(vec2(ar * 7.0, r * 18.0) + 9.0)) * smoothstep(rp + 0.03, rp + 0.12, r);
+  float rr = clamp((r - rp) / max(ri - rp, 0.01), 0.0, 1.0);          // 0 at the pupil, 1 at the rim
+
+  vec3 deep = vec3(0.07, 0.028, 0.01);
+  vec3 brown = vec3(0.52, 0.26, 0.09);
+  vec3 amber = vec3(1.0, 0.64, 0.2);
+  vec3 iris = mix(deep, brown, clamp(fibres * 1.5 + rays * 0.9 - 0.1, 0.0, 1.0));
+  iris = mix(iris, amber, smoothstep(0.45, 0.85, fibres) * (1.0 - rr * 0.6) * 1.0);                  // light fibres, brighter near the pupil
+  iris = mix(iris, vec3(0.9, 0.62, 0.2), (1.0 - smoothstep(0.0, 0.32, rr)) * (0.5 + 0.5 * fibres));   // the golden ring round the pupil
+  iris = mix(iris, vec3(0.3, 0.36, 0.12), flecks * smoothstep(0.2, 0.55, rr) * 0.7);           // green-gold flecks
+  iris *= 1.0 - 0.45 * spokes * smoothstep(0.1, 0.5, rr);                                      // dark rust spokes
+  iris *= 1.0 - 0.6 * crypts;
+  iris *= mix(1.0, 0.22, smoothstep(0.72, 1.0, rr));                                           // the limbal ring
+  iris *= 0.4 + 0.6 * smoothstep(-0.05, 0.28, upper - q.y);                                    // the lid shades it
+  iris += vec3(0.5, 0.35, 0.2) * pow(max(1.0 - length(d - vec2(0.06, -0.1)) / 0.3, 0.0), 3.0) * 0.35;   // light caught in the bowl
 
   float inIris = 1.0 - smoothstep(ri - 0.005, ri + 0.005, r);
   vec3 col = mix(sclera, iris, inIris);
@@ -252,8 +266,8 @@ vec3 sceneAt(vec2 p, float zz, float w, vec2 centre, float roll, float t) {
   vec3 e = eye(q, t, pm);
   vec3 g = galaxy(rot(-t * 0.02) * q / 0.115 * w, t);
   // a rim of light where the galaxy first shows at the edge of the pupil
-  float rp = 0.105 + 0.07 * smoothstep(0.15, 0.55, uZoom);
-  float rim = exp(-pow((length(q - (uMouse - 0.5) * vec2(0.16, 0.07) * (1.0 - smoothstep(0.0, 0.5, uZoom))) - rp) / 0.016, 2.0));
+  float rp = (0.105 + 0.07 * smoothstep(0.15, 0.55, uZoom)) * uPupil;
+  float rim = exp(-pow((length(q - uGaze * vec2(0.2, 0.09) * (1.0 - smoothstep(0.0, 0.5, uZoom))) - rp) / 0.016, 2.0));
   vec3 col = mix(e, g, pm);
   col += sparkle(q, t) * (1.0 - smoothstep(0.05, 0.4, uZoom)) * uOpen;
   col += vec3(0.7, 0.85, 1.0) * rim * smoothstep(0.2, 0.5, uZoom) * (1.0 - smoothstep(0.62, 0.8, uZoom)) * 0.5;
@@ -517,7 +531,7 @@ void main() {
   gl.vertexAttribPointer(0, 2, gl.FLOAT, false, 0, 0);
 
   const loc = (prog, names) => Object.fromEntries(names.map((n) => [n, gl.getUniformLocation(prog, n)]));
-  const us = loc(sceneProg, ['uCells', 'uAsp', 'uTime', 'uZoom', 'uOpen', 'uSpeed', 'uJourney', 'uMouse']);
+  const us = loc(sceneProg, ['uCells', 'uAsp', 'uTime', 'uZoom', 'uOpen', 'uSpeed', 'uJourney', 'uMouse', 'uGaze', 'uPupil']);
   const ua = loc(asciiProg, ['uScene', 'uAtlas', 'uCells', 'uCellPx', 'uRes', 'uTint', 'uPower', 'uTime']);
 
   // ---------- the glyph atlas: a ramp sorted by how much ink each character really has ----------
@@ -599,6 +613,32 @@ void main() {
   let tintTarget = GRADES.cold;
 
   const mouse = { x: 0.5, y: 0.5, tx: 0.5, ty: 0.5 };
+  // The eye is alive: the gaze is a spring (it overshoots a little), it makes small jumps of its own when the
+  // pointer is still, and the pupil breathes and widens when the eye moves.
+  const gaze = { x: 0, y: 0, vx: 0, vy: 0, jx: 0, jy: 0, next: 1.2, still: 0 };
+  const pupil = { v: 1, vv: 0 };
+  function lifeStep(dt) {
+    const moved = Math.hypot(mouse.tx - mouse.x, mouse.ty - mouse.y);
+    gaze.still = moved < 0.002 ? gaze.still + dt : 0;
+    gaze.next -= dt;
+    if (gaze.next <= 0) {
+      gaze.next = 0.9 + Math.random() * 2.6;
+      const reach = gaze.still > 1.5 ? 0.3 : 0.08;
+      gaze.jx = (Math.random() - 0.5) * 2 * reach;
+      gaze.jy = (Math.random() - 0.5) * 2 * reach * 0.6;
+    }
+    const tx = (mouse.tx - 0.5) * 0.9 + gaze.jx;
+    const ty = (mouse.ty - 0.5) * 0.9 + gaze.jy;
+    const k = 70, c = 9;   // a spring a little under critical damping
+    gaze.vx += (k * (tx - gaze.x) - c * gaze.vx) * dt;
+    gaze.vy += (k * (ty - gaze.y) - c * gaze.vy) * dt;
+    gaze.x += gaze.vx * dt;
+    gaze.y += gaze.vy * dt;
+    const energy = Math.min(Math.hypot(gaze.vx, gaze.vy) * 0.5, 1);
+    const goal = 1 + 0.12 * Math.sin(time * 0.7) + 0.07 * Math.sin(time * 1.9 + 1) + 0.28 * energy;
+    pupil.vv += (45 * (goal - pupil.v) - 7 * pupil.vv) * dt;
+    pupil.v += pupil.vv * dt;
+  }
   const goalZoom = () => (home ? Math.min(Math.max(scrollY / (innerHeight * FALL), 0), 1) : 1);
   let time = 0;
   let last = 0;
@@ -627,6 +667,8 @@ void main() {
     gl.uniform1f(us.uSpeed, Math.min(Math.abs(speed) * 7, 1));
     gl.uniform1f(us.uJourney, journey);
     gl.uniform2f(us.uMouse, mouse.x, mouse.y);
+    gl.uniform2f(us.uGaze, gaze.x, gaze.y);
+    gl.uniform1f(us.uPupil, pupil.v);
     gl.drawArrays(gl.TRIANGLES, 0, 3);
     gl.bindTexture(gl.TEXTURE_2D, target);
     gl.generateMipmap(gl.TEXTURE_2D);
@@ -660,6 +702,7 @@ void main() {
     time += dt;
     mouse.x += (mouse.tx - mouse.x) * 0.05;
     mouse.y += (mouse.ty - mouse.y) * 0.05;
+    lifeStep(Math.min(dt, 0.033));
     const k = Math.min(dt * 1.6, 1);
     for (let i = 0; i < 3; i++) tint[i] += (tintTarget[i] - tint[i]) * k;
     if (home) {
