@@ -397,7 +397,7 @@ void main() {
 
   // motion blur along the line of the zoom
   vec3 col = vec3(0.0);
-  if (uJourney > 0.0001) {
+  if (uJourney > 0.0001 && uZoom > 0.995) {
     float J = min(uJourney, 4.7);
     for (int i = 0; i < 3; i++) {
       col += journeyScene(p * (1.0 - uSpeed * 0.05 * float(i)), J, uTime);
@@ -709,7 +709,8 @@ void main() {
     for (let i = 0; i < 3; i++) tint[i] += (tintTarget[i] - tint[i]) * k;
     if (home) {
       // A camera on a rail: it eases toward where the scroll says it should be.
-      const goal = goalZoom();
+      // Scrolling back up plays the journey in reverse first; only then does the eye start to come back.
+      const goal = journey > 0.02 ? 1 : goalZoom();
       const next = zoom + (goal - zoom) * Math.min(dt * 2.6, 1);
       // After the galaxy, the rest of the page is the rest of the fall.
       const maxScroll = Math.max(document.documentElement.scrollHeight - innerHeight, 1);
@@ -718,7 +719,7 @@ void main() {
       const nj = journey + (jGoal - journey) * Math.min(dt * 2.2, 1);
       speed = dt ? (next - zoom) / dt + ((nj - journey) / dt) * 0.4 : 0;
       zoom = next;
-      journey = nj;
+      journey = jGoal === 0 && nj < 0.01 ? 0 : nj;
       power = basePower + 0.2 * (1 - Math.min(zoom * 2.5, 1)) + 0.4 * smoothstep(0.55, 0.9, zoom);   // space is the brightest part   // the opening shot is the brightest
     }
     draw();
