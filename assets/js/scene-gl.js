@@ -69,7 +69,7 @@ vec3 eye(vec2 q, float t, out float pupilMask) {
   float r = length(d), a = atan(d.y, d.x);
 
   float ri = 0.30;
-  float rp = (0.105 + 0.07 * smoothstep(0.15, 0.55, uZoom)) * uPupil + 0.006 * noise(vec2(a * 4.0, t * 0.9));   // it breathes, reacts, and opens as we fall in
+  float rp = (0.105 + 0.07 * smoothstep(0.15, 0.65, uZoom)) * uPupil + 0.006 * noise(vec2(a * 4.0, t * 0.9));   // it breathes, reacts, and opens as we fall in
 
   // sclera: grey white, veined from the corners, shaded by the lids
   float vein = fbm(vec2(atan(q.y, q.x + sign(q.x) * 1.4) * 6.0, length(q) * 8.0) + 3.0);
@@ -173,7 +173,7 @@ vec3 worldStarsW(vec2 wp, float J, float t) {
   }
   return acc;
 }
-vec3 worldStars(vec2 p, float J, float t) { return worldStarsW(rot(-t * 0.02) * rot(0.35) * p * 1.318, J, t); }
+vec3 worldStars(vec2 p, float J, float t) { return worldStarsW(rot(-t * 0.02) * rot(0.35) * p * 0.4526, J, t); }
 
 vec3 galaxyBody(vec2 gp, float t) {
   float r = length(gp) + 1e-4;
@@ -268,11 +268,11 @@ vec3 sceneAt(vec2 p, float zz, float w, vec2 centre, float roll, float t) {
   vec3 e = eye(q, t, pm);
   vec3 g = galaxy(rot(-t * 0.02) * q / 0.115 * w, t);
   // a rim of light where the galaxy first shows at the edge of the pupil
-  float rp = (0.105 + 0.07 * smoothstep(0.15, 0.55, uZoom)) * uPupil;
+  float rp = (0.105 + 0.07 * smoothstep(0.15, 0.65, uZoom)) * uPupil;
   float rim = exp(-pow((length(q - uGaze * vec2(0.2, 0.09) * (1.0 - smoothstep(0.0, 0.5, uZoom))) - rp) / 0.016, 2.0));
   vec3 col = mix(e, g, pm);
   col += sparkle(q, t) * (1.0 - smoothstep(0.05, 0.4, uZoom)) * uOpen;
-  col += vec3(0.7, 0.85, 1.0) * rim * smoothstep(0.2, 0.5, uZoom) * (1.0 - smoothstep(0.62, 0.8, uZoom)) * 0.5;
+  col += vec3(0.7, 0.85, 1.0) * rim * smoothstep(0.3, 0.6, uZoom) * (1.0 - smoothstep(0.72, 0.86, uZoom)) * 0.5;
   return col;
 }
 
@@ -280,7 +280,7 @@ vec3 sceneAt(vec2 p, float zz, float w, vec2 centre, float roll, float t) {
 // reaches it; the camera keeps magnifying, the old place thins out as it outgrows the frame and the next one
 // swells to fill it. Nothing is cut or faded as a whole picture.
 
-vec3 galaxyObj(vec2 q, float t) { return galaxyBody(rot(-t * 0.02) * rot(0.35) * q * 1.318, t); }
+vec3 galaxyObj(vec2 q, float t) { return galaxyBody(rot(-t * 0.02) * rot(0.35) * q * 0.4526, t); }
 
 vec3 nebulaObj(vec2 q, float t) {
   float r = length(q);
@@ -294,7 +294,7 @@ vec3 nebulaObj(vec2 q, float t) {
     vec3 c2 = k < 1.0 ? vec3(0.9, 0.3, 0.6) : (k < 2.0 ? vec3(0.2, 0.9, 0.7) : (k < 3.0 ? vec3(1.0, 0.85, 0.5) : vec3(0.6, 0.5, 1.0)));
     col += mix(c1, c2, m) * pow(n, 2.3) * (0.9 / (1.0 + 0.5 * k));
   }
-  col *= smoothstep(1.7, 0.5, r) * 0.7;
+  col *= smoothstep(1.7, 0.5, r) * 1.0;
   // the young star at its heart: this is what becomes the sun of the next place
   col += vec3(0.85, 0.92, 1.0) * (exp(-r * r * 500.0) * 2.2 + exp(-r * 16.0) * 0.5);
   return col;
@@ -373,7 +373,10 @@ vec3 journeyScene(vec2 p, float J, float t) {
   vec3 col = worldStars(p, J, t) * 1.35;
   for (int i = 0; i < 5; i++) {
     float fi = float(i);
-    float w = smoothstep(fi - 1.6, fi - 0.9, J) * (i < 4 ? 1.0 - smoothstep(fi + 0.5, fi + 1.2, J) : 1.0);
+    // the galaxy, already magnified to its core, gives way early; the others stay for longer
+    float outA = i == 0 ? 0.05 : fi + 0.5;
+    float outB = i == 0 ? 0.6 : fi + 1.2;
+    float w = smoothstep(fi - 1.6, fi - 0.9, J) * (i < 4 ? 1.0 - smoothstep(outA, outB, J) : 1.0);
     if (w > 0.002) {
       vec2 q = p / exp(1.45 * (J - fi));
       vec3 o = i == 0 ? galaxyObj(q, t) : (i == 1 ? nebulaObj(q, t) : (i == 2 ? systemObj(q, t) : (i == 3 ? planetObj(q, t) : holeObj(q, t))));
@@ -387,9 +390,8 @@ void main() {
   vec2 uv = gl_FragCoord.xy / uCells;
   vec2 p = (uv - 0.5) * vec2(uAsp, 1.0);
 
-  float fall = min(uZoom / 0.78, 1.0);
-  float zz = 1.02 * pow(22.0, fall);                         // the camera falls into the pupil
-  float w = 1.0 + 2.4 * smoothstep(0.78, 1.0, uZoom);       // then pulls back to show the whole galaxy
+  float zz = 1.02 * pow(22.0, uZoom / 0.78);                // the camera falls into the pupil and keeps falling
+  float w = 1.0 + 1.8 * smoothstep(0.2, 0.74, uZoom);       // the galaxy is shown wide once the pupil fills the frame, then magnified
   vec2 centre = vec2(mix(0.05, 0.0, smoothstep(0.0, 0.6, uZoom)), 0.0);
   float roll = 0.35 * smoothstep(0.3, 1.0, uZoom) + 0.004 * sin(uTime * 0.9);   // a slow roll, a little hand shake
 
@@ -401,6 +403,7 @@ void main() {
       col += journeyScene(p * (1.0 - uSpeed * 0.05 * float(i)), J, uTime);
     }
     col /= 3.0;
+    col *= mix(0.55, 1.0, smoothstep(0.0, 0.6, J));   // picks up the dimming the eye phase ends with
   } else {
     for (int i = 0; i < 5; i++) {
       vec2 pi = (p - centre) * (1.0 - uSpeed * 0.06 * float(i)) + centre;
@@ -409,13 +412,14 @@ void main() {
     col /= 5.0;
   }
 
-  float warpS = smoothstep(0.5, 0.68, uZoom) * (1.0 - smoothstep(0.76, 0.96, uZoom));
+  float warpS = smoothstep(0.58, 0.74, uZoom) * (1.0 - smoothstep(0.8, 0.98, uZoom));
   col += warp(p, uTime, warpS);
   col += shoot(p, uTime) * smoothstep(0.82, 1.0, uZoom);
 
   // a white-out as the pupil takes the whole frame
-  col += vec3(0.65, 0.8, 1.0) * exp(-pow((uZoom - 0.66) / 0.05, 2.0)) * 0.1;
+  col += vec3(0.65, 0.8, 1.0) * exp(-pow((uZoom - 0.72) / 0.05, 2.0)) * 0.1;
 
+  col *= 1.0 - 0.45 * smoothstep(0.82, 1.0, uZoom);          // the galaxy core is a lot of light; ease it as we reach it
   col = 1.0 - exp(-col * 1.05);                              // filmic roll-off
   // alpha carries where the glitter is, so the second pass can print stars there
   vec2 q0 = rot(roll) * (p - centre) / zz;
@@ -612,23 +616,21 @@ void main() {
   let tintTarget = GRADES.cold;
 
   const mouse = { x: 0.5, y: 0.5, tx: 0.5, ty: 0.5 };
-  // The eye is alive: the gaze is a spring (it overshoots a little), it makes small jumps of its own when the
-  // pointer is still, and the pupil breathes and widens when the eye moves.
+  // The eye is alive on its own: the gaze is a spring that overshoots a little, with jumps of its own, and the
+  // pupil breathes and widens when the eye moves.
   const gaze = { x: 0, y: 0, vx: 0, vy: 0, jx: 0, jy: 0, next: 1.2, still: 0 };
   const pupil = { v: 1, vv: 0 };
   function lifeStep(dt) {
-    const moved = Math.hypot(mouse.tx - mouse.x, mouse.ty - mouse.y);
-    gaze.still = moved < 0.002 ? gaze.still + dt : 0;
+    // The eye needs no pointer: it drifts, then flicks to somewhere else every second or two.
     gaze.next -= dt;
     if (gaze.next <= 0) {
-      gaze.next = 0.9 + Math.random() * 2.6;
-      const reach = gaze.still > 1.5 ? 0.3 : 0.08;
-      gaze.jx = (Math.random() - 0.5) * 2 * reach;
-      gaze.jy = (Math.random() - 0.5) * 2 * reach * 0.6;
+      gaze.next = 0.8 + Math.random() * 1.8;
+      gaze.jx = (Math.random() - 0.5) * 0.7;
+      gaze.jy = (Math.random() - 0.5) * 0.4;
     }
-    const tx = (mouse.tx - 0.5) * 0.9 + gaze.jx;
-    const ty = (mouse.ty - 0.5) * 0.9 + gaze.jy;
-    const k = 70, c = 9;   // a spring a little under critical damping
+    const tx = gaze.jx + 0.06 * Math.sin(time * 0.45);
+    const ty = gaze.jy + 0.04 * Math.sin(time * 0.33 + 1);
+    const k = 70, c = 9;   // a spring a little under critical damping: quick, with a small overshoot
     gaze.vx += (k * (tx - gaze.x) - c * gaze.vx) * dt;
     gaze.vy += (k * (ty - gaze.y) - c * gaze.vy) * dt;
     gaze.x += gaze.vx * dt;
@@ -638,6 +640,7 @@ void main() {
     pupil.vv += (45 * (goal - pupil.v) - 7 * pupil.vv) * dt;
     pupil.v += pupil.vv * dt;
   }
+
   const goalZoom = () => (home ? Math.min(Math.max(scrollY / (innerHeight * FALL), 0), 1) : 1);
   let time = 0;
   let last = 0;
