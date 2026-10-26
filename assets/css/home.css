@@ -57,6 +57,7 @@ main > section { background: transparent; }
 .films { display: grid; gap: clamp(88px, 12vw, 180px); margin-top: clamp(48px, 7vw, 104px); }
 .film { display: grid; grid-template-columns: repeat(12, 1fr); column-gap: clamp(16px, 2vw, 32px); row-gap: 20px; align-items: start; }
 .film__rail {
+  position: relative;
   grid-column: 1 / -1;
   display: flex;
   align-items: baseline;
@@ -217,6 +218,9 @@ main > section { background: transparent; }
 /* ---------- legibility over the moving background: every block of text sits in its own soft shadow ---------- */
 
 .hero__sub, .film__text, .entry__main, .edu__row > div, .about__line, .credits { position: relative; isolation: isolate; }
+/* the rail is a thin strip, so its shadow is a band rather than a pool */
+.film__rail { isolation: isolate; }
+.film__rail::before { content: ''; position: absolute; inset: -18px -24px -6px; z-index: -1; background: radial-gradient(farthest-side, oklch(0.115 0.01 255 / 0.7), oklch(0.115 0.01 255 / 0.35) 70%, transparent); pointer-events: none; }
 .film__text::before, .entry__main::before, .edu__row > div::before, .about__line::before, .credits::before {
   content: '';
   position: absolute;
@@ -234,4 +238,5 @@ main > section { background: transparent; }
 /* the shadows must not push the page wider than the screen */
 @media (max-width: 899px) {
   .film__text::before, .entry__main::before, .edu__row > div::before, .about__line::before, .credits::before { inset: -26px -14px; }
+  .film__rail::before { inset: -14px -10px -6px; }
 }
