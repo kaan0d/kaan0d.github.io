@@ -222,7 +222,7 @@ body::after {
 
 /* ---------- shared type ---------- */
 
-.section { position: relative; padding: clamp(96px, 14vw, 200px) var(--gutter); max-width: var(--maxw); margin: 0 auto; }
+.section { position: relative; padding: clamp(72px, 9vw, 136px) var(--gutter); max-width: var(--maxw); margin: 0 auto; }
 .eyebrow { font-family: var(--font-mono); font-size: 0.8rem; letter-spacing: 0.08em; text-transform: uppercase; color: var(--accent); }
 .section-title {
   margin-top: 14px;
