@@ -296,7 +296,8 @@ vec3 nebulaObj(vec2 q, float t) {
   }
   col *= smoothstep(1.7, 0.5, r) * 1.0;
   // the young star at its heart: this is what becomes the sun of the next place
-  col += vec3(0.85, 0.92, 1.0) * (exp(-r * r * 500.0) * 2.2 + exp(-r * 16.0) * 0.5);
+  float rs = r / 0.235;   // the next place is 0.235 times this one's size, and its sun is this star
+  col += vec3(1.0, 0.85, 0.55) * (exp(-rs * rs * 700.0) * 4.0 + exp(-rs * 16.0) * 0.8 + exp(-rs * 6.0) * 0.25);
   return col;
 }
 
@@ -374,9 +375,12 @@ vec3 journeyScene(vec2 p, float J, float t) {
   for (int i = 0; i < 5; i++) {
     float fi = float(i);
     // the galaxy, already magnified to its core, gives way early; the others stay for longer
-    float outA = i == 0 ? 0.05 : fi + 0.5;
-    float outB = i == 0 ? 0.6 : fi + 1.2;
-    float w = smoothstep(fi - 1.6, fi - 0.9, J) * (i < 4 ? 1.0 - smoothstep(outA, outB, J) : 1.0);
+    // a place appears only once it is big enough to read, and the one before it lingers until the next fills the frame
+    float inA = i < 2 ? fi - 1.6 : fi - 1.0;
+    float inB = i < 2 ? fi - 0.9 : fi - 0.4;
+    float outA = i == 0 ? 0.05 : fi + 0.9;
+    float outB = i == 0 ? 0.6 : fi + 1.6;
+    float w = smoothstep(inA, inB, J) * (i < 4 ? 1.0 - smoothstep(outA, outB, J) : 1.0);
     if (w > 0.002) {
       vec2 q = p / exp(1.45 * (J - fi));
       vec3 o = i == 0 ? galaxyObj(q, t) : (i == 1 ? nebulaObj(q, t) : (i == 2 ? systemObj(q, t) : (i == 3 ? planetObj(q, t) : holeObj(q, t))));
