@@ -1,7 +1,8 @@
 // The scene behind the page, filmed in ASCII.
 //
 // Pass one paints a small colour picture, one pixel per character: a ringed giant lit by its sun, its ring
-// turning, stars and now and then a meteor. It stays put while the page scrolls; only time moves it. Pass two
+// turning, stars and now and then a meteor. Scrolling down the page rolls the camera, moves it closer and swings
+// the sunlight from behind the planet's left shoulder round to its right, so the page ends on a lit face. Pass two
 // turns each pixel into a character. The characters come from a ramp that is sorted by measured ink, edges get
 // line glyphs that follow them, and the image gets bloom, an anamorphic streak, chromatic fringing and grain.
 // site.grade(name) tints the characters per section. Does nothing without WebGL2.
@@ -37,6 +38,7 @@ precision highp float;
 uniform vec2 uCells;
 uniform float uAsp;
 uniform float uTime;
+uniform float uScroll;   // 0 at the top of the page, 1 at the bottom, eased
 out vec4 outColor;
 
 float hash(vec2 p) { p = fract(p * vec2(123.34, 456.21)); p += dot(p, p + 45.32); return fract(p.x * p.y); }
@@ -83,9 +85,9 @@ vec3 shoot(vec2 p, float t) {
   return vec3(0.8, 0.9, 1.0) * line * (1.0 - ph) * 1.5;
 }
 
-// The ringed giant: banded clouds that drift, lit from the upper left, a thin blue limb, the ring passing in front
+// The ringed giant: banded clouds that drift, lit from the angle la, a thin blue limb, the ring passing in front
 // below and behind above. The ring is made of clumps and gaps that travel round it, so the whole ring turns.
-vec3 planet(vec2 q, float t) {
+vec3 planet(vec2 q, float t, float la) {
   float R = 0.34;
   float r = length(q);
   vec3 col = vec3(1.0, 0.82, 0.5) * (exp(-r * r * 40.0) * 0.8 + exp(-r * 3.0) * 0.15);   // the sun, behind it
@@ -97,10 +99,10 @@ vec3 planet(vec2 q, float t) {
   float clumps = fbm(vec2(cos(ra), sin(ra)) * 3.0 + rd * 9.0);
   vec3 ringCol = mix(vec3(0.6, 0.5, 0.38), vec3(0.95, 0.85, 0.65), grain) * (0.4 + 0.6 * fbm(vec2(rd * 60.0, 3.0)));
   ringCol *= 0.35 + 1.3 * smoothstep(0.3, 0.7, clumps);
-  vec2 lightDir = vec2(-0.7, 0.45);
+  vec2 lightDir = vec2(cos(la), sin(la));
   if (r < R) {
     vec3 n = vec3(q / R, sqrt(max(1.0 - dot(q / R, q / R), 0.0)));
-    float dif = clamp(dot(n, normalize(vec3(-0.7, 0.45, 0.6))), 0.0, 1.0);
+    float dif = clamp(dot(n, normalize(vec3(lightDir * 0.83, 0.6))), 0.0, 1.0);
     float band = sin(n.y * 14.0 + fbm(vec2(n.x * 2.5 + t * 0.02, n.y * 5.0)) * 3.5);
     vec3 pc = mix(vec3(0.85, 0.55, 0.28), vec3(0.95, 0.85, 0.65), 0.5 + 0.5 * band);
     pc = mix(pc, vec3(0.5, 0.3, 0.2), smoothstep(0.55, 0.8, fbm(vec2(n.x * 4.0, n.y * 9.0 - t * 0.03))));
@@ -119,13 +121,15 @@ void main() {
   vec2 p = (uv - 0.5) * vec2(uAsp, 1.0);
 
   // Wide screens hold the planet right of centre, clear of the text column; narrow ones centre it and shrink it
-  // to fit. It breathes a little in size and sways a little, so it is never quite still.
-  vec2 centre = uAsp > 1.0 ? vec2(uAsp * 0.5 - 0.5, 0.06) : vec2(0.0, 0.22);
-  float size = min(0.8, uAsp * 1.05) * (1.0 + 0.025 * sin(uTime * 0.11));
-  vec2 q = rot(0.03 * sin(uTime * 0.07)) * (p - centre) / size;
+  // to fit. It breathes a little in size and sways a little, so it is never quite still. The scroll rolls it,
+  // brings it closer and moves the sun from the upper left (2.57 rad) over the top to the right.
+  float sc = uScroll * uScroll * (3.0 - 2.0 * uScroll);
+  vec2 centre = uAsp > 1.0 ? vec2(uAsp * 0.5 - 0.5, 0.06 - 0.08 * sc) : vec2(0.0, 0.22);
+  float size = min(0.8, uAsp * 1.05) * (1.0 + 0.025 * sin(uTime * 0.11)) * (1.0 + 0.4 * sc);
+  vec2 q = rot(0.03 * sin(uTime * 0.07) + 0.55 * sc) * (p - centre) / size;
 
   vec3 col = starfield(rot(uTime * 0.004) * p * 0.6, uTime) * 1.2;
-  col += planet(q, uTime) * 1.4;
+  col += planet(q, uTime, 2.57 - 2.2 * sc) * 1.4;
   col += shoot(p, uTime) * 0.7;
   col = 1.0 - exp(-col * 1.05);   // filmic roll-off
   outColor = vec4(col, 1.0);
@@ -243,7 +247,7 @@ void main() {
   gl.vertexAttribPointer(0, 2, gl.FLOAT, false, 0, 0);
 
   const loc = (prog, names) => Object.fromEntries(names.map((n) => [n, gl.getUniformLocation(prog, n)]));
-  const us = loc(sceneProg, ['uCells', 'uAsp', 'uTime']);
+  const us = loc(sceneProg, ['uCells', 'uAsp', 'uTime', 'uScroll']);
   const ua = loc(asciiProg, ['uScene', 'uAtlas', 'uCells', 'uCellPx', 'uRes', 'uTint', 'uPower', 'uTime', 'uLite', 'uCalm']);
 
   // ---------- the glyph atlas: a ramp sorted by how much ink each character really has ----------
@@ -321,6 +325,7 @@ void main() {
   let avgDt = 1 / 60;
   let governorT = -3;   // ignore the first seconds: compiling and loading stall frames
   let frameN = 0;
+  let scrolled = 0;   // eased page progress; stays 0 with reduced motion
   const power = 0.38;
 
   function draw() {
@@ -331,6 +336,7 @@ void main() {
     gl.uniform2f(us.uCells, cols, rows);
     gl.uniform1f(us.uAsp, W / H);
     gl.uniform1f(us.uTime, time);
+    gl.uniform1f(us.uScroll, scrolled);
     gl.drawArrays(gl.TRIANGLES, 0, 3);
     gl.bindTexture(gl.TEXTURE_2D, target);
     gl.generateMipmap(gl.TEXTURE_2D);
@@ -362,6 +368,8 @@ void main() {
     last = now;
     if (document.hidden) return;
     time += dt;
+    const goal = Math.min(Math.max(scrollY / Math.max(document.documentElement.scrollHeight - innerHeight, 1), 0), 1);
+    scrolled += (goal - scrolled) * Math.min(dt * 2.5, 1);
     const k = Math.min(dt * 1.6, 1);
     for (let i = 0; i < 3; i++) tint[i] += (tintTarget[i] - tint[i]) * k;
     // Frames running long means the device is struggling: step down a tier (and never back up).
