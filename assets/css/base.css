@@ -36,8 +36,7 @@
   --z-grain: 80;
   --z-header: 70;
   --z-menu: 75;
-  --z-cursor: 90;
-  --z-curtain: 95;
+    --z-curtain: 95;
   --z-skip: 100;
 }
 
@@ -247,7 +246,7 @@ body::after {
   animation: metal-flow 5s linear infinite paused;
 }
 @keyframes metal-flow { to { background-position: 0 0, 260% 130%; } }
-.btn:hover, .btn:focus-visible { box-shadow: 0 14px 40px -14px oklch(0.9 0.02 255 / 0.45), inset 0 0 0 1px oklch(1 0 0 / 0.6); }
+.btn:hover, .btn:focus-visible { box-shadow: 0 0 0 1px oklch(1 0 0 / 0.7), 0 0 22px oklch(0.96 0.03 250 / 0.6), 0 0 64px oklch(0.85 0.09 250 / 0.38), 0 18px 40px -14px oklch(0.9 0.02 255 / 0.5); }
 .btn:hover::before, .btn:focus-visible::before { clip-path: circle(150% at var(--mx) var(--my)); animation-play-state: running; }
 .btn:active { transform: scale(0.97); }
 .btn__arrow { display: inline-block; margin-left: 0.5em; transition: transform 0.5s var(--ease); }
@@ -257,7 +256,7 @@ body::after {
 .btn__metal { position: absolute; inset: 0; z-index: 0; width: 100%; height: 100%; pointer-events: none; }
 .btn__label { position: relative; z-index: 1; display: inline-flex; align-items: center; }
 .has-metal .btn::before { display: none; }
-.has-metal .btn__label { text-shadow: 0 0 10px oklch(1 0 0 / 0.55); }
+.has-metal .btn__label { color: oklch(0.12 0.01 255); text-shadow: 0 0 6px oklch(1 0 0 / 0.9), 0 0 14px oklch(1 0 0 / 0.6); font-weight: 600; }
 
 /* ---------- shared type ---------- */
 
@@ -294,31 +293,6 @@ body::after {
 .curtain__half--bottom { bottom: 0; }
 .curtain__count { position: absolute; left: var(--gutter); bottom: var(--gutter); z-index: 1; font-family: var(--font-serif); font-size: clamp(4rem, 14vw, 12rem); line-height: 0.8; font-variant-numeric: tabular-nums; color: var(--text); }
 .curtain__label { position: absolute; right: var(--gutter); bottom: var(--gutter); z-index: 1; font-family: var(--font-mono); font-size: 0.78rem; letter-spacing: 0.08em; text-transform: uppercase; color: var(--text-dim); }
-
-/* ---------- cursor: a ring that grows over links and can carry a word ---------- */
-
-.cursor { display: none; }
-.has-cursor .cursor {
-  display: grid;
-  place-items: center;
-  position: fixed;
-  left: 0;
-  top: 0;
-  z-index: var(--z-cursor);
-  width: 14px;
-  height: 14px;
-  margin: -7px 0 0 -7px;
-  border-radius: 50%;
-  border: 1px solid var(--text);
-  pointer-events: none;
-  mix-blend-mode: difference;
-  transition: width 0.45s var(--ease), height 0.45s var(--ease), margin 0.45s var(--ease), background-color 0.3s, opacity 0.3s;
-}
-.has-cursor .cursor.is-link { width: 56px; height: 56px; margin: -28px 0 0 -28px; background: oklch(1 0 0 / 0.14); }
-.has-cursor .cursor.is-label { width: 92px; height: 92px; margin: -46px 0 0 -46px; background: var(--text); }
-.cursor span { font-family: var(--font-mono); font-size: 0.72rem; letter-spacing: 0.06em; text-transform: uppercase; color: #000; opacity: 0; transition: opacity 0.3s; }
-.cursor.is-label span { opacity: 1; }
-.has-cursor .cursor.is-hidden { opacity: 0; }
 
 /* ---------- footer ---------- */
 

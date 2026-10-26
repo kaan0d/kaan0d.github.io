@@ -156,7 +156,6 @@ ${kind === 'home' ? PERSON_LD : ''}
 ${kind === 'post' ? '' : '<canvas class="scene-gl" aria-hidden="true"></canvas>'}
 <div class="vignette" aria-hidden="true"></div>
 <div class="frame" aria-hidden="true"><i></i><i></i><i></i><i></i></div>
-<div class="cursor" aria-hidden="true"><span></span></div>
 
 <header class="site-header">
   <a class="site-header__brand" href="${home}" aria-label="${NAME}, home"><img src="${base}assets/favicon.svg" width="30" height="30" alt=""><span>${NAME}</span></a>

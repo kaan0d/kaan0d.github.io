@@ -133,27 +133,6 @@
 
   $$('[data-top]').forEach((btn) => btn.addEventListener('click', () => site.scrollTo(0)));
 
-  // ---------- cursor ----------
-
-  site.fine = matchMedia('(hover: hover) and (pointer: fine)').matches;
-
-  function initCursor() {
-    const ring = $('.cursor');
-    const word = $('span', ring);
-    root.classList.add('has-cursor');
-    const x = gsap.quickTo(ring, 'x', { duration: 0.35, ease: 'power3' });
-    const y = gsap.quickTo(ring, 'y', { duration: 0.35, ease: 'power3' });
-    ring.classList.add('is-hidden');
-    addEventListener('pointermove', (e) => { ring.classList.remove('is-hidden'); x(e.clientX); y(e.clientY); }, { passive: true });
-    document.addEventListener('pointerleave', () => ring.classList.add('is-hidden'));
-    document.addEventListener('pointerover', (e) => {
-      const label = e.target.closest('[data-cursor]');
-      word.textContent = label ? label.dataset.cursor : '';
-      ring.classList.toggle('is-label', !!label);
-      ring.classList.toggle('is-link', !label && !!e.target.closest('a, button, summary'));
-    });
-  }
-
   // ---------- reveals ----------
 
   // Heading lines rise out of a mask. Re-splits on resize and font load.
@@ -222,7 +201,6 @@
     if (!reduce) {
       initReveals();
       if (site.fine) {
-        initCursor();
         // Liquid chrome buttons: three.js and anime.js load once the page is idle.
         (window.requestIdleCallback || setTimeout)(() => import(scriptBase + 'metal.js').catch(() => {}));
       }
