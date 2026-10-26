@@ -251,9 +251,13 @@ body::after {
 .btn:hover::before, .btn:focus-visible::before { clip-path: circle(150% at var(--mx) var(--my)); animation-play-state: running; }
 .btn:active { transform: scale(0.97); }
 .btn__arrow { display: inline-block; margin-left: 0.5em; transition: transform 0.5s var(--ease); }
-.btn:hover .btn__arrow, .btn:focus-visible .btn__arrow { transform: translate(3px, -3px); }
 .btn--blog .btn__arrow { margin-left: 0; }
-.btn--blog:hover .btn__arrow, .btn--blog:focus-visible .btn__arrow { transform: translateX(6px); }
+
+/* Three.js chrome (metal.js): the canvas sits under the label. */
+.btn__metal { position: absolute; inset: 0; z-index: 0; width: 100%; height: 100%; pointer-events: none; }
+.btn__label { position: relative; z-index: 1; display: inline-flex; align-items: center; }
+.has-metal .btn::before { display: none; }
+.has-metal .btn__label { text-shadow: 0 0 10px oklch(1 0 0 / 0.55); }
 
 /* ---------- shared type ---------- */
 

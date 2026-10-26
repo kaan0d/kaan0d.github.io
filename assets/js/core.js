@@ -1,5 +1,6 @@
 // Shared behavior for every page: smooth scroll, header, menu, curtain, cursor, timecode, reveals.
 (() => {
+  const scriptBase = document.currentScript.src.replace(/core.js.*$/, '');
   const root = document.documentElement;
   const reduce = root.classList.contains('reduce');
   const $ = (sel, ctx = document) => ctx.querySelector(sel);
@@ -220,7 +221,11 @@
     root.classList.add('ready');
     if (!reduce) {
       initReveals();
-      if (site.fine) initCursor();
+      if (site.fine) {
+        initCursor();
+        // Liquid chrome buttons: three.js and anime.js load once the page is idle.
+        (window.requestIdleCallback || setTimeout)(() => import(scriptBase + 'metal.js').catch(() => {}));
+      }
     }
     if (location.hash) {
       const target = document.getElementById(location.hash.slice(1));
