@@ -95,7 +95,7 @@
     if (!curtain || reduce || !firstVisit) return;
     const count = $('.curtain__count');
     const n = { v: 0 };
-    await gsap.to(n, { v: 100, duration: 1.5, ease: 'power2.inOut', onUpdate: () => { count.textContent = pad(n.v); } });
+    await gsap.to(n, { v: 100, duration: 1, ease: 'power2.inOut', onUpdate: () => { count.textContent = pad(n.v); } });
     await gsap.timeline()
       .to([count, $('.curtain__label')], { autoAlpha: 0, y: -24, duration: 0.4, ease: 'power2.in' })
       .to(top, { yPercent: -100, duration: 1.1, ease: 'expo.inOut' }, '>-0.05')
@@ -157,7 +157,7 @@
   // Top-of-page content: header, then each [data-hero] element in document order.
   function intro() {
     // On the home page the headline waits until the eye has opened.
-    const wait = root.dataset.page === 'home' ? 1.6 : 0;
+    const wait = root.dataset.page === 'home' ? 1.1 : 0;
     gsap.from($$('.site-header > *'), { opacity: 0, y: -14, duration: 1, stagger: 0.08, ease: 'expo.out' });
     $$('[data-hero]').forEach((el, i) => {
       if (el.hasAttribute('data-split')) {

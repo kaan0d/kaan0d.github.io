@@ -135,6 +135,8 @@ function shell({ file, kind, title, description, main, ogImage }) {
 <link rel="icon" href="${base}assets/favicon.svg" type="image/svg+xml">
 <link rel="preload" href="${base}assets/fonts/Geist-Variable.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="preload" href="${base}assets/fonts/instrument-serif-latin-400-normal.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="${base}assets/fonts/instrument-serif-latin-400-italic.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="${base}assets/fonts/GeistMono-Variable.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="stylesheet" href="${base}assets/css/base.css">
 <link rel="stylesheet" href="${base}assets/css/${kind}.css">
 <script>
@@ -159,7 +161,7 @@ ${kind === 'post' ? '' : '<canvas class="scene-gl" aria-hidden="true"></canvas>'
 
 <header class="site-header">
   <a class="site-header__brand" href="${home}" aria-label="${NAME}, home"><img src="${base}assets/favicon.svg" width="30" height="30" alt=""><span>${NAME}</span></a>
-  <p class="timecode" aria-hidden="true"><span data-timecode>00:00:00:00</span></p>
+  <p class="timecode" aria-hidden="true"><span data-timecode>00:00:00:00</span>${kind === 'home' ? '<span class="timecode__scene"><span data-scene-label>SC 01 · Title card</span></span>' : ''}</p>
   <button class="menu-btn" type="button" aria-label="menu" aria-expanded="false" aria-controls="site-nav"><span></span><span></span></button>
   <nav class="site-nav" id="site-nav" aria-label="primary">
 ${NAV.map(([label, id]) => `    <a class="roll" href="${home}#${id}" data-spy="${id}">${roll(label)}</a>`).join('\n')}

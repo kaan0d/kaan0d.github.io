@@ -148,6 +148,8 @@ body::after {
 .site-header__brand img { width: 30px; height: 30px; border-radius: 6px; }
 
 .timecode { display: flex; align-items: center; gap: 10px; font-family: var(--font-mono); font-size: 0.78rem; font-variant-numeric: tabular-nums; letter-spacing: 0.04em; color: var(--text-dim); }
+.timecode__scene { display: inline-block; min-width: 19ch; overflow: hidden; padding-left: 10px; border-left: 1px solid var(--line-strong); color: var(--text); }
+.timecode__scene > span { display: inline-block; }
 .timecode::before { content: ''; width: 7px; height: 7px; border-radius: 50%; background: var(--accent); animation: rec 2.4s ease-in-out infinite; }
 @keyframes rec { 50% { opacity: 0.25; } }
 
