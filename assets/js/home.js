@@ -1,17 +1,16 @@
-// Home page motion: scenes (grade, nav), hero, about scrub, timeline, project reveals, asides.
+// Home page motion: scenes (grade, nav), hero, about scrub, timeline, project reveals, shapes.
 (() => {
   const { $, $$, reduce, ready, opened } = window.site || {};
   if (!ready) return;
 
   ready.then(() => {
     scenes();
-    clock();
     if (reduce) return;
 
     aboutScrub();
     timeline();
     films();
-    asides();
+    shapes();
     ScrollTrigger.refresh();
   });
 
@@ -77,29 +76,17 @@
     });
   }
 
-  // Local time in Çanakkale; runs even with reduced motion since it only changes text.
-  function clock() {
-    const els = $$('[data-clock]');
-    if (!els.length) return;
-    const fmt = new Intl.DateTimeFormat('en-GB', { hour: '2-digit', minute: '2-digit', timeZone: 'Europe/Istanbul' });
-    const tick = () => els.forEach((el) => { el.textContent = fmt.format(new Date()); });
-    tick();
-    setInterval(tick, 15000);
-  }
-
-  // The report bars fill and the route draws itself when their block scrolls in.
-  function asides() {
-    $$('.bar__fill').forEach((el, i) => {
-      gsap.from(el, { scaleX: 0, duration: 1.4, delay: i * 0.25, ease: 'expo.out', scrollTrigger: { trigger: el, start: 'top 92%', once: true } });
+  // The line drawings turn with the scroll; the contact rings pulse outward on their own.
+  function shapes() {
+    $$('.shape').forEach((svg) => {
+      const section = svg.parentElement;
+      const trigger = { trigger: section, start: 'top bottom', end: 'bottom top', scrub: true };
+      $$('.spin', svg).forEach((el) => gsap.to(el, { rotation: 140, svgOrigin: '0 0', ease: 'none', scrollTrigger: trigger }));
+      $$('.orbit', svg).forEach((el) => gsap.to(el, { rotation: 360, svgOrigin: '0 0', ease: 'none', scrollTrigger: trigger }));
+      $$('.pulse', svg).forEach((el, i) => {
+        gsap.fromTo(el, { attr: { r: 24 }, opacity: 0.9 }, { attr: { r: 130 }, opacity: 0, duration: 4.5, ease: 'power1.out', repeat: -1, delay: i * 1.5 });
+      });
     });
-    const line = $('.route__line');
-    if (!line) return;
-    gsap.set('.route__dot, .route text', { opacity: 0 });
-    gsap.set(line, { strokeDasharray: 1, strokeDashoffset: 1 });
-    gsap.timeline({ scrollTrigger: { trigger: '.route', start: 'top 90%', once: true } })
-      .to('.route__dot, .route text', { opacity: 1, duration: 0.6, stagger: 0.25 })
-      .to(line, { strokeDashoffset: 0, duration: 1.8, ease: 'power2.inOut' }, 0)
-      .set(line, { strokeDasharray: '0.02 0.03' });
   }
 
   // Each project frame opens like a curtain, then its image settles in.
