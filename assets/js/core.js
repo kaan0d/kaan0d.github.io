@@ -69,10 +69,16 @@
 
   // ---------- menu (small screens) ----------
 
+  // While the menu covers the screen, the page behind it is out of reach for Tab and screen readers.
+  const behind = $$('main, .site-footer');
   const setMenu = (open) => {
+    const was = root.classList.contains('menu-open');
     root.classList.toggle('menu-open', open);
     menuBtn.setAttribute('aria-expanded', String(open));
+    behind.forEach((el) => { el.inert = open; });
     if (open) lenis?.stop(); else lenis?.start();
+    if (open && !was) $('a', nav)?.focus();
+    if (!open && was && nav.contains(document.activeElement)) menuBtn.focus();
   };
   menuBtn.addEventListener('click', () => setMenu(!root.classList.contains('menu-open')));
   nav.addEventListener('click', (e) => { if (e.target.closest('a')) setMenu(false); });
@@ -111,8 +117,14 @@
     if (cleanPath(url.pathname) !== cleanPath(location.pathname)) return;
 
     e.preventDefault();
-    site.scrollTo(url.hash ? document.getElementById(url.hash.slice(1)) || 0 : 0);
+    const target = url.hash ? document.getElementById(url.hash.slice(1)) : null;
+    site.scrollTo(target || 0);
     if (url.hash) history.replaceState(null, '', url.hash);
+    // Move focus too, so the next Tab continues from where the page now is.
+    if (target) {
+      if (!target.hasAttribute('tabindex')) target.setAttribute('tabindex', '-1');
+      target.focus({ preventScroll: true });
+    }
   });
 
   $$('[data-top]').forEach((btn) => btn.addEventListener('click', () => site.scrollTo(0)));

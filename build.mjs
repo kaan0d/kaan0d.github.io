@@ -169,7 +169,7 @@ ${NAV.map(([label, id]) => `    <a class="roll" href="${home}#${id}" data-spy="$
   </nav>
 </header>
 
-<main id="main">
+<main id="main" tabindex="-1">
 ${main}
 </main>
 
@@ -248,7 +248,7 @@ ${post.toc.map((t) => `        <li><a href="#${t.id}">${t.text}</a></li>`).join(
   return `<div class="progress" aria-hidden="true"><span></span></div>
 <article class="post">
   <header class="post-head">
-    <a class="post-head__back roll" href="../blog">${roll('&larr; blog')}</a>
+    <a class="post-head__back roll" href="../blog">${roll('← blog')}</a>
     <p class="post-head__meta" data-hero><time datetime="${post.date}">${post.label}</time> &nbsp;/&nbsp; ${post.minutes} min read</p>
     <h1 class="post-head__title" data-split="lines" data-hero>${post.title}</h1>${post.subtitle ? `
     <p class="post-head__sub" data-hero>${post.subtitle}</p>` : ''}
