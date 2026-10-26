@@ -1,4 +1,4 @@
-/* Shared foundation: tokens, type, frame, header, buttons, footer, motion states.
+/* Shared foundation: tokens, type, header, buttons, footer, motion states.
    Direction: dark cinematic. Cool blue-black shadows, one amber signal, serif title cards. */
 
 @font-face { font-family: 'Geist'; src: url('../fonts/Geist-Variable.woff2') format('woff2'); font-weight: 100 900; font-display: swap; }
@@ -111,15 +111,6 @@ body::after {
   80% { background-position: 45px 40px; }
 }
 
-/* Viewfinder corners */
-.frame { position: fixed; inset: 14px; z-index: var(--z-vignette); pointer-events: none; }
-.frame i { position: absolute; width: 14px; height: 14px; border: 0 solid oklch(0.945 0.012 85 / 0.35); }
-.frame i:nth-child(1) { left: 0; top: 0; border-width: 1px 0 0 1px; }
-.frame i:nth-child(2) { right: 0; top: 0; border-width: 1px 1px 0 0; }
-.frame i:nth-child(3) { left: 0; bottom: 0; border-width: 0 0 1px 1px; }
-.frame i:nth-child(4) { right: 0; bottom: 0; border-width: 0 1px 1px 0; }
-@media (max-width: 720px) { .frame { display: none; } }
-
 .skip {
   position: fixed;
   left: 16px;
@@ -171,7 +162,6 @@ body::after {
 .site-nav { display: flex; align-items: center; justify-self: end; gap: clamp(14px, 1.7vw, 26px); font-size: 0.9rem; white-space: nowrap; }
 .site-nav a { flex: none; color: var(--text); transition: color 0.3s; }
 .site-nav a.is-active { color: var(--accent); }
-.site-nav .nav-cv { color: var(--accent); }
 
 .menu-btn { display: none; justify-self: end; width: 44px; height: 44px; position: relative; }
 .menu-btn span { position: absolute; left: 11px; right: 11px; height: 1px; background: var(--text); transition: transform 0.5s var(--ease), top 0.5s var(--ease); }
@@ -284,10 +274,10 @@ body::after {
   transition: color 0.3s, border-color 0.3s;
 }
 
-/* ---------- curtain: closes on the way out of a page, opens on the way in ---------- */
+/* ---------- curtain: the opening of the first visit to the home page ---------- */
 
 .curtain { display: none; }
-.js:not(.reduce):not(.no-anim) .curtain { display: block; position: fixed; inset: 0; z-index: var(--z-curtain); pointer-events: none; }
+.js.intro:not(.reduce):not(.no-anim) .curtain { display: block; position: fixed; inset: 0; z-index: var(--z-curtain); pointer-events: none; }
 .curtain__half { position: absolute; left: 0; right: 0; height: 50.5%; background: oklch(0.1 0.01 255); }
 .curtain__half--top { top: 0; }
 .curtain__half--bottom { bottom: 0; }
@@ -314,13 +304,6 @@ body::after {
   .site-footer { grid-template-columns: 1fr; justify-items: start; }
   .site-footer .roll { justify-self: start; }
 }
-
-/* ---------- HUD: scene label and scroll position, bottom corners (wide screens) ---------- */
-
-.hud { position: fixed; inset: auto var(--gutter) 22px; z-index: var(--z-vignette); display: flex; justify-content: space-between; pointer-events: none; font-family: var(--font-mono); font-size: 0.74rem; letter-spacing: 0.06em; text-transform: uppercase; color: var(--text-dim); }
-.hud__scene { display: flex; gap: 14px; }
-.hud__scene b { font-weight: 400; color: var(--accent); }
-@media (max-width: 1099px) { .hud { display: none; } }
 
 /* ---------- motion states ---------- */
 

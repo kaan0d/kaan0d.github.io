@@ -24,12 +24,10 @@
     });
   });
 
-  // Each [data-scene] section sets the grade of the shader, the HUD label and the highlighted header link.
+  // Each [data-scene] section sets the grade of the shader and the highlighted header link.
   function scenes() {
     const sections = $$('[data-scene]');
     const links = $$('.site-nav a[data-spy]');
-    const noEl = $('[data-scene-no]');
-    const nameEl = $('[data-scene-name]');
     let last = null;
 
     const update = () => {
@@ -43,11 +41,8 @@
       last = current;
 
       window.site.grade?.(current.dataset.grade);
-      if (noEl) noEl.textContent = String(sections.indexOf(current) + 1).padStart(2, '0');
-      if (nameEl) nameEl.textContent = current.dataset.scene;
 
-      // The contact section has the id "links"; the header calls it nothing, so the last link stays lit.
-      const id = current.id === 'links' ? null : current.id;
+      const id = current.id;
       for (const a of links) {
         const on = a.dataset.spy === id;
         a.classList.toggle('is-active', on);
@@ -80,7 +75,7 @@
     });
   }
 
-  // Each project frame opens like a curtain, then its image drifts while it crosses the screen.
+  // Each project frame opens like a curtain, then its image settles in.
   function films() {
     $$('.film').forEach((film) => {
       const frame = $('.film__frame', film);
@@ -96,11 +91,6 @@
       });
       if (img) {
         gsap.fromTo(img, { scale: 1.3 }, { scale: 1, duration: 1.8, ease: 'expo.out', scrollTrigger: { trigger: frame, start: 'top 85%', once: true } });
-        gsap.fromTo(img, { yPercent: -4 }, {
-          yPercent: 4,
-          ease: 'none',
-          scrollTrigger: { trigger: frame, start: 'top bottom', end: 'bottom top', scrub: true },
-        });
       }
     });
   }

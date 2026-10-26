@@ -1,4 +1,4 @@
-// Shared behavior for every page: smooth scroll, header, menu, curtain, cursor, timecode, reveals.
+// Shared behavior for every page: smooth scroll, header, menu, intro curtain, timecode, reveals.
 (() => {
   const scriptBase = document.currentScript.src.replace(/core.js.*$/, '');
   const root = document.documentElement;
@@ -46,7 +46,6 @@
   const FPS = 24;
   const pad = (n, w = 2) => String(Math.floor(n)).padStart(w, '0');
   const timecodeEl = $('[data-timecode]');
-  const pctEl = $('[data-scene-pct]');
 
   function onScroll(self) {
     header.classList.toggle('is-scrolled', self.scroll() > 24);
@@ -55,7 +54,6 @@
     const frames = Math.round(progress * RUNTIME * FPS);
     const s = Math.floor(frames / FPS);
     if (timecodeEl) timecodeEl.textContent = `${pad(s / 3600)}:${pad((s % 3600) / 60)}:${pad(s % 60)}:${pad(frames % FPS)}`;
-    if (pctEl) pctEl.textContent = `${Math.round(progress * 100)}%`;
   }
 
   ScrollTrigger.create({ start: 0, end: 'max', onUpdate: onScroll, onRefresh: onScroll });
@@ -72,43 +70,25 @@
   addEventListener('keydown', (e) => { if (e.key === 'Escape') setMenu(false); });
   matchMedia('(min-width: 1100px)').addEventListener('change', () => setMenu(false));
 
-  // ---------- curtain: runs on the way out of a page and the way in ----------
+  // ---------- curtain: the opening of the first visit to the home page ----------
 
-  const halves = $$('.curtain__half');
-  const [top, bottom] = halves;
-  const seen = (() => { try { return sessionStorage.getItem('seen'); } catch (e) { return null; } })();
-  const firstVisit = !seen && root.dataset.page === 'home';
+  const [top, bottom] = $$('.curtain__half');
+  const firstVisit = root.classList.contains('intro');
   try { sessionStorage.setItem('seen', '1'); } catch (e) { /* private mode: the intro just repeats */ }
 
   site.openCurtain = async () => {
-    if (!curtain || reduce) return;
+    if (!curtain || reduce || !firstVisit) return;
     const count = $('.curtain__count');
-    const label = $('.curtain__label');
-    if (firstVisit) {
-      const n = { v: 0 };
-      await gsap.to(n, { v: 100, duration: 1.5, ease: 'power2.inOut', onUpdate: () => { count.textContent = pad(n.v); } });
-    } else {
-      gsap.set([count, label], { autoAlpha: 0 });
-    }
+    const n = { v: 0 };
+    await gsap.to(n, { v: 100, duration: 1.5, ease: 'power2.inOut', onUpdate: () => { count.textContent = pad(n.v); } });
     await gsap.timeline()
-      .to([count, label], { autoAlpha: 0, y: -24, duration: 0.4, ease: 'power2.in' })
-      .to(top, { yPercent: -100, duration: firstVisit ? 1.1 : 0.8, ease: 'expo.inOut' }, '>-0.05')
-      .to(bottom, { yPercent: 100, duration: firstVisit ? 1.1 : 0.8, ease: 'expo.inOut' }, '<');
+      .to([count, $('.curtain__label')], { autoAlpha: 0, y: -24, duration: 0.4, ease: 'power2.in' })
+      .to(top, { yPercent: -100, duration: 1.1, ease: 'expo.inOut' }, '>-0.05')
+      .to(bottom, { yPercent: 100, duration: 1.1, ease: 'expo.inOut' }, '<');
     gsap.set(curtain, { display: 'none' });
   };
 
-  const leave = (href) => {
-    gsap.set(curtain, { display: 'block' });
-    gsap.set($$('.curtain__count, .curtain__label'), { autoAlpha: 0 });
-    gsap.timeline({ onComplete: () => { location.href = href; } })
-      .fromTo(top, { yPercent: -100 }, { yPercent: 0, duration: 0.55, ease: 'expo.inOut' })
-      .fromTo(bottom, { yPercent: 100 }, { yPercent: 0, duration: 0.55, ease: 'expo.inOut' }, '<');
-  };
-
-  // Back/forward restores the page from memory with the curtain still closed.
-  addEventListener('pageshow', (e) => { if (e.persisted && curtain) gsap.set(curtain, { display: 'none' }); });
-
-  // ---------- links: same-page anchors scroll smoothly, other pages go through the curtain ----------
+  // ---------- links: same-page anchors scroll smoothly, everything else navigates normally ----------
 
   const cleanPath = (p) => p.replace(/index\.html$/, '').replace(/\.html$/, '').replace(/\/$/, '');
 
@@ -119,12 +99,7 @@
     const url = new URL(a.href, location.href);
     if (url.origin !== location.origin) return;
 
-    if (cleanPath(url.pathname) !== cleanPath(location.pathname)) {
-      if (reduce) return;
-      e.preventDefault();
-      leave(a.href);
-      return;
-    }
+    if (cleanPath(url.pathname) !== cleanPath(location.pathname)) return;
 
     e.preventDefault();
     site.scrollTo(url.hash ? document.getElementById(url.hash.slice(1)) || 0 : 0);
@@ -167,16 +142,6 @@
       };
       el.addEventListener('pointerenter', at);
       el.addEventListener('pointermove', at);
-    });
-    $$('[data-magnetic]').forEach((el) => {
-      const x = gsap.quickTo(el, 'x', { duration: 0.6, ease: 'power3' });
-      const y = gsap.quickTo(el, 'y', { duration: 0.6, ease: 'power3' });
-      el.addEventListener('pointermove', (e) => {
-        const r = el.getBoundingClientRect();
-        x((e.clientX - r.left - r.width / 2) * 0.28);
-        y((e.clientY - r.top - r.height / 2) * 0.28);
-      });
-      el.addEventListener('pointerleave', () => { x(0); y(0); });
     });
   }
 

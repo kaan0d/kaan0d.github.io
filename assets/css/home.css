@@ -98,7 +98,7 @@ main > section { background: transparent; }
   box-shadow: 0 40px 80px -40px oklch(0.05 0.01 255 / 0.9), 0 0 0 1px oklch(1 0 0 / 0.02) inset;
 }
 .media::after { content: ''; position: absolute; inset: 0; pointer-events: none; background: linear-gradient(180deg, oklch(0.76 0.145 62 / 0.08), transparent 35%, oklch(0.06 0.01 255 / 0.35)); }
-.media img { position: absolute; inset: -6% 0; width: 100%; height: 112%; object-fit: cover; transition: transform 1.2s var(--ease); }
+.media img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; transition: transform 1.2s var(--ease); }
 .media:hover img { transform: scale(1.04); }
 .media--card img { inset: 0; height: 100%; padding: clamp(24px, 5vw, 80px); object-fit: contain; }
 

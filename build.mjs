@@ -89,7 +89,7 @@ function loadPosts() {
 const CV_URL = 'https://drive.google.com/file/d/1M5Ri6U8PAwSgwr31EN4JDeT90P7OuCPo/view';
 
 // Header links in reading order. 'top' is the hero, so "home" lights up while it is on screen.
-const SECTIONS = ['about', 'projects', 'experience', 'skills', 'education'];
+const NAV = [['work', 'projects'], ['experience', 'experience']];
 
 const PERSON_LD = `<script type="application/ld+json">${JSON.stringify({
   '@context': 'https://schema.org',
@@ -141,6 +141,7 @@ function shell({ file, kind, title, description, main, ogImage }) {
 <script>
 (function (d) {
   d.classList.add('js');
+  try { if (!sessionStorage.getItem('seen') && d.dataset.page === 'home') d.classList.add('intro'); } catch (e) {}
   if (matchMedia('(prefers-reduced-motion: reduce)').matches) d.classList.add('reduce');
   // Safety net: reveal content if the animation scripts never report ready.
   setTimeout(function () { if (!d.classList.contains('ready')) d.classList.add('no-anim'); }, 4000);
@@ -155,17 +156,15 @@ ${kind === 'home' ? PERSON_LD : ''}
 <div class="curtain" aria-hidden="true"><i class="curtain__half curtain__half--top"></i><i class="curtain__half curtain__half--bottom"></i><span class="curtain__count">00</span><span class="curtain__label">${NAME}</span></div>
 ${kind === 'post' ? '' : '<canvas class="scene-gl" aria-hidden="true"></canvas>'}
 <div class="vignette" aria-hidden="true"></div>
-<div class="frame" aria-hidden="true"><i></i><i></i><i></i><i></i></div>
 
 <header class="site-header">
   <a class="site-header__brand" href="${home}" aria-label="${NAME}, home"><img src="${base}assets/favicon.svg" width="30" height="30" alt=""><span>${NAME}</span></a>
   <p class="timecode" aria-hidden="true"><span data-timecode>00:00:00:00</span></p>
   <button class="menu-btn" type="button" aria-label="menu" aria-expanded="false" aria-controls="site-nav"><span></span><span></span></button>
   <nav class="site-nav" id="site-nav" aria-label="primary">
-    <a class="roll" href="${home}" data-spy="top">${roll('home')}</a>
-${SECTIONS.map((s) => `    <a class="roll" href="${home}#${s}" data-spy="${s}">${roll(s)}</a>`).join('\n')}
+${NAV.map(([label, id]) => `    <a class="roll" href="${home}#${id}" data-spy="${id}">${roll(label)}</a>`).join('\n')}
     <a class="roll${kind === 'home' ? '' : ' is-active'}" href="${base}blog"${kind === 'home' ? '' : ' aria-current="page"'}>${roll('blog')}</a>
-    <a class="roll nav-cv" href="${CV_URL}" target="_blank" rel="noopener">${roll('cv &nearr;')}</a>
+    <a class="roll" href="${home}#links" data-spy="links">${roll('contact')}</a>
   </nav>
 </header>
 
@@ -178,8 +177,6 @@ ${main}
   <span>Çanakkale, Turkey</span>
   <button class="roll" type="button" data-top>${roll('back to top')}</button>
 </footer>
-
-<div class="hud" aria-hidden="true"><p class="hud__scene"><b data-scene-no>00</b><span data-scene-name>${kind === 'home' ? 'Title card' : kind === 'blog' ? 'Blog' : 'Reading'}</span></p><p data-scene-pct>0%</p></div>
 
 ${scripts}
 <script defer src="${base}assets/js/core.js"></script>

@@ -28,6 +28,7 @@
 <script>
 (function (d) {
   d.classList.add('js');
+  try { if (!sessionStorage.getItem('seen') && d.dataset.page === 'home') d.classList.add('intro'); } catch (e) {}
   if (matchMedia('(prefers-reduced-motion: reduce)').matches) d.classList.add('reduce');
   // Safety net: reveal content if the animation scripts never report ready.
   setTimeout(function () { if (!d.classList.contains('ready')) d.classList.add('no-anim'); }, 4000);
@@ -42,21 +43,16 @@
 <div class="curtain" aria-hidden="true"><i class="curtain__half curtain__half--top"></i><i class="curtain__half curtain__half--bottom"></i><span class="curtain__count">00</span><span class="curtain__label">Kaan Dinç</span></div>
 
 <div class="vignette" aria-hidden="true"></div>
-<div class="frame" aria-hidden="true"><i></i><i></i><i></i><i></i></div>
 
 <header class="site-header">
   <a class="site-header__brand" href="../" aria-label="Kaan Dinç, home"><img src="../assets/favicon.svg" width="30" height="30" alt=""><span>Kaan Dinç</span></a>
   <p class="timecode" aria-hidden="true"><span data-timecode>00:00:00:00</span></p>
   <button class="menu-btn" type="button" aria-label="menu" aria-expanded="false" aria-controls="site-nav"><span></span><span></span></button>
   <nav class="site-nav" id="site-nav" aria-label="primary">
-    <a class="roll" href="../" data-spy="top"><span class="roll__in" data-text="home">home</span></a>
-    <a class="roll" href="../#about" data-spy="about"><span class="roll__in" data-text="about">about</span></a>
-    <a class="roll" href="../#projects" data-spy="projects"><span class="roll__in" data-text="projects">projects</span></a>
+    <a class="roll" href="../#projects" data-spy="projects"><span class="roll__in" data-text="work">work</span></a>
     <a class="roll" href="../#experience" data-spy="experience"><span class="roll__in" data-text="experience">experience</span></a>
-    <a class="roll" href="../#skills" data-spy="skills"><span class="roll__in" data-text="skills">skills</span></a>
-    <a class="roll" href="../#education" data-spy="education"><span class="roll__in" data-text="education">education</span></a>
     <a class="roll is-active" href="../blog" aria-current="page"><span class="roll__in" data-text="blog">blog</span></a>
-    <a class="roll nav-cv" href="https://drive.google.com/file/d/1M5Ri6U8PAwSgwr31EN4JDeT90P7OuCPo/view" target="_blank" rel="noopener"><span class="roll__in" data-text="cv &amp;nearr;">cv &nearr;</span></a>
+    <a class="roll" href="../#links" data-spy="links"><span class="roll__in" data-text="contact">contact</span></a>
   </nav>
 </header>
 
@@ -85,8 +81,6 @@
   <span>Çanakkale, Turkey</span>
   <button class="roll" type="button" data-top><span class="roll__in" data-text="back to top">back to top</span></button>
 </footer>
-
-<div class="hud" aria-hidden="true"><p class="hud__scene"><b data-scene-no>00</b><span data-scene-name>Reading</span></p><p data-scene-pct>0%</p></div>
 
 <script defer src="../assets/vendor/gsap.min.js"></script>
 <script defer src="../assets/vendor/ScrollTrigger.min.js"></script>
