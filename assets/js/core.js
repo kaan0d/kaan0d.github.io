@@ -1,6 +1,5 @@
 // Shared behavior for every page: smooth scroll, header, menu, intro curtain, timecode, reveals.
 (() => {
-  const scriptBase = document.currentScript.src.replace(/core.js.*$/, '');
   const root = document.documentElement;
   const reduce = root.classList.contains('reduce');
   const $ = (sel, ctx = document) => ctx.querySelector(sel);
@@ -131,18 +130,6 @@
       once: true,
       onEnter: (els) => gsap.to(els, { opacity: 1, y: 0, duration: 1.1, stagger: { amount: 0.4 }, ease: 'expo.out', overwrite: true }),
     });
-
-    if (!site.fine) return;
-    // The chrome on every button pours in from where the pointer entered.
-    $$('.btn').forEach((el) => {
-      const at = (e) => {
-        const r = el.getBoundingClientRect();
-        el.style.setProperty('--mx', `${((e.clientX - r.left) / r.width) * 100}%`);
-        el.style.setProperty('--my', `${((e.clientY - r.top) / r.height) * 100}%`);
-      };
-      el.addEventListener('pointerenter', at);
-      el.addEventListener('pointermove', at);
-    });
   }
 
   // Top-of-page content: header, then each [data-hero] element in document order.
@@ -165,10 +152,6 @@
     root.classList.add('ready');
     if (!reduce) {
       initReveals();
-      if (site.fine) {
-        // Liquid chrome buttons: three.js and anime.js load once the page is idle.
-        (window.requestIdleCallback || setTimeout)(() => import(scriptBase + 'metal.js').catch(() => {}));
-      }
     }
     if (location.hash) {
       const target = document.getElementById(location.hash.slice(1));

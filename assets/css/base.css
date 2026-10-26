@@ -199,54 +199,40 @@ body::after {
   .menu-open .site-header.is-scrolled { -webkit-backdrop-filter: none; backdrop-filter: none; }
 }
 
-/* ---------- buttons: plain white at rest, liquid chrome poured in from the cursor on hover ---------- */
+/* ---------- buttons: editorial text links, an underline that wipes in and an arrow disc that fills ---------- */
 
 .btn {
-  --mx: 50%;
-  --my: 50%;
   position: relative;
-  isolation: isolate;
-  overflow: hidden;
   display: inline-flex;
   align-items: center;
-  justify-content: center;
-  padding: 0.95em 1.6em;
-  border: 0;
-  border-radius: 999px;
-  background: oklch(0.975 0.004 255);
-  color: oklch(0.16 0.01 255);
-  font-size: 0.95rem;
-  font-weight: 500;
+  gap: 0.75em;
+  padding: 0.5em 0 0.6em;
+  font-family: var(--font-serif);
+  font-size: clamp(1.6rem, 2.2vw, 2.1rem);
+  line-height: 1;
+  letter-spacing: -0.01em;
+  color: var(--text);
   white-space: nowrap;
-  transition: box-shadow 0.6s var(--ease), transform 0.4s var(--ease);
 }
-/* The metal: banded silver that drifts, warped by an SVG turbulence so the bands flow like liquid. */
-.btn::before {
-  content: '';
-  position: absolute;
-  inset: -30%;
-  z-index: -1;
-  background:
-    radial-gradient(circle at var(--mx) var(--my), oklch(1 0 0) 0, oklch(1 0 0 / 0) 28%),
-    repeating-linear-gradient(115deg, oklch(0.97 0.004 255) 0, oklch(0.7 0.012 255) 8%, oklch(0.5 0.014 255) 15%, oklch(0.86 0.008 255) 24%, oklch(0.99 0.002 255) 31%, oklch(0.66 0.012 255) 42%, oklch(0.92 0.006 255) 52%, oklch(0.97 0.004 255) 60%);
-  background-size: 100% 100%, 260% 260%;
-  filter: url(#liquid);
-  clip-path: circle(0% at var(--mx) var(--my));
-  transition: clip-path 0.8s var(--ease);
-  animation: metal-flow 5s linear infinite paused;
+.btn::before, .btn::after { content: ''; position: absolute; left: 0; right: 0; bottom: 0; height: 1px; }
+.btn::before { background: var(--line-strong); }
+.btn::after { background: var(--accent); transform: scaleX(0); transform-origin: right; transition: transform 0.7s var(--ease); }
+.btn:hover::after, .btn:focus-visible::after { transform: scaleX(1); transform-origin: left; }
+.btn > span:first-child { transition: color 0.4s, transform 0.6s var(--ease); }
+.btn:hover > span:first-child, .btn:focus-visible > span:first-child { color: var(--accent); transform: translateX(6px); }
+.btn__arrow {
+  display: grid;
+  place-items: center;
+  width: 1.9em;
+  height: 1.9em;
+  margin: 0;
+  border: 1px solid var(--line-strong);
+  border-radius: 50%;
+  font-family: var(--font-sans);
+  font-size: 0.6em;
+  transition: background-color 0.4s, border-color 0.4s, color 0.4s, transform 0.6s var(--ease);
 }
-@keyframes metal-flow { to { background-position: 0 0, 260% 130%; } }
-.btn:hover, .btn:focus-visible { box-shadow: 0 0 0 1px oklch(0.88 0.13 70), 0 0 18px 2px oklch(0.78 0.17 65 / 0.95), 0 0 48px 8px oklch(0.72 0.18 58 / 0.7), 0 0 110px 24px oklch(0.68 0.17 52 / 0.45); }
-.btn:hover::before, .btn:focus-visible::before { clip-path: circle(150% at var(--mx) var(--my)); animation-play-state: running; }
-.btn:active { transform: scale(0.97); }
-.btn__arrow { display: inline-block; margin-left: 0.5em; transition: transform 0.5s var(--ease); }
-.btn--blog .btn__arrow { margin-left: 0; }
-
-/* Three.js chrome (metal.js): the canvas sits under the label. */
-.btn__metal { position: absolute; inset: 0; z-index: 0; width: 100%; height: 100%; pointer-events: none; }
-.btn__label { position: relative; z-index: 1; display: inline-flex; align-items: center; }
-.has-metal .btn::before { display: none; }
-.has-metal .btn__label { color: oklch(0.12 0.01 255); text-shadow: 0 0 6px oklch(1 0 0 / 0.9), 0 0 14px oklch(1 0 0 / 0.6); font-weight: 600; }
+.btn:hover .btn__arrow, .btn:focus-visible .btn__arrow { background: var(--accent); border-color: var(--accent); color: var(--on-accent); transform: scale(1.12) rotate(-12deg); }
 
 /* ---------- shared type ---------- */
 

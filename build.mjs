@@ -1,7 +1,6 @@
 // Static site build: src/ -> index.html, blog.html, posts/*.html. Run: npm run build
 import fs from 'node:fs';
 import path from 'node:path';
-import { buildSync } from 'esbuild';
 
 const SITE = 'https://kaandinc.com';
 const NAME = 'Kaan Dinç';
@@ -295,9 +294,6 @@ for (const [from, to] of Object.entries(VENDOR)) {
   fs.mkdirSync(path.dirname(to), { recursive: true });
   fs.copyFileSync(from, to);
 }
-
-// Three.js and anime.js are tree-shaken into one file that core.js loads when a mouse is present.
-buildSync({ entryPoints: ['src/js/metal.js'], bundle: true, minify: true, format: 'esm', outfile: 'assets/js/metal.js' });
 
 const posts = loadPosts();
 const urls = [`${SITE}/`, `${SITE}/blog`];

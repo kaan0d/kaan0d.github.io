@@ -10,6 +10,7 @@
     aboutScrub();
     timeline();
     films();
+    ghosts();
     ScrollTrigger.refresh();
   });
 
@@ -72,6 +73,17 @@
       scaleY: 1,
       ease: 'none',
       scrollTrigger: { trigger: '.timeline', start: 'top 70%', end: 'bottom 70%', scrub: true },
+    });
+  }
+
+  // The big section numbers drift against the scroll, slower than the page.
+  function ghosts() {
+    $$('[data-ghost]').forEach((el) => {
+      gsap.fromTo(el, { yPercent: -12 }, {
+        yPercent: 12,
+        ease: 'none',
+        scrollTrigger: { trigger: el.parentElement, start: 'top bottom', end: 'bottom top', scrub: true },
+      });
     });
   }
 

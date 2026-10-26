@@ -170,3 +170,22 @@ main > section { background: transparent; }
   .entry__when { padding-top: 0; }
   .edu__row { grid-template-columns: 1fr; gap: 8px; }
 }
+
+/* ---------- ghost numerals: the section number, outlined, in the space beside each heading ---------- */
+
+.ghost {
+  position: absolute;
+  top: clamp(24px, 4vw, 64px);
+  right: var(--gutter);
+  z-index: -1;
+  font-family: var(--font-serif);
+  font-size: clamp(9rem, 26vw, 25rem);
+  line-height: 0.8;
+  letter-spacing: -0.04em;
+  color: transparent;
+  -webkit-text-stroke: 1px oklch(0.5 0.02 255 / 0.7);
+  pointer-events: none;
+  user-select: none;
+}
+.about .ghost { top: auto; bottom: clamp(24px, 4vw, 64px); }
+@media (max-width: 720px) { .ghost { font-size: 11rem; opacity: 0.6; } }
