@@ -6,16 +6,6 @@
   const $$ = (sel, ctx = document) => [...ctx.querySelectorAll(sel)];
   const site = (window.site = { reduce, $, $$ });
 
-  // Calm mode: no flicker, no glitter, the letters hold still. Remembered between visits.
-  const calmBtn = $('[data-calm]');
-  const setCalm = (on) => {
-    root.classList.toggle('calm', on);
-    calmBtn?.setAttribute('aria-pressed', String(on));
-    try { localStorage.setItem('calm', on ? '1' : '0'); } catch (e) { /* private mode: it just resets next visit */ }
-  };
-  calmBtn?.setAttribute('aria-pressed', String(root.classList.contains('calm')));
-  calmBtn?.addEventListener('click', () => setCalm(!root.classList.contains('calm')));
-
   if (!window.gsap || !window.ScrollTrigger || !window.SplitText || !window.Lenis) return; // 4 s safety net shows content
   gsap.registerPlugin(ScrollTrigger, SplitText);
 

@@ -142,7 +142,6 @@ function shell({ file, kind, title, description, main, ogImage }) {
 <script>
 (function (d) {
   d.classList.add('js');
-  try { if (localStorage.getItem('calm') === '1') d.classList.add('calm'); } catch (e) {}
   try { if (!sessionStorage.getItem('seen') && d.dataset.page === 'home') d.classList.add('intro'); } catch (e) {}
   if (matchMedia('(prefers-reduced-motion: reduce)').matches) d.classList.add('reduce');
   // Safety net: reveal content if the animation scripts never report ready.
@@ -167,7 +166,6 @@ ${kind === 'post' ? '' : '<canvas class="scene-gl" aria-hidden="true"></canvas>'
 ${NAV.map(([label, id]) => `    <a class="roll" href="${home}#${id}" data-spy="${id}">${roll(label)}</a>`).join('\n')}
     <a class="roll${kind === 'home' ? '' : ' is-active'}" href="${base}blog"${kind === 'home' ? '' : ' aria-current="page"'}>${roll('blog')}</a>
     <a class="roll" href="${home}#links" data-spy="links">${roll('contact')}</a>
-    <button class="roll calm-btn" type="button" aria-pressed="false" data-calm title="Calm mode: stops the flicker">${roll('calm')}</button>
   </nav>
 </header>
 

@@ -25,7 +25,6 @@
     { dpr: 0.75, cell: [14, 23], lite: 1, skip: 1 },   // skip: draw every other frame
   ];
   let tier = innerWidth < 900 || (navigator.hardwareConcurrency || 8) <= 4 || (navigator.deviceMemory || 8) <= 4 ? 1 : 0;
-  const calmNow = () => (reduce || root.classList.contains('calm') ? 1 : 0);   // no flicker: letters hold still
 
   const VERT = `#version 300 es
 layout(location = 0) in vec2 p;
@@ -353,7 +352,7 @@ void main() {
     gl.uniform1f(ua.uPower, power);
     gl.uniform1f(ua.uTime, time);
     gl.uniform1f(ua.uLite, TIERS[tier].lite);
-    gl.uniform1f(ua.uCalm, calmNow());
+    gl.uniform1f(ua.uCalm, reduce ? 1 : 0);   // reduced motion: the letters hold still
     gl.drawArrays(gl.TRIANGLES, 0, 3);
   }
 
