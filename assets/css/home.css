@@ -272,11 +272,7 @@ main > section { background: transparent; }
 .contact__k { width: 6.5em; color: var(--text-dim); }
 .contact__blog { display: flex; flex-direction: column; align-items: flex-start; gap: 20px; margin-top: clamp(40px, 4.5vw, 64px); }
 .contact__blog p { font-family: var(--font-mono); font-size: 0.85rem; color: var(--text-dim); }
-.btn--blog .btn__arrow { margin-left: 0; }
-.btn--blog { gap: 0.9em; padding: 1.15em 2.4em; font-size: 1.05rem; border-color: var(--accent); color: var(--accent); }
-.btn--blog::before { background: var(--accent); }
-.btn--blog:hover, .btn--blog:focus-visible { border-color: var(--accent); color: var(--on-accent); }
-.btn--blog:hover .btn__arrow, .btn--blog:focus-visible .btn__arrow { transform: translateX(6px); }
+.btn--blog { gap: 0.9em; padding: 1.15em 2.4em; font-size: 1.05rem; }
 
 /* ---------- small screens ---------- */
 

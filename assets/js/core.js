@@ -178,6 +178,16 @@
     });
 
     if (!site.fine) return;
+    // The chrome on every button pours in from where the pointer entered.
+    $$('.btn').forEach((el) => {
+      const at = (e) => {
+        const r = el.getBoundingClientRect();
+        el.style.setProperty('--mx', `${((e.clientX - r.left) / r.width) * 100}%`);
+        el.style.setProperty('--my', `${((e.clientY - r.top) / r.height) * 100}%`);
+      };
+      el.addEventListener('pointerenter', at);
+      el.addEventListener('pointermove', at);
+    });
     $$('[data-magnetic]').forEach((el) => {
       const x = gsap.quickTo(el, 'x', { duration: 0.6, ease: 'power3' });
       const y = gsap.quickTo(el, 'y', { duration: 0.6, ease: 'power3' });

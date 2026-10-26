@@ -1,4 +1,4 @@
-// The scene behind the page: a projector beam through haze with drifting dust.
+// The scene behind the page: a slow pool of liquid chrome lit by the cursor.
 // The grade (shadow and beam colours) follows the section on screen: site.grade(name).
 // Does nothing without WebGL2; the page then keeps its plain background.
 (() => {
@@ -32,56 +32,45 @@ float noise(vec2 p) {
 }
 float fbm(vec2 p) {
   float v = 0.0, a = 0.5;
-  for (int i = 0; i < 4; i++) { v += a * noise(p); p = p * 2.03 + vec2(1.7, 9.2); a *= 0.5; }
+  for (int i = 0; i < 3; i++) { v += a * noise(p); p = p * 2.03 + vec2(1.7, 9.2); a *= 0.5; }
   return v;
 }
 
-// One layer of dust: a jittered grid of motes that drift and twinkle.
-float dust(vec2 p, float scale, float seed, float t) {
-  vec2 q = p * scale + vec2(t * 0.12, -t * 0.2) * (0.6 + seed);
-  vec2 id = floor(q), f = fract(q) - 0.5;
-  float h = hash(id + seed * 17.0);
-  vec2 off = vec2(hash(id + 3.1 + seed), hash(id + 7.7 + seed)) - 0.5;
-  float d = length(f - off * 0.7);
-  float tw = 0.5 + 0.5 * sin(t * (0.6 + h * 1.4) + h * 40.0);
-  return smoothstep(0.07 + 0.03 * h, 0.0, d) * step(0.55, h) * tw;
+// Height of the liquid surface: slow, domain-warped swells.
+float height(vec2 p, float t) {
+  vec2 w = vec2(fbm(p * 0.9 + vec2(t, -t * 0.7)), fbm(p * 0.9 + 5.2 - vec2(t * 0.8, t)));
+  return fbm(p * 1.1 + w * 1.9);
 }
 
 void main() {
   vec2 uv = gl_FragCoord.xy / uRes;
   float asp = uRes.x / uRes.y;
-  vec2 p = (uv - 0.5) * vec2(asp, 1.0);
-  vec2 m = (uMouse - 0.5) * vec2(asp, 1.0);
-  float t = uTime;
+  vec2 p = (uv - 0.5) * vec2(asp, 1.0) * 1.5;
+  vec2 m = (uMouse - 0.5) * vec2(asp, 1.0) * 1.5;
+  float t = uTime * 0.035 + uScroll * 1.2;
 
-  // Source sits above the top-right corner; the beam leans toward the cursor and swings slowly with scroll.
-  vec2 src = vec2(0.42 * asp, 0.75);
-  float lean = 0.55 + (m.x * 0.35) + sin(uScroll * 6.2832 * 1.5) * 0.18;
-  vec2 v = p - src;
-  float len = length(v);
-  float ang = atan(v.x, -v.y);                       // 0 straight down
-  float da = ang + lean * 0.9;                       // aim, radians
-  float width = 0.2 + len * 0.16;
-  float cone = smoothstep(width, width * 0.15, abs(da));
-  cone *= smoothstep(0.0, 0.25, len) * exp(-len * 0.8);
+  // Surface normal from the height field's slope.
+  float e = 0.012;
+  float h = height(p, t);
+  float hx = height(p + vec2(e, 0.0), t) - h;
+  float hy = height(p + vec2(0.0, e), t) - h;
+  vec3 n = normalize(vec3(-hx, -hy, e * 0.55));
 
-  // Haze: slow smoke that the beam lights up.
-  vec2 w = vec2(fbm(p * 1.6 + vec2(t * 0.03, -t * 0.02)), fbm(p * 1.6 + 5.2 - t * 0.025));
-  float haze = fbm(p * 2.2 + w * 1.8 + t * 0.02);
-  float beam = cone * (0.35 + 1.1 * haze);
+  // One light that follows the cursor, one fixed rim from the top right.
+  vec3 L = normalize(vec3(m - p, 0.55));
+  vec3 R = normalize(vec3(0.7, 0.9, 0.6));
+  float spec = pow(max(dot(reflect(-L, n), vec3(0.0, 0.0, 1.0)), 0.0), 28.0);
+  float rim = pow(max(dot(reflect(-R, n), vec3(0.0, 0.0, 1.0)), 0.0), 18.0);
 
-  // Soft pool of light that follows the cursor.
-  float pool = exp(-dot(p - m, p - m) * 6.0) * 0.1;
+  // Chrome look: a studio gradient read through the normal, banded into dark and light stripes.
+  float band = n.x * 3.2 + n.y * 4.4;
+  float env = smoothstep(0.35, 0.95, 0.5 + 0.5 * sin(band * 5.0 + h * 6.0));
+  env *= smoothstep(0.0, 0.5, length(vec2(hx, hy)) / e);
 
-  float motes = dust(p, 9.0, 0.0, t) + dust(p, 17.0, 1.0, t) * 0.7 + dust(p, 31.0, 2.0, t) * 0.45;
-  motes *= (0.25 + beam * 2.4);
-
-  vec3 col = uShadow;
-  col += uBeam * (beam * 0.3 + pool * 0.6) * uPower;
-  col += uBeam * motes * 0.55 * uPower;
-  // Light falls off toward the bottom so footer and text sit on shadow.
+  vec3 col = uShadow * (0.75 + 0.5 * h);
+  col += uBeam * (spec * 0.55 + rim * 0.35 + env * 0.1) * uPower;
   col *= mix(0.7, 1.0, uv.y);
-  col += (hash(gl_FragCoord.xy + t) - 0.5) * 0.012;
+  col += (hash(gl_FragCoord.xy + uTime) - 0.5) * 0.012;
   outColor = vec4(col, 1.0);
 }`;
 
@@ -110,12 +99,12 @@ void main() {
 
   // Grades: [shadow rgb, beam rgb]. Teal shadows with warm light is the base look.
   const GRADES = {
-    cold: [[0.040, 0.050, 0.078], [0.46, 0.62, 0.86]],
-    amber: [[0.062, 0.052, 0.050], [0.97, 0.64, 0.30]],
-    teal: [[0.030, 0.060, 0.074], [0.36, 0.80, 0.78]],
-    ember: [[0.070, 0.042, 0.040], [0.96, 0.46, 0.26]],
+    cold: [[0.040, 0.046, 0.062], [0.74, 0.82, 0.95]],
+    amber: [[0.058, 0.050, 0.046], [1.00, 0.80, 0.55]],
+    teal: [[0.034, 0.052, 0.060], [0.70, 0.92, 0.92]],
+    ember: [[0.062, 0.046, 0.044], [1.00, 0.72, 0.58]],
   };
-  const cur = { shadow: [...GRADES.cold[0]], beam: [...GRADES.cold[1]], power: home ? 1 : 0.55 };
+  const cur = { shadow: [...GRADES.cold[0]], beam: [...GRADES.cold[1]], power: home ? 0.5 : 0.35 };
   let target = GRADES.cold;
 
   const mouse = { x: 0.7, y: 0.6, tx: 0.7, ty: 0.6 };
