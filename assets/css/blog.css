@@ -46,3 +46,10 @@
   .post-row__date { grid-column: 1 / -1; }
   .post-row__arrow { display: none; }
 }
+
+/* ---------- legibility over the planet: the list sits on a dark slab, the small text in a soft shadow ---------- */
+
+.post-list { background: oklch(0.13 0.011 255 / 0.62); }
+.blog-hero__lede, .post-row__date, .post-row__meta, .post-row__tags, .year__label {
+  text-shadow: 0 0 12px oklch(0.12 0.01 255), 0 0 26px oklch(0.12 0.01 255 / 0.8);
+}
