@@ -793,11 +793,25 @@ void main() {
     mouse.tx = e.clientX / innerWidth;
     mouse.ty = 1 - e.clientY / innerHeight;
   }, { passive: true });
-  addEventListener('resize', resize);
+  // A phone's address bar showing or hiding changes only the height a little; the canvas just stretches for that
+  // instead of reallocating every buffer mid-scroll.
+  let sizedW = innerWidth, sizedH = innerHeight;
+  addEventListener('resize', () => {
+    if (innerWidth === sizedW && Math.abs(innerHeight - sizedH) < 160) return;
+    sizedW = innerWidth;
+    sizedH = innerHeight;
+    resize();
+  });
+  let queued = false;
   if (reduce) addEventListener('scroll', () => {
-    zoom = goalZoom();
-    journey = home ? journeyAt(scrollY) : 0;
-    draw();
+    if (queued) return;
+    queued = true;
+    requestAnimationFrame(() => {
+      queued = false;
+      zoom = goalZoom();
+      journey = home ? journeyAt(scrollY) : 0;
+      draw();
+    });
   }, { passive: true });
   resize();
   if (!reduce) requestAnimationFrame(frame);
