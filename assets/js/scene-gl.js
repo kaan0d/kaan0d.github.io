@@ -1,7 +1,7 @@
 // The scene behind the page, filmed in ASCII.
 //
-// Pass one paints a small colour picture, one pixel per character: a ringed giant lit by its sun, a moon going
-// round it, stars and now and then a meteor. It stays put while the page scrolls; only time moves it. Pass two
+// Pass one paints a small colour picture, one pixel per character: a ringed giant lit by its sun, its ring
+// turning, stars and now and then a meteor. It stays put while the page scrolls; only time moves it. Pass two
 // turns each pixel into a character. The characters come from a ramp that is sorted by measured ink, edges get
 // line glyphs that follow them, and the image gets bloom, an anamorphic streak, chromatic fringing and grain.
 // site.grade(name) tints the characters per section. Does nothing without WebGL2.
@@ -85,7 +85,7 @@ vec3 shoot(vec2 p, float t) {
 }
 
 // The ringed giant: banded clouds that drift, lit from the upper left, a thin blue limb, the ring passing in front
-// below and behind above, and a moon on a tilted orbit.
+// below and behind above. The ring is made of clumps and gaps that travel round it, so the whole ring turns.
 vec3 planet(vec2 q, float t) {
   float R = 0.34;
   float r = length(q);
@@ -94,7 +94,10 @@ vec3 planet(vec2 q, float t) {
   float rd = length(vec2(rq.x, rq.y / 0.26));
   float ring = smoothstep(0.52, 0.54, rd) * smoothstep(0.95, 0.93, rd);
   float grain = 0.5 + 0.5 * sin(rd * 140.0 + fbm(vec2(rd * 30.0, 1.0)) * 6.0);
+  float ra = atan(rq.y / 0.26, rq.x) + t * 0.12 / rd;   // inner parts go round faster, like a real ring
+  float clumps = fbm(vec2(cos(ra), sin(ra)) * 3.0 + rd * 9.0);
   vec3 ringCol = mix(vec3(0.6, 0.5, 0.38), vec3(0.95, 0.85, 0.65), grain) * (0.4 + 0.6 * fbm(vec2(rd * 60.0, 3.0)));
+  ringCol *= 0.35 + 1.3 * smoothstep(0.3, 0.7, clumps);
   vec2 lightDir = vec2(-0.7, 0.45);
   if (r < R) {
     vec3 n = vec3(q / R, sqrt(max(1.0 - dot(q / R, q / R), 0.0)));
@@ -109,9 +112,6 @@ vec3 planet(vec2 q, float t) {
     col += vec3(0.4, 0.6, 1.0) * exp(-(r - R) * 38.0) * 0.35 * smoothstep(-0.2, 0.6, dot(q / r, normalize(lightDir)));
     col = mix(col, ringCol, ring * 0.9);
   }
-  vec2 mp = rot(0.25) * vec2(cos(t * 0.35) * 0.85, sin(t * 0.35) * 0.2);
-  float md = length(q - mp);
-  col += vec3(0.8, 0.8, 0.82) * smoothstep(0.045, 0.035, md) * (0.5 + 0.5 * clamp(dot(normalize(q - mp + 1e-3), normalize(lightDir)) + 0.5, 0.0, 1.0));
   return col;
 }
 
