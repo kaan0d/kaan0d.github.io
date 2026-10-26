@@ -58,6 +58,7 @@ function loadPosts() {
     const firstParagraph = stripTags(body.match(/<p[^>]*>[\s\S]*?<\/p>/)[0]);
     return {
       slug: file.replace(/\.html$/, ''),
+      image: meta.image, // link-preview image of this post, relative to posts/; the site-wide one is used when absent
       title: meta.title,
       subtitle: meta.subtitle,
       summary: meta.summary,
@@ -96,7 +97,7 @@ const PERSON_LD = `<script type="application/ld+json">${JSON.stringify({
   alumniOf: { '@type': 'CollegeOrUniversity', name: 'Gaziosmanpaşa University' },
 })}</script>`;
 
-function shell({ file, kind, title, description, main }) {
+function shell({ file, kind, title, description, main, ogImage }) {
   const base = '../'.repeat(file.split('/').length - 1);
   const home = base || './';
   const canonical = file === 'index.html' ? SITE + '/' : `${SITE}/${file.replace(/\.html$/, '')}`;
@@ -120,14 +121,14 @@ function shell({ file, kind, title, description, main }) {
 <meta property="og:description" content="${esc(description)}">
 <meta property="og:url" content="${canonical}">
 <meta property="og:site_name" content="${NAME}">
-<meta property="og:image" content="${SITE}/assets/og.png">
+<meta property="og:image" content="${ogImage ? ogImage.url : SITE + '/assets/og.png'}">
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="630">
-<meta property="og:image:alt" content="Kaan Dinç, computer engineer. K logo beside 3D solids in amber on black.">
+<meta property="og:image:alt" content="${esc(ogImage ? ogImage.alt : 'Kaan Dinç, computer engineer. K logo beside 3D solids in amber on black.')}">
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:title" content="${esc(fullTitle)}">
 <meta name="twitter:description" content="${esc(description)}">
-<meta name="twitter:image" content="${SITE}/assets/og.png">
+<meta name="twitter:image" content="${ogImage ? ogImage.url : SITE + '/assets/og.png'}">
 <link rel="icon" href="${base}assets/favicon.svg" type="image/svg+xml">
 <link rel="preload" href="${base}assets/fonts/Geist-Variable.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="stylesheet" href="${base}assets/css/base.css">
@@ -316,6 +317,7 @@ for (const post of posts) {
     title: post.title,
     description: post.description,
     main: postMain(post, posts),
+    ogImage: post.image ? { url: `${SITE}/posts/${post.image}`, alt: post.title } : undefined,
   }));
   urls.push(`${SITE}/posts/${post.slug}`);
   for (const old of post.aliases) {
