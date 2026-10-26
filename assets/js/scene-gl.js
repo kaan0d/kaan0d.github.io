@@ -122,9 +122,10 @@ void main() {
 
   // Wide screens hold the planet right of centre, clear of the text column; narrow ones centre it and shrink it
   // to fit. It breathes a little in size and sways a little, so it is never quite still. The scroll rolls it,
-  // brings it closer and moves the sun from the upper left (2.57 rad) over the top to the right.
+  // brings it closer, slides it right so the closing text has room, and moves the sun from the upper left
+  // (2.57 rad) over the top to the right.
   float sc = uScroll * uScroll * (3.0 - 2.0 * uScroll);
-  vec2 centre = uAsp > 1.0 ? vec2(uAsp * 0.5 - 0.5, 0.06 - 0.08 * sc) : vec2(0.0, 0.22);
+  vec2 centre = uAsp > 1.0 ? vec2(uAsp * 0.5 - 0.5 + 0.2 * sc, 0.06 - 0.08 * sc) : vec2(0.0, 0.22);
   float size = min(0.8, uAsp * 1.05) * (1.0 + 0.025 * sin(uTime * 0.11)) * (1.0 + 0.4 * sc);
   vec2 q = rot(0.03 * sin(uTime * 0.07) + 0.55 * sc) * (p - centre) / size;
 
