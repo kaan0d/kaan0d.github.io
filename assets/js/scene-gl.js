@@ -14,8 +14,9 @@
   const reduce = root.classList.contains('reduce');
   const home = root.dataset.page === 'home';
 
-  const N = 30;                 // glyphs in the tonal ramp
-  const CELL = [9, 16];         // one character, in CSS pixels
+  const N = 30;                 // tonal levels
+  const K = 3;                  // characters per level, picked at random so no letter repeats in a row
+  const CELL = [11, 18];         // one character, in CSS pixels
   const FALL = 2.2;             // screens of scroll from the whole eye to the whole galaxy
 
   const VERT = `#version 300 es
@@ -442,24 +443,30 @@ void main() {
   // tone: a little temporal dither so the characters shimmer like film grain instead of banding
   float dither = hash(vec2(cell) + floor(uTime * 14.0)) - 0.5;
   float level = clamp(pow(L, 0.8) * ${N}.0 + dither * 0.9, 0.0, ${N}.0 - 0.01);
-  float idx = floor(level);
+  float lvl = floor(level);
+  float rnd = hash(vec2(cell) * 1.37 + floor(uTime * 1.6 + hash(vec2(cell).yx) * 4.0));   // every cell re-rolls now and then, out of step
+  float idx = lvl * ${K}.0 + floor(rnd * ${K}.0);
 
   // edges become line glyphs that follow them
   float mag = length(g);
   if (mag > 0.15 && L > 0.1) {
     float e = abs(g.x) > 2.0 * abs(g.y) ? 1.0 : (abs(g.y) > 2.0 * abs(g.x) ? 0.0 : (g.x * g.y > 0.0 ? 3.0 : 2.0));
-    idx = ${N}.0 + e;   // the line glyphs sit after the ramp
+    idx = ${N * K}.0 + e;   // the line glyphs sit after the ramp
   }
 
   // glitter prints as little stars
   float sp = sparkAt(cell);
-  if (sp > 0.22) idx = ${N}.0 + 4.0 + (sp > 0.55 ? 1.0 : 0.0);
+  if (sp > 0.22) idx = ${N * K}.0 + 4.0 + (sp > 0.55 ? 1.0 : 0.0);
 
-  float total = ${N}.0 + 6.0;
-  vec2 gu = vec2((idx + 0.06 + 0.88 * local.x) / total, 0.04 + 0.92 * (1.0 - local.y));
+  float total = ${N * K}.0 + 6.0;
+  // the glyph takes only part of its cell, so there is air between the characters
+  vec2 lc = (local - 0.5) * 1.3 + 0.5;
+  float inside = step(0.0, lc.x) * step(lc.x, 1.0) * step(0.0, lc.y) * step(lc.y, 1.0);
+  lc = clamp(lc, 0.0, 1.0);
+  vec2 gu = vec2((idx + 0.06 + 0.88 * lc.x) / total, 0.04 + 0.92 * (1.0 - lc.y));
   // chromatic fringing grows toward the edges of the frame
   vec2 off = (fc / uRes - 0.5) * vec2(0.0022, 0.0);
-  vec3 a = vec3(texture(uAtlas, gu + off).a, texture(uAtlas, gu).a, texture(uAtlas, gu - off).a);
+  vec3 a = vec3(texture(uAtlas, gu + off).a, texture(uAtlas, gu).a, texture(uAtlas, gu - off).a) * inside;
 
   vec3 ink = mix(vec3(L), c, 1.55) * (0.85 + 1.1 * L) * uTint;   // push the colour
   if (sp > 0.22) ink = vec3(1.0, 0.86, 0.6) * (0.9 + 1.4 * sp);
@@ -533,15 +540,15 @@ void main() {
       for (let i = 3; i < d.length; i += 4) s += d[i];
       return { ch, s };
     }).sort((a, b) => a.s - b.s);
-    const max = ink[ink.length - 1].s * 0.92;
-    const ramp = [];
+    // Sorted by ink, the candidates are cut into N levels; each level keeps K neighbours of nearly the same weight.
+    const M = ink.length;
+    const levels = [];
     for (let k = 0; k < N; k++) {
-      const want = (k / (N - 1)) * max;
-      let best = null;
-      for (const e of ink) if (!ramp.includes(e.ch) && (!best || Math.abs(e.s - want) < Math.abs(best.s - want))) best = e;
-      ramp.push(best.ch);
+      const start = Math.round((k * (M - K)) / (N - 1));
+      levels.push(ink.slice(start, start + K).map((e) => e.ch));
     }
-    const glyphs = [...ramp, '-', '|', '/', '\\', '+', '*'];
+    const glyphs = [...levels.flat(), '-', '|', '/', '\\', '+', '*'];
+    const ramp = levels.map((l) => l[0]);
     const c = document.createElement('canvas');
     c.width = gw * glyphs.length;
     c.height = gh;
