@@ -64,7 +64,7 @@ main > section { background: transparent; }
   padding-bottom: 14px;
   border-bottom: 1px solid var(--line);
   font-family: var(--font-mono);
-  font-size: 0.78rem;
+  font-size: 0.8rem;
   color: var(--text-dim);
 }
 .film__no { font-family: var(--font-serif); font-size: clamp(2.4rem, 4vw, 3.6rem); line-height: 0.8; color: var(--accent); }
@@ -194,7 +194,7 @@ main > section { background: transparent; }
 .term__bar { display: flex; align-items: center; gap: 6px; padding: 10px 14px; border-bottom: 1px solid var(--line); color: var(--text-dim); }
 .term__bar i { width: 9px; height: 9px; border-radius: 50%; background: var(--line-strong); }
 .term__bar i:first-child { background: var(--accent); }
-.term__bar span { margin-left: 8px; font-size: 0.7rem; letter-spacing: 0.04em; }
+.term__bar span { margin-left: 8px; font-size: 0.75rem; letter-spacing: 0.04em; }
 .term__body { padding: 14px 16px 16px; }
 .term__line { white-space: pre; overflow: hidden; text-overflow: clip; }
 .term__line .p { color: var(--accent); font-weight: 400; }
@@ -220,7 +220,8 @@ main > section { background: transparent; }
   background: radial-gradient(closest-side, oklch(0.115 0.01 255 / 0.66), oklch(0.115 0.01 255 / 0.32) 58%, transparent);
   pointer-events: none;
 }
-.hero__sub, .film__desc, .entry__list, .about__line, .skills__line, .edu__note, .contact__list {
+.hero__sub, .film__desc, .entry__list, .about__line, .skills__line, .edu__note, .contact__list,
+.film__rail, .film__kind, .entry__when, .entry__org, .entry__role, .entry__loc, .edu__when, .edu__org, .edu__title, .about__statement, .eyebrow {
   text-shadow: 0 0 12px oklch(0.12 0.01 255), 0 0 26px oklch(0.12 0.01 255 / 0.8);
 }
 .film__desc, .entry__list, .edu__note { color: oklch(0.8 0.012 255); }
