@@ -127,7 +127,7 @@ function shell({ file, kind, title, description, main, ogImage }) {
 <meta property="og:image" content="${ogImage ? ogImage.url : SITE + '/assets/og.png'}">
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="630">
-<meta property="og:image:alt" content="${esc(ogImage ? ogImage.alt : 'Kaan Dinç, computer engineer. An eye drawn in ASCII characters, opening onto a galaxy.')}">
+<meta property="og:image:alt" content="${esc(ogImage ? ogImage.alt : 'Kaan Dinç, computer engineer. A ringed planet drawn in ASCII characters.')}">
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:title" content="${esc(fullTitle)}">
 <meta name="twitter:description" content="${esc(description)}">

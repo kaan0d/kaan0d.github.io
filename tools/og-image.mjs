@@ -1,4 +1,4 @@
-// Makes assets/og.png (1200x630) from the live home page: the ASCII eye with the name set over it.
+// Makes assets/og.png (1200x630) from the live home page: the ASCII planet with the name set over it.
 // Needs Chrome and a built site. Run: npm run og
 import { chromium } from 'playwright-core';
 import path from 'node:path';
@@ -7,7 +7,7 @@ import { pathToFileURL } from 'node:url';
 const browser = await chromium.launch({ channel: 'chrome' });
 const page = await browser.newPage({ viewport: { width: 1200, height: 630 }, deviceScaleFactor: 1 });
 await page.goto(pathToFileURL(path.resolve('index.html')).href);
-await page.waitForTimeout(9000); // the curtain, then the lids lifting
+await page.waitForTimeout(9000); // the curtain, then the background fading in
 
 await page.evaluate(() => {
   for (const sel of ['main', '.site-header', '.site-footer', '.curtain']) {
