@@ -104,7 +104,7 @@ vec3 eye(vec2 q, float t, out float pupilMask) {
   vec2 hp = d - vec2(-0.1, 0.095);
   float box = smoothstep(0.01, 0.0, max(abs(hp.x) - 0.062, abs(hp.y) - 0.036));
   float dot2 = smoothstep(0.016, 0.0, length(d - vec2(0.085, -0.075)));
-  col += (box * 1.6 + dot2 * 0.7) * inside * (1.0 - 0.7 * smoothstep(0.55, 0.8, uZoom));
+  col += (box * 0.9 + dot2 * 0.4) * inside * (1.0 - 0.7 * smoothstep(0.55, 0.8, uZoom));
 
   pupilMask = pm * inside;
   return col;
@@ -155,7 +155,7 @@ vec3 sceneAt(vec2 p, float zz, float w, vec2 centre, float roll, float t) {
   float rp = 0.105 + 0.07 * smoothstep(0.15, 0.55, uZoom);
   float rim = exp(-pow((length(q - (uMouse - 0.5) * vec2(0.16, 0.07) * (1.0 - smoothstep(0.0, 0.5, uZoom))) - rp) / 0.016, 2.0));
   vec3 col = mix(e, g, pm);
-  col += vec3(0.7, 0.85, 1.0) * rim * smoothstep(0.2, 0.5, uZoom) * (1.0 - smoothstep(0.62, 0.8, uZoom)) * 1.2;
+  col += vec3(0.7, 0.85, 1.0) * rim * smoothstep(0.2, 0.5, uZoom) * (1.0 - smoothstep(0.62, 0.8, uZoom)) * 0.5;
   return col;
 }
 
@@ -178,9 +178,9 @@ void main() {
   col /= 5.0;
 
   // a white-out as the pupil takes the whole frame
-  col += vec3(0.65, 0.8, 1.0) * exp(-pow((uZoom - 0.66) / 0.05, 2.0)) * 0.35;
+  col += vec3(0.65, 0.8, 1.0) * exp(-pow((uZoom - 0.66) / 0.05, 2.0)) * 0.1;
 
-  col = 1.0 - exp(-col * 1.35);                              // filmic roll-off
+  col = 1.0 - exp(-col * 1.05);                              // filmic roll-off
   outColor = vec4(col, 1.0);
 }`;
 
@@ -243,13 +243,13 @@ void main() {
   vec3 streak = vec3(0.0);
   for (int i = -8; i <= 8; i++) {
     vec3 s = textureLod(uScene, suv + vec2(float(i) * 0.014, 0.0), 2.0).rgb;
-    streak += max(s - 0.5, 0.0) * (1.0 - abs(float(i)) / 9.0);
+    streak += max(s - 0.65, 0.0) * (1.0 - abs(float(i)) / 9.0);
   }
   streak *= vec3(0.45, 0.7, 1.0) * 0.45;
 
   vec2 uv = fc / uRes;
   float vig = smoothstep(1.2, 0.25, length((uv - 0.5) * vec2(1.3, 1.0)));
-  vec3 col = vec3(0.03, 0.034, 0.046) + glow * uPower * 0.2 * uTint + streak * uPower * 0.7 + ink * a * uPower * 0.85;
+  vec3 col = vec3(0.03, 0.034, 0.046) + glow * uPower * 0.07 * uTint + streak * uPower * 0.22 + ink * a * uPower * 0.8;
   col *= 0.4 + 0.6 * vig;
   col += (hash(fc + uTime * 61.0) - 0.5) * 0.028;   // grain
   outColor = vec4(col, 1.0);
@@ -429,7 +429,7 @@ void main() {
       const next = zoom + (goal - zoom) * Math.min(dt * 2.6, 1);
       speed = dt ? (next - zoom) / dt : 0;
       zoom = next;
-      power = basePower + 0.55 * (1 - Math.min(zoom * 2.5, 1));   // the opening shot is the brightest
+      power = basePower + 0.2 * (1 - Math.min(zoom * 2.5, 1));   // the opening shot is the brightest
     }
     draw();
   }
