@@ -15,7 +15,7 @@
 <meta property="og:image" content="https://kaandinc.com/assets/og.png">
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="630">
-<meta property="og:image:alt" content="Kaan Dinç, computer engineer. K logo beside 3D solids in amber on black.">
+<meta property="og:image:alt" content="Kaan Dinç, computer engineer. An eye drawn in ASCII characters, opening onto a galaxy.">
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:title" content="Kaan Dinç | Computer Engineer, full-stack and desktop developer">
 <meta name="twitter:description" content="Kaan Dinç, computer engineer interested in the defense industry. Full-stack apps, desktop tools, a packet analyzer and a physics engine, built end to end. See projects and CV.">
@@ -28,6 +28,7 @@
 <script>
 (function (d) {
   d.classList.add('js');
+  try { if (localStorage.getItem('calm') === '1') d.classList.add('calm'); } catch (e) {}
   try { if (!sessionStorage.getItem('seen') && d.dataset.page === 'home') d.classList.add('intro'); } catch (e) {}
   if (matchMedia('(prefers-reduced-motion: reduce)').matches) d.classList.add('reduce');
   // Safety net: reveal content if the animation scripts never report ready.
@@ -53,6 +54,7 @@
     <a class="roll" href="./#experience" data-spy="experience"><span class="roll__in" data-text="experience">experience</span></a>
     <a class="roll" href="blog"><span class="roll__in" data-text="blog">blog</span></a>
     <a class="roll" href="./#links" data-spy="links"><span class="roll__in" data-text="contact">contact</span></a>
+    <button class="roll calm-btn" type="button" aria-pressed="false" data-calm title="Calm mode: stops the flicker"><span class="roll__in" data-text="calm">calm</span></button>
   </nav>
 </header>
 
@@ -92,7 +94,7 @@
       <div class="film__text">
         <p class="film__kind">Shop Management Software</p>
         <h3 class="film__title" data-split="lines">Raflıyo</h3>
-        <p class="film__desc" data-fade>Windows desktop app for small shops, sold by subscription: barcode till, stock, customer credit, suppliers, expenses, reports, service receipts, quotes and shelf labels. The installer sets up PostgreSQL on the shop's server PC and the other PCs share it with live refresh. Money is integer kuruş end to end, licenses are Ed25519-signed and never lock the data, updates are signed, backups run every 4 hours, and a Chrome extension sends receipts over WhatsApp.</p>
+        <p class="film__desc" data-fade>Windows shop software sold by subscription: barcode till, stock, customer credit, reports and receipts. One PostgreSQL on the shop's server PC, shared live by the other PCs, with signed licences and updates and backups every 4 hours.</p>
         <ul class="tags"><li>Rust</li><li>Tauri</li><li>React</li><li>PostgreSQL</li></ul>
         <p class="film__links"><a class="roll" href="https://rafliyo.com/" target="_blank" rel="noopener"><span class="roll__in" data-text="website and demo">website and demo</span></a><a class="roll" href="posts/rafliyo"><span class="roll__in" data-text="write-up">write-up</span></a></p>
       </div>
@@ -106,7 +108,7 @@
       <div class="film__text">
         <p class="film__kind">File Converter for Windows</p>
         <h3 class="film__title" data-split="lines">Tessera</h3>
-        <p class="film__desc" data-fade>Free converter that lives in the Explorer right-click menu: photos, audio, video and PDF, size targets like "under 10 MB", ten presets, a command line and merge. Images, audio and PDF convert in pure Rust, video uses an optional ffmpeg, and results never grow. One 22 MB exe is its own installer, with no admin rights, no account and no telemetry. About 230 tests.</p>
+        <p class="film__desc" data-fade>A free converter in the Explorer right-click menu: photos, audio, video and PDF, with size targets like "under 10 MB". One 22 MB exe is its own installer, with no account and no telemetry. About 230 tests.</p>
         <ul class="tags"><li>Rust</li><li>Tauri</li><li>JavaScript</li><li>ffmpeg</li></ul>
         <p class="film__links"><a class="roll" href="posts/tessera"><span class="roll__in" data-text="write-up">write-up</span></a><a class="roll" href="https://github.com/kaan0d/Tessera" target="_blank" rel="noopener"><span class="roll__in" data-text="source">source</span></a></p>
       </div>
@@ -120,7 +122,7 @@
       <div class="film__text">
         <p class="film__kind">Chrome Extension</p>
         <h3 class="film__title" data-split="lines">Volume Lock</h3>
-        <p class="film__desc" data-fade>Manifest V3 extension that sets and remembers the volume of each site. A rotary knob, levels applied before media starts, boost up to 600% behind a limiter, a five-band equalizer, night mode, autoplay blocking and a live level ring from tab capture. It makes no network requests, and 81 Playwright tests run the built extension in Chromium.</p>
+        <p class="film__desc" data-fade>Manifest V3 extension that remembers the volume of each site and applies it before media starts. A rotary knob, boost up to 600%, a five-band equalizer and night mode. It makes no network requests, and 81 Playwright tests run the built extension.</p>
         <ul class="tags"><li>TypeScript</li><li>Web Audio</li><li>Vite</li><li>Playwright</li></ul>
         <p class="film__links"><a class="roll" href="https://chromewebstore.google.com/detail/volume-lock/hfpdohjhnfgkhnangkecmkhochllhifb" target="_blank" rel="noopener"><span class="roll__in" data-text="chrome web store">chrome web store</span></a><a class="roll" href="posts/volume-lock"><span class="roll__in" data-text="write-up">write-up</span></a></p>
       </div>
@@ -134,7 +136,7 @@
       <div class="film__text">
         <p class="film__kind">HTTPS Inspector for Windows</p>
         <h3 class="film__title" data-split="lines">tls-peek</h3>
-        <p class="film__desc" data-fade>Shows the HTTPS requests one Windows program sends, in a local web UI. Built on mitmproxy's local mode and the WinDivert driver, so it works on programs that ignore the system proxy, and each capture gets its own CA that is removed on stop; hosts that refuse it pass through so the program keeps working. Adds intercept and rewrite rules, TLS and timing details, 39 passive security checks on requests and responses, live event streams and an API map with OpenAPI export; CI tests it on Windows, clicks through the UI in Chrome, and builds an exe and a zip.</p>
+        <p class="film__desc" data-fade>Shows the HTTPS requests one Windows program sends, in a local web UI, on mitmproxy's local mode. Each capture gets its own CA that is removed on stop. Adds intercept rules, TLS and timing details, 39 passive security checks and an API map with OpenAPI export.</p>
         <ul class="tags"><li>Python</li><li>mitmproxy</li><li>JavaScript</li></ul>
         <p class="film__links"><a class="roll" href="posts/tls-peek"><span class="roll__in" data-text="write-up">write-up</span></a><a class="roll" href="https://github.com/kaan0d/tls-peek" target="_blank" rel="noopener"><span class="roll__in" data-text="source">source</span></a><a class="roll" href="https://github.com/kaan0d/tls-peek/releases/latest" target="_blank" rel="noopener"><span class="roll__in" data-text="download">download</span></a></p>
       </div>

@@ -15,7 +15,7 @@
 <meta property="og:image" content="https://kaandinc.com/assets/og.png">
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="630">
-<meta property="og:image:alt" content="Kaan Dinç, computer engineer. K logo beside 3D solids in amber on black.">
+<meta property="og:image:alt" content="Kaan Dinç, computer engineer. An eye drawn in ASCII characters, opening onto a galaxy.">
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:title" content="Sentinel: a packet analyzer and IDS from scratch in Python | Kaan Dinç">
 <meta name="twitter:description" content="Hand-written protocol parsers with no runtime dependencies, pcap and pcapng reading, TCP stream reassembly, a filter language, six detectors and JA3 fingerprints, checked against Wireshark's tshark and run unchanged on 2.7 million packets of real traffic.">
@@ -28,6 +28,7 @@
 <script>
 (function (d) {
   d.classList.add('js');
+  try { if (localStorage.getItem('calm') === '1') d.classList.add('calm'); } catch (e) {}
   try { if (!sessionStorage.getItem('seen') && d.dataset.page === 'home') d.classList.add('intro'); } catch (e) {}
   if (matchMedia('(prefers-reduced-motion: reduce)').matches) d.classList.add('reduce');
   // Safety net: reveal content if the animation scripts never report ready.
@@ -53,6 +54,7 @@
     <a class="roll" href="../#experience" data-spy="experience"><span class="roll__in" data-text="experience">experience</span></a>
     <a class="roll is-active" href="../blog" aria-current="page"><span class="roll__in" data-text="blog">blog</span></a>
     <a class="roll" href="../#links" data-spy="links"><span class="roll__in" data-text="contact">contact</span></a>
+    <button class="roll calm-btn" type="button" aria-pressed="false" data-calm title="Calm mode: stops the flicker"><span class="roll__in" data-text="calm">calm</span></button>
   </nav>
 </header>
 

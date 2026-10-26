@@ -18,7 +18,7 @@ main > section { background: transparent; }
   max-width: 11.5em;
   margin-top: clamp(16px, 2vw, 28px);
   font-family: var(--font-serif);
-  font-size: clamp(3.4rem, 9.4vw, 10.5rem);
+  font-size: clamp(3rem, 6.6vw, 7.4rem);
   font-weight: 400;
   letter-spacing: -0.03em;
   line-height: 0.9;
@@ -184,7 +184,7 @@ main > section { background: transparent; }
   backdrop-filter: blur(10px);
   box-shadow: 0 30px 60px -30px oklch(0.05 0.01 255 / 0.9);
   font-family: var(--font-mono);
-  font-size: 0.74rem;
+  font-size: 0.8rem;
   line-height: 1.7;
   color: var(--text);
   pointer-events: none;
@@ -199,7 +199,7 @@ main > section { background: transparent; }
 .term__line { white-space: pre; overflow: hidden; text-overflow: clip; }
 .term__line .p { color: var(--accent); font-weight: 400; }
 .term__line.out { color: var(--text-dim); }
-.c-dim { color: oklch(0.55 0.015 255); }
+.c-dim { color: oklch(0.66 0.015 255); }
 .c-ok { color: oklch(0.78 0.13 165); }
 .c-err { color: oklch(0.7 0.17 25); }
 .c-hot { color: var(--accent); }
@@ -208,3 +208,19 @@ main > section { background: transparent; }
 .term__cursor { display: inline-block; width: 0.55em; height: 1.1em; margin-top: 2px; vertical-align: -0.2em; background: var(--accent); animation: caret 1.1s steps(1) infinite; }
 @keyframes caret { 50% { opacity: 0; } }
 @media (max-width: 1099px) { .term { display: none; } }
+
+/* ---------- legibility over the moving background: every block of text sits in its own soft shadow ---------- */
+
+.hero__sub, .film__text, .entry__main, .edu__row > div, .about__line, .skills__line { position: relative; isolation: isolate; }
+.film__text::before, .entry__main::before, .edu__row > div::before, .about__line::before, .skills__line::before {
+  content: '';
+  position: absolute;
+  inset: -34px -46px;
+  z-index: -1;
+  background: radial-gradient(closest-side, oklch(0.115 0.01 255 / 0.66), oklch(0.115 0.01 255 / 0.32) 58%, transparent);
+  pointer-events: none;
+}
+.hero__sub, .film__desc, .entry__list, .about__line, .skills__line, .edu__note, .contact__list {
+  text-shadow: 0 0 12px oklch(0.12 0.01 255), 0 0 26px oklch(0.12 0.01 255 / 0.8);
+}
+.film__desc, .entry__list, .edu__note { color: oklch(0.8 0.012 255); }

@@ -18,7 +18,15 @@
   const CAND = ' .\'`^",:;Il!i><~+_-?][}{1)(|\\/tfjrxnuvczXYUJCLQ0OZmwqpdbkhao*#MW&8%B@$';
   const M = [...CAND].length;   // every glyph the atlas holds, sorted by ink
   const WINDOW = 44;            // how far from its own tone a cell may wander when it picks a letter
-  const CELL = [11, 18];         // one character, in CSS pixels
+  // Quality tiers: the page starts on the best one the device probably affords and steps down by itself
+  // when frames run long. Each tier is a pixel ratio, a character size (CSS px) and whether the costly streak is drawn.
+  const TIERS = [
+    { dpr: 1.5, cell: [11, 18], lite: 0, skip: 0 },
+    { dpr: 1.0, cell: [11, 18], lite: 1, skip: 0 },
+    { dpr: 0.75, cell: [14, 23], lite: 1, skip: 1 },   // skip: draw every other frame
+  ];
+  let tier = innerWidth < 900 || (navigator.hardwareConcurrency || 8) <= 4 || (navigator.deviceMemory || 8) <= 4 ? 1 : 0;
+  const calmNow = () => (reduce || root.classList.contains('calm') ? 1 : 0);   // no flicker: letters hold still, no glitter
   const FALL = 2.2;             // screens of scroll from the whole eye to the whole galaxy
 
   const VERT = `#version 300 es
@@ -39,6 +47,7 @@ uniform float uJourney;   // 0 until the galaxy fills the frame, then 0 to 4.7 t
 uniform vec2 uMouse;
 uniform vec2 uGaze;       // where the eye looks, sprung and jumpy
 uniform float uPupil;     // pupil size, breathing and reacting
+uniform float uCalm;      // 1 = no flicker
 out vec4 outColor;
 
 float hash(vec2 p) { p = fract(p * vec2(123.34, 456.21)); p += dot(p, p + 45.32); return fract(p.x * p.y); }
@@ -173,7 +182,7 @@ vec3 worldStarsW(vec2 wp, float J, float t) {
   }
   return acc;
 }
-vec3 worldStars(vec2 p, float J, float t) { return worldStarsW(rot(-t * 0.02) * rot(0.35) * p * 0.4526, J, t); }
+vec3 worldStars(vec2 p, float J, float t) { return worldStarsW(rot(-t * 0.02) * rot(0.35) * p * 0.503, J, t); }
 
 vec3 galaxyBody(vec2 gp, float t) {
   float r = length(gp) + 1e-4;
@@ -244,6 +253,7 @@ vec3 shoot(vec2 p, float t) {
 // ---- glitter around the eye: short flashes of four-point stars, thickest near the lids ----
 
 vec3 sparkle(vec2 q, float t) {
+  if (uCalm > 0.5) return vec3(0.0);
   vec3 acc = vec3(0.0);
   for (int l = 0; l < 2; l++) {
     float sc = 9.0 + 7.0 * float(l);
@@ -280,7 +290,7 @@ vec3 sceneAt(vec2 p, float zz, float w, vec2 centre, float roll, float t) {
 // reaches it; the camera keeps magnifying, the old place thins out as it outgrows the frame and the next one
 // swells to fill it. Nothing is cut or faded as a whole picture.
 
-vec3 galaxyObj(vec2 q, float t) { return galaxyBody(rot(-t * 0.02) * rot(0.35) * q * 0.4526, t); }
+vec3 galaxyObj(vec2 q, float t) { return galaxyBody(rot(-t * 0.02) * rot(0.35) * q * 0.503, t); }
 
 vec3 nebulaObj(vec2 q, float t) {
   float r = length(q);
@@ -394,9 +404,9 @@ void main() {
   vec2 uv = gl_FragCoord.xy / uCells;
   vec2 p = (uv - 0.5) * vec2(uAsp, 1.0);
 
-  float zz = 1.02 * pow(22.0, uZoom / 0.78);                // the camera falls into the pupil and keeps falling
+  float zz = 0.92 * pow(22.0, uZoom / 0.78);                // the camera falls into the pupil and keeps falling
   float w = 1.0 + 1.8 * smoothstep(0.2, 0.74, uZoom);       // the galaxy is shown wide once the pupil fills the frame, then magnified
-  vec2 centre = vec2(mix(0.05, 0.0, smoothstep(0.0, 0.6, uZoom)), 0.0);
+  vec2 centre = vec2(mix(0.05, 0.0, smoothstep(0.0, 0.6, uZoom)), mix(0.14, 0.0, smoothstep(0.0, 0.6, uZoom)));
   float roll = 0.35 * smoothstep(0.3, 1.0, uZoom) + 0.004 * sin(uTime * 0.9);   // a slow roll, a little hand shake
 
   // motion blur along the line of the zoom
@@ -443,6 +453,8 @@ uniform vec2 uRes;
 uniform vec3 uTint;
 uniform float uPower;
 uniform float uTime;
+uniform float uLite;      // 1 = skip the streak
+uniform float uCalm;
 out vec4 outColor;
 
 float hash(vec2 p) { p = fract(p * vec2(123.34, 456.21)); p += dot(p, p + 45.32); return fract(p.x * p.y); }
@@ -451,6 +463,7 @@ vec3 cellAt(ivec2 c) { return texelFetch(uScene, clamp(c, ivec2(0), ivec2(uCells
 float sparkAt(ivec2 c) { return texelFetch(uScene, clamp(c, ivec2(0), ivec2(uCells) - 1), 0).a; }
 
 void main() {
+  float tt = uTime * (1.0 - uCalm);   // the letters, the dither and the grain all run on this clock
   vec2 fc = gl_FragCoord.xy;
   ivec2 cell = ivec2(floor(fc / uCellPx));
   vec2 local = fract(fc / uCellPx);
@@ -465,11 +478,11 @@ void main() {
   vec2 g = vec2(Lr - Ll, Lu - Ld);
 
   // tone: a little temporal dither so the characters shimmer like film grain instead of banding
-  float dither = hash(vec2(cell) + floor(uTime * 14.0)) - 0.5;
+  float dither = hash(vec2(cell) + floor(tt * 14.0)) - 0.5;
   float level = clamp(pow(L, 0.8) * ${N}.0 + dither * 0.9, 0.0, ${N}.0 - 0.01);
   // chaos: a cell takes any letter from a wide stretch of the ink scale around its tone, and re-rolls often, out of step
   float lvl = floor(level);
-  float rnd = hash(vec2(cell) * 1.37 + floor(uTime * 3.4 + hash(vec2(cell).yx) * 6.0));
+  float rnd = hash(vec2(cell) * 1.37 + floor(tt * 3.4 + hash(vec2(cell).yx) * 6.0));
   float centre = lvl / (${N}.0 - 1.0) * (${M}.0 - 1.0);
   float idx = clamp(floor(centre + (rnd - 0.5) * ${WINDOW}.0 + 0.5), 0.0, ${M}.0 - 1.0);
   float gInk = idx / (${M}.0 - 1.0);
@@ -505,7 +518,7 @@ void main() {
 
   // anamorphic streak: bright parts smear sideways, blue
   vec3 streak = vec3(0.0);
-  for (int i = -8; i <= 8; i++) {
+  if (uLite < 0.5) for (int i = -8; i <= 8; i++) {
     vec3 s = textureLod(uScene, suv + vec2(float(i) * 0.014, 0.0), 2.0).rgb;
     streak += max(s - 0.65, 0.0) * (1.0 - abs(float(i)) / 9.0);
   }
@@ -515,7 +528,7 @@ void main() {
   float vig = smoothstep(1.2, 0.25, length((uv - 0.5) * vec2(1.3, 1.0)));
   vec3 col = vec3(0.03, 0.034, 0.046) + glow * uPower * 0.07 * uTint + streak * uPower * 0.22 + ink * a * uPower * 0.8;
   col *= 0.4 + 0.6 * vig;
-  col += (hash(fc + uTime * 61.0) - 0.5) * 0.028;   // grain
+  col += (hash(fc + tt * 61.0) - 0.5) * 0.028;   // grain
   outColor = vec4(col, 1.0);
 }`;
 
@@ -546,8 +559,8 @@ void main() {
   gl.vertexAttribPointer(0, 2, gl.FLOAT, false, 0, 0);
 
   const loc = (prog, names) => Object.fromEntries(names.map((n) => [n, gl.getUniformLocation(prog, n)]));
-  const us = loc(sceneProg, ['uCells', 'uAsp', 'uTime', 'uZoom', 'uOpen', 'uSpeed', 'uJourney', 'uMouse', 'uGaze', 'uPupil']);
-  const ua = loc(asciiProg, ['uScene', 'uAtlas', 'uCells', 'uCellPx', 'uRes', 'uTint', 'uPower', 'uTime']);
+  const us = loc(sceneProg, ['uCells', 'uAsp', 'uTime', 'uZoom', 'uOpen', 'uSpeed', 'uJourney', 'uMouse', 'uGaze', 'uPupil', 'uCalm']);
+  const ua = loc(asciiProg, ['uScene', 'uAtlas', 'uCells', 'uCellPx', 'uRes', 'uTint', 'uPower', 'uTime', 'uLite', 'uCalm']);
 
   // ---------- the glyph atlas: a ramp sorted by how much ink each character really has ----------
 
@@ -591,15 +604,15 @@ void main() {
 
   const target = gl.createTexture();
   const fbo = gl.createFramebuffer();
-  let cols = 1, rows = 1, W = 1, H = 1, cellPx = [CELL[0], CELL[1]];
+  let cols = 1, rows = 1, W = 1, H = 1, cellPx = [11, 18];
 
   function resize() {
-    const dpr = Math.min(devicePixelRatio || 1, 1.5);
+    const dpr = Math.min(devicePixelRatio || 1, TIERS[tier].dpr);
     W = Math.max(2, Math.round(innerWidth * dpr));
     H = Math.max(2, Math.round(innerHeight * dpr));
     canvas.width = W;
     canvas.height = H;
-    cellPx = [CELL[0] * dpr, CELL[1] * dpr];
+    cellPx = [TIERS[tier].cell[0] * dpr, TIERS[tier].cell[1] * dpr];
     cols = Math.ceil(W / cellPx[0]);
     rows = Math.ceil(H / cellPx[1]);
     gl.bindTexture(gl.TEXTURE_2D, target);
@@ -645,14 +658,52 @@ void main() {
     pupil.v += pupil.vv * dt;
   }
 
+  // Which place the camera is at is tied to the content: the nebula is centred on Projects, the star system on
+  // Experience, the giant on Education and the black hole on Contact. Between them it moves linearly.
+  let anchors = null;
+  let anchorsAt = -1e9;
+  function journeyAt(y) {
+    const now = performance.now();
+    if (!anchors || now - anchorsAt > 700) {
+      anchorsAt = now;
+      const mid = (id) => {
+        const el = document.getElementById(id);
+        if (!el) return null;
+        const r = el.getBoundingClientRect();
+        return r.top + scrollY + r.height / 2 - innerHeight / 2;
+      };
+      const maxScroll = Math.max(document.documentElement.scrollHeight - innerHeight, 1);
+      const raw = [innerHeight * FALL, mid('projects'), mid('experience'), mid('education'), maxScroll];
+      const js = [0, 1, 2, 3, 4.7];
+      anchors = [];
+      raw.forEach((v, i) => {
+        if (v == null) return;
+        const prev = anchors.length ? anchors[anchors.length - 1][0] : -Infinity;
+        if (v > prev + 20) anchors.push([v, js[i]]);
+      });
+    }
+    if (y <= anchors[0][0]) return 0;
+    for (let i = 1; i < anchors.length; i++) {
+      if (y <= anchors[i][0]) {
+        const [y0, j0] = anchors[i - 1];
+        const [y1, j1] = anchors[i];
+        return j0 + ((y - y0) / (y1 - y0)) * (j1 - j0);
+      }
+    }
+    return anchors[anchors.length - 1][1];
+  }
+
   const goalZoom = () => (home ? Math.min(Math.max(scrollY / (innerHeight * FALL), 0), 1) : 1);
   let time = 0;
   let last = 0;
+  let avgDt = 1 / 60;
+  let governorT = -3;   // ignore the first seconds: compiling and loading stall frames
+  let frameN = 0;
   let zoom = goalZoom();
   let speed = 0;
   let journey = 0;   // 0 to 4.7: nebula, a star and its planets, a giant, a black hole
   let openStart = home && scrollY < 50 ? Infinity : -10;   // when the lids start to lift
-  const basePower = home ? 0.4 : 0.38;
+  const basePower = home ? 0.32 : 0.3;
   let power = basePower;
 
   function draw() {
@@ -675,6 +726,7 @@ void main() {
     gl.uniform2f(us.uMouse, mouse.x, mouse.y);
     gl.uniform2f(us.uGaze, gaze.x, gaze.y);
     gl.uniform1f(us.uPupil, pupil.v);
+    gl.uniform1f(us.uCalm, calmNow());
     gl.drawArrays(gl.TRIANGLES, 0, 3);
     gl.bindTexture(gl.TEXTURE_2D, target);
     gl.generateMipmap(gl.TEXTURE_2D);
@@ -695,6 +747,8 @@ void main() {
     gl.uniform3fv(ua.uTint, tint);
     gl.uniform1f(ua.uPower, power);
     gl.uniform1f(ua.uTime, time);
+    gl.uniform1f(ua.uLite, TIERS[tier].lite);
+    gl.uniform1f(ua.uCalm, calmNow());
     gl.drawArrays(gl.TRIANGLES, 0, 3);
   }
 
@@ -715,17 +769,23 @@ void main() {
       // A camera on a rail: it eases toward where the scroll says it should be.
       // Scrolling back up plays the journey in reverse first; only then does the eye start to come back.
       const goal = journey > 0.02 ? 1 : goalZoom();
-      const next = zoom + (goal - zoom) * Math.min(dt * 2.6, 1);
-      // After the galaxy, the rest of the page is the rest of the fall.
-      const maxScroll = Math.max(document.documentElement.scrollHeight - innerHeight, 1);
-      const start = innerHeight * FALL;
-      const jGoal = Math.min(Math.max((scrollY - start) / Math.max(maxScroll - start, 1), 0), 1) * 4.7;
-      const nj = journey + (jGoal - journey) * Math.min(dt * 2.2, 1);
+      const next = zoom + (goal - zoom) * Math.min(dt * (goal < zoom ? 5 : 2.6), 1);
+      // After the galaxy the camera follows the sections; going back up it rewinds faster than it advances.
+      const jGoal = journeyAt(scrollY);
+      const nj = journey + (jGoal - journey) * Math.min(dt * (jGoal < journey ? 6 : 2.2), 1);
       speed = dt ? (next - zoom) / dt + ((nj - journey) / dt) * 0.4 : 0;
       zoom = next;
       journey = jGoal === 0 && nj < 0.01 ? 0 : nj;
-      power = basePower + 0.2 * (1 - Math.min(zoom * 2.5, 1)) + 0.4 * smoothstep(0.55, 0.9, zoom);   // space is the brightest part   // the opening shot is the brightest
+      power = basePower + 0.2 * (1 - Math.min(zoom * 2.5, 1)) + 0.12 * smoothstep(0.55, 0.9, zoom);   // space is a little brighter, never enough to fight the text
     }
+    // Frames running long means the device is struggling: step down a tier (and never back up).
+    avgDt += (dt - avgDt) * 0.04;
+    governorT += dt;
+    if (governorT > 2.5) {
+      if (avgDt > 0.036 && tier < TIERS.length - 1) { tier++; resize(); }
+      governorT = 0;
+    }
+    if (TIERS[tier].skip && frameN++ % 2) return;
     draw();
   }
 
@@ -736,9 +796,7 @@ void main() {
   addEventListener('resize', resize);
   if (reduce) addEventListener('scroll', () => {
     zoom = goalZoom();
-    const maxScroll = Math.max(document.documentElement.scrollHeight - innerHeight, 1);
-    const start = innerHeight * FALL;
-    journey = home ? Math.min(Math.max((scrollY - start) / Math.max(maxScroll - start, 1), 0), 1) * 4.7 : 0;
+    journey = home ? journeyAt(scrollY) : 0;
     draw();
   }, { passive: true });
   resize();

@@ -28,6 +28,7 @@
 <script>
 (function (d) {
   d.classList.add('js');
+  try { if (localStorage.getItem('calm') === '1') d.classList.add('calm'); } catch (e) {}
   try { if (!sessionStorage.getItem('seen') && d.dataset.page === 'home') d.classList.add('intro'); } catch (e) {}
   if (matchMedia('(prefers-reduced-motion: reduce)').matches) d.classList.add('reduce');
   // Safety net: reveal content if the animation scripts never report ready.
@@ -53,6 +54,7 @@
     <a class="roll" href="../#experience" data-spy="experience"><span class="roll__in" data-text="experience">experience</span></a>
     <a class="roll is-active" href="../blog" aria-current="page"><span class="roll__in" data-text="blog">blog</span></a>
     <a class="roll" href="../#links" data-spy="links"><span class="roll__in" data-text="contact">contact</span></a>
+    <button class="roll calm-btn" type="button" aria-pressed="false" data-calm title="Calm mode: stops the flicker"><span class="roll__in" data-text="calm">calm</span></button>
   </nav>
 </header>
 

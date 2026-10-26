@@ -189,6 +189,13 @@ body::after {
   .menu-open .site-header.is-scrolled { -webkit-backdrop-filter: none; backdrop-filter: none; }
 }
 
+/* ---------- calm mode switch ---------- */
+
+.calm-btn { color: var(--text-dim); font: inherit; }
+.calm-btn::before { content: ''; display: inline-block; width: 6px; height: 6px; margin-right: 0.55em; border-radius: 50%; background: var(--line-strong); vertical-align: 0.08em; }
+.calm-btn[aria-pressed='true'] { color: var(--accent); }
+.calm-btn[aria-pressed='true']::before { background: var(--accent); }
+
 /* ---------- buttons: editorial text links, an underline that wipes in and an arrow disc that fills ---------- */
 
 .btn {

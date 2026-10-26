@@ -6,6 +6,16 @@
   const $$ = (sel, ctx = document) => [...ctx.querySelectorAll(sel)];
   const site = (window.site = { reduce, $, $$ });
 
+  // Calm mode: no flicker, no glitter, the letters hold still. Remembered between visits.
+  const calmBtn = $('[data-calm]');
+  const setCalm = (on) => {
+    root.classList.toggle('calm', on);
+    calmBtn?.setAttribute('aria-pressed', String(on));
+    try { localStorage.setItem('calm', on ? '1' : '0'); } catch (e) { /* private mode: it just resets next visit */ }
+  };
+  calmBtn?.setAttribute('aria-pressed', String(root.classList.contains('calm')));
+  calmBtn?.addEventListener('click', () => setCalm(!root.classList.contains('calm')));
+
   if (!window.gsap || !window.ScrollTrigger || !window.SplitText || !window.Lenis) return; // 4 s safety net shows content
   gsap.registerPlugin(ScrollTrigger, SplitText);
 
@@ -134,14 +144,16 @@
 
   // Top-of-page content: header, then each [data-hero] element in document order.
   function intro() {
+    // On the home page the headline waits until the eye has opened.
+    const wait = root.dataset.page === 'home' ? 1.6 : 0;
     gsap.from($$('.site-header > *'), { opacity: 0, y: -14, duration: 1, stagger: 0.08, ease: 'expo.out' });
     $$('[data-hero]').forEach((el, i) => {
       if (el.hasAttribute('data-split')) {
-        site.splitLines(el, { delay: 0.1 });
+        site.splitLines(el, { delay: 0.1 + wait });
         return;
       }
       gsap.set(el, { visibility: 'visible' });
-      gsap.fromTo(el, { opacity: 0, y: 28 }, { opacity: 1, y: 0, duration: 1.1, delay: 0.35 + i * 0.1, ease: 'expo.out' });
+      gsap.fromTo(el, { opacity: 0, y: 28 }, { opacity: 1, y: 0, duration: 1.1, delay: 0.35 + wait + i * 0.1, ease: 'expo.out' });
     });
   }
 
