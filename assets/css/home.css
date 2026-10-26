@@ -50,7 +50,6 @@ main > section { background: transparent; }
   line-height: 1.05;
 }
 .about__statement .word { display: inline-block; }
-.about__line { max-width: 34ch; margin-top: clamp(32px, 5vw, 64px); font-family: var(--font-serif); font-size: clamp(1.5rem, 2.4vw, 2.2rem); line-height: 1.2; color: var(--text-dim); }
 
 /* ---------- projects: each one a scene ---------- */
 
@@ -191,11 +190,11 @@ main > section { background: transparent; }
 
 /* ---------- legibility over the moving background: every block of text sits in its own soft shadow ---------- */
 
-.hero__sub, .film__text, .entry__main, .edu__row > div, .about__line, .credits { position: relative; isolation: isolate; }
+.hero__sub, .film__text, .entry__main, .edu__row > div, .credits { position: relative; isolation: isolate; }
 /* the rail is a thin strip, so its shadow is a band rather than a pool */
 .film__rail { isolation: isolate; }
 .film__rail::before { content: ''; position: absolute; inset: -18px -24px -6px; z-index: -1; background: radial-gradient(farthest-side, oklch(0.115 0.01 255 / 0.7), oklch(0.115 0.01 255 / 0.35) 70%, transparent); pointer-events: none; }
-.film__text::before, .entry__main::before, .edu__row > div::before, .about__line::before, .credits::before {
+.film__text::before, .entry__main::before, .edu__row > div::before, .credits::before {
   content: '';
   position: absolute;
   inset: -34px -46px;
@@ -203,7 +202,7 @@ main > section { background: transparent; }
   background: radial-gradient(closest-side, oklch(0.115 0.01 255 / 0.66), oklch(0.115 0.01 255 / 0.32) 58%, transparent);
   pointer-events: none;
 }
-.hero__sub, .film__desc, .entry__list, .about__line, .edu__note, .contact__list, .credits,
+.hero__sub, .film__desc, .entry__list, .edu__note, .contact__list, .credits,
 .film__rail, .film__kind, .entry__when, .entry__org, .entry__role, .entry__loc, .edu__when, .edu__org, .edu__title, .about__statement, .eyebrow {
   text-shadow: 0 0 12px oklch(0.12 0.01 255), 0 0 26px oklch(0.12 0.01 255 / 0.8);
 }
@@ -211,6 +210,6 @@ main > section { background: transparent; }
 
 /* the shadows must not push the page wider than the screen */
 @media (max-width: 899px) {
-  .film__text::before, .entry__main::before, .edu__row > div::before, .about__line::before, .credits::before { inset: -26px -14px; }
+  .film__text::before, .entry__main::before, .edu__row > div::before, .credits::before { inset: -26px -14px; }
   .film__rail::before { inset: -14px -10px -6px; }
 }
