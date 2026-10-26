@@ -123,14 +123,14 @@ body::after {
 .roll__in::after { content: attr(data-text); content: attr(data-text) / ''; position: absolute; left: 0; top: 110%; white-space: nowrap; color: var(--accent); }
 .roll:hover .roll__in, .roll:focus-visible .roll__in { transform: translateY(-110%); }
 
-/* ---------- header: brand left, timecode centre, links right ---------- */
+/* ---------- header: brand left, links right ---------- */
 
 .site-header {
   position: fixed;
   inset: 0 0 auto 0;
   z-index: var(--z-header);
   display: grid;
-  grid-template-columns: 1fr auto 1fr;
+  grid-template-columns: 1fr auto;
   align-items: center;
   gap: 16px 32px;
   min-height: 72px;
@@ -147,12 +147,6 @@ body::after {
 .site-header__brand { display: flex; align-items: center; gap: 12px; justify-self: start; font-family: var(--font-serif); font-size: 1.7rem; line-height: 1; letter-spacing: -0.01em; white-space: nowrap; }
 .site-header__brand img { width: 30px; height: 30px; border-radius: 6px; }
 
-.timecode { display: flex; align-items: center; gap: 10px; font-family: var(--font-mono); font-size: 0.78rem; font-variant-numeric: tabular-nums; letter-spacing: 0.04em; color: var(--text-dim); }
-.timecode__scene { display: inline-block; min-width: 19ch; overflow: hidden; padding-left: 10px; border-left: 1px solid var(--line-strong); color: var(--text); }
-.timecode__scene > span { display: inline-block; }
-.timecode::before { content: ''; width: 7px; height: 7px; border-radius: 50%; background: var(--accent); animation: rec 2.4s ease-in-out infinite; }
-@keyframes rec { 50% { opacity: 0.25; } }
-
 .site-nav { display: flex; align-items: center; justify-self: end; gap: clamp(14px, 1.7vw, 26px); font-size: 0.9rem; white-space: nowrap; }
 .site-nav a { flex: none; color: var(--text); transition: color 0.3s; }
 .site-nav a.is-active { color: var(--accent); }
@@ -165,8 +159,6 @@ body::after {
 .menu-open .menu-btn span:nth-child(2) { top: 21px; transform: rotate(-45deg); }
 
 @media (max-width: 1099px) {
-  .site-header { grid-template-columns: 1fr auto; }
-  .timecode { display: none; }
   .menu-btn { display: block; }
   .site-nav {
     position: fixed;

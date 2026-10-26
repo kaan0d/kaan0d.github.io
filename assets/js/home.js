@@ -41,7 +41,6 @@
       last = current;
 
       window.site.grade?.(current.dataset.grade);
-      slate(sections.indexOf(current), current.dataset.scene);
 
       const id = current.id;
       for (const a of links) {
@@ -51,19 +50,6 @@
       }
     };
     ScrollTrigger.create({ start: 0, end: 'max', onUpdate: update, onRefresh: update });
-  }
-
-  // The header slate names the scene on screen; the new name rolls up into place.
-  function slate(i, name) {
-    const el = $('[data-scene-label]');
-    if (!el) return;
-    const text = `SC ${String(i + 1).padStart(2, '0')} · ${name}`;
-    if (el.textContent === text) return;
-    if (reduce) { el.textContent = text; return; }
-    gsap.timeline()
-      .to(el, { yPercent: -110, duration: 0.25, ease: 'power2.in', overwrite: true })
-      .call(() => { el.textContent = text; })
-      .fromTo(el, { yPercent: 110 }, { yPercent: 0, duration: 0.45, ease: 'expo.out' });
   }
 
   // Words light up as the reader scrolls through the statement.

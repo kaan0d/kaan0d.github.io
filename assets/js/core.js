@@ -1,4 +1,4 @@
-// Shared behavior for every page: smooth scroll, header, menu, intro curtain, timecode, reveals.
+// Shared behavior for every page: smooth scroll, header, menu, intro curtain, reveals.
 (() => {
   const root = document.documentElement;
   const reduce = root.classList.contains('reduce');
@@ -39,21 +39,10 @@
     return typeof target === 'number' ? window.scrollTo({ top: target }) : target.scrollIntoView();
   };
 
-  // ---------- header backdrop, timecode and HUD ----------
+  // ---------- header backdrop ----------
 
-  const RUNTIME = 6120; // the page runs 1 h 42 min; the timecode is just scroll position
-  const FPS = 24;
   const pad = (n, w = 2) => String(Math.floor(n)).padStart(w, '0');
-  const timecodeEl = $('[data-timecode]');
-
-  function onScroll(self) {
-    header.classList.toggle('is-scrolled', self.scroll() > 24);
-    const max = ScrollTrigger.maxScroll(window) || 1;
-    const progress = Math.min(Math.max(self.scroll() / max, 0), 1);
-    const frames = Math.round(progress * RUNTIME * FPS);
-    const s = Math.floor(frames / FPS);
-    if (timecodeEl) timecodeEl.textContent = `${pad(s / 3600)}:${pad((s % 3600) / 60)}:${pad(s % 60)}:${pad(frames % FPS)}`;
-  }
+  const onScroll = (self) => header.classList.toggle('is-scrolled', self.scroll() > 24);
 
   ScrollTrigger.create({ start: 0, end: 'max', onUpdate: onScroll, onRefresh: onScroll });
 

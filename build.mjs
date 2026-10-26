@@ -160,7 +160,6 @@ ${kind === 'post' ? '' : '<canvas class="scene-gl" aria-hidden="true"></canvas>'
 
 <header class="site-header">
   <a class="site-header__brand" href="${home}" aria-label="${NAME}, home"><img src="${base}assets/favicon.svg" width="30" height="30" alt=""><span>${NAME}</span></a>
-  <p class="timecode" aria-hidden="true"><span data-timecode>00:00:00:00</span>${kind === 'home' ? '<span class="timecode__scene"><span data-scene-label>SC 01 · Title card</span></span>' : ''}</p>
   <button class="menu-btn" type="button" aria-label="menu" aria-expanded="false" aria-controls="site-nav"><span></span><span></span></button>
   <nav class="site-nav" id="site-nav" aria-label="primary">
 ${NAV.map(([label, id]) => `    <a class="roll" href="${home}#${id}" data-spy="${id}">${roll(label)}</a>`).join('\n')}
