@@ -246,7 +246,7 @@ body::after {
   animation: metal-flow 5s linear infinite paused;
 }
 @keyframes metal-flow { to { background-position: 0 0, 260% 130%; } }
-.btn:hover, .btn:focus-visible { box-shadow: 0 0 0 1px oklch(1 0 0 / 0.7), 0 0 22px oklch(0.96 0.03 250 / 0.6), 0 0 64px oklch(0.85 0.09 250 / 0.38), 0 18px 40px -14px oklch(0.9 0.02 255 / 0.5); }
+.btn:hover, .btn:focus-visible { box-shadow: 0 0 0 1px oklch(0.88 0.13 70), 0 0 18px 2px oklch(0.78 0.17 65 / 0.95), 0 0 48px 8px oklch(0.72 0.18 58 / 0.7), 0 0 110px 24px oklch(0.68 0.17 52 / 0.45); }
 .btn:hover::before, .btn:focus-visible::before { clip-path: circle(150% at var(--mx) var(--my)); animation-play-state: running; }
 .btn:active { transform: scale(0.97); }
 .btn__arrow { display: inline-block; margin-left: 0.5em; transition: transform 0.5s var(--ease); }

@@ -1,4 +1,4 @@
-// The scene behind the page: a slow pool of liquid chrome lit by the cursor.
+// The scene behind the page: a few soft lights drifting over a dark ground, one trailing the cursor.
 // The grade (shadow and beam colours) follows the section on screen: site.grade(name).
 // Does nothing without WebGL2; the page then keeps its plain background.
 (() => {
@@ -25,51 +25,28 @@ uniform vec3 uBeam;
 out vec4 outColor;
 
 float hash(vec2 p) { p = fract(p * vec2(123.34, 456.21)); p += dot(p, p + 45.32); return fract(p.x * p.y); }
-float noise(vec2 p) {
-  vec2 i = floor(p), f = fract(p);
-  f = f * f * (3.0 - 2.0 * f);
-  return mix(mix(hash(i), hash(i + vec2(1, 0)), f.x), mix(hash(i + vec2(0, 1)), hash(i + vec2(1, 1)), f.x), f.y);
-}
-float fbm(vec2 p) {
-  float v = 0.0, a = 0.5;
-  for (int i = 0; i < 3; i++) { v += a * noise(p); p = p * 2.03 + vec2(1.7, 9.2); a *= 0.5; }
-  return v;
-}
 
-// Height of the liquid surface: slow, domain-warped swells.
-float height(vec2 p, float t) {
-  vec2 w = vec2(fbm(p * 0.9 + vec2(t, -t * 0.7)), fbm(p * 0.9 + 5.2 - vec2(t * 0.8, t)));
-  return fbm(p * 1.1 + w * 1.9);
+// A soft round glow centred on c.
+float blob(vec2 p, vec2 c, float r) {
+  vec2 d = p - c;
+  return exp(-dot(d, d) / (r * r));
 }
 
 void main() {
   vec2 uv = gl_FragCoord.xy / uRes;
   float asp = uRes.x / uRes.y;
-  vec2 p = (uv - 0.5) * vec2(asp, 1.0) * 1.5;
-  vec2 m = (uMouse - 0.5) * vec2(asp, 1.0) * 1.5;
-  float t = uTime * 0.035 + uScroll * 1.2;
+  vec2 p = (uv - 0.5) * vec2(asp, 1.0);
+  vec2 m = (uMouse - 0.5) * vec2(asp, 1.0);
+  float t = uTime * 0.12 + uScroll * 2.0;
 
-  // Surface normal from the height field's slope.
-  float e = 0.012;
-  float h = height(p, t);
-  float hx = height(p + vec2(e, 0.0), t) - h;
-  float hy = height(p + vec2(0.0, e), t) - h;
-  vec3 n = normalize(vec3(-hx, -hy, e * 0.55));
+  // Three slow lights drifting on their own paths, one more that trails the cursor.
+  float g = blob(p, vec2(sin(t * 0.9) * 0.55 * asp * 0.8, cos(t * 0.7) * 0.32), 0.55);
+  g += 0.8 * blob(p, vec2(cos(t * 0.6 + 2.0) * 0.5 * asp * 0.8, sin(t * 0.8 + 1.0) * 0.38), 0.45);
+  g += 0.6 * blob(p, vec2(sin(t * 0.5 + 4.0) * 0.4 * asp, cos(t * 0.45 + 3.0) * 0.3), 0.7);
+  g += 0.7 * blob(p, m * 0.7, 0.4);
 
-  // One light that follows the cursor, one fixed rim from the top right.
-  vec3 L = normalize(vec3(m - p, 0.55));
-  vec3 R = normalize(vec3(0.7, 0.9, 0.6));
-  float spec = pow(max(dot(reflect(-L, n), vec3(0.0, 0.0, 1.0)), 0.0), 28.0);
-  float rim = pow(max(dot(reflect(-R, n), vec3(0.0, 0.0, 1.0)), 0.0), 18.0);
-
-  // Chrome look: a studio gradient read through the normal, banded into dark and light stripes.
-  float band = n.x * 3.2 + n.y * 4.4;
-  float env = smoothstep(0.35, 0.95, 0.5 + 0.5 * sin(band * 5.0 + h * 6.0));
-  env *= smoothstep(0.0, 0.5, length(vec2(hx, hy)) / e);
-
-  vec3 col = uShadow * (0.75 + 0.5 * h);
-  col += uBeam * (spec * 0.55 + rim * 0.35 + env * 0.1) * uPower;
-  col *= mix(0.7, 1.0, uv.y);
+  vec3 col = uShadow + uBeam * g * 0.2 * uPower;
+  col *= mix(0.75, 1.0, uv.y);
   col += (hash(gl_FragCoord.xy + uTime) - 0.5) * 0.012;
   outColor = vec4(col, 1.0);
 }`;
@@ -99,12 +76,12 @@ void main() {
 
   // Grades: [shadow rgb, beam rgb]. Teal shadows with warm light is the base look.
   const GRADES = {
-    cold: [[0.040, 0.046, 0.062], [0.74, 0.82, 0.95]],
-    amber: [[0.058, 0.050, 0.046], [1.00, 0.80, 0.55]],
-    teal: [[0.034, 0.052, 0.060], [0.70, 0.92, 0.92]],
-    ember: [[0.062, 0.046, 0.044], [1.00, 0.72, 0.58]],
+    cold: [[0.040, 0.046, 0.066], [0.30, 0.42, 0.80]],
+    amber: [[0.058, 0.050, 0.046], [0.95, 0.52, 0.16]],
+    teal: [[0.034, 0.052, 0.060], [0.16, 0.66, 0.66]],
+    ember: [[0.062, 0.046, 0.044], [0.92, 0.32, 0.16]],
   };
-  const cur = { shadow: [...GRADES.cold[0]], beam: [...GRADES.cold[1]], power: home ? 0.5 : 0.35 };
+  const cur = { shadow: [...GRADES.cold[0]], beam: [...GRADES.cold[1]], power: home ? 1 : 0.7 };
   let target = GRADES.cold;
 
   const mouse = { x: 0.7, y: 0.6, tx: 0.7, ty: 0.6 };
