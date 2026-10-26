@@ -1,4 +1,4 @@
-// Home page motion: scenes (grade, nav), hero, about scrub, timeline, project reveals, terminal cards.
+// Home page motion: scenes (grade, nav), hero, about scrub, timeline, project reveals.
 (() => {
   const { $, $$, reduce, ready, opened } = window.site || {};
   if (!ready) return;
@@ -10,7 +10,6 @@
     aboutScrub();
     timeline();
     films();
-    terminals();
     ScrollTrigger.refresh();
   });
 
@@ -87,32 +86,6 @@
       scaleY: 1,
       ease: 'none',
       scrollTrigger: { trigger: '.timeline', start: 'top 70%', end: 'bottom 70%', scrub: true },
-    });
-  }
-
-  // Each terminal card types its command and prints the output lines when it scrolls in.
-  function terminals() {
-    $$('.term').forEach((term) => {
-      const lines = $$('.term__line', term);
-      const cursor = $('.term__cursor', term);
-      gsap.set(lines, { autoAlpha: 0 });
-      gsap.set(cursor, { autoAlpha: 0 });
-      const tl = gsap.timeline({ paused: true, delay: 0.3 });
-      lines.forEach((line) => {
-        const typed = line.hasAttribute('data-type') ? $('.t', line) : null;
-        if (typed) {
-          const text = typed.textContent;
-          const n = { c: 0 };
-          typed.textContent = '';
-          tl.set(line, { autoAlpha: 1 })
-            .to(n, { c: text.length, duration: Math.max(0.5, text.length * 0.045), ease: 'none', onUpdate: () => { typed.textContent = text.slice(0, Math.round(n.c)); } })
-            .to({}, { duration: 0.25 });
-        } else {
-          tl.fromTo(line, { autoAlpha: 0, y: 6 }, { autoAlpha: 1, y: 0, duration: 0.35, ease: 'power2.out' }, '>+0.08');
-        }
-      });
-      tl.set(cursor, { autoAlpha: 1 });
-      ScrollTrigger.create({ trigger: term, start: 'top 90%', once: true, onEnter: () => tl.play() });
     });
   }
 
