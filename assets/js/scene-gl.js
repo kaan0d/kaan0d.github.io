@@ -1,4 +1,4 @@
-// The scene behind the page: a few soft lights drifting over a dark ground, one trailing the cursor.
+// The scene behind the page: a grid of dots that swell as a slow wave and the cursor pass over them.
 // The grade (shadow and beam colours) follows the section on screen: site.grade(name).
 // Does nothing without WebGL2; the page then keeps its plain background.
 (() => {
@@ -26,28 +26,30 @@ out vec4 outColor;
 
 float hash(vec2 p) { p = fract(p * vec2(123.34, 456.21)); p += dot(p, p + 45.32); return fract(p.x * p.y); }
 
-// A soft round glow centred on c.
-float blob(vec2 p, vec2 c, float r) {
-  vec2 d = p - c;
-  return exp(-dot(d, d) / (r * r));
-}
-
 void main() {
   vec2 uv = gl_FragCoord.xy / uRes;
   float asp = uRes.x / uRes.y;
-  vec2 p = (uv - 0.5) * vec2(asp, 1.0);
+
+  // A grid of dots. Each dot swells where a slow wave passes and near the cursor.
+  float cell = 15.0;
+  vec2 g = gl_FragCoord.xy / cell;
+  vec2 id = floor(g);
+  vec2 f = fract(g) - 0.5;
+
+  vec2 p = (id * cell / uRes - 0.5) * vec2(asp, 1.0);
   vec2 m = (uMouse - 0.5) * vec2(asp, 1.0);
-  float t = uTime * 0.12 + uScroll * 2.0;
+  float t = uTime * 0.18 + uScroll * 3.0;
 
-  // Three slow lights drifting on their own paths, one more that trails the cursor.
-  float g = blob(p, vec2(sin(t * 0.9) * 0.55 * asp * 0.8, cos(t * 0.7) * 0.32), 0.55);
-  g += 0.8 * blob(p, vec2(cos(t * 0.6 + 2.0) * 0.5 * asp * 0.8, sin(t * 0.8 + 1.0) * 0.38), 0.45);
-  g += 0.6 * blob(p, vec2(sin(t * 0.5 + 4.0) * 0.4 * asp, cos(t * 0.45 + 3.0) * 0.3), 0.7);
-  g += 0.7 * blob(p, m * 0.7, 0.4);
+  float w = sin(p.x * 3.2 + t) + sin(p.y * 4.1 - t * 1.3) + sin((p.x + p.y) * 2.6 + t * 0.7) + sin(length(p - vec2(0.3 * asp, 0.1)) * 6.0 - t * 1.6);
+  w = w * 0.125 + 0.5;
+  float near = exp(-dot(p - m, p - m) * 9.0);
 
-  vec3 col = uShadow + uBeam * g * 0.2 * uPower;
-  col *= mix(0.75, 1.0, uv.y);
-  col += (hash(gl_FragCoord.xy + uTime) - 0.5) * 0.012;
+  float r = mix(0.05, 0.4, smoothstep(0.35, 1.0, w + near * 0.55));
+  float dotm = smoothstep(r, r - 0.09, length(f));
+
+  vec3 col = uShadow + uBeam * dotm * (0.16 + 0.5 * w) * 0.35 * uPower;
+  col *= mix(0.7, 1.0, uv.y);
+  col += (hash(gl_FragCoord.xy + uTime) - 0.5) * 0.01;
   outColor = vec4(col, 1.0);
 }`;
 

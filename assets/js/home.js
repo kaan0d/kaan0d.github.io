@@ -1,16 +1,17 @@
-// Home page motion: scenes (grade, HUD, nav), hero, about scrub, timeline, project reveals.
+// Home page motion: scenes (grade, nav), hero, about scrub, timeline, project reveals, asides.
 (() => {
   const { $, $$, reduce, ready, opened } = window.site || {};
   if (!ready) return;
 
   ready.then(() => {
     scenes();
+    clock();
     if (reduce) return;
 
     aboutScrub();
     timeline();
     films();
-    ghosts();
+    asides();
     ScrollTrigger.refresh();
   });
 
@@ -76,15 +77,29 @@
     });
   }
 
-  // The big section numbers drift against the scroll, slower than the page.
-  function ghosts() {
-    $$('[data-ghost]').forEach((el) => {
-      gsap.fromTo(el, { yPercent: -12 }, {
-        yPercent: 12,
-        ease: 'none',
-        scrollTrigger: { trigger: el.parentElement, start: 'top bottom', end: 'bottom top', scrub: true },
-      });
+  // Local time in Çanakkale; runs even with reduced motion since it only changes text.
+  function clock() {
+    const els = $$('[data-clock]');
+    if (!els.length) return;
+    const fmt = new Intl.DateTimeFormat('en-GB', { hour: '2-digit', minute: '2-digit', timeZone: 'Europe/Istanbul' });
+    const tick = () => els.forEach((el) => { el.textContent = fmt.format(new Date()); });
+    tick();
+    setInterval(tick, 15000);
+  }
+
+  // The report bars fill and the route draws itself when their block scrolls in.
+  function asides() {
+    $$('.bar__fill').forEach((el, i) => {
+      gsap.from(el, { scaleX: 0, duration: 1.4, delay: i * 0.25, ease: 'expo.out', scrollTrigger: { trigger: el, start: 'top 92%', once: true } });
     });
+    const line = $('.route__line');
+    if (!line) return;
+    gsap.set('.route__dot, .route text', { opacity: 0 });
+    gsap.set(line, { strokeDasharray: 1, strokeDashoffset: 1 });
+    gsap.timeline({ scrollTrigger: { trigger: '.route', start: 'top 90%', once: true } })
+      .to('.route__dot, .route text', { opacity: 1, duration: 0.6, stagger: 0.25 })
+      .to(line, { strokeDashoffset: 0, duration: 1.8, ease: 'power2.inOut' }, 0)
+      .set(line, { strokeDasharray: '0.02 0.03' });
   }
 
   // Each project frame opens like a curtain, then its image settles in.
