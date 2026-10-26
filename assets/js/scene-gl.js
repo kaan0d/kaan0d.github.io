@@ -15,7 +15,9 @@
   const home = root.dataset.page === 'home';
 
   const N = 30;                 // tonal levels
-  const K = 3;                  // characters per level, picked at random so no letter repeats in a row
+  const CAND = ' .\'`^",:;Il!i><~+_-?][}{1)(|\\/tfjrxnuvczXYUJCLQ0OZmwqpdbkhao*#MW&8%B@$';
+  const M = [...CAND].length;   // every glyph the atlas holds, sorted by ink
+  const WINDOW = 44;            // how far from its own tone a cell may wander when it picks a letter
   const CELL = [11, 18];         // one character, in CSS pixels
   const FALL = 2.2;             // screens of scroll from the whole eye to the whole galaxy
 
@@ -457,22 +459,26 @@ void main() {
   // tone: a little temporal dither so the characters shimmer like film grain instead of banding
   float dither = hash(vec2(cell) + floor(uTime * 14.0)) - 0.5;
   float level = clamp(pow(L, 0.8) * ${N}.0 + dither * 0.9, 0.0, ${N}.0 - 0.01);
+  // chaos: a cell takes any letter from a wide stretch of the ink scale around its tone, and re-rolls often, out of step
   float lvl = floor(level);
-  float rnd = hash(vec2(cell) * 1.37 + floor(uTime * 1.6 + hash(vec2(cell).yx) * 4.0));   // every cell re-rolls now and then, out of step
-  float idx = lvl * ${K}.0 + floor(rnd * ${K}.0);
+  float rnd = hash(vec2(cell) * 1.37 + floor(uTime * 3.4 + hash(vec2(cell).yx) * 6.0));
+  float centre = lvl / (${N}.0 - 1.0) * (${M}.0 - 1.0);
+  float idx = clamp(floor(centre + (rnd - 0.5) * ${WINDOW}.0 + 0.5), 0.0, ${M}.0 - 1.0);
+  float gInk = idx / (${M}.0 - 1.0);
 
   // edges become line glyphs that follow them
   float mag = length(g);
   if (mag > 0.15 && L > 0.1) {
     float e = abs(g.x) > 2.0 * abs(g.y) ? 1.0 : (abs(g.y) > 2.0 * abs(g.x) ? 0.0 : (g.x * g.y > 0.0 ? 3.0 : 2.0));
-    idx = ${N * K}.0 + e;   // the line glyphs sit after the ramp
+    idx = ${M}.0 + e;
+    gInk = L;   // the line glyphs sit after the ramp
   }
 
   // glitter prints as little stars
   float sp = sparkAt(cell);
-  if (sp > 0.22) idx = ${N * K}.0 + 4.0 + (sp > 0.55 ? 1.0 : 0.0);
+  if (sp > 0.22) { idx = ${M}.0 + 4.0 + (sp > 0.55 ? 1.0 : 0.0); gInk = L; }
 
-  float total = ${N * K}.0 + 6.0;
+  float total = ${M}.0 + 6.0;
   // the glyph takes only part of its cell, so there is air between the characters
   vec2 lc = (local - 0.5) * 1.3 + 0.5;
   float inside = step(0.0, lc.x) * step(lc.x, 1.0) * step(0.0, lc.y) * step(lc.y, 1.0);
@@ -483,6 +489,7 @@ void main() {
   vec3 a = vec3(texture(uAtlas, gu + off).a, texture(uAtlas, gu).a, texture(uAtlas, gu - off).a) * inside;
 
   vec3 ink = mix(vec3(L), c, 1.55) * (0.85 + 1.1 * L) * uTint;   // push the colour
+  ink *= clamp((L + 0.2) / (gInk + 0.2), 0.5, 1.8);               // a heavy letter on a dark spot is dimmed, a light one is lifted
   if (sp > 0.22) ink = vec3(1.0, 0.86, 0.6) * (0.9 + 1.4 * sp);
 
   // bloom, from the blurred levels of the picture
@@ -540,7 +547,6 @@ void main() {
   function buildAtlas() {
     const gw = 40, gh = 72;
     const font = `600 ${gh * 0.78}px "Geist Mono", ui-monospace, Menlo, monospace`;
-    const CAND = ' .\'`^",:;Il!i><~+_-?][}{1)(|\\/tfjrxnuvczXYUJCLQ0OZmwqpdbkhao*#MW&8%B@$';
     const m = document.createElement('canvas');
     m.width = gw;
     m.height = gh;
@@ -554,15 +560,8 @@ void main() {
       for (let i = 3; i < d.length; i += 4) s += d[i];
       return { ch, s };
     }).sort((a, b) => a.s - b.s);
-    // Sorted by ink, the candidates are cut into N levels; each level keeps K neighbours of nearly the same weight.
-    const M = ink.length;
-    const levels = [];
-    for (let k = 0; k < N; k++) {
-      const start = Math.round((k * (M - K)) / (N - 1));
-      levels.push(ink.slice(start, start + K).map((e) => e.ch));
-    }
-    const glyphs = [...levels.flat(), '-', '|', '/', '\\', '+', '*'];
-    const ramp = levels.map((l) => l[0]);
+    const glyphs = [...ink.map((e) => e.ch), '-', '|', '/', '\\', '+', '*'];
+    const ramp = ink.map((e) => e.ch);
     const c = document.createElement('canvas');
     c.width = gw * glyphs.length;
     c.height = gh;
