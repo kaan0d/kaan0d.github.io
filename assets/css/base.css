@@ -220,6 +220,17 @@ body::after {
 }
 .btn:hover .btn__arrow, .btn:focus-visible .btn__arrow { background: var(--accent); border-color: var(--accent); color: var(--on-accent); transform: scale(1.12) rotate(-12deg); }
 
+/* ---------- page transitions: the browser cross-fades between pages; the header stays put ---------- */
+
+@media (prefers-reduced-motion: no-preference) {
+  @view-transition { navigation: auto; }
+  ::view-transition-old(root) { animation: vt-out 0.35s var(--ease) both; }
+  ::view-transition-new(root) { animation: vt-in 0.7s var(--ease) 0.1s both; }
+}
+@keyframes vt-out { to { opacity: 0; transform: translateY(-14px); } }
+@keyframes vt-in { from { opacity: 0; transform: translateY(18px); } }
+.site-header { view-transition-name: site-header; }
+
 /* ---------- shared type ---------- */
 
 .section { position: relative; padding: clamp(72px, 9vw, 136px) var(--gutter); max-width: var(--maxw); margin: 0 auto; }
