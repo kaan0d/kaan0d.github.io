@@ -1,57 +1,63 @@
-// Home page motion: hero, counters, marquee, about scrub, timeline, project stack, repo pan.
+// Home page motion: scenes (grade, HUD, nav), hero, counters, marquee, about scrub, timeline, project reveals, repo reel.
 (() => {
-  const { $, $$, reduce, ready } = window.site || {};
+  const { $, $$, reduce, ready, opened } = window.site || {};
   if (!ready) return;
 
   ready.then(() => {
-    const glCanvas = window.site.heroGL?.canvas;
-    if (glCanvas) gsap.to(glCanvas, { opacity: 1, duration: reduce ? 0 : 2.4, ease: 'power2.out' });
-    scrollSpy();
+    scenes();
     if (reduce) return;
 
-    hero();
     counters();
     marquee();
     aboutScrub();
     timeline();
-    projectStack();
+    films();
     repoPan();
     ScrollTrigger.refresh();
   });
 
-  // Marks the header link of the section crossing the middle of the screen.
-  function scrollSpy() {
-    const links = $$('.site-nav a[data-spy]');
-    const sections = [...links.map((a) => a.dataset.spy), 'links'].map((id) => document.getElementById(id)).filter(Boolean);
-    let last = null;
-    const update = () => {
-      const middle = window.innerHeight * 0.45;
-      let current = null;
-      for (const section of sections) {
-        if (section.getBoundingClientRect().top <= middle) current = section.id;
-      }
-      if (window.scrollY >= ScrollTrigger.maxScroll(window) - 4) current = sections[sections.length - 1].id;
-      for (const a of links) {
-        const on = a.dataset.spy === current;
-        a.classList.toggle('is-active', on);
-        if (on) a.setAttribute('aria-current', 'true'); else a.removeAttribute('aria-current');
-      }
-      if (current !== last) {
-        last = current;
-        window.site.syncNav?.();
-      }
-    };
-    ScrollTrigger.create({ start: 0, end: 'max', onUpdate: update, onRefresh: update });
-  }
-
-  // Content drifts up and dims as the hero leaves the screen.
-  function hero() {
+  // The hero fades back as the first scene ends; waits for the curtain so it does not fight the intro.
+  (opened || ready).then(() => {
+    if (reduce) return;
     gsap.to('.hero__inner', {
-      y: -90,
-      opacity: 0.15,
+      y: -80,
+      opacity: 0.12,
       ease: 'none',
       scrollTrigger: { trigger: '.hero', start: 'top top', end: 'bottom top', scrub: true },
     });
+  });
+
+  // Each [data-scene] section sets the grade of the shader, the HUD label and the highlighted header link.
+  function scenes() {
+    const sections = $$('[data-scene]');
+    const links = $$('.site-nav a[data-spy]');
+    const noEl = $('[data-scene-no]');
+    const nameEl = $('[data-scene-name]');
+    let last = null;
+
+    const update = () => {
+      const middle = window.innerHeight * 0.45;
+      let current = sections[0];
+      for (const section of sections) {
+        if (section.getBoundingClientRect().top <= middle) current = section;
+      }
+      if (window.scrollY >= ScrollTrigger.maxScroll(window) - 4) current = sections[sections.length - 1];
+      if (current === last) return;
+      last = current;
+
+      window.site.grade?.(current.dataset.grade);
+      if (noEl) noEl.textContent = String(sections.indexOf(current) + 1).padStart(2, '0');
+      if (nameEl) nameEl.textContent = current.dataset.scene;
+
+      // The contact section has the id "links"; the header calls it nothing, so the last link stays lit.
+      const id = current.id === 'links' ? null : current.id;
+      for (const a of links) {
+        const on = a.dataset.spy === id;
+        a.classList.toggle('is-active', on);
+        if (on) a.setAttribute('aria-current', 'true'); else a.removeAttribute('aria-current');
+      }
+    };
+    ScrollTrigger.create({ start: 0, end: 'max', onUpdate: update, onRefresh: update });
   }
 
   function counters() {
@@ -112,29 +118,28 @@
     });
   }
 
-  // Featured projects pin in turn; each earlier card recedes as the next slides over it.
-  function projectStack() {
-    $$('.media').forEach((media) => {
-      gsap.fromTo($('img', media), { yPercent: -4 }, {
-        yPercent: 4,
-        ease: 'none',
-        scrollTrigger: { trigger: media, start: 'top bottom', end: 'bottom top', scrub: true },
-      });
-    });
+  // Each project frame opens like a curtain, then its image drifts while it crosses the screen.
+  function films() {
+    $$('.film').forEach((film) => {
+      const frame = $('.film__frame', film);
+      const img = $('img', frame);
+      const rail = $('.film__rail', film);
 
-    gsap.matchMedia().add('(min-width: 900px) and (min-height: 760px)', () => {
-      const cards = $$('.stack-card');
-      const last = cards[cards.length - 1];
-      cards.forEach((card, i) => {
-        if (card === last) return;
-        ScrollTrigger.create({ trigger: card, start: 'top top', endTrigger: last, end: 'top top', pin: true, pinSpacing: false });
-        gsap.to($('.stack-card__inner', card), {
-          scale: 0.93,
-          '--dim': 0.72,
-          ease: 'none',
-          scrollTrigger: { trigger: cards[i + 1], start: 'top bottom', end: 'top top', scrub: true },
-        });
+      gsap.from(rail, { opacity: 0, y: 20, duration: 1, ease: 'expo.out', scrollTrigger: { trigger: film, start: 'top 85%', once: true } });
+      gsap.fromTo(frame, { clipPath: 'inset(0 0 100% 0)' }, {
+        clipPath: 'inset(0 0 0% 0)',
+        duration: 1.5,
+        ease: 'expo.inOut',
+        scrollTrigger: { trigger: frame, start: 'top 85%', once: true },
       });
+      if (img) {
+        gsap.fromTo(img, { scale: 1.3 }, { scale: 1, duration: 1.8, ease: 'expo.out', scrollTrigger: { trigger: frame, start: 'top 85%', once: true } });
+        gsap.fromTo(img, { yPercent: -4 }, {
+          yPercent: 4,
+          ease: 'none',
+          scrollTrigger: { trigger: frame, start: 'top bottom', end: 'bottom top', scrub: true },
+        });
+      }
     });
   }
 

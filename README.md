@@ -4,7 +4,7 @@ Personal portfolio website of **Kaan Dinç**, published at [kaandinc.com](https:
 
 ## Notices
 
-- **The design is 100% the author's own work.** The visual identity, layout, typography choices, color system, motion design, 3D scenes, page transitions, and every interaction on the site were designed and built by Kaan Dinç for this portfolio.
+- **The design is 100% the author's own work.** The visual identity, layout, typography choices, color system, motion design, shader scene, page transitions, and every interaction on the site were designed and built by Kaan Dinç for this portfolio.
 - **Do not copy or redistribute it as your own.** Do not reuse the design, layout, styles, animations, or code structure as your own portfolio, template, theme, or product, in whole or in part.
 - **The content is personal and not for reuse.** The name, CV, work history, education, project descriptions, blog posts, screenshots, and images describe one real person and one real body of work. Do not republish, rewrite, or present them as yours.
 - **All rights reserved.** No license is granted to use any part of this repository, code included. See `LICENSE`.

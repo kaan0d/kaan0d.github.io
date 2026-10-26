@@ -1,6 +1,5 @@
-// Shared behavior for every page: smooth scroll, header, anchors, reveals.
+// Shared behavior for every page: smooth scroll, header, menu, curtain, cursor, timecode, reveals.
 (() => {
-  const scriptBase = document.currentScript.src.replace(/core.js.*$/, '');
   const root = document.documentElement;
   const reduce = root.classList.contains('reduce');
   const $ = (sel, ctx = document) => ctx.querySelector(sel);
@@ -11,7 +10,9 @@
   gsap.registerPlugin(ScrollTrigger, SplitText);
 
   const header = $('.site-header');
-  const cue = $('.scroll-cue');
+  const nav = $('.site-nav');
+  const menuBtn = $('.menu-btn');
+  const curtain = $('.curtain');
 
   // ---------- smooth scroll ----------
 
@@ -38,46 +39,75 @@
     return typeof target === 'number' ? window.scrollTo({ top: target }) : target.scrollIntoView();
   };
 
-  // ---------- header stays put; it only gains a backdrop once the page moves ----------
+  // ---------- header backdrop, timecode and HUD ----------
 
-  const NEAR_BOTTOM = 120;
-  let cueReady = false;
-
-  const updateCue = () => cue.classList.toggle('is-hidden', !cueReady || window.scrollY > ScrollTrigger.maxScroll(window) - NEAR_BOTTOM);
+  const RUNTIME = 6120; // the page runs 1 h 42 min; the timecode is just scroll position
+  const FPS = 24;
+  const pad = (n, w = 2) => String(Math.floor(n)).padStart(w, '0');
+  const timecodeEl = $('[data-timecode]');
+  const pctEl = $('[data-scene-pct]');
 
   function onScroll(self) {
     header.classList.toggle('is-scrolled', self.scroll() > 24);
-    updateCue();
+    const max = ScrollTrigger.maxScroll(window) || 1;
+    const progress = Math.min(Math.max(self.scroll() / max, 0), 1);
+    const frames = Math.round(progress * RUNTIME * FPS);
+    const s = Math.floor(frames / FPS);
+    if (timecodeEl) timecodeEl.textContent = `${pad(s / 3600)}:${pad((s % 3600) / 60)}:${pad(s % 60)}:${pad(frames % FPS)}`;
+    if (pctEl) pctEl.textContent = `${Math.round(progress * 100)}%`;
   }
 
   ScrollTrigger.create({ start: 0, end: 'max', onUpdate: onScroll, onRefresh: onScroll });
 
-  // ---------- header links: on small screens they scroll sideways ----------
+  // ---------- menu (small screens) ----------
 
-  const nav = $('.site-nav');
-
-  // Edge fades show which side still has links.
-  const updateNavFade = () => {
-    nav.classList.toggle('fade-left', nav.scrollLeft > 4);
-    nav.classList.toggle('fade-right', nav.scrollLeft + nav.clientWidth < nav.scrollWidth - 4);
+  const setMenu = (open) => {
+    root.classList.toggle('menu-open', open);
+    menuBtn.setAttribute('aria-expanded', String(open));
+    if (open) lenis?.stop(); else lenis?.start();
   };
-  nav.addEventListener('scroll', updateNavFade, { passive: true });
-  addEventListener('resize', updateNavFade);
-  updateNavFade();
+  menuBtn.addEventListener('click', () => setMenu(!root.classList.contains('menu-open')));
+  nav.addEventListener('click', (e) => { if (e.target.closest('a')) setMenu(false); });
+  addEventListener('keydown', (e) => { if (e.key === 'Escape') setMenu(false); });
+  matchMedia('(min-width: 1100px)').addEventListener('change', () => setMenu(false));
 
-  // Keeps the highlighted link centered in the scrolling row.
-  site.syncNav = (smooth = true) => {
-    const active = $('.is-active', nav);
-    if (!active || nav.scrollWidth <= nav.clientWidth) return;
-    const offset = active.getBoundingClientRect().left - nav.getBoundingClientRect().left + nav.scrollLeft;
-    nav.scrollTo({ left: offset - (nav.clientWidth - active.offsetWidth) / 2, behavior: smooth && !reduce ? 'smooth' : 'auto' });
+  // ---------- curtain: runs on the way out of a page and the way in ----------
+
+  const halves = $$('.curtain__half');
+  const [top, bottom] = halves;
+  const seen = (() => { try { return sessionStorage.getItem('seen'); } catch (e) { return null; } })();
+  const firstVisit = !seen && root.dataset.page === 'home';
+  try { sessionStorage.setItem('seen', '1'); } catch (e) { /* private mode: the intro just repeats */ }
+
+  site.openCurtain = async () => {
+    if (!curtain || reduce) return;
+    const count = $('.curtain__count');
+    const label = $('.curtain__label');
+    if (firstVisit) {
+      const n = { v: 0 };
+      await gsap.to(n, { v: 100, duration: 1.5, ease: 'power2.inOut', onUpdate: () => { count.textContent = pad(n.v); } });
+    } else {
+      gsap.set([count, label], { autoAlpha: 0 });
+    }
+    await gsap.timeline()
+      .to([count, label], { autoAlpha: 0, y: -24, duration: 0.4, ease: 'power2.in' })
+      .to(top, { yPercent: -100, duration: firstVisit ? 1.1 : 0.8, ease: 'expo.inOut' }, '>-0.05')
+      .to(bottom, { yPercent: 100, duration: firstVisit ? 1.1 : 0.8, ease: 'expo.inOut' }, '<');
+    gsap.set(curtain, { display: 'none' });
   };
 
-  cue.addEventListener('click', () => {
-    site.scrollTo(Math.min(window.scrollY + window.innerHeight * 0.85, ScrollTrigger.maxScroll(window)));
-  });
+  const leave = (href) => {
+    gsap.set(curtain, { display: 'block' });
+    gsap.set($$('.curtain__count, .curtain__label'), { autoAlpha: 0 });
+    gsap.timeline({ onComplete: () => { location.href = href; } })
+      .fromTo(top, { yPercent: -100 }, { yPercent: 0, duration: 0.55, ease: 'expo.inOut' })
+      .fromTo(bottom, { yPercent: 100 }, { yPercent: 0, duration: 0.55, ease: 'expo.inOut' }, '<');
+  };
 
-  // ---------- links: same-page anchors scroll smoothly, everything else navigates normally ----------
+  // Back/forward restores the page from memory with the curtain still closed.
+  addEventListener('pageshow', (e) => { if (e.persisted && curtain) gsap.set(curtain, { display: 'none' }); });
+
+  // ---------- links: same-page anchors scroll smoothly, other pages go through the curtain ----------
 
   const cleanPath = (p) => p.replace(/index\.html$/, '').replace(/\.html$/, '').replace(/\/$/, '');
 
@@ -88,7 +118,12 @@
     const url = new URL(a.href, location.href);
     if (url.origin !== location.origin) return;
 
-    if (cleanPath(url.pathname) !== cleanPath(location.pathname)) return;
+    if (cleanPath(url.pathname) !== cleanPath(location.pathname)) {
+      if (reduce) return;
+      e.preventDefault();
+      leave(a.href);
+      return;
+    }
 
     e.preventDefault();
     site.scrollTo(url.hash ? document.getElementById(url.hash.slice(1)) || 0 : 0);
@@ -96,6 +131,27 @@
   });
 
   $$('[data-top]').forEach((btn) => btn.addEventListener('click', () => site.scrollTo(0)));
+
+  // ---------- cursor ----------
+
+  site.fine = matchMedia('(hover: hover) and (pointer: fine)').matches;
+
+  function initCursor() {
+    const ring = $('.cursor');
+    const word = $('span', ring);
+    root.classList.add('has-cursor');
+    const x = gsap.quickTo(ring, 'x', { duration: 0.35, ease: 'power3' });
+    const y = gsap.quickTo(ring, 'y', { duration: 0.35, ease: 'power3' });
+    ring.classList.add('is-hidden');
+    addEventListener('pointermove', (e) => { ring.classList.remove('is-hidden'); x(e.clientX); y(e.clientY); }, { passive: true });
+    document.addEventListener('pointerleave', () => ring.classList.add('is-hidden'));
+    document.addEventListener('pointerover', (e) => {
+      const label = e.target.closest('[data-cursor]');
+      word.textContent = label ? label.dataset.cursor : '';
+      ring.classList.toggle('is-label', !!label);
+      ring.classList.toggle('is-link', !label && !!e.target.closest('a, button, summary'));
+    });
+  }
 
   // ---------- reveals ----------
 
@@ -149,35 +205,24 @@
 
   // ---------- boot ----------
 
-  site.fine = matchMedia('(hover: hover) and (pointer: fine)').matches;
-
   site.ready = (async () => {
     await document.fonts.ready;
     root.classList.add('ready');
-    updateNavFade();
-    if (root.dataset.page !== 'home') site.syncNav(false);
-    else if (!reduce && nav.scrollWidth > nav.clientWidth) {
-      // One small nudge tells first-time visitors the row scrolls.
-      setTimeout(() => {
-        if (nav.scrollLeft > 0) return;
-        nav.scrollTo({ left: 56, behavior: 'smooth' });
-        setTimeout(() => nav.scrollTo({ left: 0, behavior: 'smooth' }), 650);
-      }, 2000);
-    }
-    setTimeout(() => { cueReady = true; updateCue(); }, reduce ? 0 : 1500);
     if (!reduce) {
       initReveals();
-      intro();
-    }
-    // Decorative solids: wide screens only, loaded after everything else.
-    if (!reduce && matchMedia('(min-width: 1000px)').matches && $('[data-obj]')) {
-      import(scriptBase + 'objects.js').catch(() => {});
+      if (site.fine) initCursor();
     }
     if (location.hash) {
       const target = document.getElementById(location.hash.slice(1));
       if (target) setTimeout(() => site.scrollTo(target, true), 150);
     }
   })();
+
+  // Scripts that need the opened page (hero text, pinned sections) wait on this one.
+  site.opened = site.ready.then(async () => {
+    await site.openCurtain();
+    if (!reduce) intro();
+  });
 
   addEventListener('load', () => ScrollTrigger.refresh());
 })();

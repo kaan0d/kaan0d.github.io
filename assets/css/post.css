@@ -13,10 +13,11 @@
 .post-head__title {
   max-width: 16em;
   margin-top: 20px;
-  font-size: clamp(2.4rem, 6vw, 5.8rem);
-  font-weight: 500;
-  letter-spacing: -0.05em;
-  line-height: 1.02;
+  font-family: var(--font-serif);
+  font-size: clamp(3rem, 7.4vw, 7rem);
+  font-weight: 400;
+  letter-spacing: -0.025em;
+  line-height: 0.95;
   padding-bottom: 0.06em;
   text-wrap: balance;
 }
@@ -58,7 +59,7 @@
 .post-body { font-size: 1.06rem; line-height: 1.72; }
 .post-body > p { margin: 0 0 1.25em; }
 .post-body b { font-weight: 600; }
-.post-body h2 { margin: clamp(56px, 7vw, 96px) 0 24px; font-size: clamp(1.7rem, 3vw, 2.4rem); font-weight: 500; letter-spacing: -0.04em; line-height: 1.1; scroll-margin-top: 96px; }
+.post-body h2 { margin: clamp(56px, 7vw, 96px) 0 24px; font-family: var(--font-serif); font-size: clamp(2.1rem, 3.6vw, 3.1rem); font-weight: 400; letter-spacing: -0.02em; line-height: 1.05; scroll-margin-top: 96px; }
 .post-body h3 { margin: 40px 0 12px; font-size: 1.15rem; font-weight: 600; letter-spacing: -0.02em; line-height: 1.3; }
 .post-body h3.sub { margin-top: 44px; }
 .post-body code { font-family: var(--font-mono); font-size: 0.86em; color: var(--accent); }
@@ -223,7 +224,7 @@ table.data.roomy td.num.dim { font-family: var(--font-sans); font-size: 0.88rem;
 .post-step { display: flex; flex-direction: column; gap: 14px; }
 .post-step--older { align-items: flex-end; text-align: right; grid-column: 2; }
 .post-step__dir { font-family: var(--font-mono); font-size: 0.82rem; color: var(--text-dim); }
-.post-step__title { max-width: 18em; font-size: clamp(1.4rem, 2.8vw, 2.4rem); font-weight: 500; letter-spacing: -0.04em; line-height: 1.12; transition: color 0.3s, transform 0.6s var(--ease); }
+.post-step__title { max-width: 18em; font-family: var(--font-serif); font-size: clamp(1.9rem, 3.4vw, 3rem); font-weight: 400; letter-spacing: -0.015em; line-height: 1.05; transition: color 0.3s, transform 0.6s var(--ease); }
 .post-step:hover .post-step__title { color: var(--accent); transform: translateX(8px); }
 .post-step--older:hover .post-step__title { transform: translateX(-8px); }
 @media (max-width: 720px) {

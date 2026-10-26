@@ -1,7 +1,6 @@
 // Static site build: src/ -> index.html, blog.html, posts/*.html. Run: npm run build
 import fs from 'node:fs';
 import path from 'node:path';
-import { buildSync } from 'esbuild';
 
 const SITE = 'https://kaandinc.com';
 const NAME = 'Kaan Dinç';
@@ -13,6 +12,10 @@ const VENDOR = {
   'node_modules/lenis/dist/lenis.min.js': 'assets/vendor/lenis.min.js',
   'node_modules/geist/dist/fonts/geist-sans/Geist-Variable.woff2': 'assets/fonts/Geist-Variable.woff2',
   'node_modules/geist/dist/fonts/geist-mono/GeistMono-Variable.woff2': 'assets/fonts/GeistMono-Variable.woff2',
+  ...Object.fromEntries(['latin', 'latin-ext'].flatMap((s) => ['normal', 'italic'].map((st) => [
+    `node_modules/@fontsource/instrument-serif/files/instrument-serif-${s}-400-${st}.woff2`,
+    `assets/fonts/instrument-serif-${s}-400-${st}.woff2`,
+  ]))),
 };
 
 // ---------- helpers ----------
@@ -105,7 +108,7 @@ function shell({ file, kind, title, description, main, ogImage }) {
   const scripts = ['gsap.min.js', 'ScrollTrigger.min.js', 'SplitText.min.js', 'lenis.min.js']
     .map((s) => `<script defer src="${base}assets/vendor/${s}"></script>`)
     .join('\n');
-  const pageScripts = { home: ['hero-gl.js', 'home.js'], blog: [], post: ['post.js'] }[kind];
+  const pageScripts = { home: ['scene-gl.js', 'home.js'], blog: ['scene-gl.js'], post: ['post.js'] }[kind];
 
   return `<!doctype html>
 <html lang="en" data-page="${kind}">
@@ -114,7 +117,7 @@ function shell({ file, kind, title, description, main, ogImage }) {
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>${esc(fullTitle)}</title>
 <meta name="description" content="${esc(description)}">
-<meta name="theme-color" content="#0a0a09">
+<meta name="theme-color" content="#0b0d12">
 <link rel="canonical" href="${canonical}">
 <meta property="og:type" content="${kind === 'post' ? 'article' : 'website'}">
 <meta property="og:title" content="${esc(fullTitle)}">
@@ -131,6 +134,7 @@ function shell({ file, kind, title, description, main, ogImage }) {
 <meta name="twitter:image" content="${ogImage ? ogImage.url : SITE + '/assets/og.png'}">
 <link rel="icon" href="${base}assets/favicon.svg" type="image/svg+xml">
 <link rel="preload" href="${base}assets/fonts/Geist-Variable.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="${base}assets/fonts/instrument-serif-latin-400-normal.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="stylesheet" href="${base}assets/css/base.css">
 <link rel="stylesheet" href="${base}assets/css/${kind}.css">
 <script>
@@ -146,15 +150,21 @@ ${kind === 'home' ? PERSON_LD : ''}
 <body>
 <a class="skip" href="#main">skip to content</a>
 
+<div class="curtain" aria-hidden="true"><i class="curtain__half curtain__half--top"></i><i class="curtain__half curtain__half--bottom"></i><span class="curtain__count">00</span><span class="curtain__label">${NAME}</span></div>
+${kind === 'post' ? '' : '<canvas class="scene-gl" aria-hidden="true"></canvas>'}
+<div class="vignette" aria-hidden="true"></div>
+<div class="frame" aria-hidden="true"><i></i><i></i><i></i><i></i></div>
+<div class="cursor" aria-hidden="true"><span></span></div>
+
 <header class="site-header">
-  <div class="site-header__left">
-    <a class="site-header__brand" href="${home}" aria-label="${NAME}, home"><img src="${base}assets/favicon.svg" width="32" height="32" alt=""><span>${NAME}</span></a>
-    <a class="btn btn--cv btn--sm" href="${CV_URL}" target="_blank" rel="noopener"><span>view my cv</span><span class="btn__arrow" aria-hidden="true">&nearr;</span></a>
-  </div>
-  <nav class="site-nav" aria-label="primary">
+  <a class="site-header__brand" href="${home}" aria-label="${NAME}, home"><img src="${base}assets/favicon.svg" width="30" height="30" alt=""><span>${NAME}</span></a>
+  <p class="timecode" aria-hidden="true"><span data-timecode>00:00:00:00</span></p>
+  <button class="menu-btn" type="button" aria-label="menu" aria-expanded="false" aria-controls="site-nav"><span></span><span></span></button>
+  <nav class="site-nav" id="site-nav" aria-label="primary">
     <a class="roll" href="${home}" data-spy="top">${roll('home')}</a>
 ${SECTIONS.map((s) => `    <a class="roll" href="${home}#${s}" data-spy="${s}">${roll(s)}</a>`).join('\n')}
     <a class="roll${kind === 'home' ? '' : ' is-active'}" href="${base}blog"${kind === 'home' ? '' : ' aria-current="page"'}>${roll('blog')}</a>
+    <a class="roll nav-cv" href="${CV_URL}" target="_blank" rel="noopener">${roll('cv &nearr;')}</a>
   </nav>
 </header>
 
@@ -168,7 +178,7 @@ ${main}
   <button class="roll" type="button" data-top>${roll('back to top')}</button>
 </footer>
 
-<button class="scroll-cue is-hidden" type="button" aria-label="scroll down"><span></span></button>
+<div class="hud" aria-hidden="true"><p class="hud__scene"><b data-scene-no>00</b><span data-scene-name>${kind === 'home' ? 'Title card' : kind === 'blog' ? 'Blog' : 'Reading'}</span></p><p data-scene-pct>0%</p></div>
 
 ${scripts}
 <script defer src="${base}assets/js/core.js"></script>
@@ -196,9 +206,9 @@ ${posts.filter((p) => p.date.startsWith(year)).map((p) => `        <li><a class=
     </section>`).join('\n');
 
   return `<section class="blog-hero">
-  <div class="obj" data-obj="tetra" aria-hidden="true"></div>
-  <h1 class="blog-hero__title" data-split="lines" data-hero>blog</h1>
-  <p class="blog-hero__lede" data-fade data-hero>Notes on what I've been building.</p>
+  <p class="eyebrow" data-hero>Notes</p>
+  <h1 class="blog-hero__title" data-split="lines" data-hero>The <em>blog.</em></h1>
+  <p class="blog-hero__lede" data-hero>Notes on what I've been building.</p>
 </section>
 <div class="blog-index">${groups}
 </div>`;
@@ -287,9 +297,6 @@ for (const [from, to] of Object.entries(VENDOR)) {
   fs.mkdirSync(path.dirname(to), { recursive: true });
   fs.copyFileSync(from, to);
 }
-
-// Three.js is tree-shaken into one file that core.js loads lazily on wide screens.
-buildSync({ entryPoints: ['src/js/objects.js'], bundle: true, minify: true, format: 'esm', outfile: 'assets/js/objects.js' });
 
 const posts = loadPosts();
 const urls = [`${SITE}/`, `${SITE}/blog`];
