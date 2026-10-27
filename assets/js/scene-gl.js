@@ -17,15 +17,20 @@
   const N = 30;                 // tonal levels
   const CAND = ' .\'`^",:;Il!i><~+_-?][}{1)(|\\/tfjrxnuvczXYUJCLQ0OZmwqpdbkhao*#MW&8%B@$';
   const M = [...CAND].length;   // every glyph the atlas holds, sorted by ink
-  const WINDOW = 44;            // how far from its own tone a cell may wander when it picks a letter
+  const WINDOW = 24;            // how far from its own tone a cell may wander when it picks a letter
   // Quality tiers: the page starts on the best one the device probably affords and steps down by itself
-  // when frames run long. Each tier is a pixel ratio, a character size (CSS px) and whether the costly streak is drawn.
+  // when frames run long. Each tier caps the pixel ratio and says whether the costly streak is drawn. The canvas
+  // follows the screen's own pixel ratio up to that cap, so the letters stay sharp on phones and retina screens.
   const TIERS = [
-    { dpr: 1.5, cell: [11, 18], lite: 0, skip: 0 },
-    { dpr: 1.0, cell: [11, 18], lite: 1, skip: 0 },
-    { dpr: 0.75, cell: [14, 23], lite: 1, skip: 1 },   // skip: draw every other frame
+    { dpr: 3, lite: 0, skip: 0 },
+    { dpr: 3, lite: 1, skip: 0 },
+    { dpr: 2, lite: 1, skip: 0 },
+    { dpr: 1.5, lite: 1, skip: 0 },
+    { dpr: 1, lite: 1, skip: 1 },   // skip: draw every other frame
   ];
   let tier = innerWidth < 900 || (navigator.hardwareConcurrency || 8) <= 4 || (navigator.deviceMemory || 8) <= 4 ? 1 : 0;
+  // Character size in CSS px: small screens get small characters so the planet keeps its detail.
+  const cellCss = () => (innerWidth < 600 ? [7, 11.5] : innerWidth < 1100 ? [8, 13] : [9, 15]);
 
   const VERT = `#version 300 es
 layout(location = 0) in vec2 p;
@@ -183,7 +188,7 @@ void main() {
 
   // edges become line glyphs that follow them
   float mag = length(g);
-  if (mag > 0.15 && L > 0.1) {
+  if (mag > 0.25 && L > 0.15) {
     float e = abs(g.x) > 2.0 * abs(g.y) ? 1.0 : (abs(g.y) > 2.0 * abs(g.x) ? 0.0 : (g.x * g.y > 0.0 ? 3.0 : 2.0));
     idx = ${M}.0 + e;
     gInk = L;   // the line glyphs sit after the ramp
@@ -191,7 +196,7 @@ void main() {
 
   float total = ${M}.0 + 4.0;
   // the glyph takes only part of its cell, so there is air between the characters
-  vec2 lc = (local - 0.5) * 1.3 + 0.5;
+  vec2 lc = (local - 0.5) * 1.15 + 0.5;
   float inside = step(0.0, lc.x) * step(lc.x, 1.0) * step(0.0, lc.y) * step(lc.y, 1.0);
   lc = clamp(lc, 0.0, 1.0);
   vec2 gu = vec2((idx + 0.06 + 0.88 * lc.x) / total, 0.04 + 0.92 * (1.0 - lc.y));
@@ -291,7 +296,7 @@ void main() {
 
   const target = gl.createTexture();
   const fbo = gl.createFramebuffer();
-  let cols = 1, rows = 1, W = 1, H = 1, cellPx = [11, 18];
+  let cols = 1, rows = 1, W = 1, H = 1, cellPx = [9, 15];
 
   function resize() {
     const dpr = Math.min(devicePixelRatio || 1, TIERS[tier].dpr);
@@ -299,7 +304,8 @@ void main() {
     H = Math.max(2, Math.round(innerHeight * dpr));
     canvas.width = W;
     canvas.height = H;
-    cellPx = [TIERS[tier].cell[0] * dpr, TIERS[tier].cell[1] * dpr];
+    const cell = cellCss();
+    cellPx = [cell[0] * dpr, cell[1] * dpr];
     cols = Math.ceil(W / cellPx[0]);
     rows = Math.ceil(H / cellPx[1]);
     gl.bindTexture(gl.TEXTURE_2D, target);
